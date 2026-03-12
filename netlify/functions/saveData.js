@@ -13,6 +13,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, message: 'Данные сохранены' })
     };
   } catch (error) {
+    console.error('Error in saveData:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ success: false, error: error.message })
