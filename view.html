@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оператор - просмотр графиков</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #000000;
+            color: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        .header {
+            background: #111111;
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            border: 1px solid #333333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            color: #ffd700;
+            font-size: 24px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .select-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .select-group label {
+            color: #ffd700;
+            font-weight: 500;
+        }
+        select, button {
+            background: #1a1a1a;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 200px;
+        }
+        select:hover, select:focus {
+            border-color: #ffd700;
+            outline: none;
+        }
+        button {
+            background: #ffd700;
+            color: #000000;
+            border: 2px solid #ffd700;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #ffe44d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+        }
+        .schedule-wrapper {
+            background: #111111;
+            border-radius: 16px;
+            border: 1px solid #333333;
+            overflow: auto;
+            max-height: calc(100vh - 200px);
+        }
+        .headers-container {
+            display: flex;
+            background: #000000;
+            border-bottom: 2px solid #333333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            min-width: min-content;
+        }
+        .fixed-headers {
+            display: flex;
+            flex: 0 0 auto;
+            background: #000000;
+            border-right: 2px solid #ffd700;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+        }
+        .fixed-header-cell {
+            padding: 15px 10px;
+            font-weight: 600;
+            text-align: center;
+            border-right: 1px solid #333333;
+            font-size: 13px;
+            background: #000000;
+            color: #ffd700;
+            min-width: 120px;
+        }
+        .fixed-header-cell:first-child {
+            width: 250px;
+            text-align: left;
+            padding-left: 20px;
+        }
+        .fixed-header-cell:nth-child(2) { width: 100px; }
+        .fixed-header-cell:nth-child(3) { width: 120px; }
+        .scrollable-headers {
+            display: flex;
+            flex: 1;
+        }
+        .scrollable-header-cell {
+            flex: 0 0 80px;
+            padding: 15px 5px;
+            text-align: center;
+            font-weight: 600;
+            background: #000000;
+            color: #ffd700;
+            border-right: 1px solid #333333;
+        }
+        .day-week {
+            font-size: 10px;
+            color: #8f9bb3;
+        }
+        .rows-container {
+            min-width: min-content;
+        }
+        .data-row {
+            display: flex;
+            border-bottom: 1px solid #333333;
+            min-height: 50px;
+        }
+        .data-row:hover {
+            background: #1a1a1a;
+        }
+        .fixed-cells {
+            display: flex;
+            flex: 0 0 auto;
+            background: #111111;
+            border-right: 2px solid #ffd700;
+            position: sticky;
+            left: 0;
+            z-index: 9;
+        }
+        .fixed-cell {
+            padding: 10px;
+            border-right: 1px solid #333333;
+            display: flex;
+            align-items: center;
+            background: #111111;
+            color: #cccccc;
+        }
+        .fixed-cell:first-child {
+            width: 250px;
+            font-weight: 600;
+            color: #ffd700;
+            padding-left: 20px;
+        }
+        .fixed-cell:nth-child(2) { width: 100px; }
+        .fixed-cell:nth-child(3) { width: 120px; }
+        .scrollable-cells {
+            display: flex;
+            flex: 1;
+        }
+        .scrollable-cell {
+            flex: 0 0 80px;
+            padding: 8px 4px;
+            border-right: 1px solid #333333;
+            background: #111111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 12px;
+        }
+        .time-value {
+            background: #1a1a1a;
+            padding: 4px 6px;
+            border-radius: 6px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid #333333;
+        }
+        .time-value.late { background: #3a3a1a; border-color: #ffd700; color: #ffd700; }
+        .time-value.overtime { background: #1a2a1a; border-color: #6bff6b; color: #aaffaa; }
+        .time-value.absent { background: #2a1a1a; border-color: #ff6b6b; color: #ffaaaa; }
+        .time-value.sick { background: #1a1a2a; border-color: #6b6bff; color: #aaaaff; }
+        .time-value.vacation { background: #1a1a2a; border-color: #6b6bff; color: #aaaaff; }
+        .time-value.dayoff { background: #1a1a1a; border-color: #444444; color: #666666; }
+        .no-data {
+            padding: 40px;
+            text-align: center;
+            color: #8f9bb3;
+        }
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .loader {
+            text-align: center;
+            padding: 40px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Графики работы</h1>
+            <div class="controls">
+                <div class="select-group">
+                    <label for="projectSelect">Проект:</label>
+                    <select id="projectSelect"></select>
+                </div>
+                <div class="select-group">
+                    <label for="monthSelect">Месяц:</label>
+                    <select id="monthSelect"></select>
+                </div>
+                <button onclick="loadSchedule()">Показать</button>
+            </div>
+        </div>
+
+        <div id="scheduleContainer">
+            <div class="loader">Загрузка данных...</div>
+        </div>
+    </div>
+
+    <script>
+        // URL функций Netlify
+        const GET_DATA_URL = '/.netlify/functions/getData';
+
+        let allData = null; // полные данные из Blobs
+
+        // Загрузка данных при старте
+        async function loadData() {
+            try {
+                const response = await fetch(GET_DATA_URL);
+                if (!response.ok) throw new Error('Ошибка загрузки');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    allData = result.data;
+                    fillProjectSelect();
+                } else {
+                    showError('Не удалось загрузить данные');
+                }
+            } catch (error) {
+                console.error(error);
+                showError('Ошибка соединения с сервером');
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('scheduleContainer').innerHTML = `<div class="error-message">${msg}</div>`;
+        }
+
+        // Заполнение списка проектов
+        function fillProjectSelect() {
+            const projectSelect = document.getElementById('projectSelect');
+            if (!allData || !allData.projects || allData.projects.length === 0) {
+                projectSelect.innerHTML = '<option>Нет проектов</option>';
+                return;
+            }
+            projectSelect.innerHTML = allData.projects.map(p => `<option value="${p}">${p}</option>`).join('');
+            // После выбора проекта заполняем месяцы
+            updateMonthSelect();
+        }
+
+        // Обновление списка месяцев при смене проекта
+        function updateMonthSelect() {
+            const project = document.getElementById('projectSelect').value;
+            const monthSelect = document.getElementById('monthSelect');
+            if (!project || !allData || !allData.monthsByProject[project] || allData.monthsByProject[project].length === 0) {
+                monthSelect.innerHTML = '<option>Нет месяцев</option>';
+                return;
+            }
+            const months = allData.monthsByProject[project];
+            // сортируем по убыванию (последний месяц первым)
+            const sortedMonths = [...months].sort().reverse();
+            monthSelect.innerHTML = sortedMonths.map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
+        }
+
+        // Форматирование месяца
+        function formatMonth(monthStr) {
+            if (!monthStr) return '';
+            const [year, month] = monthStr.split('-');
+            const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                           'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            return `${months[parseInt(month)-1]} ${year}`;
+        }
+
+        // Получение дней в месяце
+        function getDaysInMonth(monthStr) {
+            if (!monthStr) return 30;
+            const [year, month] = monthStr.split('-').map(Number);
+            return new Date(year, month, 0).getDate();
+        }
+
+        // Дни недели
+        const weekDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+        function getDayOfWeek(monthStr, day) {
+            const [year, month] = monthStr.split('-').map(Number);
+            const date = new Date(year, month-1, day);
+            return weekDays[date.getDay()];
+        }
+
+        // Определение статуса ячейки (для подсветки)
+        function getCellStatus(value, baseTime) {
+            if (!value) return '';
+            const lower = value.toLowerCase().trim();
+            if (lower === 'вых') return 'dayoff';
+            if (lower === 'прг') return 'absent';
+            if (lower === 'б') return 'sick';
+            if (lower === 'отп') return 'vacation';
+            if (!baseTime) return '';
+            // Простейшее сравнение длительности (можно улучшить)
+            function getDuration(t) {
+                const parts = t.split('-');
+                if (parts.length !== 2) return 0;
+                const start = parts[0].split(':').map(Number);
+                const end = parts[1].split(':').map(Number);
+                if (start.length<2 || end.length<2) return 0;
+                let startMin = start[0]*60 + start[1];
+                let endMin = end[0]*60 + end[1];
+                if (endMin < startMin) endMin += 24*60;
+                return endMin - startMin;
+            }
+            const valDur = getDuration(value);
+            const baseDur = getDuration(baseTime);
+            if (valDur < baseDur) return 'late';
+            if (valDur > baseDur) return 'overtime';
+            return '';
+        }
+
+        // Построение таблицы
+        function loadSchedule() {
+            const project = document.getElementById('projectSelect').value;
+            const month = document.getElementById('monthSelect').value;
+            if (!project || !month || !allData) {
+                alert('Выберите проект и месяц');
+                return;
+            }
+
+            const container = document.getElementById('scheduleContainer');
+            const key = `${project}_${month}`;
+            const employees = allData.employees[key] || [];
+
+            if (employees.length === 0) {
+                container.innerHTML = '<div class="no-data">Нет сотрудников на этот месяц</div>';
+                return;
+            }
+
+            const daysInMonth = getDaysInMonth(month);
+            let html = '<div class="schedule-wrapper">';
+
+            // Заголовки
+            html += '<div class="headers-container">';
+            html += '<div class="fixed-headers">';
+            html += '<div class="fixed-header-cell">ФИО</div>';
+            html += '<div class="fixed-header-cell">Смена</div>';
+            html += '<div class="fixed-header-cell">Время</div>';
+            html += '</div>';
+            html += '<div class="scrollable-headers">';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dow = getDayOfWeek(month, d);
+                html += `<div class="scrollable-header-cell">${d}<br><span class="day-week">${dow}</span></div>`;
+            }
+            html += '</div></div>';
+
+            // Строки с сотрудниками
+            html += '<div class="rows-container">';
+            employees.forEach(emp => {
+                const empKey = `${key}_${emp}`;
+                const empData = allData.employeeData[empKey] || { shiftType: '', time: '' };
+                const baseTime = empData.time || '';
+
+                html += '<div class="data-row">';
+                html += '<div class="fixed-cells">';
+                html += `<div class="fixed-cell">${emp}</div>`;
+                html += `<div class="fixed-cell">${empData.shiftType || '—'}</div>`;
+                html += `<div class="fixed-cell">${baseTime || '—'}</div>`;
+                html += '</div>';
+
+                html += '<div class="scrollable-cells">';
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const entryKey = `${key}_${d}_${emp}`;
+                    const value = allData.entries[entryKey] || '';
+                    const status = getCellStatus(value, baseTime);
+                    html += `<div class="scrollable-cell"><div class="time-value ${status}">${value || '—'}</div></div>`;
+                }
+                html += '</div></div>';
+            });
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        // Событие при смене проекта
+        document.getElementById('projectSelect').addEventListener('change', updateMonthSelect);
+
+        // Инициализация
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
