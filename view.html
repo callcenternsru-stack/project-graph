@@ -93,7 +93,7 @@
             z-index: 11;
         }
         .fixed-header-cell {
-            padding: 15px 10px;
+            padding: 10px;
             font-weight: 600;
             text-align: center;
             border-right: 1px solid #333333;
@@ -102,11 +102,17 @@
             color: #ffd700;
             min-width: 120px;
             white-space: nowrap;
+            min-height: 60px;           /* фиксируем высоту */
+            display: flex;
+            align-items: center;         /* вертикальное центрирование */
+            justify-content: center;
+            line-height: 1.2;
         }
         .fixed-header-cell:first-child {
             width: 250px;
             text-align: left;
             padding-left: 20px;
+            justify-content: flex-start;
         }
         .fixed-header-cell:nth-child(2) { width: 100px; }
         .fixed-header-cell:nth-child(3) { width: 120px; }
@@ -116,12 +122,18 @@
         }
         .scrollable-header-cell {
             flex: 0 0 80px;
-            padding: 15px 5px;
+            padding: 10px 5px;
             text-align: center;
             font-weight: 600;
             background: #000000;
             color: #ffd700;
             border-right: 1px solid #333333;
+            min-height: 60px;            /* такая же высота */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
         }
         .day-week {
             font-size: 10px;
@@ -155,6 +167,7 @@
             background: #111111;
             color: #cccccc;
             white-space: nowrap;
+            min-height: 50px;
         }
         .fixed-cell:first-child {
             width: 250px;
@@ -352,7 +365,6 @@
             const project = document.getElementById('projectSelect').value;
             const month = document.getElementById('monthSelect').value;
             if (!project || !month || !allData) {
-                // Если данных нет, показываем заглушку
                 document.getElementById('scheduleContainer').innerHTML = '<div class="no-data">Выберите проект и месяц</div>';
                 return;
             }
