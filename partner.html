@@ -1,0 +1,1839 @@
+!DOCTYPE html
+html lang=ru
+head
+    meta charset=UTF-8
+    meta name=viewport content=width=device-width, initial-scale=1.0
+    titleПартнер - график работtitle
+    style
+         Все стили остаются без изменений – они у вас уже есть, я не меняю их 
+         ... (ваши стили) ... 
+    style
+head
+body
+    !-- Форма входа --
+    div class=login-container id=loginContainer
+        h2🤝 Вход для партнераh2
+        div class=login-form
+            div class=form-group
+                labelЛогин (название компании)label
+                input type=text id=loginUsername placeholder=ООО Партнер autocomplete=off
+            div
+            div class=form-group
+                labelПарольlabel
+                input type=password id=loginPassword placeholder=••••••••
+            div
+            button class=login-btn onclick=partnerLogin()Войтиbutton
+            div class=error-message id=loginErrorНеверный логин или парольdiv
+        div
+    div
+
+    !-- Основной интерфейс партнера (скрыт до входа) --
+    div class=partner-container id=partnerContainer
+        div class=partner-header
+            div class=partner-info
+                div class=partner-badge id=partnerName-div
+                div class=month-badge id=currentMonth-div
+                div class=sync-indicator id=syncIndicator title=Данные синхронизируются с Netlify Blobsdiv
+            div
+            div class=partner-action-buttons
+                button class=partner-action-btn stats onclick=showStatsPage() id=statsBtnСтатистикаbutton
+                button class=partner-action-btn onclick=toggleMenu('filterMenu')Фильтрbutton
+                button class=partner-action-btn onclick=toggleMenu('employeesMenu')Сотрудникиbutton
+                button class=partner-action-btn onclick=toggleMenu('scheduleMenu')Графикbutton
+                button class=logout-btn onclick=logout()🚪 Выйтиbutton
+            div
+        div
+
+        !-- Вкладки проектов (только доступные партнеру) --
+        div class=project-tabs id=projectTabsdiv
+
+        !-- Контент (график или статистика) --
+        div id=mainContentdiv
+
+        !-- Инструкция по цветам --
+        div class=instruction id=instruction
+            div class=instruction-item
+                div class=color-box latediv
+                spanОпоздание (меньше нормы)span
+            div
+            div class=instruction-item
+                div class=color-box overtimediv
+                spanПереработка (больше нормы)span
+            div
+            div class=instruction-item
+                div class=color-box vacationdiv
+                spanОтпуск (отп)span
+            div
+            div class=instruction-item
+                div class=color-box sickdiv
+                spanБольничный (б)span
+            div
+            div class=instruction-item
+                div class=color-box absentdiv
+                spanПрогул (прг)span
+            div
+            div class=instruction-item
+                div class=color-box dayoffdiv
+                spanВыходной (вых)span
+            div
+        div
+    div
+
+    !-- Меню Фильтр для партнера --
+    div id=filterMenu class=context-menu
+        div class=menu-header
+            span🔍 Фильтрspan
+            button class=menu-close onclick=closeMenu('filterMenu')✕button
+        div
+        div class=menu-content
+            div class=menu-item
+                labelВыберите проектlabel
+                select id=filterProjectSelectselect
+            div
+            div class=menu-item
+                labelВыберите месяцlabel
+                select id=filterMonthSelectselect
+            div
+            button onclick=applyFilter()Применитьbutton
+        div
+    div
+
+    !-- Меню Сотрудники для партнера --
+    div id=employeesMenu class=context-menu
+        div class=menu-header
+            span👤 Мои операторыspan
+            button class=menu-close onclick=closeMenu('employeesMenu')✕button
+        div
+        div class=menu-content
+            div class=menu-item
+                labelВыберите проектlabel
+                select id=employeeProjectSelectselect
+            div
+            div class=menu-item
+                labelВыберите месяцlabel
+                select id=employeeMonthSelectselect
+            div
+            div class=menu-item
+                labelФИО оператораlabel
+                input type=text id=employeeNameInput placeholder=Иванов Иван Иванович
+                button onclick=addEmployee()➕ Добавить оператораbutton
+            div
+            div class=menu-item
+                labelСписок операторовlabel
+                div class=items-list id=employeesListdiv
+            div
+        div
+    div
+
+    !-- Меню График для партнера --
+    div id=scheduleMenu class=context-menu
+        div class=menu-header
+            span📅 Графикspan
+            button class=menu-close onclick=closeMenu('scheduleMenu')✕button
+        div
+        div class=menu-content
+            div class=menu-item
+                labelВыберите проектlabel
+                select id=scheduleProjectSelectselect
+            div
+            div class=menu-item
+                labelВыберите месяцlabel
+                input type=month id=scheduleMonthInput
+                button onclick=addMonth()➕ Добавить месяцbutton
+            div
+            div class=menu-item
+                labelМесяцы проектаlabel
+                div class=items-list id=monthsListdiv
+            div
+        div
+    div
+
+    !-- Контекстное меню для комментариев --
+    div id=commentModal class=context-menu
+        div class=menu-header
+            span id=commentModalTitle✏️ Добавить комментарийspan
+        div
+        div class=menu-content
+            div class=menu-item
+                label id=commentContextLabelОператор label
+            div
+            div class=menu-item
+                labelДатаlabel
+                div id=commentDateLabel style=color #ffd700; margin-bottom 10px;div
+            div
+            div class=menu-item
+                labelТипlabel
+                div id=commentTypeLabel style=color #ffd700; margin-bottom 10px;div
+            div
+            div class=menu-item
+                labelКомментарий span style=color #ff6b6b;(обязательно)spanlabel
+                textarea id=commentText rows=4 style=width 100%; padding 12px; background #1e2230; border 2px solid #2a2e3a; border-radius 12px; color #fff; resize vertical;textarea
+            div
+            div class=menu-item
+                button onclick=saveComment()💾 Сохранить комментарийbutton
+                button class=delete onclick=deleteComment() style=margin-top 10px;🗑 Удалить комментарийbutton
+            div
+        div
+    div
+
+    !-- Модальное окно для сводной таблицы --
+    div id=summaryModal class=context-menu style=width 800px; max-width 90vw;
+        div class=menu-header
+            span id=summaryModalTitle📋 Сводная таблицаspan
+            button class=menu-close onclick=closeSummaryModal()✕button
+        div
+        div class=menu-content style=max-height 70vh; overflow-y auto;
+            div id=summaryTableContainerdiv
+        div
+    div
+
+    script
+         Ключи для localStorage (те же, что и в основной странице)
+        const STORAGE_KEYS = {
+            PROJECTS 'v10_projects_list',
+            MONTHS_BY_PROJECT 'v10_months_by_project',
+            EMPLOYEES 'v10_employees_by_month',
+            EMPLOYEE_DATA 'v10_employee_data',
+            ENTRIES 'v10_time_entries',
+            PARTNERS 'v10_partners',
+            COMMENTS 'v10_comments'
+        };
+
+         ===== NETLIFY BLOBS ИНТЕГРАЦИЯ =====
+
+         Индикатор синхронизации
+        function showSync() {
+            const indicator = document.getElementById('syncIndicator');
+            if (indicator) {
+                indicator.style.background = '#4caf50';
+                indicator.style.boxShadow = '0 0 5px #4caf50';
+            }
+        }
+
+        function showSyncError() {
+            const indicator = document.getElementById('syncIndicator');
+            if (indicator) {
+                indicator.style.background = '#ff6b6b';
+                indicator.style.boxShadow = '0 0 5px #ff6b6b';
+            }
+        }
+
+         Загрузка данных из Netlify Blobs
+        async function loadFromSheets() {
+            try {
+                const response = await fetch('.netlifyfunctionsgetData');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(result.data.projects  []));
+                    localStorage.setItem(STORAGE_KEYS.MONTHS_BY_PROJECT, JSON.stringify(result.data.monthsByProject  {}));
+                    localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(result.data.employees  {}));
+                    localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(result.data.employeeData  {}));
+                    localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(result.data.entries  {}));
+                    localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(result.data.partners  []));
+                    localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(result.data.comments  {}));
+                    showSync();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Ошибка загрузки из Blobs', error);
+                showSyncError();
+                return false;
+            }
+        }
+
+         Сохранение данных в Netlify Blobs
+        async function saveToSheets() {
+            try {
+                const data = {
+                    projects JSON.parse(localStorage.getItem(STORAGE_KEYS.PROJECTS)  '[]'),
+                    monthsByProject JSON.parse(localStorage.getItem(STORAGE_KEYS.MONTHS_BY_PROJECT)  '{}'),
+                    employees JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES)  '{}'),
+                    employeeData JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEE_DATA)  '{}'),
+                    entries JSON.parse(localStorage.getItem(STORAGE_KEYS.ENTRIES)  '{}'),
+                    partners JSON.parse(localStorage.getItem(STORAGE_KEYS.PARTNERS)  '[]'),
+                    comments JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS)  '{}')
+                };
+
+                const response = await fetch('.netlifyfunctionssaveData', {
+                    method 'POST',
+                    headers { 'Content-Type' 'applicationjson' },
+                    body JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showSync();
+                } else {
+                    console.error('Ошибка сохранения', result.error);
+                    showSyncError();
+                }
+                return result.success;
+            } catch (error) {
+                console.error('Ошибка сохранения в Blobs', error);
+                showSyncError();
+                return false;
+            }
+        }
+
+         Данные партнера после входа
+        let currentPartner = null;
+        let partnerProjects = [];
+
+         Текущий выбранный проект и месяц
+        let currentProject = null;
+        let currentMonth = null;
+
+         Текущая страница
+        let currentPage = 'schedule';
+
+         Переменные для сортировки
+        let currentSortColumn = 0;
+        let currentSortDirection = 'asc';
+
+         Для комментариев
+        let currentCommentContext = null;
+
+         Для сводной таблицы
+        let currentSummaryType = null;
+
+         Дни недели
+        const weekDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+         Загрузка данных из localStorage
+        function loadData() {
+            try {
+                return {
+                    projects JSON.parse(localStorage.getItem(STORAGE_KEYS.PROJECTS))  [],
+                    monthsByProject JSON.parse(localStorage.getItem(STORAGE_KEYS.MONTHS_BY_PROJECT))  {},
+                    employees JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES))  {},
+                    employeeData JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEE_DATA))  {},
+                    entries JSON.parse(localStorage.getItem(STORAGE_KEYS.ENTRIES))  {},
+                    partners JSON.parse(localStorage.getItem(STORAGE_KEYS.PARTNERS))  [],
+                    comments JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS))  {}
+                };
+            } catch (e) {
+                console.error('Ошибка загрузки', e);
+                return {
+                    projects [],
+                    monthsByProject {},
+                    employees {},
+                    employeeData {},
+                    entries {},
+                    partners [],
+                    comments {}
+                };
+            }
+        }
+
+         Сохранение комментариев
+        function saveComments(comments) {
+            localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(comments));
+        }
+
+         Ключ для комментария
+        function getCommentKey(project, month, day, employee, type) {
+            return `${project}_${month}_${day}_${employee}_${type}`;
+        }
+
+         Сохранение состояния сессии
+        function saveSession() {
+            if (currentPartner) {
+                sessionStorage.setItem('partner_session', JSON.stringify({
+                    name currentPartner.name,
+                    projects currentPartner.projects
+                }));
+            }
+        }
+
+         Загрузка сессии
+        function loadSession() {
+            try {
+                const session = sessionStorage.getItem('partner_session');
+                if (session) {
+                    const data = JSON.parse(session);
+                    const allData = loadData();
+                    const partner = allData.partners.find(p = p.name === data.name);
+                    if (partner) {
+                        currentPartner = partner;
+                        partnerProjects = partner.projects  [];
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки сессии', e);
+            }
+            return false;
+        }
+
+         Очистка сессии
+        function clearSession() {
+            sessionStorage.removeItem('partner_session');
+            currentPartner = null;
+            partnerProjects = [];
+        }
+
+         Вход партнера
+        function partnerLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username  !password) {
+                showLoginError('Введите логин и пароль');
+                return;
+            }
+
+            const data = loadData();
+            const partner = data.partners.find(p = p.name === username);
+
+            if (partner && password === username + '123') {
+                currentPartner = partner;
+                partnerProjects = partner.projects  [];
+
+                if (partnerProjects.length === 0) {
+                    showLoginError('У вас нет подключенных проектов');
+                    return;
+                }
+
+                 Устанавливаем первый доступный проект
+                currentProject = partnerProjects[0];
+
+                 Устанавливаем последний месяц для проекта
+                if (data.monthsByProject[currentProject].length  0) {
+                    const months = [...data.monthsByProject[currentProject]].sort();
+                    currentMonth = months[months.length - 1];
+                }
+
+                 Показываем интерфейс партнера
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('partnerContainer').style.display = 'block';
+                document.body.classList.add('partner-view');
+
+                 Сохраняем сессию
+                saveSession();
+
+                 Обновляем интерфейс
+                refreshUI();
+            } else {
+                showLoginError('Неверный логин или пароль');
+            }
+        }
+
+        function showLoginError(message) {
+            const errorEl = document.getElementById('loginError');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+         Выход
+        function logout() {
+            clearSession();
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('partnerContainer').style.display = 'none';
+            document.body.classList.remove('partner-view');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+         Управление меню
+        function toggleMenu(menuId) {
+            const menu = document.getElementById(menuId);
+
+             Закрываем все другие меню
+            document.querySelectorAll('.context-menu').forEach(m = {
+                if (m.id !== menuId) {
+                    m.classList.remove('show');
+                }
+            });
+
+             Переключаем текущее меню
+            if (menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                document.body.classList.remove('menu-open');
+            } else {
+                menu.classList.add('show');
+                document.body.classList.add('menu-open');
+                updateMenuSelects();
+            }
+        }
+
+        function closeMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            menu.classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        function closeAllMenus() {
+            document.querySelectorAll('.context-menu').forEach(menu = {
+                menu.classList.remove('show');
+            });
+            document.body.classList.remove('menu-open');
+        }
+
+         Форматирование месяца
+        function formatMonth(monthStr) {
+            if (!monthStr) return '';
+            const [year, month] = monthStr.split('-');
+            const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                           'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            return `${months[parseInt(month) - 1]} ${year}`;
+        }
+
+         Форматирование даты для отображения
+        function formatDate(monthStr, day) {
+            if (!monthStr) return String(day);
+            const [year, month] = monthStr.split('-');
+            return `${day}.${month}.${year}`;
+        }
+
+         Получение дня недели
+        function getDayOfWeek(monthStr, day) {
+            if (!monthStr) return '';
+            const [year, month] = monthStr.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return weekDays[date.getDay()];
+        }
+
+         Форматирование даты
+        function formatDateHeader(monthStr, day) {
+            if (!monthStr) return String(day);
+            const [year, month] = monthStr.split('-');
+            const dayOfWeek = getDayOfWeek(monthStr, day);
+            return `${dayOfWeek}${String(day).padStart(2, '0')}.${month}`;
+        }
+
+         Получение дней в месяце
+        function getDaysInMonth(monthStr) {
+            if (!monthStr) return 30;
+            const [year, month] = monthStr.split('-').map(Number);
+            return new Date(year, month, 0).getDate();
+        }
+
+         Валидация времени
+        function validateTimeRange(timeRangeStr) {
+            if (!timeRangeStr) return true;
+            const regex = ^([0-1][0-9]2[0-3])[0-5][0-9]-([0-1][0-9]2[0-3])[0-5][0-9]$;
+            return regex.test(timeRangeStr);
+        }
+
+         Сравнение времени
+        function compareTime(timeStr1, timeStr2) {
+            if (!timeStr1  !timeStr2) return 0;
+
+            const parseTime = (time) = {
+                const [hours, minutes] = time.split('').map(Number);
+                return hours  60 + minutes;
+            };
+
+            const [start1, end1] = timeStr1.split('-').map(t = t.trim());
+            const [start2, end2] = timeStr2.split('-').map(t = t.trim());
+
+            if (!start1  !end1  !start2  !end2) return 0;
+
+            const start1Minutes = parseTime(start1);
+            const end1Minutes = parseTime(end1);
+            const start2Minutes = parseTime(start2);
+            const end2Minutes = parseTime(end2);
+
+            const duration1 = end1Minutes - start1Minutes;
+            const duration2 = end2Minutes - start2Minutes;
+
+            if (duration1  duration2) return -1;
+            if (duration1  duration2) return 1;
+            return 0;
+        }
+
+         Функция для расчета длительности в часах
+        function getDurationHours(timeStr) {
+            if (!timeStr) return 0;
+            const [start, end] = timeStr.split('-').map(t = t.trim());
+            if (!start  !end) return 0;
+
+            const [startHours, startMinutes] = start.split('').map(Number);
+            const [endHours, endMinutes] = end.split('').map(Number);
+
+            let duration = (endHours  60 + endMinutes) - (startHours  60 + startMinutes);
+            if (duration  0) duration += 24  60;
+
+            return duration  60;
+        }
+
+         Получение статуса ячейки
+        function getCellStatus(value, baseTime) {
+            if (!value) return '';
+
+            const lowerValue = value.toLowerCase().trim();
+            if (lowerValue === 'вых') return 'dayoff';
+            if (lowerValue === 'прг') return 'absent';
+            if (lowerValue === 'б') return 'sick';
+            if (lowerValue === 'отп') return 'vacation';
+
+            if (!baseTime) return '';
+
+            if (!validateTimeRange(value)  !validateTimeRange(baseTime)) return '';
+
+            const comparison = compareTime(value, baseTime);
+            if (comparison  0) return 'late';
+            if (comparison  0) return 'overtime';
+
+            return '';
+        }
+
+         Переключение проекта
+        function switchProject(project) {
+            if (!partnerProjects.includes(project)) return;
+
+            currentProject = project;
+
+            const data = loadData();
+            if (data.monthsByProject[project].length  0) {
+                const months = [...data.monthsByProject[project]].sort();
+                currentMonth = months[months.length - 1];
+            }
+
+            refreshUI();
+        }
+
+         Обновление вкладок проектов
+        function updateProjectTabs() {
+            const tabs = document.getElementById('projectTabs');
+            if (!tabs) return;
+
+            tabs.innerHTML = partnerProjects.map(project = `
+                button class=project-tab ${project === currentProject  'active'  ''}
+                        onclick=switchProject('${project}')
+                        title=${project}
+                    ${project}
+                button
+            `).join('');
+        }
+
+         Получение сотрудников только для текущего партнера
+        function getPartnerEmployees(project, month, data) {
+            const key = `${project}_${month}`;
+            const allEmployees = data.employees[key]  [];
+
+             Фильтруем сотрудников, оставляем только тех, у кого partner = имя текущего партнера
+            return allEmployees.filter(emp = {
+                const dataKey = `${key}_${emp}`;
+                const empData = data.employeeData[dataKey]  {};
+                return empData.partner === currentPartner.name;
+            });
+        }
+
+         Обновление селектов в меню
+        function updateMenuSelects() {
+            const data = loadData();
+
+            const filterProjectSelect = document.getElementById('filterProjectSelect');
+            if (filterProjectSelect) {
+                filterProjectSelect.innerHTML = partnerProjects.map(p =
+                    `option value=${p}${p}option`
+                ).join('');
+                filterProjectSelect.value = partnerProjects.includes(currentProject)  currentProject  partnerProjects[0]  '';
+
+                 Обновляем месяцы для фильтра
+                updateFilterMonths();
+            }
+
+            const empProjectSelect = document.getElementById('employeeProjectSelect');
+            const empMonthSelect = document.getElementById('employeeMonthSelect');
+
+            if (empProjectSelect) {
+                empProjectSelect.innerHTML = partnerProjects.map(p =
+                    `option value=${p}${p}option`
+                ).join('');
+                empProjectSelect.value = partnerProjects.includes(currentProject)  currentProject  partnerProjects[0]  '';
+            }
+
+            if (empMonthSelect && currentProject) {
+                const months = data.monthsByProject[currentProject]  [];
+                empMonthSelect.innerHTML = months.map(m =
+                    `option value=${m}${formatMonth(m)}option`
+                ).join('');
+                empMonthSelect.value = currentMonth  '';
+            }
+
+            const schedProjectSelect = document.getElementById('scheduleProjectSelect');
+            if (schedProjectSelect) {
+                schedProjectSelect.innerHTML = partnerProjects.map(p =
+                    `option value=${p}${p}option`
+                ).join('');
+                schedProjectSelect.value = partnerProjects.includes(currentProject)  currentProject  partnerProjects[0]  '';
+
+                 Обновляем список месяцев для графика
+                updateMonthsList(currentProject);
+            }
+
+             Обновляем список сотрудников
+            const empProject = document.getElementById('employeeProjectSelect').value;
+            const empMonth = document.getElementById('employeeMonthSelect').value;
+            if (empProject && empMonth) {
+                updateEmployeesList(empProject, empMonth);
+            }
+        }
+
+         Обновление месяцев в фильтре
+        function updateFilterMonths() {
+            const project = document.getElementById('filterProjectSelect').value;
+            const monthSelect = document.getElementById('filterMonthSelect');
+            const data = loadData();
+
+            if (project && monthSelect && data.monthsByProject[project]) {
+                const months = data.monthsByProject[project];
+                monthSelect.innerHTML = months.map(m =
+                    `option value=${m}${formatMonth(m)}option`
+                ).join('');
+
+                if (months.includes(currentMonth)) {
+                    monthSelect.value = currentMonth;
+                } else if (months.length  0) {
+                    monthSelect.value = months[0];
+                }
+            }
+        }
+
+         Применить фильтр
+        function applyFilter() {
+            const project = document.getElementById('filterProjectSelect').value;
+            const month = document.getElementById('filterMonthSelect').value;
+
+            if (project && month) {
+                currentProject = project;
+                currentMonth = month;
+                refreshUI();
+                closeAllMenus();
+            }
+        }
+
+         Добавление оператора
+        function addEmployee() {
+            const project = document.getElementById('employeeProjectSelect').value;
+            const month = document.getElementById('employeeMonthSelect').value;
+            const name = document.getElementById('employeeNameInput').value.trim();
+
+            if (!name  !project  !month) return;
+
+            const data = loadData();
+            const key = `${project}_${month}`;
+
+            if (!data.employees[key]) {
+                data.employees[key] = [];
+            }
+
+             Формируем имя оператора с указанием партнера
+            const employeeName = `${name} (${currentPartner.name})`;
+
+            if (data.employees[key].includes(employeeName)) {
+                alert('Этот оператор уже есть');
+                return;
+            }
+
+            data.employees[key].push(employeeName);
+
+             Сохраняем информацию о партнере в данных оператора
+            const dataKey = `${key}_${employeeName}`;
+            if (!data.employeeData[dataKey]) {
+                data.employeeData[dataKey] = { shiftType '', time '', phone '', partner currentPartner.name };
+            } else {
+                data.employeeData[dataKey].partner = currentPartner.name;
+            }
+
+             Сохраняем в localStorage
+            localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(data.employees));
+            localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
+
+             Сохраняем в Netlify Blobs
+            saveToSheets();
+
+            if (project === currentProject && month === currentMonth) {
+                refreshUI();
+            }
+
+            document.getElementById('employeeNameInput').value = '';
+            updateEmployeesList(project, month);
+        }
+
+         Удаление оператора
+        function deleteEmployee(project, month, index) {
+            const data = loadData();
+            const key = `${project}_${month}`;
+            const employees = data.employees[key]  [];
+            const name = employees[index];
+
+            if (confirm(`Удалить оператора ${name}`)) {
+                employees.splice(index, 1);
+
+                const dataKey = `${key}_${name}`;
+                delete data.employeeData[dataKey];
+
+                 Удаляем все записи времени для этого оператора
+                Object.keys(data.entries).forEach(entryKey = {
+                    if (entryKey.startsWith(`${key}_`) && entryKey.endsWith(`_${name}`)) {
+                        delete data.entries[entryKey];
+                    }
+                });
+
+                 Удаляем комментарии для этого оператора
+                Object.keys(data.comments).forEach(commentKey = {
+                    if (commentKey.includes(`_${name}_`)) {
+                        delete data.comments[commentKey];
+                    }
+                });
+
+                if (employees.length === 0) {
+                    delete data.employees[key];
+                }
+
+                 Сохраняем в localStorage
+                localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(data.employees));
+                localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
+                localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
+                localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(data.comments));
+
+                 Сохраняем в Netlify Blobs
+                saveToSheets();
+
+                if (project === currentProject && month === currentMonth) {
+                    refreshUI();
+                }
+
+                updateEmployeesList(project, month);
+            }
+        }
+
+         Обновление данных оператора
+        function updateEmployeeData(project, month, employeeName, field, value) {
+            const data = loadData();
+            const dataKey = `${project}_${month}_${employeeName}`;
+
+            if (!data.employeeData[dataKey]) {
+                data.employeeData[dataKey] = { shiftType '', time '', phone '', partner currentPartner.name };
+            }
+
+            if (field === 'time' && value && !validateTimeRange(value)) {
+                alert('Ошибка время должно быть в формате ЧЧММ-ЧЧММ (например, 0900-1800)');
+                return false;
+            }
+
+            data.employeeData[dataKey][field] = value;
+
+             Если установлено базовое время, заполняем пустые дни
+            if (field === 'time' && value && validateTimeRange(value)) {
+                const daysInMonth = getDaysInMonth(month);
+                const employeeKey = `${project}_${month}`;
+
+                for (let day = 1; day = daysInMonth; day++) {
+                    const entryKey = `${employeeKey}_${day}_${employeeName}`;
+                    if (!data.entries[entryKey]) {
+                        data.entries[entryKey] = value;
+                    }
+                }
+            }
+
+             Сохраняем в localStorage
+            localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
+            localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
+
+             Сохраняем в Netlify Blobs
+            saveToSheets();
+
+            if (project === currentProject && month === currentMonth) {
+                refreshUI();
+            }
+
+            return true;
+        }
+
+         Обновление записи времени
+        function updateTimeEntry(project, month, day, operator, value) {
+            const data = loadData();
+            const employeeKey = `${project}_${month}`;
+            const entryKey = `${employeeKey}_${day}_${operator}`;
+
+            if (value.trim() === '') {
+                delete data.entries[entryKey];
+                localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
+                saveToSheets();
+                refreshUI();
+                return;
+            }
+
+             Сохраняем значение
+            data.entries[entryKey] = value;
+            localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
+            saveToSheets();
+
+             Проверяем, нужно ли открыть модальное окно для комментария
+            const dataKey = `${project}_${month}_${operator}`;
+            const employeeData = data.employeeData[dataKey]  { time '' };
+
+            const lowerValue = value.toLowerCase().trim();
+            const status = getCellStatus(value, employeeData.time);
+
+             Определяем тип для комментария
+            let commentType = null;
+
+            if (lowerValue === 'прг') {
+                commentType = 'absent';
+            } else if (status === 'late') {
+                commentType = 'late';
+            } else if (status === 'overtime') {
+                commentType = 'overtime';
+            }
+
+             Если есть тип для комментария, открываем модальное окно принудительно
+            if (commentType) {
+                forceCommentModal(project, month, day, operator, commentType);
+            } else {
+                refreshUI();
+            }
+        }
+
+         Функция для принудительного открытия модального окна комментария
+        function forceCommentModal(project, month, day, employee, type) {
+            const data = loadData();
+            currentCommentContext = { project, month, day, employee, type };
+
+            const commentKey = getCommentKey(project, month, day, employee, type);
+            const comment = data.comments[commentKey]  { text '' };
+
+             Устанавливаем заголовок в зависимости от типа
+            let title = '';
+            if (type === 'late') title = '✏️ Требуется комментарий к опозданию';
+            else if (type === 'overtime') title = '✏️ Требуется комментарий к переработке';
+            else if (type === 'absent') title = '✏️ Требуется комментарий к прогулу';
+
+            document.getElementById('commentModalTitle').textContent = title;
+
+            document.getElementById('commentContextLabel').textContent = `Оператор ${employee}`;
+            document.getElementById('commentDateLabel').textContent = formatDate(month, day);
+
+            const typeText =
+                type === 'late'  'Опоздание' 
+                type === 'overtime'  'Переработка' 
+                'Прогул (прг)';
+            document.getElementById('commentTypeLabel').textContent = typeText;
+
+            document.getElementById('commentText').value = comment.text  '';
+
+             Открываем модальное окно
+            const modal = document.getElementById('commentModal');
+            modal.classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+         Функции для работы с комментариями
+        function openCommentModal(project, month, day, employee, type) {
+            const data = loadData();
+            currentCommentContext = { project, month, day, employee, type };
+
+            const commentKey = getCommentKey(project, month, day, employee, type);
+            const comment = data.comments[commentKey]  { text '' };
+
+            document.getElementById('commentModalTitle').textContent =
+                type === 'late'  '✏️ Комментарий к опозданию' 
+                type === 'overtime'  '✏️ Комментарий к переработке' 
+                '✏️ Комментарий к прогулу';
+
+            document.getElementById('commentContextLabel').textContent = `Оператор ${employee}`;
+            document.getElementById('commentDateLabel').textContent = formatDate(month, day);
+
+            const typeText =
+                type === 'late'  'Опоздание' 
+                type === 'overtime'  'Переработка' 
+                'Прогул (прг)';
+            document.getElementById('commentTypeLabel').textContent = typeText;
+
+            document.getElementById('commentText').value = comment.text  '';
+
+            toggleMenu('commentModal');
+        }
+
+        function closeCommentModal() {
+            closeMenu('commentModal');
+            currentCommentContext = null;
+        }
+
+        function saveComment() {
+            if (!currentCommentContext) return;
+
+            const data = loadData();
+            const { project, month, day, employee, type } = currentCommentContext;
+            const commentKey = getCommentKey(project, month, day, employee, type);
+            const commentText = document.getElementById('commentText').value.trim();
+
+            if (commentText) {
+                data.comments[commentKey] = {
+                    text commentText,
+                    date new Date().toISOString()
+                };
+                localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(data.comments));
+                saveToSheets();
+                closeCommentModal();
+                refreshUI();
+            } else {
+                alert('Пожалуйста, укажите причину');
+            }
+        }
+
+        function deleteComment() {
+            if (!currentCommentContext) return;
+
+            if (confirm('Удалить комментарий')) {
+                const data = loadData();
+                const { project, month, day, employee, type } = currentCommentContext;
+                const commentKey = getCommentKey(project, month, day, employee, type);
+
+                delete data.comments[commentKey];
+                localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(data.comments));
+                saveToSheets();
+                closeCommentModal();
+                refreshUI();
+            }
+        }
+
+         Функции для сводной таблицы
+        function showSummaryTable(type) {
+            if (!currentProject  !currentMonth) {
+                alert('Сначала выберите проект и месяц');
+                return;
+            }
+
+            currentSummaryType = type;
+
+            const title =
+                type === 'late'  '📋 Опоздания' 
+                type === 'overtime'  '📋 Переработки' 
+                '📋 Прогулы';
+
+            document.getElementById('summaryModalTitle').textContent = title;
+
+            const data = collectSummaryData(type);
+            renderSummaryTable(data);
+
+            document.getElementById('summaryModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summaryModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+            currentSummaryType = null;
+        }
+
+        function collectSummaryData(type) {
+            const data = loadData();
+            const key = `${currentProject}_${currentMonth}`;
+            const employees = getPartnerEmployees(currentProject, currentMonth, data);
+            const daysInMonth = getDaysInMonth(currentMonth);
+
+            let result = [];
+
+            employees.forEach(employee = {
+                const dataKey = `${key}_${employee}`;
+                const employeeData = data.employeeData[dataKey]  { time '', partner currentPartner.name };
+
+                for (let day = 1; day = daysInMonth; day++) {
+                    const entryKey = `${key}_${day}_${employee}`;
+                    const value = data.entries[entryKey]  '';
+
+                    if (value) {
+                        const lowerValue = value.toLowerCase().trim();
+
+                         Проверяем условие для каждого типа
+                        if (type === 'absent' && lowerValue === 'прг') {
+                            const commentKey = getCommentKey(currentProject, currentMonth, day, employee, 'absent');
+                            const comment = data.comments[commentKey]  { text '' };
+
+                            result.push({
+                                employee employee,
+                                partner employeeData.partner  'Внутренний',
+                                date formatDate(currentMonth, day),
+                                hours 8,
+                                comment comment.text  ''
+                            });
+                        }
+                        else if (type !== 'absent' && validateTimeRange(value) && validateTimeRange(employeeData.time)) {
+                            const status = getCellStatus(value, employeeData.time);
+
+                            if ((type === 'late' && status === 'late') 
+                                (type === 'overtime' && status === 'overtime')) {
+
+                                const hours = getDurationHours(value);
+                                const baseHours = getDurationHours(employeeData.time);
+                                const diff = type === 'late'  baseHours - hours  hours - baseHours;
+
+                                const commentKey = getCommentKey(currentProject, currentMonth, day, employee, type);
+                                const comment = data.comments[commentKey]  { text '' };
+
+                                result.push({
+                                    employee employee,
+                                    partner employeeData.partner  'Внутренний',
+                                    date formatDate(currentMonth, day),
+                                    hours diff.toFixed(1),
+                                    comment comment.text  ''
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+
+             Сортируем по дате
+            result.sort((a, b) = a.date.localeCompare(b.date));
+
+            return result;
+        }
+
+        function renderSummaryTable(data) {
+            const container = document.getElementById('summaryTableContainer');
+
+            if (data.length === 0) {
+                container.innerHTML = 'div style=text-align center; padding 40px; color #8f9bb3;Нет данных для отображенияdiv';
+                return;
+            }
+
+            let tableHtml = `
+                table class=summary-table
+                    thead
+                        tr
+                            thФИО оператораth
+                            thПартнерth
+                            thДатаth
+                            thКол-во часовth
+                            thКомментарийth
+                        tr
+                    thead
+                    tbody
+            `;
+
+            data.forEach(item = {
+                tableHtml += `
+                    tr
+                        td${item.employee}td
+                        td${item.partner}td
+                        td${item.date}td
+                        td${item.hours} чtd
+                        td class=comment-cell title=${item.comment}${item.comment  '—'}td
+                    tr
+                `;
+            });
+
+            tableHtml += `
+                    tbody
+                table
+            `;
+
+            container.innerHTML = tableHtml;
+        }
+
+         Обновление списка операторов в меню
+        function updateEmployeesList(project, month) {
+            const list = document.getElementById('employeesList');
+            if (!list) return;
+
+            const data = loadData();
+            const key = `${project}_${month}`;
+            const employees = (data.employees[key]  []).filter(emp = {
+                const dataKey = `${key}_${emp}`;
+                const empData = data.employeeData[dataKey]  {};
+                return empData.partner === currentPartner.name;
+            });
+
+            if (employees.length === 0) {
+                list.innerHTML = 'div class=list-itemНет операторовdiv';
+                return;
+            }
+
+            list.innerHTML = employees.map((emp, index) = {
+                return `
+                    div class=list-item
+                        span${emp}span
+                        button onclick=deleteEmployee('${project}', '${month}', ${index})✕button
+                    div
+                `;
+            }).join('');
+        }
+
+         Добавление месяца
+        function addMonth() {
+            const project = document.getElementById('scheduleProjectSelect').value;
+            const month = document.getElementById('scheduleMonthInput').value;
+
+            if (!project  !month) return;
+
+            const data = loadData();
+
+            if (!data.monthsByProject[project]) {
+                data.monthsByProject[project] = [];
+            }
+
+            if (!data.monthsByProject[project].includes(month)) {
+                data.monthsByProject[project].push(month);
+
+                localStorage.setItem(STORAGE_KEYS.MONTHS_BY_PROJECT, JSON.stringify(data.monthsByProject));
+                saveToSheets();
+
+                currentProject = project;
+                currentMonth = month;
+
+                refreshUI();
+                updateMonthsList(project);
+                closeAllMenus();
+            } else {
+                alert('Этот месяц уже существует для данного проекта');
+            }
+        }
+
+         Удаление месяца
+        function deleteMonth(project, month) {
+            if (confirm(`Удалить месяц ${formatMonth(month)} из проекта ${project}`)) {
+                const data = loadData();
+                const index = data.monthsByProject[project].indexOf(month);
+                if (index !== -1) {
+                    data.monthsByProject[project].splice(index, 1);
+
+                    const key = `${project}_${month}`;
+                    delete data.employees[key];
+
+                    Object.keys(data.employeeData).forEach(dataKey = {
+                        if (dataKey.startsWith(key)) {
+                            delete data.employeeData[dataKey];
+                        }
+                    });
+
+                    Object.keys(data.entries).forEach(entryKey = {
+                        if (entryKey.startsWith(key + '_')) {
+                            delete data.entries[entryKey];
+                        }
+                    });
+
+                    Object.keys(data.comments).forEach(commentKey = {
+                        if (commentKey.startsWith(key)) {
+                            delete data.comments[commentKey];
+                        }
+                    });
+
+                    localStorage.setItem(STORAGE_KEYS.MONTHS_BY_PROJECT, JSON.stringify(data.monthsByProject));
+                    localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(data.employees));
+                    localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
+                    localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
+                    localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(data.comments));
+
+                    saveToSheets();
+
+                    if (currentProject === project && currentMonth === month) {
+                        if (data.monthsByProject[project].length  0) {
+                            const months = [...data.monthsByProject[project]].sort();
+                            currentMonth = months[months.length - 1];
+                        } else {
+                            currentMonth = null;
+                        }
+                    }
+
+                    refreshUI();
+                    updateMonthsList(project);
+                }
+            }
+        }
+
+         Обновление списка месяцев в меню
+        function updateMonthsList(project) {
+            const list = document.getElementById('monthsList');
+            if (!list) return;
+
+            const data = loadData();
+            const months = data.monthsByProject[project]  [];
+
+            if (months.length === 0) {
+                list.innerHTML = 'div class=list-itemНет месяцевdiv';
+                return;
+            }
+
+            list.innerHTML = months.map(month = `
+                div class=list-item
+                    span${formatMonth(month)}span
+                    button onclick=deleteMonth('${project}', '${month}')✕button
+                div
+            `).join('');
+        }
+
+         Показать страницу статистики
+        function showStatsPage() {
+            if (!currentProject  !currentMonth) {
+                alert('Сначала выберите проект и месяц');
+                return;
+            }
+
+            currentPage = 'stats';
+            document.getElementById('statsBtn').classList.add('active');
+            renderStatsPage();
+            document.getElementById('instruction').style.display = 'none';
+            closeAllMenus();
+        }
+
+         Показать страницу графика
+        function showSchedulePage() {
+            currentPage = 'schedule';
+            document.getElementById('statsBtn').classList.remove('active');
+            renderSchedulePage();
+            document.getElementById('instruction').style.display = 'flex';
+            closeAllMenus();
+        }
+
+         Рендер страницы графика
+        function renderSchedulePage() {
+            const wrapper = document.getElementById('mainContent');
+            const data = loadData();
+
+            if (!currentProject  !currentMonth) {
+                wrapper.innerHTML = 'div class=schedule-wrapperdiv class=no-dataВыберите проект и месяцdivdiv';
+                return;
+            }
+
+            const employees = getPartnerEmployees(currentProject, currentMonth, data);
+
+            if (employees.length === 0) {
+                wrapper.innerHTML = 'div class=schedule-wrapperdiv class=no-dataНет операторов для отображенияdivdiv';
+                return;
+            }
+
+            const daysInMonth = getDaysInMonth(currentMonth);
+            const key = `${currentProject}_${currentMonth}`;
+
+            let html = 'div class=schedule-wrapper';
+
+             Заголовки
+            html += 'div class=headers-container';
+            html += 'div class=fixed-headers';
+            html += 'div class=fixed-header-cellОператорdiv';
+            html += 'div class=fixed-header-cellСменаdiv';
+            html += 'div class=fixed-header-cellВремяdiv';
+            html += 'div class=fixed-header-cellТелефонdiv';
+            html += 'div class=fixed-header-cellТипdiv';
+            html += 'div';
+
+            html += 'div class=scrollable-headers';
+            for (let day = 1; day = daysInMonth; day++) {
+                const dateHeader = formatDateHeader(currentMonth, day);
+                const [dayWeek, dateStr] = dateHeader.split('');
+                html += `div class=scrollable-header-cell
+                    ${dateStr}
+                    span class=day-week${dayWeek}span
+                div`;
+            }
+            html += 'div';
+            html += 'div';
+
+             Строки с данными
+            html += 'div class=rows-container';
+
+            employees.forEach(operator = {
+                const dataKey = `${key}_${operator}`;
+                const employeeData = data.employeeData[dataKey]  { shiftType '', time '', phone '' };
+
+                html += 'div class=data-row';
+
+                 Фиксированная часть
+                html += 'div class=fixed-cells';
+
+                 ФИО
+                html += `div class=fixed-cell title=${operator}
+                    span${operator}span
+                div`;
+
+                 Тип смены
+                html += 'div class=fixed-cell employee-field';
+                html += `select onchange=updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'shiftType', this.value)`;
+                html += `option value= ${employeeData.shiftType === ''  'selected'  ''}—option`;
+                html += `option value=22 ${employeeData.shiftType === '22'  'selected'  ''}22option`;
+                html += `option value=52 ${employeeData.shiftType === '52'  'selected'  ''}52option`;
+                html += 'select';
+                html += 'div';
+
+                 Время смены
+                html += 'div class=fixed-cell employee-field';
+                const timeValid = validateTimeRange(employeeData.time);
+                html += `input type=text
+                               value=${employeeData.time  ''}
+                               placeholder=0900-1800
+                               class=${employeeData.time && !timeValid  'error'  ''}
+                               onchange=updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'time', this.value)`;
+                if (employeeData.time && !timeValid) {
+                    html += 'div class=error-messageФормат ЧЧММ-ЧЧММdiv';
+                }
+                html += 'div';
+
+                 Телефон
+                html += 'div class=fixed-cell phone-field';
+                html += `input type=text
+                               value=${employeeData.phone  ''}
+                               placeholder=+7 (999) 999-99-99
+                               onchange=updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'phone', this.value)`;
+                html += 'div';
+
+                 Тип оператора
+                html += 'div class=fixed-cell';
+                html += 'span class=partner-badge partnerПspan';
+                html += 'div';
+
+                html += 'div';  fixed-cells
+
+                 Прокручиваемая часть
+                html += 'div class=scrollable-cells';
+                for (let day = 1; day = daysInMonth; day++) {
+                    const entryKey = `${key}_${day}_${operator}`;
+                    const value = data.entries[entryKey]  '';
+
+                    const status = getCellStatus(value, employeeData.time);
+
+                     Проверяем наличие комментария для этого дня
+                    let hasComment = false;
+                    let commentType = '';
+
+                    if (status === 'late') {
+                        const commentKey = getCommentKey(currentProject, currentMonth, day, operator, 'late');
+                        hasComment = !!data.comments[commentKey];
+                        commentType = 'late';
+                    } else if (status === 'overtime') {
+                        const commentKey = getCommentKey(currentProject, currentMonth, day, operator, 'overtime');
+                        hasComment = !!data.comments[commentKey];
+                        commentType = 'overtime';
+                    } else if (value.toLowerCase().trim() === 'прг') {
+                        const commentKey = getCommentKey(currentProject, currentMonth, day, operator, 'absent');
+                        hasComment = !!data.comments[commentKey];
+                        commentType = 'absent';
+                    }
+
+                    html += `div class=scrollable-cell
+                        div class=time-cell style=position relative;
+                            input type=text
+                                   value=${value}
+                                   placeholder=ччмм-ччмм
+                                   class=${value  'filled'  ''} ${status}
+                                   onchange=updateTimeEntry('${currentProject}', '${currentMonth}', ${day}, '${operator}', this.value)
+                                   oninput=this.classList.toggle('filled', this.value.length  0)`;
+
+                    if (hasComment) {
+                        html += `div class=comment-indicator onclick=openCommentModal('${currentProject}', '${currentMonth}', ${day}, '${operator}', '${commentType}') title=Есть комментарийdiv`;
+                    }
+
+                    html += `   div
+                    div`;
+                }
+                html += 'div';  scrollable-cells
+
+                html += 'div';  data-row
+            });
+
+            html += 'div';  rows-container
+            html += 'div';  schedule-wrapper
+            wrapper.innerHTML = html;
+        }
+
+         Рендер страницы статистики
+        function renderStatsPage() {
+            const wrapper = document.getElementById('mainContent');
+            const data = loadData();
+
+            if (!currentProject  !currentMonth) {
+                wrapper.innerHTML = 'div class=stats-pagediv class=stats-emptyВыберите проект и месяцdivdiv';
+                return;
+            }
+
+            const employees = getPartnerEmployees(currentProject, currentMonth, data);
+
+            if (employees.length === 0) {
+                wrapper.innerHTML = 'div class=stats-pagediv class=stats-emptydiv class=icon📊divНет данных для отображения статистикиdivdiv';
+                return;
+            }
+
+            const key = `${currentProject}_${currentMonth}`;
+
+            let totalHoursAll = 0;
+            let totalLateHours = 0;
+            let totalOvertimeHours = 0;
+            let totalAbsentHours = 0;
+            let totalSickHours = 0;
+            let totalVacationHours = 0;
+
+             Собираем данные для сортировки
+            let statsData = [];
+
+            employees.forEach(employee = {
+                const dataKey = `${key}_${employee}`;
+                const employeeData = data.employeeData[dataKey]  { time '' };
+                const daysInMonth = getDaysInMonth(currentMonth);
+
+                let totalHours = 0;
+                let lateHours = 0;
+                let overtimeHours = 0;
+                let absentHours = 0;
+                let sickHours = 0;
+                let vacationHours = 0;
+
+                for (let day = 1; day = daysInMonth; day++) {
+                    const entryKey = `${key}_${day}_${employee}`;
+                    const value = data.entries[entryKey]  '';
+
+                    if (value) {
+                        const lowerValue = value.toLowerCase().trim();
+                        const status = getCellStatus(value, employeeData.time);
+
+                        if (lowerValue === 'прг') {
+                            absentHours += 8;
+                        } else if (lowerValue === 'б') {
+                            sickHours += 8;
+                        } else if (lowerValue === 'отп') {
+                            vacationHours += 8;
+                        } else if (lowerValue === 'вых') {
+                             Выходной не считаем
+                        } else if (validateTimeRange(value)) {
+                            const hours = getDurationHours(value);
+                            totalHours += hours;
+
+                            if (status === 'late') {
+                                const diff = getDurationHours(employeeData.time) - hours;
+                                lateHours += diff  0  diff  0;
+                            } else if (status === 'overtime') {
+                                const diff = hours - getDurationHours(employeeData.time);
+                                overtimeHours += diff  0  diff  0;
+                            }
+                        }
+                    }
+                }
+
+                statsData.push({
+                    name employee,
+                    total totalHours,
+                    late lateHours,
+                    overtime overtimeHours,
+                    absent absentHours,
+                    sick sickHours,
+                    vacation vacationHours
+                });
+
+                totalHoursAll += totalHours;
+                totalLateHours += lateHours;
+                totalOvertimeHours += overtimeHours;
+                totalAbsentHours += absentHours;
+                totalSickHours += sickHours;
+                totalVacationHours += vacationHours;
+            });
+
+             Сортировка данных
+            const sortedData = [...statsData];
+            if (currentSortColumn  0) {
+                sortedData.sort((a, b) = {
+                    let aVal, bVal;
+
+                    switch(currentSortColumn) {
+                        case 0 aVal = a.name; bVal = b.name; break;
+                        case 1 aVal = a.total; bVal = b.total; break;
+                        case 2 aVal = a.late; bVal = b.late; break;
+                        case 3 aVal = a.overtime; bVal = b.overtime; break;
+                        case 4 aVal = a.absent; bVal = b.absent; break;
+                        case 5 aVal = a.sick; bVal = b.sick; break;
+                        case 6 aVal = a.vacation; bVal = b.vacation; break;
+                        default return 0;
+                    }
+
+                    if (currentSortDirection === 'asc') {
+                        return aVal  bVal  1  -1;
+                    } else {
+                        return aVal  bVal  1  -1;
+                    }
+                });
+            }
+
+            let tableHtml = '';
+
+            sortedData.forEach(data = {
+                tableHtml += `
+                    tr
+                        td${data.name}td
+                        td class=hours-value${data.total.toFixed(1)} чtd
+                        td class=hours-value late${data.late.toFixed(1)} чtd
+                        td class=hours-value overtime${data.overtime.toFixed(1)} чtd
+                        td class=hours-value absent${data.absent.toFixed(1)} чtd
+                        td class=hours-value sick${data.sick.toFixed(1)} чtd
+                        td class=hours-value vacation${data.vacation.toFixed(1)} чtd
+                    tr
+                `;
+            });
+
+             Добавляем итоговую строку
+            tableHtml += `
+                tr class=total-row
+                    tdИТОГОtd
+                    td${totalHoursAll.toFixed(1)} чtd
+                    td class=hours-value late${totalLateHours.toFixed(1)} чtd
+                    td class=hours-value overtime${totalOvertimeHours.toFixed(1)} чtd
+                    td class=hours-value absent${totalAbsentHours.toFixed(1)} чtd
+                    td class=hours-value sick${totalSickHours.toFixed(1)} чtd
+                    td class=hours-value vacation${totalVacationHours.toFixed(1)} чtd
+                tr
+            `;
+
+            const statsHtml = `
+                div class=stats-page
+                    div class=stats-header
+                        h2
+                            📊 Статистика за ${formatMonth(currentMonth)}
+                            span${currentProject}span
+                        h2
+                        div class=stats-actions
+                            button class=export-btn onclick=exportToExcel()📥 Excelbutton
+                            button class=back-btn onclick=showSchedulePage()← Вернуться к графикуbutton
+                        div
+                    div
+
+                    div class=stats-grid
+                        div class=stat-card
+                            div class=label⏱ Всего отработаноdiv
+                            div class=value${totalHoursAll.toFixed(1)}span class=unitчасовspandiv
+                        div
+                        div class=stat-card late onclick=showSummaryTable('late') style=cursor pointer; title=Показать сводную таблицу опозданий
+                            div class=label⏰ Опозданияdiv
+                            div class=value${totalLateHours.toFixed(1)}span class=unitчасовspandiv
+                        div
+                        div class=stat-card overtime onclick=showSummaryTable('overtime') style=cursor pointer; title=Показать сводную таблицу переработок
+                            div class=label⚡ Переработкиdiv
+                            div class=value${totalOvertimeHours.toFixed(1)}span class=unitчасовspandiv
+                        div
+                        div class=stat-card absent onclick=showSummaryTable('absent') style=cursor pointer; title=Показать сводную таблицу прогулов
+                            div class=label❌ Прогулыdiv
+                            div class=value${totalAbsentHours.toFixed(1)}span class=unitчасовspandiv
+                        div
+                        div class=stat-card sick
+                            div class=label🤒 Больничныеdiv
+                            div class=value${totalSickHours.toFixed(1)}span class=unitчасовspandiv
+                        div
+                        div class=stat-card vacation
+                            div class=label🏖 Отпускdiv
+                            div class=value${totalVacationHours.toFixed(1)}span class=unitчасовspandiv
+                        div
+                    div
+
+                    div class=stats-table-container
+                        table class=stats-table
+                            thead
+                                tr
+                                    th onclick=sortStats(0) class=${currentSortColumn === 0  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Операторth
+                                    th onclick=sortStats(1) class=${currentSortColumn === 1  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Всего часовth
+                                    th onclick=sortStats(2) class=${currentSortColumn === 2  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Опозданияth
+                                    th onclick=sortStats(3) class=${currentSortColumn === 3  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Переработкиth
+                                    th onclick=sortStats(4) class=${currentSortColumn === 4  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Прогулыth
+                                    th onclick=sortStats(5) class=${currentSortColumn === 5  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Больничныеth
+                                    th onclick=sortStats(6) class=${currentSortColumn === 6  (currentSortDirection === 'asc'  'sorted-asc'  'sorted-desc')  ''}Отпускth
+                                tr
+                            thead
+                            tbody
+                                ${tableHtml}
+                            tbody
+                        table
+                    div
+                div
+            `;
+
+            wrapper.innerHTML = statsHtml;
+        }
+
+         Функция сортировки статистики
+        function sortStats(column) {
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc'  'desc'  'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            renderStatsPage();
+        }
+
+         Функция экспорта в Excel
+        function exportToExcel() {
+            const data = loadData();
+            const key = `${currentProject}_${currentMonth}`;
+            const employees = getPartnerEmployees(currentProject, currentMonth, data);
+
+            if (employees.length === 0) {
+                alert('Нет данных для экспорта');
+                return;
+            }
+
+             Собираем данные для экспорта
+            let excelData = [];
+
+             Заголовки
+            excelData.push([
+                'Оператор',
+                'Всего часов',
+                'Опоздания',
+                'Переработки',
+                'Прогулы',
+                'Больничные',
+                'Отпуск'
+            ]);
+
+            let totalHoursAll = 0;
+            let totalLateHours = 0;
+            let totalOvertimeHours = 0;
+            let totalAbsentHours = 0;
+            let totalSickHours = 0;
+            let totalVacationHours = 0;
+
+            employees.forEach(employee = {
+                const dataKey = `${key}_${employee}`;
+                const employeeData = data.employeeData[dataKey]  { time '' };
+                const daysInMonth = getDaysInMonth(currentMonth);
+
+                let totalHours = 0;
+                let lateHours = 0;
+                let overtimeHours = 0;
+                let absentHours = 0;
+                let sickHours = 0;
+                let vacationHours = 0;
+
+                for (let day = 1; day = daysInMonth; day++) {
+                    const entryKey = `${key}_${day}_${employee}`;
+                    const value = data.entries[entryKey]  '';
+
+                    if (value) {
+                        const lowerValue = value.toLowerCase().trim();
+                        const status = getCellStatus(value, employeeData.time);
+
+                        if (lowerValue === 'прг') {
+                            absentHours += 8;
+                        } else if (lowerValue === 'б') {
+                            sickHours += 8;
+                        } else if (lowerValue === 'отп') {
+                            vacationHours += 8;
+                        } else if (lowerValue === 'вых') {
+                             Выходной не считаем
+                        } else if (validateTimeRange(value)) {
+                            const hours = getDurationHours(value);
+                            totalHours += hours;
+
+                            if (status === 'late') {
+                                const diff = getDurationHours(employeeData.time) - hours;
+                                lateHours += diff  0  diff  0;
+                            } else if (status === 'overtime') {
+                                const diff = hours - getDurationHours(employeeData.time);
+                                overtimeHours += diff  0  diff  0;
+                            }
+                        }
+                    }
+                }
+
+                totalHoursAll += totalHours;
+                totalLateHours += lateHours;
+                totalOvertimeHours += overtimeHours;
+                totalAbsentHours += absentHours;
+                totalSickHours += sickHours;
+                totalVacationHours += vacationHours;
+
+                excelData.push([
+                    employee,
+                    totalHours.toFixed(1),
+                    lateHours.toFixed(1),
+                    overtimeHours.toFixed(1),
+                    absentHours.toFixed(1),
+                    sickHours.toFixed(1),
+                    vacationHours.toFixed(1)
+                ]);
+            });
+
+             Итоговая строка
+            excelData.push([
+                'ИТОГО',
+                totalHoursAll.toFixed(1),
+                totalLateHours.toFixed(1),
+                totalOvertimeHours.toFixed(1),
+                totalAbsentHours.toFixed(1),
+                totalSickHours.toFixed(1),
+                totalVacationHours.toFixed(1)
+            ]);
+
+             Создаем CSV контент
+            const csvContent = excelData.map(row = row.join(';')).join('n');
+
+             Добавляем BOM для правильного отображения кириллицы
+            const blob = new Blob(['uFEFF' + csvContent], { type 'textcsv;charset=utf-8;' });
+
+             Создаем ссылку для скачивания
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            link.href = url;
+            link.setAttribute('download', `statistics_${currentPartner.name}_${currentProject}_${currentMonth}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+         Обновление UI
+        function refreshUI() {
+            document.getElementById('partnerName').textContent = currentPartner.name;
+            document.getElementById('currentMonth').textContent = currentMonth  formatMonth(currentMonth)  '-';
+
+            updateProjectTabs();
+
+            if (currentPage === 'stats') {
+                renderStatsPage();
+                document.getElementById('instruction').style.display = 'none';
+                document.getElementById('statsBtn').classList.add('active');
+            } else {
+                renderSchedulePage();
+                document.getElementById('instruction').style.display = 'flex';
+                document.getElementById('statsBtn').classList.remove('active');
+            }
+
+            updateMenuSelects();
+        }
+
+         Слушаем изменения в селектах
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'employeeProjectSelect'  e.target.id === 'employeeMonthSelect') {
+                const project = document.getElementById('employeeProjectSelect').value;
+                const month = document.getElementById('employeeMonthSelect').value;
+                if (project && month) {
+                    updateEmployeesList(project, month);
+                }
+            } else if (e.target.id === 'filterProjectSelect') {
+                updateFilterMonths();
+            } else if (e.target.id === 'scheduleProjectSelect') {
+                const project = e.target.value;
+                updateMonthsList(project);
+            }
+        });
+
+         Проверяем сессию при загрузке
+        window.addEventListener('load', function() {
+             Сначала загружаем из Netlify Blobs
+            loadFromSheets().then(() = {
+                if (loadSession()) {
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('partnerContainer').style.display = 'block';
+                    document.body.classList.add('partner-view');
+
+                    const data = loadData();
+
+                    if (partnerProjects.length  0) {
+                        currentProject = partnerProjects[0];
+
+                        if (data.monthsByProject[currentProject].length  0) {
+                            const months = [...data.monthsByProject[currentProject]].sort();
+                            currentMonth = months[months.length - 1];
+                        }
+                    }
+
+                    refreshUI();
+                }
+            });
+        });
+    script
+body
+html
