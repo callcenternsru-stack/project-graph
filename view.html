@@ -82,6 +82,7 @@
             top: 0;
             z-index: 10;
             min-width: min-content;
+            line-height: 1; /* убираем лишние межстрочные интервалы */
         }
         .fixed-headers {
             display: flex;
@@ -93,19 +94,17 @@
             z-index: 11;
         }
         .fixed-header-cell {
+            height: 60px;                 /* фиксированная высота */
             padding: 0 10px;
-            font-weight: 600;
-            text-align: center;
+            display: flex;
+            align-items: center;           /* вертикальное центрирование для одной строки */
             border-right: 1px solid #333333;
-            font-size: 13px;
             background: #000000;
             color: #ffd700;
-            width: 120px;               /* базовая ширина, будет переопределена индивидуально */
-            height: 60px;                /* фиксированная высота */
-            display: flex;
-            align-items: center;         /* вертикальное центрирование для одной строки */
+            font-weight: 600;
+            font-size: 13px;
             white-space: nowrap;
-            line-height: 1.2;
+            line-height: 1;
         }
         .fixed-header-cell:first-child {
             width: 250px;
@@ -124,18 +123,18 @@
             flex: 1;
         }
         .scrollable-header-cell {
-            flex: 0 0 80px;
+            height: 60px;                 /* точно такая же высота */
             padding: 0 5px;
-            text-align: center;
-            font-weight: 600;
-            background: #000000;
-            color: #ffd700;
-            border-right: 1px solid #333333;
-            height: 60px;                /* точно такая же высота */
             display: flex;
             flex-direction: column;
-            justify-content: center;      /* центрируем две строки по вертикали */
-            line-height: 1.2;
+            justify-content: center;       /* центрируем две строки по вертикали */
+            align-items: center;
+            border-right: 1px solid #333333;
+            background: #000000;
+            color: #ffd700;
+            font-weight: 600;
+            font-size: 13px;
+            line-height: 1;
         }
         .day-week {
             font-size: 10px;
