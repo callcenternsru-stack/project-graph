@@ -178,6 +178,28 @@
             color: #0b0e14;
             border-color: #ffd700;
         }
+
+        /* Кнопка скрытия полей */
+        .action-btn.toggle-cols {
+            background: #1e2230;
+            color: #8f9bb3;
+            border: 1px solid #8f9bb3;
+        }
+        .action-btn.toggle-cols:hover {
+            background: #2a2e3a;
+            border-color: #ffd700;
+        }
+
+        /* Кнопка истории */
+        .action-btn.history {
+            background: #1e2230;
+            color: #ffb347;
+            border: 1px solid #ffb347;
+        }
+        .action-btn.history:hover {
+            background: #2a2e3a;
+            border-color: #ffd700;
+        }
         
         /* Контекстное меню */
         .context-menu {
@@ -536,7 +558,7 @@
         /* Фиксированная левая часть заголовка */
         .fixed-headers {
             display: flex;
-            flex: 0 0 750px;
+            flex: 0 0 auto;
             background: #0b0e14;
             border-right: 2px solid #ffd700;
             position: sticky;
@@ -629,7 +651,7 @@
         /* Фиксированная левая часть строки */
         .fixed-cells {
             display: flex;
-            flex: 0 0 750px;
+            flex: 0 0 auto;
             background: #141824;
             border-right: 2px solid #ffd700;
             position: sticky;
@@ -840,9 +862,9 @@
         
         /* Стили для подсветки ячеек */
         .time-cell input.late {
-            background: #2a1e1e;
-            border-color: #ff6b6b;
-            color: #ff8a8a;
+            background: #3a3a1a;  /* изменено на желтый */
+            border-color: #ffd700;
+            color: #ffd700;
         }
         
         .time-cell input.overtime {
@@ -906,7 +928,7 @@
             border-radius: 6px;
         }
         
-        .color-box.late { background: #2a1e1e; border: 2px solid #ff6b6b; }
+        .color-box.late { background: #3a3a1a; border: 2px solid #ffd700; } /* изменено */
         .color-box.overtime { background: #1a2a1a; border: 2px solid #6bff6b; }
         .color-box.vacation { background: #1a1a2a; border: 2px solid #6b6bff; }
         .color-box.sick { background: #2a1a1a; border: 2px solid #ff6b6b; }
@@ -1015,7 +1037,7 @@
             margin-left: 8px;
         }
         
-        .stat-card.late .value { color: #ff6b6b; }
+        .stat-card.late .value { color: #ffd700; } /* изменено на желтый */
         .stat-card.overtime .value { color: #6bff6b; }
         .stat-card.absent .value { color: #ff6b6b; }
         .stat-card.sick .value { color: #6b6bff; }
@@ -1100,7 +1122,7 @@
             font-weight: 500;
         }
         
-        .stats-table .hours-value.late { color: #ff6b6b; }
+        .stats-table .hours-value.late { color: #ffd700; } /* изменено */
         .stats-table .hours-value.overtime { color: #6bff6b; }
         .stats-table .hours-value.absent { color: #ff6b6b; }
         .stats-table .hours-value.sick { color: #6b6bff; }
@@ -1217,6 +1239,36 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #141824;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            z-index: 20000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+        .notification.error {
+            border-color: #ff6b6b;
+        }
+        .notification.success {
+            border-color: #4caf50;
+        }
+        .notification.info {
+            border-color: #ffd700;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1240,6 +1292,10 @@
                 <button class="action-btn" onclick="toggleMenu('employeesMenu')">Сотрудники</button>
                 <button class="action-btn" onclick="toggleMenu('projectsMenu')">Проекты</button>
                 <button class="action-btn primary" onclick="toggleMenu('scheduleMenu')">График</button>
+                <!-- Кнопка скрытия полей -->
+                <button class="action-btn toggle-cols" onclick="toggleColumns()" id="toggleColumnsBtn">👁️ Скрыть поля</button>
+                <!-- Кнопка истории -->
+                <button class="action-btn history" onclick="showHistory()" id="historyBtn">📜 История</button>
             </div>
         </div>
         
@@ -1431,8 +1487,6 @@
     <div id="commentModal" class="context-menu">
         <div class="menu-header">
             <span id="commentModalTitle">✏️ Добавить комментарий</span>
-            <!-- Кнопка закрытия скрыта, чтобы нельзя было закрыть без комментария -->
-            <!-- <button class="menu-close" onclick="closeCommentModal()">✕</button> -->
         </div>
         <div class="menu-content">
             <div class="menu-item">
@@ -1468,6 +1522,17 @@
         </div>
     </div>
     
+    <!-- Модальное окно истории -->
+    <div id="historyModal" class="context-menu" style="width: 800px; max-width: 90vw;">
+        <div class="menu-header">
+            <span>📜 История изменений</span>
+            <button class="menu-close" onclick="closeHistoryModal()">✕</button>
+        </div>
+        <div class="menu-content" style="max-height: 70vh; overflow-y: auto;">
+            <div id="historyContainer"></div>
+        </div>
+    </div>
+    
     <script>
         // Ключи для localStorage
         const STORAGE_KEYS = {
@@ -1480,7 +1545,11 @@
             CURRENT_PROJECT: 'v10_current_project',
             CURRENT_MONTH: 'v10_current_month',
             CURRENT_PAGE: 'v10_current_page',
-            COMMENTS: 'v10_comments'
+            COMMENTS: 'v10_comments',
+            HISTORY: 'v10_history',
+            SHOW_EXTRA_COLUMNS: 'v10_show_extra_columns',
+            SCHEDULE_SORT_COLUMN: 'v10_schedule_sort_column',
+            SCHEDULE_SORT_DIR: 'v10_schedule_sort_dir'
         };
 
         // ===== NETLIFY BLOBS ИНТЕГРАЦИЯ =====
@@ -1495,9 +1564,19 @@
             document.getElementById('syncIndicator').style.boxShadow = '0 0 5px #ff6b6b';
         }
 
+        // Уведомления
+        function showNotification(message, type = 'info') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 5000);
+        }
+
         async function loadFromSheets() {
             try {
                 const response = await fetch('/.netlify/functions/getData');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
                 if (result.success && result.data) {
                     state.projects = result.data.projects || [];
@@ -1507,6 +1586,7 @@
                     state.entries = result.data.entries || {};
                     state.partners = result.data.partners || [];
                     state.comments = result.data.comments || {};
+                    state.history = result.data.history || [];
                     showSync();
                     return true;
                 }
@@ -1514,6 +1594,7 @@
             } catch (error) {
                 console.error('Ошибка загрузки из Blobs:', error);
                 showSyncError();
+                showNotification('Ошибка загрузки данных: ' + error.message, 'error');
                 return false;
             }
         }
@@ -1527,7 +1608,8 @@
                     employeeData: state.employeeData,
                     entries: state.entries,
                     partners: state.partners,
-                    comments: state.comments
+                    comments: state.comments,
+                    history: state.history
                 };
 
                 const response = await fetch('/.netlify/functions/saveData', {
@@ -1535,7 +1617,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
                 if (result.success) {
                     showSync();
@@ -1543,13 +1625,31 @@
                 } else {
                     console.error('Ошибка сохранения:', result.error);
                     showSyncError();
+                    showNotification('Ошибка сохранения: ' + result.error, 'error');
                 }
                 return result.success;
             } catch (error) {
                 console.error('Ошибка сохранения в Blobs:', error);
                 showSyncError();
+                showNotification('Ошибка сохранения: ' + error.message, 'error');
                 return false;
             }
+        }
+
+        // Логирование действий
+        function logHistory(action, details = '') {
+            const entry = {
+                timestamp: new Date().toISOString(),
+                user: 'admin',
+                action,
+                details,
+                project: state.currentProject,
+                month: state.currentMonth
+            };
+            if (!state.history) state.history = [];
+            state.history.push(entry);
+            if (state.history.length > 500) state.history = state.history.slice(-500);
+            saveState();
         }
 
         // Состояние приложения
@@ -1559,18 +1659,19 @@
             employees: {},
             employeeData: {},
             entries: {},
-            partners: [], // [{ name: 'Партнер', password: 'пароль', projects: ['Проект 1', 'Проект 2'] }]
-            comments: {}, // ключ: project_month_day_employee_type, значение: { text: 'комментарий', date: timestamp }
+            partners: [],
+            comments: {},
+            history: [],
             currentProject: null,
             currentMonth: null,
-            currentPage: 'schedule' // 'schedule' или 'stats'
+            currentPage: 'schedule'
         };
 
         // Для редактирования партнера
         let editingPartnerIndex = -1;
 
         // Для комментариев
-        let currentCommentContext = null; // { project, month, day, employee, type }
+        let currentCommentContext = null;
 
         // Для сводной таблицы
         let currentSummaryType = null;
@@ -1578,14 +1679,75 @@
         // Дни недели
         const weekDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 
-        // Переменные для сортировки
+        // Переменные для сортировки статистики
         let currentSortColumn = 0;
         let currentSortDirection = 'asc';
+
+        // Переменные для скрытия полей
+        let showExtraColumns = true;
+        try {
+            const saved = localStorage.getItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS);
+            if (saved !== null) showExtraColumns = saved === 'true';
+        } catch (e) {}
+
+        // Переменные для сортировки в графике
+        let scheduleSortColumn = 'name';
+        let scheduleSortDirection = 'asc';
+        try {
+            const col = localStorage.getItem(STORAGE_KEYS.SCHEDULE_SORT_COLUMN);
+            if (col) scheduleSortColumn = col;
+            const dir = localStorage.getItem(STORAGE_KEYS.SCHEDULE_SORT_DIR);
+            if (dir) scheduleSortDirection = dir;
+        } catch (e) {}
+
+        // Вспомогательные функции для времени (старая логика)
+        function parseTime(timeStr) {
+            if (!timeStr) return null;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function getDurationHours(timeStr) {
+            if (!timeStr) return 0;
+            const [start, end] = timeStr.split('-').map(t => t.trim());
+            if (!start || !end) return 0;
+            const startMinutes = parseTime(start);
+            const endMinutes = parseTime(end);
+            if (startMinutes === null || endMinutes === null) return 0;
+            let duration = endMinutes - startMinutes;
+            if (duration < 0) duration += 24 * 60;
+            return duration / 60;
+        }
+
+        function compareTime(timeStr1, timeStr2) {
+            if (!timeStr1 || !timeStr2) return 0;
+            const dur1 = getDurationHours(timeStr1);
+            const dur2 = getDurationHours(timeStr2);
+            if (dur1 < dur2) return -1;
+            if (dur1 > dur2) return 1;
+            return 0;
+        }
+
+        // Определение статуса ячейки (старая логика)
+        function getCellStatus(value, baseTime) {
+            if (!value) return '';
+            const lowerValue = value.toLowerCase().trim();
+            if (lowerValue === 'вых') return 'dayoff';
+            if (lowerValue === 'прг') return 'absent';
+            if (lowerValue === 'б') return 'sick';
+            if (lowerValue === 'отп') return 'vacation';
+            if (!baseTime) return '';
+            if (!validateTimeRange(value) || !validateTimeRange(baseTime)) return '';
+            const comparison = compareTime(value, baseTime);
+            if (comparison < 0) return 'late';
+            if (comparison > 0) return 'overtime';
+            return '';
+        }
 
         // Сохраняем оригинальную функцию saveState
         const originalSaveState = saveState;
 
-        // Переопределяем saveState для автосохранения в Netlify Blobs
+        // Переопределяем saveState для автосохранения
         function saveState() {
             localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(state.projects));
             localStorage.setItem(STORAGE_KEYS.MONTHS_BY_PROJECT, JSON.stringify(state.monthsByProject));
@@ -1594,6 +1756,7 @@
             localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(state.entries));
             localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(state.partners));
             localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(state.comments));
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
             if (state.currentProject) {
                 localStorage.setItem(STORAGE_KEYS.CURRENT_PROJECT, state.currentProject);
             }
@@ -1601,8 +1764,10 @@
                 localStorage.setItem(STORAGE_KEYS.CURRENT_MONTH, state.currentMonth);
             }
             localStorage.setItem(STORAGE_KEYS.CURRENT_PAGE, state.currentPage);
+            localStorage.setItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS, showExtraColumns);
+            localStorage.setItem(STORAGE_KEYS.SCHEDULE_SORT_COLUMN, scheduleSortColumn);
+            localStorage.setItem(STORAGE_KEYS.SCHEDULE_SORT_DIR, scheduleSortDirection);
 
-            // Сохраняем в Netlify Blobs с задержкой (чтобы не спамить)
             if (!window._saveTimeout) {
                 window._saveTimeout = setTimeout(() => {
                     saveToSheets();
@@ -1611,7 +1776,7 @@
             }
         }
 
-        // Загрузка состояния
+        // Загрузка состояния из localStorage
         function loadState() {
             try {
                 state.projects = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROJECTS)) || [];
@@ -1621,6 +1786,7 @@
                 state.entries = JSON.parse(localStorage.getItem(STORAGE_KEYS.ENTRIES)) || {};
                 state.partners = JSON.parse(localStorage.getItem(STORAGE_KEYS.PARTNERS)) || [];
                 state.comments = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS)) || {};
+                state.history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY)) || [];
                 state.currentProject = localStorage.getItem(STORAGE_KEYS.CURRENT_PROJECT);
                 state.currentMonth = localStorage.getItem(STORAGE_KEYS.CURRENT_MONTH);
                 state.currentPage = localStorage.getItem(STORAGE_KEYS.CURRENT_PAGE) || 'schedule';
@@ -1653,14 +1819,12 @@
             return `${months[parseInt(month) - 1]} ${year}`;
         }
 
-        // Форматирование даты для отображения
         function formatDate(monthStr, day) {
             if (!monthStr) return String(day);
             const [year, month] = monthStr.split('-');
             return `${day}.${month}.${year}`;
         }
 
-        // Получение дня недели
         function getDayOfWeek(monthStr, day) {
             if (!monthStr) return '';
             const [year, month] = monthStr.split('-').map(Number);
@@ -1668,7 +1832,6 @@
             return weekDays[date.getDay()];
         }
 
-        // Форматирование даты
         function formatDateHeader(monthStr, day) {
             if (!monthStr) return String(day);
             const [year, month] = monthStr.split('-');
@@ -1676,81 +1839,16 @@
             return `${dayOfWeek}/${String(day).padStart(2, '0')}.${month}`;
         }
 
-        // Получение дней в месяце
         function getDaysInMonth(monthStr) {
             if (!monthStr) return 30;
             const [year, month] = monthStr.split('-').map(Number);
             return new Date(year, month, 0).getDate();
         }
 
-        // Валидация времени (формат ЧЧ:ММ-ЧЧ:ММ)
         function validateTimeRange(timeRangeStr) {
             if (!timeRangeStr) return true;
             const regex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]-([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
             return regex.test(timeRangeStr);
-        }
-
-        // Функция для сравнения времени
-        function compareTime(timeStr1, timeStr2) {
-            if (!timeStr1 || !timeStr2) return 0;
-
-            const parseTime = (time) => {
-                const [hours, minutes] = time.split(':').map(Number);
-                return hours * 60 + minutes;
-            };
-
-            const [start1, end1] = timeStr1.split('-').map(t => t.trim());
-            const [start2, end2] = timeStr2.split('-').map(t => t.trim());
-
-            if (!start1 || !end1 || !start2 || !end2) return 0;
-
-            const start1Minutes = parseTime(start1);
-            const end1Minutes = parseTime(end1);
-            const start2Minutes = parseTime(start2);
-            const end2Minutes = parseTime(end2);
-
-            const duration1 = end1Minutes - start1Minutes;
-            const duration2 = end2Minutes - start2Minutes;
-
-            if (duration1 < duration2) return -1;
-            if (duration1 > duration2) return 1;
-            return 0;
-        }
-
-        // Функция для расчета длительности в часах
-        function getDurationHours(timeStr) {
-            if (!timeStr) return 0;
-            const [start, end] = timeStr.split('-').map(t => t.trim());
-            if (!start || !end) return 0;
-
-            const [startHours, startMinutes] = start.split(':').map(Number);
-            const [endHours, endMinutes] = end.split(':').map(Number);
-
-            let duration = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-            if (duration < 0) duration += 24 * 60; // Если смена переходит на следующий день
-
-            return duration / 60;
-        }
-
-        // Определение статуса ячейки
-        function getCellStatus(value, baseTime) {
-            if (!value) return '';
-
-            const lowerValue = value.toLowerCase().trim();
-            if (lowerValue === 'вых') return 'dayoff';
-            if (lowerValue === 'прг') return 'absent';
-            if (lowerValue === 'б') return 'sick';
-            if (lowerValue === 'отп') return 'vacation';
-
-            if (!baseTime) return '';
-
-            if (!validateTimeRange(value) || !validateTimeRange(baseTime)) return '';
-
-            const comparison = compareTime(value, baseTime);
-            if (comparison < 0) return 'late';
-            if (comparison > 0) return 'overtime';
-
-            return '';
         }
 
         // Очистка строки сотрудника
@@ -1763,7 +1861,6 @@
                     const entryKey = `${key}_${day}_${operator}`;
                     delete state.entries[entryKey];
 
-                    // Удаляем комментарии для этого сотрудника
                     Object.keys(state.comments).forEach(commentKey => {
                         if (commentKey.startsWith(`${project}_${month}_${day}_${operator}`)) {
                             delete state.comments[commentKey];
@@ -1771,6 +1868,7 @@
                     });
                 }
 
+                logHistory('Очистка строки', `Сотрудник ${operator}, проект ${project}, месяц ${month}`);
                 saveState();
                 refreshUI();
             }
@@ -1779,15 +1877,12 @@
         // Управление меню
         function toggleMenu(menuId) {
             const menu = document.getElementById(menuId);
-
-            // Закрываем все другие меню
             document.querySelectorAll('.context-menu').forEach(m => {
                 if (m.id !== menuId) {
                     m.classList.remove('show');
                 }
             });
 
-            // Переключаем текущее меню
             if (menu.classList.contains('show')) {
                 menu.classList.remove('show');
                 document.body.classList.remove('menu-open');
@@ -1796,10 +1891,9 @@
                 document.body.classList.add('menu-open');
                 updateMenuSelects();
 
-                // Обновляем список проектов для партнеров
                 if (menuId === 'partnersMenu') {
                     updatePartnerProjectsList();
-                    generatePartnerPassword(); // Генерируем пароль для нового партнера
+                    generatePartnerPassword();
                 }
             }
         }
@@ -1821,14 +1915,11 @@
         function updateMenuSelects() {
             const filterProjectSelect = document.getElementById('filterProjectSelect');
             if (filterProjectSelect) {
-                // Фильтруем проекты: показываем только те, к которым есть доступ
                 const availableProjects = getAvailableProjects();
                 filterProjectSelect.innerHTML = availableProjects.map(p =>
                     `<option value="${p}">${p}</option>`
                 ).join('');
                 filterProjectSelect.value = availableProjects.includes(state.currentProject) ? state.currentProject : availableProjects[0] || '';
-
-                // Обновляем месяцы для фильтра
                 updateFilterMonths();
             }
 
@@ -1864,12 +1955,9 @@
                     `<option value="${p}">${p}</option>`
                 ).join('');
                 schedProjectSelect.value = availableProjects.includes(state.currentProject) ? state.currentProject : availableProjects[0] || '';
-
-                // Обновляем список месяцев для графика
                 updateMonthsList(state.currentProject);
             }
 
-            // Обновляем список сотрудников
             const empProject = document.getElementById('employeeProjectSelect')?.value;
             const empMonth = document.getElementById('employeeMonthSelect')?.value;
             if (empProject && empMonth) {
@@ -1877,14 +1965,10 @@
             }
         }
 
-        // Получение доступных проектов (учитывая партнеров)
         function getAvailableProjects() {
-            // Здесь можно добавить логику для партнеров
-            // Пока возвращаем все проекты
             return state.projects;
         }
 
-        // Обновление месяцев в фильтре
         function updateFilterMonths() {
             const project = document.getElementById('filterProjectSelect')?.value;
             const monthSelect = document.getElementById('filterMonthSelect');
@@ -1903,7 +1987,6 @@
             }
         }
 
-        // Применить фильтр
         function applyFilter() {
             const project = document.getElementById('filterProjectSelect').value;
             const month = document.getElementById('filterMonthSelect').value;
@@ -1911,13 +1994,13 @@
             if (project && month) {
                 state.currentProject = project;
                 state.currentMonth = month;
+                logHistory('Применён фильтр', `Проект: ${project}, месяц: ${month}`);
                 saveState();
                 refreshUI();
                 closeAllMenus();
             }
         }
 
-        // Добавление сотрудника
         function addEmployee() {
             const project = document.getElementById('employeeProjectSelect').value;
             const month = document.getElementById('employeeMonthSelect').value;
@@ -1932,7 +2015,6 @@
                 state.employees[key] = [];
             }
 
-            // Формируем имя сотрудника с указанием партнера, если есть
             const employeeName = partner ? `${name} (${partner})` : name;
 
             if (state.employees[key].includes(employeeName)) {
@@ -1942,7 +2024,6 @@
 
             state.employees[key].push(employeeName);
 
-            // Сохраняем информацию о партнере в данных сотрудника
             const dataKey = getEmployeeDataKey(project, month, employeeName);
             if (!state.employeeData[dataKey]) {
                 state.employeeData[dataKey] = { shiftType: '', time: '', phone: '', partner: partner };
@@ -1950,6 +2031,7 @@
                 state.employeeData[dataKey].partner = partner;
             }
 
+            logHistory('Добавлен сотрудник', `${employeeName} в проект ${project}, месяц ${month}`);
             saveState();
 
             if (project === state.currentProject && month === state.currentMonth) {
@@ -1960,7 +2042,6 @@
             updateEmployeesList(project, month);
         }
 
-        // Удаление сотрудника
         function deleteEmployee(project, month, index) {
             const key = getEmployeeKey(project, month);
             const employees = state.employees[key] || [];
@@ -1978,7 +2059,6 @@
                     }
                 });
 
-                // Удаляем комментарии для этого сотрудника
                 Object.keys(state.comments).forEach(commentKey => {
                     if (commentKey.includes(`_${name}_`)) {
                         delete state.comments[commentKey];
@@ -1989,6 +2069,7 @@
                     delete state.employees[key];
                 }
 
+                logHistory('Удалён сотрудник', `${name} из проекта ${project}, месяц ${month}`);
                 saveState();
 
                 if (project === state.currentProject && month === state.currentMonth) {
@@ -1999,7 +2080,6 @@
             }
         }
 
-        // Обновление данных сотрудника
         function updateEmployeeData(project, month, employeeName, field, value) {
             const dataKey = getEmployeeDataKey(project, month, employeeName);
 
@@ -2012,6 +2092,7 @@
                 return false;
             }
 
+            const oldValue = state.employeeData[dataKey][field];
             state.employeeData[dataKey][field] = value;
 
             if (field === 'time' && value && validateTimeRange(value)) {
@@ -2026,6 +2107,7 @@
                 }
             }
 
+            logHistory('Изменены данные сотрудника', `${employeeName}, поле ${field}: "${oldValue}" -> "${value}"`);
             saveState();
 
             if (project === state.currentProject && month === state.currentMonth) {
@@ -2035,7 +2117,6 @@
             return true;
         }
 
-        // Обновление списка сотрудников в меню
         function updateEmployeesList(project, month) {
             const list = document.getElementById('employeesList');
             if (!list) return;
@@ -2049,7 +2130,6 @@
             }
 
             list.innerHTML = employees.map((emp, index) => {
-                // Проверяем, есть ли у сотрудника партнер
                 const dataKey = getEmployeeDataKey(project, month, emp);
                 const partner = state.employeeData[dataKey]?.partner;
 
@@ -2065,7 +2145,6 @@
             }).join('');
         }
 
-        // Добавление проекта
         function addProject() {
             const name = document.getElementById('projectNameInput').value.trim();
             if (name && !state.projects.includes(name)) {
@@ -2079,6 +2158,7 @@
                     state.monthsByProject[name].push(currentMonthStr);
                 }
 
+                logHistory('Добавлен проект', name);
                 saveState();
                 refreshUI();
                 updateProjectsList();
@@ -2086,7 +2166,6 @@
             }
         }
 
-        // Удаление проекта
         function deleteProject(index) {
             const project = state.projects[index];
             if (confirm(`Удалить проект "${project}"? Это удалит все данные проекта.`)) {
@@ -2112,7 +2191,6 @@
                     }
                 });
 
-                // Удаляем комментарии для этого проекта
                 Object.keys(state.comments).forEach(key => {
                     if (key.startsWith(project + '_')) {
                         delete state.comments[key];
@@ -2127,13 +2205,13 @@
                     }
                 }
 
+                logHistory('Удалён проект', project);
                 saveState();
                 refreshUI();
                 updateProjectsList();
             }
         }
 
-        // Редактирование названия проекта
         function showEditProject() {
             const currentName = state.currentProject;
             const newName = prompt('Введите новое название проекта:', currentName);
@@ -2181,7 +2259,6 @@
                     });
                     state.entries = newEntries;
 
-                    // Обновляем комментарии
                     const newComments = {};
                     Object.keys(state.comments).forEach(key => {
                         if (key.startsWith(currentName + '_')) {
@@ -2195,13 +2272,13 @@
 
                     state.currentProject = newName;
 
+                    logHistory('Переименован проект', `${currentName} -> ${newName}`);
                     saveState();
                     refreshUI();
                 }
             }
         }
 
-        // Обновление списка проектов в меню
         function updateProjectsList() {
             const list = document.getElementById('projectsList');
             if (!list) return;
@@ -2214,7 +2291,6 @@
             `).join('');
         }
 
-        // Добавление месяца для конкретного проекта
         function addMonth() {
             const project = document.getElementById('scheduleProjectSelect').value;
             const month = document.getElementById('scheduleMonthInput').value;
@@ -2231,6 +2307,7 @@
                 state.currentProject = project;
                 state.currentMonth = month;
 
+                logHistory('Добавлен месяц', `${project} - ${month}`);
                 saveState();
                 refreshUI();
                 updateMonthsList(project);
@@ -2240,7 +2317,6 @@
             }
         }
 
-        // Удаление месяца из проекта
         function deleteMonth(project, month) {
             if (confirm(`Удалить месяц ${formatMonth(month)} из проекта ${project}?`)) {
                 const index = state.monthsByProject[project].indexOf(month);
@@ -2262,7 +2338,6 @@
                         }
                     });
 
-                    // Удаляем комментарии для этого месяца
                     Object.keys(state.comments).forEach(commentKey => {
                         if (commentKey.startsWith(key)) {
                             delete state.comments[commentKey];
@@ -2278,6 +2353,7 @@
                         }
                     }
 
+                    logHistory('Удалён месяц', `${project} - ${month}`);
                     saveState();
                     refreshUI();
                     updateMonthsList(project);
@@ -2285,7 +2361,6 @@
             }
         }
 
-        // Обновление списка месяцев в меню
         function updateMonthsList(project) {
             const list = document.getElementById('monthsList');
             if (!list) return;
@@ -2305,30 +2380,29 @@
             `).join('');
         }
 
-        // Обновление записи времени
         function updateTimeEntry(project, month, day, operator, value) {
             const employeeKey = getEmployeeKey(project, month);
             const entryKey = `${employeeKey}_${day}_${operator}`;
 
             if (value.trim() === '') {
                 delete state.entries[entryKey];
+                logHistory('Удалена запись времени', `${operator} ${project} ${month} день ${day}`);
                 saveState();
                 refreshUI();
                 return;
             }
 
-            // Сохраняем значение
+            const oldValue = state.entries[entryKey];
             state.entries[entryKey] = value;
+            logHistory('Изменена запись времени', `${operator} ${project} ${month} день ${day}: "${oldValue||''}" -> "${value}"`);
             saveState();
 
-            // Проверяем, нужно ли открыть модальное окно для комментария
             const dataKey = getEmployeeDataKey(project, month, operator);
             const employeeData = state.employeeData[dataKey] || { time: '' };
 
             const lowerValue = value.toLowerCase().trim();
             const status = getCellStatus(value, employeeData.time);
 
-            // Определяем тип для комментария
             let commentType = null;
 
             if (lowerValue === 'прг') {
@@ -2339,7 +2413,6 @@
                 commentType = 'overtime';
             }
 
-            // Если есть тип для комментария, открываем модальное окно принудительно
             if (commentType) {
                 forceCommentModal(project, month, day, operator, commentType);
             } else {
@@ -2347,14 +2420,12 @@
             }
         }
 
-        // Функция для принудительного открытия модального окна комментария
         function forceCommentModal(project, month, day, employee, type) {
             currentCommentContext = { project, month, day, employee, type };
 
             const commentKey = getCommentKey(project, month, day, employee, type);
             const comment = state.comments[commentKey] || { text: '' };
 
-            // Устанавливаем заголовок в зависимости от типа
             let title = '';
             if (type === 'late') title = '✏️ Требуется комментарий к опозданию';
             else if (type === 'overtime') title = '✏️ Требуется комментарий к переработке';
@@ -2373,13 +2444,11 @@
 
             document.getElementById('commentText').value = comment.text || '';
 
-            // Открываем модальное окно
             const modal = document.getElementById('commentModal');
             modal.classList.add('show');
             document.body.classList.add('menu-open');
         }
 
-        // Переключение проекта
         function switchProject(project) {
             state.currentProject = project;
 
@@ -2388,12 +2457,12 @@
                 state.currentMonth = months[months.length - 1];
             }
 
+            logHistory('Переключение проекта', project);
             saveState();
             refreshUI();
             closeAllMenus();
         }
 
-        // Показать страницу статистики
         function showStatsPage() {
             if (!state.currentProject || !state.currentMonth) {
                 alert('Сначала выберите проект и месяц');
@@ -2406,7 +2475,6 @@
             closeAllMenus();
         }
 
-        // Показать страницу графика
         function showSchedulePage() {
             state.currentPage = 'schedule';
             saveState();
@@ -2416,7 +2484,6 @@
 
         // Функции для работы с партнерами
         function generatePartnerPassword() {
-            // Генерируем случайный пароль из 8 символов
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let password = '';
             for (let i = 0; i < 8; i++) {
@@ -2452,7 +2519,6 @@
                 return;
             }
 
-            // Собираем выбранные проекты
             const selectedProjects = [];
             state.projects.forEach(project => {
                 const checkbox = document.getElementById(`partner_project_${project}`);
@@ -2466,7 +2532,6 @@
                 return;
             }
 
-            // Проверяем, существует ли уже такой партнер
             if (state.partners.some(p => p.name === name)) {
                 alert('Партнер с таким названием уже существует');
                 return;
@@ -2478,11 +2543,11 @@
                 projects: selectedProjects
             });
 
+            logHistory('Добавлен партнер', `${name}, проекты: ${selectedProjects.join(', ')}`);
             saveState();
 
-            // Очищаем форму
             document.getElementById('partnerNameInput').value = '';
-            generatePartnerPassword(); // Генерируем новый пароль для следующего партнера
+            generatePartnerPassword();
             state.projects.forEach(project => {
                 const checkbox = document.getElementById(`partner_project_${project}`);
                 if (checkbox) checkbox.checked = false;
@@ -2498,20 +2563,19 @@
             const partner = state.partners[index];
             if (confirm(`Удалить партнера "${partner.name}"? Это не удалит связанных сотрудников.`)) {
                 state.partners.splice(index, 1);
+                logHistory('Удалён партнер', partner.name);
                 saveState();
                 updatePartnersList();
                 updateMenuSelects();
             }
         }
 
-        // Редактирование проектов партнера
         function editPartner(index) {
             editingPartnerIndex = index;
             const partner = state.partners[index];
 
             document.getElementById('editingPartnerName').textContent = partner.name;
 
-            // Заполняем список проектов
             const container = document.getElementById('editPartnerProjectsList');
             container.innerHTML = state.projects.map(project => `
                 <div class="project-checkbox-item">
@@ -2523,11 +2587,8 @@
                 </div>
             `).join('');
 
-            // Показываем модальное окно
             document.getElementById('editPartnerProjectsModal').style.display = 'block';
             document.body.classList.add('menu-open');
-
-            // Закрываем меню партнеров
             closeMenu('partnersMenu');
         }
 
@@ -2540,7 +2601,6 @@
         function savePartnerProjects() {
             if (editingPartnerIndex === -1) return;
 
-            // Собираем выбранные проекты
             const selectedProjects = [];
             state.projects.forEach(project => {
                 const checkbox = document.getElementById(`edit_project_${project}`);
@@ -2554,9 +2614,10 @@
                 return;
             }
 
-            // Обновляем проекты партнера
+            const oldProjects = state.partners[editingPartnerIndex].projects;
             state.partners[editingPartnerIndex].projects = selectedProjects;
 
+            logHistory('Изменены проекты партнера', `${state.partners[editingPartnerIndex].name}: ${oldProjects.join(', ')} -> ${selectedProjects.join(', ')}`);
             saveState();
             updatePartnersList();
             updateMenuSelects();
@@ -2629,12 +2690,12 @@
                     text: commentText,
                     date: new Date().toISOString()
                 };
+                logHistory('Добавлен комментарий', `${employee} ${project} ${month} день ${day} (${type}): ${commentText}`);
                 saveState();
                 closeCommentModal();
                 refreshUI();
             } else {
                 alert('Пожалуйста, укажите причину');
-                // Не закрываем окно, если комментарий пустой
             }
         }
 
@@ -2646,13 +2707,14 @@
                 const commentKey = getCommentKey(project, month, day, employee, type);
 
                 delete state.comments[commentKey];
+                logHistory('Удалён комментарий', `${employee} ${project} ${month} день ${day} (${type})`);
                 saveState();
                 closeCommentModal();
                 refreshUI();
             }
         }
 
-        // Функции для сводной таблицы
+        // Функции для сводной таблицы (прогул = длительность базовой смены или 8)
         function showSummaryTable(type) {
             if (!state.currentProject || !state.currentMonth) {
                 alert('Сначала выберите проект и месяц');
@@ -2699,32 +2761,26 @@
                     if (value) {
                         const lowerValue = value.toLowerCase().trim();
 
-                        // Проверяем условие для каждого типа
                         if (type === 'absent' && lowerValue === 'прг') {
                             const commentKey = getCommentKey(state.currentProject, state.currentMonth, day, employee, 'absent');
                             const comment = state.comments[commentKey] || { text: '' };
-
+                            const absentHours = employeeData.time ? getDurationHours(employeeData.time) : 8;
                             data.push({
                                 employee: employee,
                                 partner: employeeData.partner || 'Внутренний',
                                 date: formatDate(state.currentMonth, day),
-                                hours: 8,
+                                hours: absentHours.toFixed(1),
                                 comment: comment.text || ''
                             });
                         }
                         else if (type !== 'absent' && validateTimeRange(value) && validateTimeRange(employeeData.time)) {
                             const status = getCellStatus(value, employeeData.time);
-
-                            if ((type === 'late' && status === 'late') ||
-                                (type === 'overtime' && status === 'overtime')) {
-
+                            if ((type === 'late' && status === 'late') || (type === 'overtime' && status === 'overtime')) {
                                 const hours = getDurationHours(value);
                                 const baseHours = getDurationHours(employeeData.time);
                                 const diff = type === 'late' ? baseHours - hours : hours - baseHours;
-
                                 const commentKey = getCommentKey(state.currentProject, state.currentMonth, day, employee, type);
                                 const comment = state.comments[commentKey] || { text: '' };
-
                                 data.push({
                                     employee: employee,
                                     partner: employeeData.partner || 'Внутренний',
@@ -2738,9 +2794,7 @@
                 }
             });
 
-            // Сортируем по дате
             data.sort((a, b) => a.date.localeCompare(b.date));
-
             return data;
         }
 
@@ -2786,10 +2840,56 @@
             container.innerHTML = tableHtml;
         }
 
+        // Сортировка в графике
+        function sortSchedule(column) {
+            if (scheduleSortColumn === column) {
+                scheduleSortDirection = scheduleSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                scheduleSortColumn = column;
+                scheduleSortDirection = 'asc';
+            }
+            localStorage.setItem(STORAGE_KEYS.SCHEDULE_SORT_COLUMN, scheduleSortColumn);
+            localStorage.setItem(STORAGE_KEYS.SCHEDULE_SORT_DIR, scheduleSortDirection);
+            refreshUI();
+        }
+
+        // Скрытие/показ полей
+        function toggleColumns() {
+            showExtraColumns = !showExtraColumns;
+            localStorage.setItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS, showExtraColumns);
+            document.getElementById('toggleColumnsBtn').textContent = showExtraColumns ? '👁️ Скрыть поля' : '👁️ Показать поля';
+            refreshUI();
+        }
+
+        // Показать историю
+        function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const container = document.getElementById('historyContainer');
+            if (!state.history || state.history.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px;">История пуста</div>';
+            } else {
+                let html = '<table class="stats-table" style="min-width:100%"><thead><tr><th>Время</th><th>Действие</th><th>Детали</th><th>Проект/месяц</th></tr></thead><tbody>';
+                state.history.slice().reverse().forEach(entry => {
+                    const time = new Date(entry.timestamp).toLocaleString();
+                    html += `<tr><td>${time}</td><td>${entry.action}</td><td>${entry.details || ''}</td><td>${entry.project || ''} ${entry.month || ''}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            }
+            modal.classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
         // Обновление UI
         function refreshUI() {
             document.getElementById('currentProjectName').textContent = state.currentProject || '-';
             document.getElementById('currentMonth').textContent = state.currentMonth ? formatMonth(state.currentMonth) : '-';
+            document.getElementById('toggleColumnsBtn').textContent = showExtraColumns ? '👁️ Скрыть поля' : '👁️ Показать поля';
 
             updateProjectTabs();
 
@@ -2831,7 +2931,7 @@
             `).join('');
         }
 
-        // Рендер страницы графика
+        // Рендер страницы графика (с сортировкой и динамической шириной)
         function renderSchedulePage() {
             const wrapper = document.getElementById('mainContent');
 
@@ -2841,11 +2941,38 @@
             }
 
             const key = getEmployeeKey(state.currentProject, state.currentMonth);
-            const employees = state.employees[key] || [];
+            let employees = state.employees[key] || [];
 
             if (employees.length === 0) {
                 wrapper.innerHTML = '<div class="schedule-wrapper"><div style="padding: 40px; text-align: center; color: #8f9bb3;">Добавьте сотрудников через меню "Сотрудники"</div></div>';
                 return;
+            }
+
+            // Сортировка
+            const sortedEmployees = [...employees];
+            if (scheduleSortColumn === 'name') {
+                sortedEmployees.sort((a, b) => {
+                    return scheduleSortDirection === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
+                });
+            } else if (scheduleSortColumn === 'shift' || scheduleSortColumn === 'time' || scheduleSortColumn === 'phone') {
+                sortedEmployees.sort((a, b) => {
+                    const dataKeyA = getEmployeeDataKey(state.currentProject, state.currentMonth, a);
+                    const dataKeyB = getEmployeeDataKey(state.currentProject, state.currentMonth, b);
+                    const dataA = state.employeeData[dataKeyA] || {};
+                    const dataB = state.employeeData[dataKeyB] || {};
+                    let valA = '', valB = '';
+                    if (scheduleSortColumn === 'shift') {
+                        valA = dataA.shiftType || '';
+                        valB = dataB.shiftType || '';
+                    } else if (scheduleSortColumn === 'time') {
+                        valA = dataA.time || '';
+                        valB = dataB.time || '';
+                    } else if (scheduleSortColumn === 'phone') {
+                        valA = dataA.phone || '';
+                        valB = dataB.phone || '';
+                    }
+                    return scheduleSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                });
             }
 
             const daysInMonth = getDaysInMonth(state.currentMonth);
@@ -2854,17 +2981,14 @@
 
             // Заголовки
             html += '<div class="headers-container">';
-
-            // Фиксированные заголовки
-            html += '<div class="fixed-headers">';
-            html += '<div class="fixed-header-cell">Сотрудник</div>';
-            html += '<div class="fixed-header-cell">Смена</div>';
-            html += '<div class="fixed-header-cell">Время</div>';
-            html += '<div class="fixed-header-cell">Телефон</div>';
-            html += '<div class="fixed-header-cell">Тип</div>';
+            html += '<div class="fixed-headers" id="fixedHeaders">';
+            html += `<div class="fixed-header-cell" onclick="sortSchedule('name')" style="cursor:pointer;">Сотрудник ${scheduleSortColumn === 'name' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}" onclick="sortSchedule('shift')" style="cursor:pointer;">Смена ${scheduleSortColumn === 'shift' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}" onclick="sortSchedule('time')" style="cursor:pointer;">Время ${scheduleSortColumn === 'time' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}" onclick="sortSchedule('phone')" style="cursor:pointer;">Телефон ${scheduleSortColumn === 'phone' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}">Тип</div>`;
             html += '</div>';
 
-            // Прокручиваемые заголовки
             html += '<div class="scrollable-headers">';
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateHeader = formatDateHeader(state.currentMonth, day);
@@ -2880,14 +3004,12 @@
             // Строки с данными
             html += '<div class="rows-container">';
 
-            employees.forEach(operator => {
+            sortedEmployees.forEach(operator => {
                 const dataKey = getEmployeeDataKey(state.currentProject, state.currentMonth, operator);
                 const employeeData = state.employeeData[dataKey] || { shiftType: '', time: '', phone: '', partner: '' };
 
                 html += '<div class="data-row">';
-
-                // Фиксированная часть
-                html += '<div class="fixed-cells">';
+                html += '<div class="fixed-cells" id="fixedCells">';
 
                 // ФИО с кнопкой очистки
                 html += `<div class="fixed-cell" title="${operator}">
@@ -2896,7 +3018,7 @@
                 </div>`;
 
                 // Тип смены
-                html += '<div class="fixed-cell employee-field">';
+                html += `<div class="fixed-cell employee-field ${!showExtraColumns ? 'hidden' : ''}">`;
                 html += `<select onchange="updateEmployeeData('${state.currentProject}', '${state.currentMonth}', '${operator}', 'shiftType', this.value)">`;
                 html += `<option value="" ${employeeData.shiftType === '' ? 'selected' : ''}>—</option>`;
                 html += `<option value="2/2" ${employeeData.shiftType === '2/2' ? 'selected' : ''}>2/2</option>`;
@@ -2905,7 +3027,7 @@
                 html += '</div>';
 
                 // Время смены
-                html += '<div class="fixed-cell employee-field">';
+                html += `<div class="fixed-cell employee-field ${!showExtraColumns ? 'hidden' : ''}">`;
                 const timeValid = validateTimeRange(employeeData.time);
                 html += `<input type="text"
                                value="${employeeData.time || ''}"
@@ -2918,15 +3040,15 @@
                 html += '</div>';
 
                 // Телефон
-                html += '<div class="fixed-cell phone-field">';
+                html += `<div class="fixed-cell phone-field ${!showExtraColumns ? 'hidden' : ''}">`;
                 html += `<input type="text"
                                value="${employeeData.phone || ''}"
                                placeholder="+7 (999) 999-99-99"
                                onchange="updateEmployeeData('${state.currentProject}', '${state.currentMonth}', '${operator}', 'phone', this.value)">`;
                 html += '</div>';
 
-                // Тип сотрудника (внутренний/партнер)
-                html += '<div class="fixed-cell">';
+                // Тип сотрудника
+                html += `<div class="fixed-cell ${!showExtraColumns ? 'hidden' : ''}">`;
                 if (employeeData.partner) {
                     html += `<span class="partner-badge partner" title="Партнер: ${employeeData.partner}">П</span>`;
                 } else {
@@ -2934,7 +3056,7 @@
                 }
                 html += '</div>';
 
-                html += '</div>'; // закрываем fixed-cells
+                html += '</div>'; // fixed-cells
 
                 // Прокручиваемая часть
                 html += '<div class="scrollable-cells">';
@@ -2944,7 +3066,6 @@
 
                     const status = getCellStatus(value, employeeData.time);
 
-                    // Проверяем наличие комментария для этого дня
                     let hasComment = false;
                     let commentType = '';
 
@@ -2978,17 +3099,30 @@
                     html += `   </div>
                     </div>`;
                 }
-                html += '</div>'; // закрываем scrollable-cells
+                html += '</div>'; // scrollable-cells
 
-                html += '</div>'; // закрываем data-row
+                html += '</div>'; // data-row
             });
 
-            html += '</div>'; // закрываем rows-container
-            html += '</div>'; // закрываем schedule-wrapper
+            html += '</div>'; // rows-container
+            html += '</div>'; // schedule-wrapper
             wrapper.innerHTML = html;
+
+            // После рендера корректируем ширину фиксированных контейнеров
+            const fixedCells = document.getElementById('fixedCells');
+            const fixedHeaders = document.getElementById('fixedHeaders');
+            if (fixedCells && fixedHeaders) {
+                if (showExtraColumns) {
+                    fixedCells.style.width = '750px';
+                    fixedHeaders.style.width = '750px';
+                } else {
+                    fixedCells.style.width = '280px';
+                    fixedHeaders.style.width = '280px';
+                }
+            }
         }
 
-        // Рендер страницы статистики с сортировкой
+        // Рендер страницы статистики (старая логика с исправлением прогула, отпуска, больничного)
         function renderStatsPage() {
             const wrapper = document.getElementById('mainContent');
 
@@ -3012,7 +3146,6 @@
             let totalSickHours = 0;
             let totalVacationHours = 0;
 
-            // Собираем данные для сортировки
             let statsData = [];
 
             employees.forEach(employee => {
@@ -3036,13 +3169,16 @@
                         const status = getCellStatus(value, employeeData.time);
 
                         if (lowerValue === 'прг') {
-                            absentHours += 8;
+                            const absent = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            absentHours += absent;
                         } else if (lowerValue === 'б') {
-                            sickHours += 8;
+                            const sick = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            sickHours += sick;
                         } else if (lowerValue === 'отп') {
-                            vacationHours += 8;
+                            const vacation = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            vacationHours += vacation;
                         } else if (lowerValue === 'вых') {
-                            // Выходной не считаем
+                            // не считаем
                         } else if (validateTimeRange(value)) {
                             const hours = getDurationHours(value);
                             totalHours += hours;
@@ -3117,7 +3253,6 @@
                 `;
             });
 
-            // Добавляем итоговую строку
             tableHtml += `
                 <tr class="total-row">
                     <td>ИТОГО:</td>
@@ -3194,7 +3329,6 @@
             wrapper.innerHTML = statsHtml;
         }
 
-        // Функция сортировки статистики
         function sortStats(column) {
             if (currentSortColumn === column) {
                 currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
@@ -3205,7 +3339,6 @@
             renderStatsPage();
         }
 
-        // Функция экспорта в Excel
         function exportToExcel() {
             const key = getEmployeeKey(state.currentProject, state.currentMonth);
             const employees = state.employees[key] || [];
@@ -3215,10 +3348,8 @@
                 return;
             }
 
-            // Собираем данные для экспорта
             let data = [];
 
-            // Заголовки
             data.push([
                 'Сотрудник',
                 'Тип',
@@ -3259,13 +3390,16 @@
                         const status = getCellStatus(value, employeeData.time);
 
                         if (lowerValue === 'прг') {
-                            absentHours += 8;
+                            const absent = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            absentHours += absent;
                         } else if (lowerValue === 'б') {
-                            sickHours += 8;
+                            const sick = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            sickHours += sick;
                         } else if (lowerValue === 'отп') {
-                            vacationHours += 8;
+                            const vacation = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            vacationHours += vacation;
                         } else if (lowerValue === 'вых') {
-                            // Выходной не считаем
+                            // не считаем
                         } else if (validateTimeRange(value)) {
                             const hours = getDurationHours(value);
                             totalHours += hours;
@@ -3300,7 +3434,6 @@
                 ]);
             });
 
-            // Итоговая строка
             data.push([
                 'ИТОГО:',
                 '',
@@ -3312,16 +3445,10 @@
                 totalVacationHours.toFixed(1)
             ]);
 
-            // Создаем CSV контент
             const csvContent = data.map(row => row.join(';')).join('\n');
-
-            // Добавляем BOM для правильного отображения кириллицы
             const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-
-            // Создаем ссылку для скачивания
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
-
             link.href = url;
             link.setAttribute('download', `statistics_${state.currentProject}_${state.currentMonth}.csv`);
             document.body.appendChild(link);
@@ -3330,7 +3457,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Слушаем изменения в селектах
         document.addEventListener('change', function(e) {
             if (e.target.id === 'employeeProjectSelect' || e.target.id === 'employeeMonthSelect') {
                 const project = document.getElementById('employeeProjectSelect').value;
@@ -3346,15 +3472,11 @@
             }
         });
 
-        // Новая функция инициализации с загрузкой из Netlify Blobs
         function init() {
-            // Сначала загружаем из localStorage
             loadState();
 
-            // Потом пробуем загрузить из Blobs
             loadFromSheets().then(loaded => {
                 if (loaded) {
-                    // Если загрузилось из Blobs, обновляем localStorage
                     localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(state.projects));
                     localStorage.setItem(STORAGE_KEYS.MONTHS_BY_PROJECT, JSON.stringify(state.monthsByProject));
                     localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(state.employees));
@@ -3362,9 +3484,9 @@
                     localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(state.entries));
                     localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(state.partners));
                     localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(state.comments));
+                    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
                 }
 
-                // Продолжаем обычную инициализацию
                 if (state.projects.length === 0) {
                     for (let i = 1; i <= 10; i++) {
                         state.projects.push(`Проект ${i}`);
@@ -3375,6 +3497,7 @@
                 if (!state.employeeData) state.employeeData = {};
                 if (!state.partners) state.partners = [];
                 if (!state.comments) state.comments = {};
+                if (!state.history) state.history = [];
 
                 const today = new Date();
                 const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -3404,7 +3527,6 @@
             });
         }
 
-        // Запуск
         init();
     </script>
 </body>

@@ -241,6 +241,17 @@
             color: #0b0e14;
             border-color: #ffd700;
         }
+
+        /* Кнопка скрытия полей */
+        .partner-action-btn.toggle-cols {
+            background: #1e2230;
+            color: #8f9bb3;
+            border: 1px solid #8f9bb3;
+        }
+        .partner-action-btn.toggle-cols:hover {
+            background: #2a2e3a;
+            border-color: #ffd700;
+        }
         
         .project-tabs {
             display: grid;
@@ -321,7 +332,7 @@
         
         .fixed-headers {
             display: flex;
-            flex: 0 0 750px;
+            flex: 0 0 auto;
             background: #0b0e14;
             border-right: 2px solid #ffd700;
             position: sticky;
@@ -410,7 +421,7 @@
         
         .fixed-cells {
             display: flex;
-            flex: 0 0 750px;
+            flex: 0 0 auto;
             background: #141824;
             border-right: 2px solid #ffd700;
             position: sticky;
@@ -539,9 +550,9 @@
         }
         
         .time-cell input.late {
-            background: #2a1e1e;
-            border-color: #ff6b6b;
-            color: #ff8a8a;
+            background: #3a3a1a;
+            border-color: #ffd700;
+            color: #ffd700;
         }
         
         .time-cell input.overtime {
@@ -613,7 +624,7 @@
             border-radius: 6px;
         }
         
-        .color-box.late { background: #2a1e1e; border: 2px solid #ff6b6b; }
+        .color-box.late { background: #3a3a1a; border: 2px solid #ffd700; }
         .color-box.overtime { background: #1a2a1a; border: 2px solid #6bff6b; }
         .color-box.vacation { background: #1a1a2a; border: 2px solid #6b6bff; }
         .color-box.sick { background: #2a1a1a; border: 2px solid #ff6b6b; }
@@ -734,7 +745,7 @@
             margin-left: 8px;
         }
         
-        .stat-card.late .value { color: #ff6b6b; }
+        .stat-card.late .value { color: #ffd700; }
         .stat-card.overtime .value { color: #6bff6b; }
         .stat-card.absent .value { color: #ff6b6b; }
         .stat-card.sick .value { color: #6b6bff; }
@@ -819,7 +830,7 @@
             font-weight: 500;
         }
         
-        .stats-table .hours-value.late { color: #ff6b6b; }
+        .stats-table .hours-value.late { color: #ffd700; }
         .stats-table .hours-value.overtime { color: #6bff6b; }
         .stats-table .hours-value.absent { color: #ff6b6b; }
         .stats-table .hours-value.sick { color: #6b6bff; }
@@ -1109,6 +1120,36 @@
         .summary-table .comment-cell:hover {
             background: #3a3f4f;
         }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #141824;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            z-index: 20000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+        .notification.error {
+            border-color: #ff6b6b;
+        }
+        .notification.success {
+            border-color: #4caf50;
+        }
+        .notification.info {
+            border-color: #ffd700;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1139,6 +1180,7 @@
             </div>
             <div class="partner-action-buttons">
                 <button class="partner-action-btn stats" onclick="showStatsPage()" id="statsBtn">Статистика</button>
+                <button class="partner-action-btn toggle-cols" onclick="toggleColumns()" id="toggleColumnsBtn">👁️ Скрыть поля</button>
                 <button class="partner-action-btn" onclick="toggleMenu('filterMenu')">Фильтр</button>
                 <button class="partner-action-btn" onclick="toggleMenu('employeesMenu')">Сотрудники</button>
                 <button class="partner-action-btn" onclick="toggleMenu('scheduleMenu')">График</button>
@@ -1254,7 +1296,6 @@
     <div id="commentModal" class="context-menu">
         <div class="menu-header">
             <span id="commentModalTitle">✏️ Добавить комментарий</span>
-            <!-- Кнопка закрытия скрыта, чтобы нельзя было закрыть без комментария -->
         </div>
         <div class="menu-content">
             <div class="menu-item">
@@ -1299,7 +1340,10 @@
             EMPLOYEE_DATA: 'v10_employee_data',
             ENTRIES: 'v10_time_entries',
             PARTNERS: 'v10_partners',
-            COMMENTS: 'v10_comments'
+            COMMENTS: 'v10_comments',
+            SHOW_EXTRA_COLUMNS: 'v10_show_extra_columns',
+            SCHEDULE_SORT_COLUMN: 'v10_schedule_sort_column',
+            SCHEDULE_SORT_DIR: 'v10_schedule_sort_dir'
         };
 
         // ===== NETLIFY BLOBS ИНТЕГРАЦИЯ =====
@@ -1320,9 +1364,19 @@
             }
         }
 
+        // Уведомления
+        function showNotification(message, type = 'info') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 5000);
+        }
+
         async function loadFromSheets() {
             try {
                 const response = await fetch('/.netlify/functions/getData');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
                 if (result.success && result.data) {
                     localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(result.data.projects || []));
@@ -1339,6 +1393,7 @@
             } catch (error) {
                 console.error('Ошибка загрузки из Blobs:', error);
                 showSyncError();
+                showNotification('Ошибка загрузки данных: ' + error.message, 'error');
                 return false;
             }
         }
@@ -1360,18 +1415,20 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
                 if (result.success) {
                     showSync();
                 } else {
                     console.error('Ошибка сохранения:', result.error);
                     showSyncError();
+                    showNotification('Ошибка сохранения: ' + result.error, 'error');
                 }
                 return result.success;
             } catch (error) {
                 console.error('Ошибка сохранения в Blobs:', error);
                 showSyncError();
+                showNotification('Ошибка сохранения: ' + error.message, 'error');
                 return false;
             }
         }
@@ -1387,7 +1444,7 @@
         // Текущая страница
         let currentPage = 'schedule';
 
-        // Переменные для сортировки
+        // Переменные для сортировки статистики
         let currentSortColumn = 0;
         let currentSortDirection = 'asc';
 
@@ -1397,8 +1454,69 @@
         // Для сводной таблицы
         let currentSummaryType = null;
 
+        // NEW: Переменные для скрытия полей
+        let showExtraColumns = true;
+        try {
+            const saved = localStorage.getItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS);
+            if (saved !== null) showExtraColumns = saved === 'true';
+        } catch (e) {}
+
+        // NEW: Переменные для сортировки в графике
+        let scheduleSortColumn = 'name'; // 'name', 'shift', 'time', 'phone'
+        let scheduleSortDirection = 'asc';
+        try {
+            const col = localStorage.getItem(STORAGE_KEYS.SCHEDULE_SORT_COLUMN);
+            if (col) scheduleSortColumn = col;
+            const dir = localStorage.getItem(STORAGE_KEYS.SCHEDULE_SORT_DIR);
+            if (dir) scheduleSortDirection = dir;
+        } catch (e) {}
+
         // Дни недели
         const weekDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+        // Вспомогательные функции для времени (старая логика)
+        function parseTime(timeStr) {
+            if (!timeStr) return null;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function getDurationHours(timeStr) {
+            if (!timeStr) return 0;
+            const [start, end] = timeStr.split('-').map(t => t.trim());
+            if (!start || !end) return 0;
+            const startMinutes = parseTime(start);
+            const endMinutes = parseTime(end);
+            if (startMinutes === null || endMinutes === null) return 0;
+            let duration = endMinutes - startMinutes;
+            if (duration < 0) duration += 24 * 60;
+            return duration / 60;
+        }
+
+        function compareTime(timeStr1, timeStr2) {
+            if (!timeStr1 || !timeStr2) return 0;
+            const dur1 = getDurationHours(timeStr1);
+            const dur2 = getDurationHours(timeStr2);
+            if (dur1 < dur2) return -1;
+            if (dur1 > dur2) return 1;
+            return 0;
+        }
+
+        // Определение статуса ячейки (старая логика, но с желтым для late)
+        function getCellStatus(value, baseTime) {
+            if (!value) return '';
+            const lowerValue = value.toLowerCase().trim();
+            if (lowerValue === 'вых') return 'dayoff';
+            if (lowerValue === 'прг') return 'absent';
+            if (lowerValue === 'б') return 'sick';
+            if (lowerValue === 'отп') return 'vacation';
+            if (!baseTime) return '';
+            if (!validateTimeRange(value) || !validateTimeRange(baseTime)) return '';
+            const comparison = compareTime(value, baseTime);
+            if (comparison < 0) return 'late';   // желтый
+            if (comparison > 0) return 'overtime';
+            return '';
+        }
 
         // Загрузка данных из localStorage
         function loadData() {
@@ -1486,7 +1604,6 @@
             const data = loadData();
             const partner = data.partners.find(p => p.name === username);
 
-            // Проверяем пароль по сохранённому значению
             if (partner && partner.password === password) {
                 currentPartner = partner;
                 partnerProjects = partner.projects || [];
@@ -1496,24 +1613,19 @@
                     return;
                 }
 
-                // Устанавливаем первый доступный проект
                 currentProject = partnerProjects[0];
 
-                // Устанавливаем последний месяц для проекта
                 if (data.monthsByProject[currentProject]?.length > 0) {
                     const months = [...data.monthsByProject[currentProject]].sort();
                     currentMonth = months[months.length - 1];
                 }
 
-                // Показываем интерфейс партнера
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('partnerContainer').style.display = 'block';
                 document.body.classList.add('partner-view');
 
-                // Сохраняем сессию
                 saveSession();
 
-                // Обновляем интерфейс
                 refreshUI();
             } else {
                 showLoginError('Неверный логин или пароль');
@@ -1541,14 +1653,12 @@
         function toggleMenu(menuId) {
             const menu = document.getElementById(menuId);
 
-            // Закрываем все другие меню
             document.querySelectorAll('.context-menu').forEach(m => {
                 if (m.id !== menuId) {
                     m.classList.remove('show');
                 }
             });
 
-            // Переключаем текущее меню
             if (menu.classList.contains('show')) {
                 menu.classList.remove('show');
                 document.body.classList.remove('menu-open');
@@ -1581,14 +1691,12 @@
             return `${months[parseInt(month) - 1]} ${year}`;
         }
 
-        // Форматирование даты для отображения
         function formatDate(monthStr, day) {
             if (!monthStr) return String(day);
             const [year, month] = monthStr.split('-');
             return `${day}.${month}.${year}`;
         }
 
-        // Получение дня недели
         function getDayOfWeek(monthStr, day) {
             if (!monthStr) return '';
             const [year, month] = monthStr.split('-').map(Number);
@@ -1596,7 +1704,6 @@
             return weekDays[date.getDay()];
         }
 
-        // Форматирование даты
         function formatDateHeader(monthStr, day) {
             if (!monthStr) return String(day);
             const [year, month] = monthStr.split('-');
@@ -1604,81 +1711,16 @@
             return `${dayOfWeek}/${String(day).padStart(2, '0')}.${month}`;
         }
 
-        // Получение дней в месяце
         function getDaysInMonth(monthStr) {
             if (!monthStr) return 30;
             const [year, month] = monthStr.split('-').map(Number);
             return new Date(year, month, 0).getDate();
         }
 
-        // Валидация времени
         function validateTimeRange(timeRangeStr) {
             if (!timeRangeStr) return true;
             const regex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]-([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
             return regex.test(timeRangeStr);
-        }
-
-        // Сравнение времени
-        function compareTime(timeStr1, timeStr2) {
-            if (!timeStr1 || !timeStr2) return 0;
-
-            const parseTime = (time) => {
-                const [hours, minutes] = time.split(':').map(Number);
-                return hours * 60 + minutes;
-            };
-
-            const [start1, end1] = timeStr1.split('-').map(t => t.trim());
-            const [start2, end2] = timeStr2.split('-').map(t => t.trim());
-
-            if (!start1 || !end1 || !start2 || !end2) return 0;
-
-            const start1Minutes = parseTime(start1);
-            const end1Minutes = parseTime(end1);
-            const start2Minutes = parseTime(start2);
-            const end2Minutes = parseTime(end2);
-
-            const duration1 = end1Minutes - start1Minutes;
-            const duration2 = end2Minutes - start2Minutes;
-
-            if (duration1 < duration2) return -1;
-            if (duration1 > duration2) return 1;
-            return 0;
-        }
-
-        // Функция для расчета длительности в часах
-        function getDurationHours(timeStr) {
-            if (!timeStr) return 0;
-            const [start, end] = timeStr.split('-').map(t => t.trim());
-            if (!start || !end) return 0;
-
-            const [startHours, startMinutes] = start.split(':').map(Number);
-            const [endHours, endMinutes] = end.split(':').map(Number);
-
-            let duration = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-            if (duration < 0) duration += 24 * 60;
-
-            return duration / 60;
-        }
-
-        // Получение статуса ячейки
-        function getCellStatus(value, baseTime) {
-            if (!value) return '';
-
-            const lowerValue = value.toLowerCase().trim();
-            if (lowerValue === 'вых') return 'dayoff';
-            if (lowerValue === 'прг') return 'absent';
-            if (lowerValue === 'б') return 'sick';
-            if (lowerValue === 'отп') return 'vacation';
-
-            if (!baseTime) return '';
-
-            if (!validateTimeRange(value) || !validateTimeRange(baseTime)) return '';
-
-            const comparison = compareTime(value, baseTime);
-            if (comparison < 0) return 'late';
-            if (comparison > 0) return 'overtime';
-
-            return '';
         }
 
         // Переключение проекта
@@ -1715,7 +1757,6 @@
             const key = `${project}_${month}`;
             const allEmployees = data.employees[key] || [];
 
-            // Фильтруем сотрудников, оставляем только тех, у кого partner = имя текущего партнера
             return allEmployees.filter(emp => {
                 const dataKey = `${key}_${emp}`;
                 const empData = data.employeeData[dataKey] || {};
@@ -1733,8 +1774,6 @@
                     `<option value="${p}">${p}</option>`
                 ).join('');
                 filterProjectSelect.value = partnerProjects.includes(currentProject) ? currentProject : partnerProjects[0] || '';
-
-                // Обновляем месяцы для фильтра
                 updateFilterMonths();
             }
 
@@ -1762,12 +1801,9 @@
                     `<option value="${p}">${p}</option>`
                 ).join('');
                 schedProjectSelect.value = partnerProjects.includes(currentProject) ? currentProject : partnerProjects[0] || '';
-
-                // Обновляем список месяцев для графика
                 updateMonthsList(currentProject);
             }
 
-            // Обновляем список сотрудников
             const empProject = document.getElementById('employeeProjectSelect')?.value;
             const empMonth = document.getElementById('employeeMonthSelect')?.value;
             if (empProject && empMonth) {
@@ -1775,7 +1811,6 @@
             }
         }
 
-        // Обновление месяцев в фильтре
         function updateFilterMonths() {
             const project = document.getElementById('filterProjectSelect')?.value;
             const monthSelect = document.getElementById('filterMonthSelect');
@@ -1795,7 +1830,6 @@
             }
         }
 
-        // Применить фильтр
         function applyFilter() {
             const project = document.getElementById('filterProjectSelect').value;
             const month = document.getElementById('filterMonthSelect').value;
@@ -1808,7 +1842,6 @@
             }
         }
 
-        // Добавление оператора
         function addEmployee() {
             const project = document.getElementById('employeeProjectSelect').value;
             const month = document.getElementById('employeeMonthSelect').value;
@@ -1823,7 +1856,6 @@
                 data.employees[key] = [];
             }
 
-            // Формируем имя оператора с указанием партнера
             const employeeName = `${name} (${currentPartner.name})`;
 
             if (data.employees[key].includes(employeeName)) {
@@ -1833,7 +1865,6 @@
 
             data.employees[key].push(employeeName);
 
-            // Сохраняем информацию о партнере в данных оператора
             const dataKey = `${key}_${employeeName}`;
             if (!data.employeeData[dataKey]) {
                 data.employeeData[dataKey] = { shiftType: '', time: '', phone: '', partner: currentPartner.name };
@@ -1841,11 +1872,9 @@
                 data.employeeData[dataKey].partner = currentPartner.name;
             }
 
-            // Сохраняем в localStorage
             localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(data.employees));
             localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
 
-            // Синхронизируем с облаком
             saveToSheets();
 
             if (project === currentProject && month === currentMonth) {
@@ -1856,7 +1885,6 @@
             updateEmployeesList(project, month);
         }
 
-        // Удаление оператора
         function deleteEmployee(project, month, index) {
             const data = loadData();
             const key = `${project}_${month}`;
@@ -1869,14 +1897,12 @@
                 const dataKey = `${key}_${name}`;
                 delete data.employeeData[dataKey];
 
-                // Удаляем все записи времени для этого оператора
                 Object.keys(data.entries).forEach(entryKey => {
                     if (entryKey.startsWith(`${key}_`) && entryKey.endsWith(`_${name}`)) {
                         delete data.entries[entryKey];
                     }
                 });
 
-                // Удаляем комментарии для этого оператора
                 Object.keys(data.comments).forEach(commentKey => {
                     if (commentKey.includes(`_${name}_`)) {
                         delete data.comments[commentKey];
@@ -1887,13 +1913,11 @@
                     delete data.employees[key];
                 }
 
-                // Сохраняем в localStorage
                 localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(data.employees));
                 localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
                 localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
                 localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(data.comments));
 
-                // Синхронизируем с облаком
                 saveToSheets();
 
                 if (project === currentProject && month === currentMonth) {
@@ -1904,7 +1928,6 @@
             }
         }
 
-        // Обновление данных оператора
         function updateEmployeeData(project, month, employeeName, field, value) {
             const data = loadData();
             const dataKey = `${project}_${month}_${employeeName}`;
@@ -1920,7 +1943,6 @@
 
             data.employeeData[dataKey][field] = value;
 
-            // Если установлено базовое время, заполняем пустые дни
             if (field === 'time' && value && validateTimeRange(value)) {
                 const daysInMonth = getDaysInMonth(month);
                 const employeeKey = `${project}_${month}`;
@@ -1933,11 +1955,9 @@
                 }
             }
 
-            // Сохраняем в localStorage
             localStorage.setItem(STORAGE_KEYS.EMPLOYEE_DATA, JSON.stringify(data.employeeData));
             localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
 
-            // Синхронизируем с облаком
             saveToSheets();
 
             if (project === currentProject && month === currentMonth) {
@@ -1947,7 +1967,6 @@
             return true;
         }
 
-        // Обновление записи времени
         function updateTimeEntry(project, month, day, operator, value) {
             const data = loadData();
             const employeeKey = `${project}_${month}`;
@@ -1961,19 +1980,16 @@
                 return;
             }
 
-            // Сохраняем значение
             data.entries[entryKey] = value;
             localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
             saveToSheets();
 
-            // Проверяем, нужно ли открыть модальное окно для комментария
             const dataKey = `${project}_${month}_${operator}`;
             const employeeData = data.employeeData[dataKey] || { time: '' };
 
             const lowerValue = value.toLowerCase().trim();
             const status = getCellStatus(value, employeeData.time);
 
-            // Определяем тип для комментария
             let commentType = null;
 
             if (lowerValue === 'прг') {
@@ -1984,7 +2000,6 @@
                 commentType = 'overtime';
             }
 
-            // Если есть тип для комментария, открываем модальное окно принудительно
             if (commentType) {
                 forceCommentModal(project, month, day, operator, commentType);
             } else {
@@ -1992,7 +2007,6 @@
             }
         }
 
-        // Функция для принудительного открытия модального окна комментария
         function forceCommentModal(project, month, day, employee, type) {
             const data = loadData();
             currentCommentContext = { project, month, day, employee, type };
@@ -2000,7 +2014,6 @@
             const commentKey = getCommentKey(project, month, day, employee, type);
             const comment = data.comments[commentKey] || { text: '' };
 
-            // Устанавливаем заголовок в зависимости от типа
             let title = '';
             if (type === 'late') title = '✏️ Требуется комментарий к опозданию';
             else if (type === 'overtime') title = '✏️ Требуется комментарий к переработке';
@@ -2019,13 +2032,11 @@
 
             document.getElementById('commentText').value = comment.text || '';
 
-            // Открываем модальное окно
             const modal = document.getElementById('commentModal');
             modal.classList.add('show');
             document.body.classList.add('menu-open');
         }
 
-        // Функции для работы с комментариями
         function openCommentModal(project, month, day, employee, type) {
             const data = loadData();
             currentCommentContext = { project, month, day, employee, type };
@@ -2076,7 +2087,6 @@
                 refreshUI();
             } else {
                 alert('Пожалуйста, укажите причину');
-                // Не закрываем окно, если комментарий пустой
             }
         }
 
@@ -2096,7 +2106,6 @@
             }
         }
 
-        // Функции для сводной таблицы
         function showSummaryTable(type) {
             if (!currentProject || !currentMonth) {
                 alert('Сначала выберите проект и месяц');
@@ -2144,32 +2153,26 @@
                     if (value) {
                         const lowerValue = value.toLowerCase().trim();
 
-                        // Проверяем условие для каждого типа
                         if (type === 'absent' && lowerValue === 'прг') {
                             const commentKey = getCommentKey(currentProject, currentMonth, day, employee, 'absent');
                             const comment = data.comments[commentKey] || { text: '' };
-
+                            const absentHours = employeeData.time ? getDurationHours(employeeData.time) : 8;
                             result.push({
                                 employee: employee,
                                 partner: employeeData.partner || 'Внутренний',
                                 date: formatDate(currentMonth, day),
-                                hours: 8,
+                                hours: absentHours.toFixed(1),
                                 comment: comment.text || ''
                             });
                         } 
                         else if (type !== 'absent' && validateTimeRange(value) && validateTimeRange(employeeData.time)) {
                             const status = getCellStatus(value, employeeData.time);
-
-                            if ((type === 'late' && status === 'late') || 
-                                (type === 'overtime' && status === 'overtime')) {
-
+                            if ((type === 'late' && status === 'late') || (type === 'overtime' && status === 'overtime')) {
                                 const hours = getDurationHours(value);
                                 const baseHours = getDurationHours(employeeData.time);
                                 const diff = type === 'late' ? baseHours - hours : hours - baseHours;
-
                                 const commentKey = getCommentKey(currentProject, currentMonth, day, employee, type);
                                 const comment = data.comments[commentKey] || { text: '' };
-
                                 result.push({
                                     employee: employee,
                                     partner: employeeData.partner || 'Внутренний',
@@ -2183,9 +2186,7 @@
                 }
             });
 
-            // Сортируем по дате
             result.sort((a, b) => a.date.localeCompare(b.date));
-
             return result;
         }
 
@@ -2231,7 +2232,6 @@
             container.innerHTML = tableHtml;
         }
 
-        // Обновление списка операторов в меню
         function updateEmployeesList(project, month) {
             const list = document.getElementById('employeesList');
             if (!list) return;
@@ -2259,7 +2259,6 @@
             }).join('');
         }
 
-        // Добавление месяца
         function addMonth() {
             const project = document.getElementById('scheduleProjectSelect').value;
             const month = document.getElementById('scheduleMonthInput').value;
@@ -2277,7 +2276,6 @@
 
                 localStorage.setItem(STORAGE_KEYS.MONTHS_BY_PROJECT, JSON.stringify(data.monthsByProject));
 
-                // Синхронизируем с облаком
                 saveToSheets();
 
                 currentProject = project;
@@ -2291,7 +2289,6 @@
             }
         }
 
-        // Удаление месяца
         function deleteMonth(project, month) {
             if (confirm(`Удалить месяц ${formatMonth(month)} из проекта ${project}?`)) {
                 const data = loadData();
@@ -2326,7 +2323,6 @@
                     localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(data.entries));
                     localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(data.comments));
 
-                    // Синхронизируем с облаком
                     saveToSheets();
 
                     if (currentProject === project && currentMonth === month) {
@@ -2344,7 +2340,6 @@
             }
         }
 
-        // Обновление списка месяцев в меню
         function updateMonthsList(project) {
             const list = document.getElementById('monthsList');
             if (!list) return;
@@ -2365,7 +2360,6 @@
             `).join('');
         }
 
-        // Показать страницу статистики
         function showStatsPage() {
             if (!currentProject || !currentMonth) {
                 alert('Сначала выберите проект и месяц');
@@ -2379,7 +2373,6 @@
             closeAllMenus();
         }
 
-        // Показать страницу графика
         function showSchedulePage() {
             currentPage = 'schedule';
             document.getElementById('statsBtn').classList.remove('active');
@@ -2388,7 +2381,29 @@
             closeAllMenus();
         }
 
-        // Рендер страницы графика
+        // NEW: Функция для сортировки в графике
+        function sortSchedule(column) {
+            if (scheduleSortColumn === column) {
+                scheduleSortDirection = scheduleSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                scheduleSortColumn = column;
+                scheduleSortDirection = 'asc';
+            }
+            localStorage.setItem(STORAGE_KEYS.SCHEDULE_SORT_COLUMN, scheduleSortColumn);
+            localStorage.setItem(STORAGE_KEYS.SCHEDULE_SORT_DIR, scheduleSortDirection);
+            renderSchedulePage();
+        }
+
+        // NEW: Функция для скрытия/показа полей
+        function toggleColumns() {
+            showExtraColumns = !showExtraColumns;
+            localStorage.setItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS, showExtraColumns);
+            document.getElementById('toggleColumnsBtn').textContent = showExtraColumns ? '👁️ Скрыть поля' : '👁️ Показать поля';
+            if (currentPage === 'schedule') {
+                renderSchedulePage();
+            }
+        }
+
         function renderSchedulePage() {
             const wrapper = document.getElementById('mainContent');
             const data = loadData();
@@ -2398,11 +2413,38 @@
                 return;
             }
 
-            const employees = getPartnerEmployees(currentProject, currentMonth, data);
+            let employees = getPartnerEmployees(currentProject, currentMonth, data);
 
             if (employees.length === 0) {
                 wrapper.innerHTML = '<div class="schedule-wrapper"><div class="no-data">Нет операторов для отображения</div></div>';
                 return;
+            }
+
+            // Сортировка
+            const sortedEmployees = [...employees];
+            if (scheduleSortColumn === 'name') {
+                sortedEmployees.sort((a, b) => {
+                    return scheduleSortDirection === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
+                });
+            } else if (scheduleSortColumn === 'shift' || scheduleSortColumn === 'time' || scheduleSortColumn === 'phone') {
+                sortedEmployees.sort((a, b) => {
+                    const keyA = `${currentProject}_${currentMonth}_${a}`;
+                    const keyB = `${currentProject}_${currentMonth}_${b}`;
+                    const empA = data.employeeData[keyA] || {};
+                    const empB = data.employeeData[keyB] || {};
+                    let valA = '', valB = '';
+                    if (scheduleSortColumn === 'shift') {
+                        valA = empA.shiftType || '';
+                        valB = empB.shiftType || '';
+                    } else if (scheduleSortColumn === 'time') {
+                        valA = empA.time || '';
+                        valB = empB.time || '';
+                    } else if (scheduleSortColumn === 'phone') {
+                        valA = empA.phone || '';
+                        valB = empB.phone || '';
+                    }
+                    return scheduleSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                });
             }
 
             const daysInMonth = getDaysInMonth(currentMonth);
@@ -2410,14 +2452,14 @@
 
             let html = '<div class="schedule-wrapper">';
 
-            // Заголовки
+            // Заголовки с сортировкой
             html += '<div class="headers-container">';
-            html += '<div class="fixed-headers">';
-            html += '<div class="fixed-header-cell">Оператор</div>';
-            html += '<div class="fixed-header-cell">Смена</div>';
-            html += '<div class="fixed-header-cell">Время</div>';
-            html += '<div class="fixed-header-cell">Телефон</div>';
-            html += '<div class="fixed-header-cell">Тип</div>';
+            html += '<div class="fixed-headers" id="fixedHeaders">';
+            html += `<div class="fixed-header-cell" onclick="sortSchedule('name')" style="cursor:pointer;">Оператор ${scheduleSortColumn === 'name' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}" onclick="sortSchedule('shift')" style="cursor:pointer;">Смена ${scheduleSortColumn === 'shift' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}" onclick="sortSchedule('time')" style="cursor:pointer;">Время ${scheduleSortColumn === 'time' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}" onclick="sortSchedule('phone')" style="cursor:pointer;">Телефон ${scheduleSortColumn === 'phone' ? (scheduleSortDirection === 'asc' ? '▲' : '▼') : ''}</div>`;
+            html += `<div class="fixed-header-cell ${!showExtraColumns ? 'hidden' : ''}">Тип</div>`;
             html += '</div>';
 
             html += '<div class="scrollable-headers">';
@@ -2432,25 +2474,19 @@
             html += '</div>';
             html += '</div>';
 
-            // Строки с данными
+            // Строки
             html += '<div class="rows-container">';
 
-            employees.forEach(operator => {
+            sortedEmployees.forEach(operator => {
                 const dataKey = `${key}_${operator}`;
                 const employeeData = data.employeeData[dataKey] || { shiftType: '', time: '', phone: '' };
 
                 html += '<div class="data-row">';
+                html += '<div class="fixed-cells" id="fixedCells">';
 
-                // Фиксированная часть
-                html += '<div class="fixed-cells">';
+                html += `<div class="fixed-cell" title="${operator}"><span>${operator}</span></div>`;
 
-                // ФИО
-                html += `<div class="fixed-cell" title="${operator}">
-                    <span>${operator}</span>
-                </div>`;
-
-                // Тип смены
-                html += '<div class="fixed-cell employee-field">';
+                html += `<div class="fixed-cell employee-field ${!showExtraColumns ? 'hidden' : ''}">`;
                 html += `<select onchange="updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'shiftType', this.value)">`;
                 html += `<option value="" ${employeeData.shiftType === '' ? 'selected' : ''}>—</option>`;
                 html += `<option value="2/2" ${employeeData.shiftType === '2/2' ? 'selected' : ''}>2/2</option>`;
@@ -2458,35 +2494,24 @@
                 html += '</select>';
                 html += '</div>';
 
-                // Время смены
-                html += '<div class="fixed-cell employee-field">';
+                html += `<div class="fixed-cell employee-field ${!showExtraColumns ? 'hidden' : ''}">`;
                 const timeValid = validateTimeRange(employeeData.time);
-                html += `<input type="text" 
-                               value="${employeeData.time || ''}"
-                               placeholder="09:00-18:00"
-                               class="${employeeData.time && !timeValid ? 'error' : ''}"
-                               onchange="updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'time', this.value)">`;
+                html += `<input type="text" value="${employeeData.time || ''}" placeholder="09:00-18:00" class="${employeeData.time && !timeValid ? 'error' : ''}" onchange="updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'time', this.value)">`;
                 if (employeeData.time && !timeValid) {
                     html += '<div class="error-message">Формат: ЧЧ:ММ-ЧЧ:ММ</div>';
                 }
                 html += '</div>';
 
-                // Телефон
-                html += '<div class="fixed-cell phone-field">';
-                html += `<input type="text" 
-                               value="${employeeData.phone || ''}"
-                               placeholder="+7 (999) 999-99-99"
-                               onchange="updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'phone', this.value)">`;
+                html += `<div class="fixed-cell phone-field ${!showExtraColumns ? 'hidden' : ''}">`;
+                html += `<input type="text" value="${employeeData.phone || ''}" placeholder="+7 (999) 999-99-99" onchange="updateEmployeeData('${currentProject}', '${currentMonth}', '${operator}', 'phone', this.value)">`;
                 html += '</div>';
 
-                // Тип оператора
-                html += '<div class="fixed-cell">';
+                html += `<div class="fixed-cell ${!showExtraColumns ? 'hidden' : ''}">`;
                 html += '<span class="partner-badge partner">П</span>';
                 html += '</div>';
 
                 html += '</div>'; // fixed-cells
 
-                // Прокручиваемая часть
                 html += '<div class="scrollable-cells">';
                 for (let day = 1; day <= daysInMonth; day++) {
                     const entryKey = `${key}_${day}_${operator}`;
@@ -2494,7 +2519,6 @@
 
                     const status = getCellStatus(value, employeeData.time);
 
-                    // Проверяем наличие комментария для этого дня
                     let hasComment = false;
                     let commentType = '';
 
@@ -2514,12 +2538,7 @@
 
                     html += `<div class="scrollable-cell">
                         <div class="time-cell" style="position: relative;">
-                            <input type="text" 
-                                   value="${value}"
-                                   placeholder="чч:мм-чч:мм"
-                                   class="${value ? 'filled' : ''} ${status}"
-                                   onchange="updateTimeEntry('${currentProject}', '${currentMonth}', ${day}, '${operator}', this.value)"
-                                   oninput="this.classList.toggle('filled', this.value.length > 0)">`;
+                            <input type="text" value="${value}" placeholder="чч:мм-чч:мм" class="${value ? 'filled' : ''} ${status}" onchange="updateTimeEntry('${currentProject}', '${currentMonth}', ${day}, '${operator}', this.value)" oninput="this.classList.toggle('filled', this.value.length > 0)">`;
 
                     if (hasComment) {
                         html += `<div class="comment-indicator" onclick="openCommentModal('${currentProject}', '${currentMonth}', ${day}, '${operator}', '${commentType}')" title="Есть комментарий"></div>`;
@@ -2529,16 +2548,27 @@
                     </div>`;
                 }
                 html += '</div>'; // scrollable-cells
-
                 html += '</div>'; // data-row
             });
 
             html += '</div>'; // rows-container
             html += '</div>'; // schedule-wrapper
             wrapper.innerHTML = html;
+
+            // После рендера корректируем ширину фиксированных контейнеров
+            const fixedCells = document.getElementById('fixedCells');
+            const fixedHeaders = document.getElementById('fixedHeaders');
+            if (fixedCells && fixedHeaders) {
+                if (showExtraColumns) {
+                    fixedCells.style.width = '750px';
+                    fixedHeaders.style.width = '750px';
+                } else {
+                    fixedCells.style.width = '280px';
+                    fixedHeaders.style.width = '280px';
+                }
+            }
         }
 
-        // Рендер страницы статистики
         function renderStatsPage() {
             const wrapper = document.getElementById('mainContent');
             const data = loadData();
@@ -2564,7 +2594,6 @@
             let totalSickHours = 0;
             let totalVacationHours = 0;
 
-            // Собираем данные для сортировки
             let statsData = [];
 
             employees.forEach(employee => {
@@ -2588,13 +2617,16 @@
                         const status = getCellStatus(value, employeeData.time);
 
                         if (lowerValue === 'прг') {
-                            absentHours += 8;
+                            const absent = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            absentHours += absent;
                         } else if (lowerValue === 'б') {
-                            sickHours += 8;
+                            const sick = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            sickHours += sick;
                         } else if (lowerValue === 'отп') {
-                            vacationHours += 8;
+                            const vacation = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            vacationHours += vacation;
                         } else if (lowerValue === 'вых') {
-                            // Выходной не считаем
+                            // не считаем
                         } else if (validateTimeRange(value)) {
                             const hours = getDurationHours(value);
                             totalHours += hours;
@@ -2628,7 +2660,6 @@
                 totalVacationHours += vacationHours;
             });
 
-            // Сортировка данных
             const sortedData = [...statsData];
             if (currentSortColumn > 0) {
                 sortedData.sort((a, b) => {
@@ -2669,7 +2700,6 @@
                 `;
             });
 
-            // Добавляем итоговую строку
             tableHtml += `
                 <tr class="total-row">
                     <td>ИТОГО:</td>
@@ -2746,7 +2776,6 @@
             wrapper.innerHTML = statsHtml;
         }
 
-        // Функция сортировки статистики
         function sortStats(column) {
             if (currentSortColumn === column) {
                 currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
@@ -2757,7 +2786,6 @@
             renderStatsPage();
         }
 
-        // Функция экспорта в Excel
         function exportToExcel() {
             const data = loadData();
             const key = `${currentProject}_${currentMonth}`;
@@ -2768,10 +2796,8 @@
                 return;
             }
 
-            // Собираем данные для экспорта
             let excelData = [];
 
-            // Заголовки
             excelData.push([
                 'Оператор',
                 'Всего часов',
@@ -2810,13 +2836,16 @@
                         const status = getCellStatus(value, employeeData.time);
 
                         if (lowerValue === 'прг') {
-                            absentHours += 8;
+                            const absent = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            absentHours += absent;
                         } else if (lowerValue === 'б') {
-                            sickHours += 8;
+                            const sick = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            sickHours += sick;
                         } else if (lowerValue === 'отп') {
-                            vacationHours += 8;
+                            const vacation = employeeData.time ? getDurationHours(employeeData.time) : 8;
+                            vacationHours += vacation;
                         } else if (lowerValue === 'вых') {
-                            // Выходной не считаем
+                            // не считаем
                         } else if (validateTimeRange(value)) {
                             const hours = getDurationHours(value);
                             totalHours += hours;
@@ -2850,7 +2879,6 @@
                 ]);
             });
 
-            // Итоговая строка
             excelData.push([
                 'ИТОГО:',
                 totalHoursAll.toFixed(1),
@@ -2861,13 +2889,8 @@
                 totalVacationHours.toFixed(1)
             ]);
 
-            // Создаем CSV контент
             const csvContent = excelData.map(row => row.join(';')).join('\n');
-
-            // Добавляем BOM для правильного отображения кириллицы
             const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-
-            // Создаем ссылку для скачивания
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
 
@@ -2879,7 +2902,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Обновление UI
         function refreshUI() {
             document.getElementById('partnerName').textContent = currentPartner.name;
             document.getElementById('currentMonth').textContent = currentMonth ? formatMonth(currentMonth) : '-';
@@ -2899,7 +2921,6 @@
             updateMenuSelects();
         }
 
-        // Слушаем изменения в селектах
         document.addEventListener('change', function(e) {
             if (e.target.id === 'employeeProjectSelect' || e.target.id === 'employeeMonthSelect') {
                 const project = document.getElementById('employeeProjectSelect').value;
@@ -2915,9 +2936,8 @@
             }
         });
 
-        // Инициализация: загружаем данные из Blobs, затем проверяем сессию
         window.addEventListener('load', async function() {
-            await loadFromSheets(); // сначала загружаем из облака в localStorage
+            await loadFromSheets();
             if (loadSession()) {
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('partnerContainer').style.display = 'block';
