@@ -82,7 +82,7 @@
             top: 0;
             z-index: 10;
             min-width: min-content;
-            line-height: 1; /* убираем лишние межстрочные интервалы */
+            line-height: 1;
         }
         .fixed-headers {
             display: flex;
@@ -94,10 +94,10 @@
             z-index: 11;
         }
         .fixed-header-cell {
-            height: 60px;                 /* фиксированная высота */
+            height: 60px;
             padding: 0 10px;
             display: flex;
-            align-items: center;           /* вертикальное центрирование для одной строки */
+            align-items: center;
             border-right: 1px solid #333333;
             background: #000000;
             color: #ffd700;
@@ -123,11 +123,11 @@
             flex: 1;
         }
         .scrollable-header-cell {
-            height: 60px;                 /* точно такая же высота */
+            height: 60px;
             padding: 0 5px;
             display: flex;
             flex-direction: column;
-            justify-content: center;       /* центрируем две строки по вертикали */
+            justify-content: center;
             align-items: center;
             border-right: 1px solid #333333;
             background: #000000;
@@ -135,6 +135,7 @@
             font-weight: 600;
             font-size: 13px;
             line-height: 1;
+            flex: 0 0 100px;  /* увеличено с 80px */
         }
         .day-week {
             font-size: 10px;
@@ -187,7 +188,7 @@
             flex: 1;
         }
         .scrollable-cell {
-            flex: 0 0 80px;
+            flex: 0 0 100px;  /* увеличено с 80px */
             padding: 8px 4px;
             border-right: 1px solid #333333;
             background: #111111;
@@ -204,6 +205,7 @@
             width: 100%;
             text-align: center;
             border: 1px solid #333333;
+            word-break: break-word;  /* разрешаем перенос, но теперь ширина больше */
         }
         .time-value.late { background: #3a3a1a; border-color: #ffd700; color: #ffd700; }
         .time-value.overtime { background: #1a2a1a; border-color: #6bff6b; color: #aaffaa; }
@@ -250,12 +252,9 @@
     </div>
 
     <script>
-        // URL функций Netlify
         const GET_DATA_URL = '/.netlify/functions/getData';
+        let allData = null;
 
-        let allData = null; // полные данные из Blobs
-
-        // Загрузка данных при старте
         async function loadData() {
             try {
                 const response = await fetch(GET_DATA_URL);
@@ -277,7 +276,6 @@
             document.getElementById('scheduleContainer').innerHTML = `<div class="error-message">${msg}</div>`;
         }
 
-        // Заполнение списка проектов
         function fillProjectSelect() {
             const projectSelect = document.getElementById('projectSelect');
             if (!allData || !allData.projects || allData.projects.length === 0) {
@@ -285,11 +283,9 @@
                 return;
             }
             projectSelect.innerHTML = allData.projects.map(p => `<option value="${p}">${p}</option>`).join('');
-            // После выбора проекта заполняем месяцы и автоматически загружаем график
             updateMonthSelect(true);
         }
 
-        // Обновление списка месяцев при смене проекта
         function updateMonthSelect(shouldLoad = false) {
             const project = document.getElementById('projectSelect').value;
             const monthSelect = document.getElementById('monthSelect');
@@ -298,16 +294,13 @@
                 return;
             }
             const months = allData.monthsByProject[project];
-            // сортируем по убыванию (последний месяц первым)
             const sortedMonths = [...months].sort().reverse();
             monthSelect.innerHTML = sortedMonths.map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
-            
             if (shouldLoad) {
                 loadSchedule();
             }
         }
 
-        // Форматирование месяца
         function formatMonth(monthStr) {
             if (!monthStr) return '';
             const [year, month] = monthStr.split('-');
@@ -316,14 +309,12 @@
             return `${months[parseInt(month)-1]} ${year}`;
         }
 
-        // Получение дней в месяце
         function getDaysInMonth(monthStr) {
             if (!monthStr) return 30;
             const [year, month] = monthStr.split('-').map(Number);
             return new Date(year, month, 0).getDate();
         }
 
-        // Дни недели
         const weekDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
         function getDayOfWeek(monthStr, day) {
             const [year, month] = monthStr.split('-').map(Number);
@@ -331,7 +322,6 @@
             return weekDays[date.getDay()];
         }
 
-        // Определение статуса ячейки (для подсветки)
         function getCellStatus(value, baseTime) {
             if (!value) return '';
             const lower = value.toLowerCase().trim();
@@ -340,7 +330,6 @@
             if (lower === 'б') return 'sick';
             if (lower === 'отп') return 'vacation';
             if (!baseTime) return '';
-            // Простейшее сравнение длительности (можно улучшить)
             function getDuration(t) {
                 const parts = t.split('-');
                 if (parts.length !== 2) return 0;
@@ -359,13 +348,11 @@
             return '';
         }
 
-        // Функция для очистки имени от суффикса партнёра (удаляет всё после " (")
         function cleanEmployeeName(fullName) {
             const index = fullName.indexOf(' (');
             return index === -1 ? fullName : fullName.substring(0, index);
         }
 
-        // Построение таблицы
         function loadSchedule() {
             const project = document.getElementById('projectSelect').value;
             const month = document.getElementById('monthSelect').value;
@@ -386,7 +373,6 @@
             const daysInMonth = getDaysInMonth(month);
             let html = '<div class="schedule-wrapper">';
 
-            // Заголовки
             html += '<div class="headers-container">';
             html += '<div class="fixed-headers">';
             html += '<div class="fixed-header-cell">ФИО</div>';
@@ -400,7 +386,6 @@
             }
             html += '</div></div>';
 
-            // Строки с сотрудниками
             html += '<div class="rows-container">';
             employees.forEach(emp => {
                 const empKey = `${key}_${emp}`;
@@ -427,7 +412,6 @@
             html += '</div></div>';
             container.innerHTML = html;
 
-            // Выравнивание ширины левой фиксированной панели по ширине заголовков
             const fixedHeaders = document.querySelector('.fixed-headers');
             const fixedCells = document.querySelector('.fixed-cells');
             if (fixedHeaders && fixedCells) {
@@ -435,11 +419,9 @@
             }
         }
 
-        // События при смене проекта или месяца
         document.getElementById('projectSelect').addEventListener('change', () => updateMonthSelect(true));
         document.getElementById('monthSelect').addEventListener('change', loadSchedule);
 
-        // Инициализация
         window.addEventListener('load', loadData);
     </script>
 </body>
