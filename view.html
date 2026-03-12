@@ -52,7 +52,7 @@
             color: #ffd700;
             font-weight: 500;
         }
-        select, button {
+        select {
             background: #1a1a1a;
             border: 2px solid #333333;
             border-radius: 8px;
@@ -66,17 +66,6 @@
         select:hover, select:focus {
             border-color: #ffd700;
             outline: none;
-        }
-        button {
-            background: #ffd700;
-            color: #000000;
-            border: 2px solid #ffd700;
-            font-weight: 600;
-        }
-        button:hover {
-            background: #ffe44d;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255,215,0,0.3);
         }
         .schedule-wrapper {
             background: #111111;
@@ -112,6 +101,7 @@
             background: #000000;
             color: #ffd700;
             min-width: 120px;
+            white-space: nowrap;
         }
         .fixed-header-cell:first-child {
             width: 250px;
@@ -164,6 +154,7 @@
             align-items: center;
             background: #111111;
             color: #cccccc;
+            white-space: nowrap;
         }
         .fixed-cell:first-child {
             width: 250px;
@@ -232,7 +223,6 @@
                     <label for="monthSelect">Месяц:</label>
                     <select id="monthSelect"></select>
                 </div>
-                <button onclick="loadSchedule()">Показать</button>
             </div>
         </div>
 
@@ -277,12 +267,12 @@
                 return;
             }
             projectSelect.innerHTML = allData.projects.map(p => `<option value="${p}">${p}</option>`).join('');
-            // После выбора проекта заполняем месяцы
-            updateMonthSelect();
+            // После выбора проекта заполняем месяцы и автоматически загружаем график
+            updateMonthSelect(true);
         }
 
         // Обновление списка месяцев при смене проекта
-        function updateMonthSelect() {
+        function updateMonthSelect(shouldLoad = false) {
             const project = document.getElementById('projectSelect').value;
             const monthSelect = document.getElementById('monthSelect');
             if (!project || !allData || !allData.monthsByProject[project] || allData.monthsByProject[project].length === 0) {
@@ -293,6 +283,10 @@
             // сортируем по убыванию (последний месяц первым)
             const sortedMonths = [...months].sort().reverse();
             monthSelect.innerHTML = sortedMonths.map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
+            
+            if (shouldLoad) {
+                loadSchedule();
+            }
         }
 
         // Форматирование месяца
@@ -347,12 +341,19 @@
             return '';
         }
 
+        // Функция для очистки имени от суффикса партнёра (удаляет всё после " (")
+        function cleanEmployeeName(fullName) {
+            const index = fullName.indexOf(' (');
+            return index === -1 ? fullName : fullName.substring(0, index);
+        }
+
         // Построение таблицы
         function loadSchedule() {
             const project = document.getElementById('projectSelect').value;
             const month = document.getElementById('monthSelect').value;
             if (!project || !month || !allData) {
-                alert('Выберите проект и месяц');
+                // Если данных нет, показываем заглушку
+                document.getElementById('scheduleContainer').innerHTML = '<div class="no-data">Выберите проект и месяц</div>';
                 return;
             }
 
@@ -388,10 +389,11 @@
                 const empKey = `${key}_${emp}`;
                 const empData = allData.employeeData[empKey] || { shiftType: '', time: '' };
                 const baseTime = empData.time || '';
+                const cleanName = cleanEmployeeName(emp);
 
                 html += '<div class="data-row">';
                 html += '<div class="fixed-cells">';
-                html += `<div class="fixed-cell">${emp}</div>`;
+                html += `<div class="fixed-cell">${cleanName}</div>`;
                 html += `<div class="fixed-cell">${empData.shiftType || '—'}</div>`;
                 html += `<div class="fixed-cell">${baseTime || '—'}</div>`;
                 html += '</div>';
@@ -407,10 +409,18 @@
             });
             html += '</div></div>';
             container.innerHTML = html;
+
+            // Выравнивание ширины левой фиксированной панели по ширине заголовков
+            const fixedHeaders = document.querySelector('.fixed-headers');
+            const fixedCells = document.querySelector('.fixed-cells');
+            if (fixedHeaders && fixedCells) {
+                fixedCells.style.width = fixedHeaders.offsetWidth + 'px';
+            }
         }
 
-        // Событие при смене проекта
-        document.getElementById('projectSelect').addEventListener('change', updateMonthSelect);
+        // События при смене проекта или месяца
+        document.getElementById('projectSelect').addEventListener('change', () => updateMonthSelect(true));
+        document.getElementById('monthSelect').addEventListener('change', loadSchedule);
 
         // Инициализация
         window.addEventListener('load', loadData);
