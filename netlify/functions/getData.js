@@ -1,12 +1,26 @@
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async () => {
-console.log('NETLIFY_SITE_ID:', process.env.NETLIFY_SITE_ID);
-console.log('NETLIFY_ACCESS_TOKEN:', process.env.NETLIFY_ACCESS_TOKEN ? 'defined' : 'undefined');
+  console.log('NETLIFY_SITE_ID:', process.env.NETLIFY_SITE_ID);
+  console.log('NETLIFY_ACCESS_TOKEN defined:', !!process.env.NETLIFY_ACCESS_TOKEN);
+
   try {
-    // Просто вызываем getStore без параметров – библиотека сама найдёт NETLIFY_SITE_ID и NETLIFY_ACCESS_TOKEN
-    const store = getStore('app-data');
+    const siteID = process.env.NETLIFY_SITE_ID;
+    const token = process.env.NETLIFY_ACCESS_TOKEN;
+
+    if (!siteID || !token) {
+      throw new Error('Missing siteID or token in environment variables');
+    }
+
+    const store = getStore({
+      name: 'app-data',
+      siteID,
+      token,
+      apiURL: 'https://api.netlify.com' // можно опустить, это значение по умолчанию
+    });
+
     let data = await store.get('appData', { type: 'json' });
+
     if (!data) {
       data = {
         projects: [],
@@ -18,6 +32,7 @@ console.log('NETLIFY_ACCESS_TOKEN:', process.env.NETLIFY_ACCESS_TOKEN ? 'defined
         comments: {}
       };
     }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
