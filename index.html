@@ -1230,16 +1230,144 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        /* Стили для страницы партнеров */
+        .partners-page {
+            background: #111111;
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
+        }
+
+        .partners-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333333;
+        }
+
+        .partners-header h2 {
+            color: #ffd700;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .partners-table-container {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #333333;
+            overflow-x: auto;
+        }
+
+        .partners-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        .partners-table th {
+            background: #000000;
+            color: #ffd700;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #ffd700;
+            white-space: nowrap;
+        }
+
+        .partners-table td {
+            padding: 15px;
+            color: #cccccc;
+            border-bottom: 1px solid #333333;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .partners-table tr:hover td {
+            background: #222222;
+        }
+
+        .partners-table .project-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .partners-table .project-list li {
+            margin-bottom: 5px;
+        }
+
+        .partners-table .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .partners-table .actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .partners-table .edit-btn {
+            background: #6b8cff;
+            color: white;
+        }
+
+        .partners-table .edit-btn:hover {
+            background: #8aa5ff;
+        }
+
+        .partners-table .delete-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .partners-table .delete-btn:hover {
+            background: #ff8a8a;
+        }
+
+        .add-partner-btn {
+            padding: 12px 25px;
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            border-radius: 12px;
+            color: #ffd700;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .add-partner-btn:hover {
+            background: #ffd700;
+            color: #000000;
+        }
     </style>
 </head>
 <body>
     <!-- Триггер бокового меню (невидимая полоса слева) -->
     <div class="side-menu-trigger"></div>
     
-    <!-- Боковое меню (без смайликов) -->
+    <!-- Боковое меню -->
     <div class="side-menu">
         <button class="menu-btn" onclick="showStatsPage()">Статистика</button>
-        <button class="menu-btn" onclick="toggleMenu('partnersMenu')">Партнеры</button>
+        <button class="menu-btn" onclick="showPartnersPage()">Партнеры</button>
         <button class="menu-btn" onclick="toggleMenu('filterMenu')">Фильтр</button>
         <button class="menu-btn" onclick="toggleMenu('employeesMenu')">Сотрудники</button>
         <button class="menu-btn" onclick="toggleMenu('projectsMenu')">Проекты</button>
@@ -1266,13 +1394,10 @@
         <!-- Вкладки проектов -->
         <div class="project-tabs" id="projectTabs"></div>
         
-        <!-- Кнопки для сводной таблицы (скрыты) -->
-        <div class="summary-buttons" id="summaryButtons" style="display: none;"></div>
-        
-        <!-- Основной контент (график или статистика) -->
+        <!-- Основной контент (график, статистика или партнеры) -->
         <div id="mainContent"></div>
         
-        <!-- Инструкция по цветам -->
+        <!-- Инструкция по цветам (скрывается на страницах статистики и партнеров) -->
         <div class="instruction" id="instruction">
             <div class="instruction-item">
                 <div class="color-box late"></div>
@@ -1395,10 +1520,10 @@
         </div>
     </div>
 
-    <!-- Меню Партнеры -->
+    <!-- Меню Партнеры (только для добавления, без списка) -->
     <div id="partnersMenu" class="context-menu">
         <div class="menu-header">
-            <span>Партнеры</span>
+            <span>Добавление партнера</span>
             <button class="menu-close" onclick="closeMenu('partnersMenu')">✕</button>
         </div>
         <div class="menu-content">
@@ -1421,11 +1546,6 @@
                 </div>
             </div>
             <button onclick="addPartner()">➕ Добавить партнера</button>
-            
-            <div class="menu-item" style="margin-top: 20px;">
-                <label>Список партнеров:</label>
-                <div class="items-list" id="partnersList"></div>
-            </div>
         </div>
     </div>
     
@@ -2443,6 +2563,14 @@
             closeAllMenus();
         }
 
+        // Новая функция для отображения страницы партнеров
+        function showPartnersPage() {
+            state.currentPage = 'partners';
+            saveState();
+            refreshUI();
+            closeAllMenus();
+        }
+
         // Функции для работы с партнерами
         function generatePartnerPassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -2514,10 +2642,10 @@
                 if (checkbox) checkbox.checked = false;
             });
 
-            updatePartnersList();
-            updateMenuSelects();
-
-            alert(`Партнер "${name}" успешно создан!\nЛогин: ${name}\nПароль: ${password}\n\nСообщите эти данные партнеру для входа.`);
+            closeMenu('partnersMenu');
+            if (state.currentPage === 'partners') {
+                renderPartnersPage();
+            }
         }
 
         function deletePartner(index) {
@@ -2526,8 +2654,9 @@
                 state.partners.splice(index, 1);
                 logHistory('Удалён партнер', partner.name);
                 saveState();
-                updatePartnersList();
-                updateMenuSelects();
+                if (state.currentPage === 'partners') {
+                    renderPartnersPage();
+                }
             }
         }
 
@@ -2580,32 +2709,106 @@
 
             logHistory('Изменены проекты партнера', `${state.partners[editingPartnerIndex].name}: ${oldProjects.join(', ')} -> ${selectedProjects.join(', ')}`);
             saveState();
-            updatePartnersList();
-            updateMenuSelects();
             closeEditPartnerModal();
+            if (state.currentPage === 'partners') {
+                renderPartnersPage();
+            }
         }
 
-        function updatePartnersList() {
-            const list = document.getElementById('partnersList');
-            if (!list) return;
+        // Функция для подсчета количества операторов у партнера по проектам
+        function getPartnerOperatorsCount() {
+            const result = {}; // { partnerName: { projectName: count } }
+            // Инициализируем для каждого партнера пустой объект
+            state.partners.forEach(p => {
+                result[p.name] = {};
+            });
 
-            if (state.partners.length === 0) {
-                list.innerHTML = '<div class="list-item">Нет партнеров</div>';
-                return;
+            // Проходим по всем записям employeeData
+            Object.keys(state.employeeData).forEach(key => {
+                const data = state.employeeData[key];
+                if (data.partner) {
+                    const partnerName = data.partner;
+                    if (result[partnerName]) {
+                        // Из ключа извлекаем проект (первая часть до _)
+                        const project = key.split('_')[0];
+                        if (!result[partnerName][project]) {
+                            result[partnerName][project] = new Set();
+                        }
+                        // Имя сотрудника - последняя часть после последнего _
+                        const parts = key.split('_');
+                        const employeeName = parts.slice(2).join('_'); // может быть с пробелами, но в ключе имя целиком
+                        result[partnerName][project].add(employeeName);
+                    }
+                }
+            });
+
+            // Преобразуем Set в размер
+            const counts = {};
+            Object.keys(result).forEach(partner => {
+                counts[partner] = {};
+                Object.keys(result[partner]).forEach(project => {
+                    counts[partner][project] = result[partner][project].size;
+                });
+            });
+            return counts;
+        }
+
+        // Рендер страницы партнеров
+        function renderPartnersPage() {
+            const wrapper = document.getElementById('mainContent');
+            const operatorCounts = getPartnerOperatorsCount();
+
+            let tableRows = '';
+            state.partners.forEach((partner, index) => {
+                const projectsList = partner.projects.map(proj => {
+                    const count = (operatorCounts[partner.name] && operatorCounts[partner.name][proj]) || 0;
+                    return `<li>${proj} (${count} оп.)</li>`;
+                }).join('');
+
+                tableRows += `
+                    <tr>
+                        <td>${partner.name}</td>
+                        <td>${partner.name}</td>
+                        <td>${partner.password}</td>
+                        <td><ul class="project-list">${projectsList}</ul></td>
+                        <td class="actions">
+                            <button class="edit-btn" onclick="editPartner(${index})">✏️ Ред.</button>
+                            <button class="delete-btn" onclick="deletePartner(${index})">✕ Удалить</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (tableRows === '') {
+                tableRows = '<tr><td colspan="5" style="text-align:center; padding:40px;">Нет партнеров</td></tr>';
             }
 
-            list.innerHTML = state.partners.map((partner, index) => `
-                <div class="list-item">
-                    <span>
-                        ${partner.name}
-                        <small style="color: #8f9bb3; margin-left: 5px;">(логин: ${partner.name}, пароль: ${partner.password})</small>
-                    </span>
-                    <div class="item-actions">
-                        <button class="edit-btn" onclick="editPartner(${index})">✏️</button>
-                        <button onclick="deletePartner(${index})">✕</button>
+            const html = `
+                <div class="partners-page">
+                    <div class="partners-header">
+                        <h2>👥 Список партнеров</h2>
+                        <button class="add-partner-btn" onclick="toggleMenu('partnersMenu')">➕ Добавить партнера</button>
+                    </div>
+                    <div class="partners-table-container">
+                        <table class="partners-table">
+                            <thead>
+                                <tr>
+                                    <th>Наименование</th>
+                                    <th>Логин</th>
+                                    <th>Пароль</th>
+                                    <th>Подключенные проекты (кол-во операторов)</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            `).join('');
+            `;
+
+            wrapper.innerHTML = html;
         }
 
         // Функции для работы с комментариями
@@ -2850,24 +3053,25 @@
         function refreshUI() {
             document.getElementById('currentProjectName').textContent = state.currentProject || '-';
             document.getElementById('currentMonth').textContent = state.currentMonth ? formatMonth(state.currentMonth) : '-';
-            // Текст кнопки в меню обновляется в toggleColumns, здесь не нужно
 
             updateProjectTabs();
 
             if (state.currentPage === 'stats') {
                 renderStatsPage();
                 document.getElementById('instruction').style.display = 'none';
-                document.getElementById('summaryButtons').style.display = 'none';
-                document.getElementById('statsBtn').classList.add('active');
+            } else if (state.currentPage === 'partners') {
+                renderPartnersPage();
+                document.getElementById('instruction').style.display = 'none';
             } else {
                 renderSchedulePage();
                 document.getElementById('instruction').style.display = 'flex';
-                document.getElementById('summaryButtons').style.display = 'none';
-                document.getElementById('statsBtn').classList.remove('active');
             }
 
             updateProjectsList();
-            updatePartnersList();
+            // Обновляем список партнеров только если нужно (но на странице партнеров он уже отрисован)
+            if (state.currentPage !== 'partners') {
+                // ничего не делаем, список партнеров не показываем
+            }
 
             if (state.currentProject) {
                 updateMonthsList(state.currentProject);
@@ -2892,7 +3096,7 @@
             `).join('');
         }
 
-        // Рендер страницы графика (с сортировкой и динамической шириной)
+        // Рендер страницы графика (без изменений, оставлен как был)
         function renderSchedulePage() {
             const wrapper = document.getElementById('mainContent');
 
@@ -3083,7 +3287,7 @@
             }
         }
 
-        // Рендер страницы статистики (старая логика с исправлением прогула, отпуска, больничного)
+        // Рендер страницы статистики (без изменений)
         function renderStatsPage() {
             const wrapper = document.getElementById('mainContent');
 
