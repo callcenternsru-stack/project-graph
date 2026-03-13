@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -16,7 +17,7 @@
         body {
             background: #000000;
             margin: 0;
-            padding: 20px;
+            padding: 20px 20px 20px 60px; /* отступ для бокового меню */
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -114,6 +115,71 @@
             display: none;
         }
 
+        /* ===== БОКОВОЕ МЕНЮ (как в админке) ===== */
+        .side-menu-trigger {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100vh;
+            background: transparent;
+            z-index: 1001;
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100vh;
+            background: #111111;
+            border-right: 2px solid #ffd700;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.7);
+            transition: left 0.3s ease;
+            z-index: 1002;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .side-menu-trigger:hover + .side-menu,
+        .side-menu:hover {
+            left: 0;
+        }
+
+        .side-menu .menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            border-left: 4px solid transparent;
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .side-menu .menu-btn:hover {
+            background: #1a1a1a;
+            border-left-color: #ffd700;
+        }
+
+        .side-menu .menu-btn.logout {
+            color: #ff6b6b;
+        }
+
+        .side-menu .menu-btn.logout:hover {
+            background: #ff6b6b;
+            color: #000000;
+            border-left-color: #ff6b6b;
+        }
+
         /* Основной интерфейс партнера */
         .partner-container {
             max-width: 1800px;
@@ -144,23 +210,23 @@
         }
 
         .partner-badge {
-            background: #ffd700;
-            color: #000000;
-            padding: 10px 25px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 18px;
-            border: 2px solid #ffd700;
-        }
-
-        .month-badge {
-            background: #1a1a1a;
+            background: transparent;
+            border: none;
             color: #ffd700;
             padding: 10px 25px;
             border-radius: 30px;
-            font-weight: 500;
-            font-size: 16px;
-            border: 1px solid #ffd700;
+            font-weight: 600;       /* одинаковый вес с месяцем */
+            font-size: 18px;
+        }
+
+        .month-badge {
+            background: transparent;
+            border: none;
+            color: #ffd700;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;       /* одинаковый вес с названием партнёра */
+            font-size: 18px;
         }
 
         .sync-indicator {
@@ -179,84 +245,12 @@
             100% { opacity: 1; }
         }
 
-        .logout-btn {
-            padding: 10px 20px;
-            background: #222222;
-            border: 1px solid #ff6b6b;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
-            color: #ff6b6b;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .logout-btn:hover {
-            background: #ff6b6b;
-            color: #000000;
-            transform: translateY(-2px);
-        }
-
-        /* Кнопки действий партнера */
+        /* Старые кнопки в шапке скрыты */
         .partner-action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            display: none;
         }
 
-        .partner-action-btn {
-            padding: 10px 20px;
-            background: #222222;
-            border: 1px solid #ffd700;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
-            white-space: nowrap;
-            color: #ffd700;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .partner-action-btn:hover {
-            background: #ffd700;
-            color: #000000;
-            transform: translateY(-2px);
-            border-color: #ffd700;
-        }
-
-        .partner-action-btn.stats {
-            background: #222222;
-            color: #ffd700;
-            border: 1px solid #ffd700;
-        }
-
-        .partner-action-btn.stats:hover {
-            background: #ffd700;
-            color: #000000;
-        }
-
-        .partner-action-btn.active {
-            background: #ffd700;
-            color: #000000;
-            border-color: #ffd700;
-        }
-
-        .partner-action-btn.toggle-cols {
-            background: #222222;
-            color: #ffd700;
-            border: 1px solid #ffd700;
-        }
-
-        .partner-action-btn.toggle-cols:hover {
-            background: #ffd700;
-            color: #000000;
-        }
-
-        /* Вкладки проектов (стиль с полосками) */
+        /* Вкладки проектов */
         .project-tabs {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
@@ -589,7 +583,6 @@
             color: #666666;
         }
 
-        /* Индикатор комментария */
         .comment-indicator {
             position: absolute;
             top: 2px;
@@ -1156,6 +1149,17 @@
     </style>
 </head>
 <body>
+    <!-- Боковое меню (как в админке, без смайликов) -->
+    <div class="side-menu-trigger"></div>
+    <div class="side-menu">
+        <button class="menu-btn" onclick="showStatsPage()">Статистика</button>
+        <button class="menu-btn" onclick="toggleMenu('filterMenu')">Фильтр</button>
+        <button class="menu-btn" onclick="toggleMenu('employeesMenu')">Сотрудники</button>
+        <button class="menu-btn" onclick="toggleMenu('scheduleMenu')">График</button>
+        <button class="menu-btn" id="toggleColumnsBtn" onclick="toggleColumns()">Скрыть поля</button>
+        <button class="menu-btn logout" onclick="logout()">Выйти</button>
+    </div>
+
     <!-- Форма входа -->
     <div class="login-container" id="loginContainer">
         <h2>🤝 Вход для партнера</h2>
@@ -1181,14 +1185,7 @@
                 <div class="month-badge" id="currentMonth">-</div>
                 <div class="sync-indicator" id="syncIndicator" title="Данные синхронизируются с Netlify Blobs"></div>
             </div>
-            <div class="partner-action-buttons">
-                <button class="partner-action-btn stats" onclick="showStatsPage()" id="statsBtn">Статистика</button>
-                <button class="partner-action-btn toggle-cols" onclick="toggleColumns()" id="toggleColumnsBtn">👁️ Скрыть поля</button>
-                <button class="partner-action-btn" onclick="toggleMenu('filterMenu')">Фильтр</button>
-                <button class="partner-action-btn" onclick="toggleMenu('employeesMenu')">Сотрудники</button>
-                <button class="partner-action-btn" onclick="toggleMenu('scheduleMenu')">График</button>
-                <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
-            </div>
+            <!-- Кнопки действий удалены из шапки, они теперь в боковом меню -->
         </div>
 
         <!-- Вкладки проектов (только доступные партнеру) -->
@@ -1457,15 +1454,15 @@
         // Для сводной таблицы
         let currentSummaryType = null;
 
-        // NEW: Переменные для скрытия полей
+        // Переменные для скрытия полей
         let showExtraColumns = true;
         try {
             const saved = localStorage.getItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS);
             if (saved !== null) showExtraColumns = saved === 'true';
         } catch (e) {}
 
-        // NEW: Переменные для сортировки в графике
-        let scheduleSortColumn = 'name'; // 'name', 'shift', 'time', 'phone'
+        // Переменные для сортировки в графике
+        let scheduleSortColumn = 'name';
         let scheduleSortDirection = 'asc';
         try {
             const col = localStorage.getItem(STORAGE_KEYS.SCHEDULE_SORT_COLUMN);
@@ -2370,7 +2367,6 @@
             }
 
             currentPage = 'stats';
-            document.getElementById('statsBtn').classList.add('active');
             renderStatsPage();
             document.getElementById('instruction').style.display = 'none';
             closeAllMenus();
@@ -2378,13 +2374,12 @@
 
         function showSchedulePage() {
             currentPage = 'schedule';
-            document.getElementById('statsBtn').classList.remove('active');
             renderSchedulePage();
             document.getElementById('instruction').style.display = 'flex';
             closeAllMenus();
         }
 
-        // NEW: Функция для сортировки в графике
+        // Функция для сортировки в графике
         function sortSchedule(column) {
             if (scheduleSortColumn === column) {
                 scheduleSortDirection = scheduleSortDirection === 'asc' ? 'desc' : 'asc';
@@ -2397,11 +2392,14 @@
             renderSchedulePage();
         }
 
-        // NEW: Функция для скрытия/показа полей
+        // Функция для скрытия/показа полей (теперь работает с кнопкой в боковом меню)
         function toggleColumns() {
             showExtraColumns = !showExtraColumns;
             localStorage.setItem(STORAGE_KEYS.SHOW_EXTRA_COLUMNS, showExtraColumns);
-            document.getElementById('toggleColumnsBtn').textContent = showExtraColumns ? '👁️ Скрыть поля' : '👁️ Показать поля';
+            const btn = document.getElementById('toggleColumnsBtn');
+            if (btn) {
+                btn.textContent = showExtraColumns ? 'Скрыть поля' : 'Показать поля';
+            }
             if (currentPage === 'schedule') {
                 renderSchedulePage();
             }
@@ -2914,11 +2912,9 @@
             if (currentPage === 'stats') {
                 renderStatsPage();
                 document.getElementById('instruction').style.display = 'none';
-                document.getElementById('statsBtn').classList.add('active');
             } else {
                 renderSchedulePage();
                 document.getElementById('instruction').style.display = 'flex';
-                document.getElementById('statsBtn').classList.remove('active');
             }
 
             updateMenuSelects();
@@ -2962,4 +2958,3 @@
         });
     </script>
 </body>
-</html>
