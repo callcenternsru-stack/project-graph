@@ -1,12 +1,10 @@
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
-  // Разрешаем только GET-запросы
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // Получаем параметры запроса
   const code = event.queryStringParameters?.code;
   const fileName = event.queryStringParameters?.file;
 
@@ -17,12 +15,10 @@ exports.handler = async (event) => {
     };
   }
 
-  // Формируем ключ файла с расширением (новый формат)
   let fileKey = `${code}/${fileName}`;
   console.log(`[getFile] Request for code: ${code}, file: ${fileName}`);
 
   try {
-    // Получаем доступ к хранилищу
     const store = getStore({
       name: 'candidates-data',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -30,11 +26,9 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Пытаемся получить файл по полному имени (с расширением)
     console.log(`[getFile] Trying key: ${fileKey}`);
     let fileData = await store.get(fileKey, { type: 'arrayBuffer' });
 
-    // Если не найден, пробуем без расширения (для старых данных)
     if (!fileData) {
       const baseName = fileName.split('.').slice(0, -1).join('.');
       if (baseName) {
@@ -65,13 +59,17 @@ exports.handler = async (event) => {
 
     console.log(`[getFile] File found, size: ${fileData.byteLength} bytes, returning`);
 
+    // !!! ВАЖНО: преобразуем ArrayBuffer в Buffer, затем в Base64
+    const buffer = Buffer.from(fileData);
+    const base64 = buffer.toString('base64');
+
     return {
       statusCode: 200,
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="${fileName}"`
       },
-      body: fileData.toString('base64'),
+      body: base64,
       isBase64Encoded: true
     };
   } catch (error) {
