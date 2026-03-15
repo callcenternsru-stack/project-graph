@@ -714,6 +714,8 @@
         <button class="menu-btn" onclick="switchTab('allForms')">Все анкеты</button>
         <button class="menu-btn" onclick="switchTab('auto')">Анкеты авто</button>
         <button class="menu-btn" onclick="switchTab('manual')">Анкеты ручные</button>
+        <!-- Новая кнопка "Характеристики" -->
+        <button class="menu-btn" onclick="switchTab('characteristics')">Характеристики</button>
     </div>
 
     <div class="admin-container">
@@ -779,6 +781,41 @@
         </div>
     </div>
 
+    <!-- Новое модальное окно для добавления характеристики -->
+    <div id="characteristicModal" class="modal">
+        <div class="modal-header">
+            <span>Добавить характеристику</span>
+            <button class="modal-close" onclick="closeCharacteristicModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <div class="form-group">
+                <label>Проект</label>
+                <select id="charProjectSelect">
+                    <option value="">— выберите проект —</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Параметр</label>
+                <select id="charParamSelect" onchange="updateCharValueOptions()">
+                    <option value="">— выберите параметр —</option>
+                    <option value="os">Операционная система</option>
+                    <option value="connectionType">Тип подключения</option>
+                    <option value="internetSpeed">Скорость интернета</option>
+                    <option value="ram">Оперативная память (RAM)</option>
+                    <option value="cores">Кол-во ядер</option>
+                    <option value="cpuFreq">частота процессора МБ/сек</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Значение</label>
+                <select id="charValueSelect">
+                    <option value="">— выберите значение —</option>
+                </select>
+            </div>
+            <button class="save-btn" onclick="saveCharacteristic()">Сохранить</button>
+        </div>
+    </div>
+
     <!-- Скрытый input для загрузки Excel -->
     <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display: none;">
 
@@ -797,8 +834,37 @@
             projectTrainingComments: {},
             scheduleMonths: [],
             autoForms: [],
-            manualForms: [],      // запятая здесь была пропущена — ИСПРАВЛЕНО
-            allForms: []          // добавлено новое поле
+            manualForms: [],
+            allForms: [],
+            characteristics: [] // новое поле для характеристик
+        };
+
+        // Фиксированные параметры и их возможные значения
+        const parameterOptions = {
+            os: {
+                label: "Операционная система",
+                values: ["Windows 10", "Windows 10 Pro", "Windows 11", "Windows 11 Pro"]
+            },
+            connectionType: {
+                label: "Тип подключения",
+                values: ["Wi-Fi", "LAN"]
+            },
+            internetSpeed: {
+                label: "Скорость интернета",
+                values: ["20 Мбит/с", "40 Мбит/с", "60 Мбит/с", "80 Мбит/с"]
+            },
+            ram: {
+                label: "Оперативная память (RAM)",
+                values: ["2 ГБ", "4 ГБ", "8 ГБ", "16 ГБ"]
+            },
+            cores: {
+                label: "Кол-во ядер",
+                values: ["2", "4", "6", "8"]
+            },
+            cpuFreq: {
+                label: "частота процессора МБ/сек",
+                values: ["2", "3", "4"]
+            }
         };
 
         let currentTab = 'recruiters';
@@ -857,7 +923,7 @@
                     trainingCommentsRes,
                     monthsRes,
                     manualFormsRes,
-                    allFormsRes                // добавлен новый запрос
+                    allFormsRes
                 ] = await Promise.all([
                     fetch('/.netlify/functions/getRecruiters'),
                     fetch('/.netlify/functions/getCallResults'),
@@ -871,7 +937,7 @@
                     fetch('/.netlify/functions/getProjectTrainingComments'),
                     fetch('/.netlify/functions/getScheduleMonths'),
                     fetch('/.netlify/functions/getManualForms'),
-                    fetch('/.netlify/functions/getAllForms')   // новый вызов
+                    fetch('/.netlify/functions/getAllForms')
                 ]);
 
                 state.recruiters = await recruitersRes.json();
@@ -886,11 +952,18 @@
                 state.projectTrainingComments = await trainingCommentsRes.json();
                 state.scheduleMonths = await monthsRes.json();
                 state.manualForms = await manualFormsRes.json();
-                state.allForms = await allFormsRes.json();      // сохранение данных
+                state.allForms = await allFormsRes.json();
 
                 // Автоанкеты загружаются отдельно (они могут быть большими)
                 const autoRes = await fetch('/.netlify/functions/getResults');
                 state.autoForms = await autoRes.json();
+
+                // Здесь можно загрузить характеристики, если есть серверная функция
+                // пока оставим пустым или загрузим из localStorage для демо
+                const savedChars = localStorage.getItem('characteristics');
+                if (savedChars) {
+                    state.characteristics = JSON.parse(savedChars);
+                }
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
                 showNotification('Не удалось загрузить данные', 'error');
@@ -902,7 +975,8 @@
             if (scheduleOnly) return;
             currentTab = tabId;
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => btn.classList.remove('active'));
-            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'allForms', 'auto', 'manual'].indexOf(tabId);
+            // обновим индексы для кнопок (добавили characteristics)
+            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'allForms', 'auto', 'manual', 'characteristics'].indexOf(tabId);
             if (index !== -1) {
                 document.querySelectorAll('.side-menu .menu-btn')[index].classList.add('active');
             }
@@ -925,10 +999,12 @@
                 renderAutoForms(area);
             } else if (currentTab === 'manual') {
                 renderManualForms(area);
+            } else if (currentTab === 'characteristics') {
+                renderCharacteristics(area);
             }
         }
 
-        // ========== РЕКРУТЕРЫ ==========
+        // ========== РЕКРУТЕРЫ (без изменений) ==========
         function renderRecruiters(container) {
             let html = `
                 <div class="section-header">
@@ -971,7 +1047,7 @@
             container.innerHTML = html;
         }
 
-        // ========== БАЗА КОНТАКТОВ ==========
+        // ========== БАЗА КОНТАКТОВ (без изменений) ==========
         function renderCandidates(container) {
             const headers = [
                 { label: 'Дата', field: 'createdAt' },
@@ -1083,7 +1159,7 @@
             });
         }
 
-        // ========== СКРИПТЫ ==========
+        // ========== СКРИПТЫ (без изменений) ==========
         function renderScripts(container) {
             let html = `
                 <div class="section-header">
@@ -1122,7 +1198,7 @@
             container.innerHTML = html;
         }
 
-        // ========== ГРАФИК ==========
+        // ========== ГРАФИК (без изменений) ==========
         function renderSchedulePage(container) {
             let allMonths = [...state.scheduleMonths];
             if (!allMonths.includes(currentScheduleMonth)) {
@@ -1203,7 +1279,7 @@
             return html;
         }
 
-        // ========== ВСЕ АНКЕТЫ (ЗАГЛУШКА) ==========
+        // ========== ВСЕ АНКЕТЫ (без изменений) ==========
         function renderAllForms(container) {
             container.innerHTML = `
                 <div class="section-header">
@@ -1215,12 +1291,12 @@
             `;
         }
 
-        // ========== АНКЕТЫ АВТО (ВСЕ АНКЕТЫ, включая ожидающие) ==========
+        // ========== АНКЕТЫ АВТО (без изменений) ==========
         async function renderAutoForms(container) {
             container.innerHTML = '<div class="loader">Загрузка данных...</div>';
 
             try {
-                const forms = state.allForms; // используем все анкеты
+                const forms = state.allForms;
 
                 let html = `
                     <div class="section-header">
@@ -1248,7 +1324,6 @@
                 if (!forms || forms.length === 0) {
                     html += '<tr><td colspan="10" style="text-align:center;">Нет анкет</td></tr>';
                 } else {
-                    // Базовый URL для скачивания файлов через getFile
                     const baseUrl = `${window.location.protocol}//${window.location.host}/.netlify/functions/getFile`;
 
                     forms.forEach(item => {
@@ -1257,7 +1332,6 @@
                         const form = item.formData || {};
                         const code = item.code || '';
 
-                        // Ссылки на файлы только для completed
                         const reportLink = (item.status === 'completed')
                             ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=report.txt" class="download-btn" target="_blank">📄 report.txt</a>`
                             : '—';
@@ -1303,7 +1377,7 @@
             }
         }
 
-        // ========== АНКЕТЫ РУЧНЫЕ (С СЕРВЕРА) ==========
+        // ========== АНКЕТЫ РУЧНЫЕ (без изменений) ==========
         function renderManualForms(container) {
             let html = `
                 <div class="section-header">
@@ -1347,7 +1421,116 @@
             container.innerHTML = html;
         }
 
-        // ========== ОБРАБОТКА ИЗМЕНЕНИЙ В ГРАФИКЕ ==========
+        // ========== НОВАЯ ФУНКЦИЯ ДЛЯ ХАРАКТЕРИСТИК ==========
+        function renderCharacteristics(container) {
+            // Обновляем список проектов в модальном окне при открытии вкладки
+            updateCharProjectSelect();
+
+            let html = `
+                <div class="section-header">
+                    <h2>Характеристики для проверки кандидатов</h2>
+                    <button class="add-btn" onclick="openCharacteristicModal()">+ Добавить характеристику</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Проект</th>
+                                <th>Параметр</th>
+                                <th>Значение</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (state.characteristics.length === 0) {
+                html += '<tr><td colspan="4" style="text-align:center;">Нет характеристик</td></tr>';
+            } else {
+                state.characteristics.forEach((char, index) => {
+                    const paramLabel = parameterOptions[char.param]?.label || char.param;
+                    html += `
+                        <tr>
+                            <td>${char.project || '—'}</td>
+                            <td>${paramLabel}</td>
+                            <td>${char.value}</td>
+                            <td class="actions">
+                                <button class="delete-btn" onclick="deleteCharacteristic(${index})">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        // ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ХАРАКТЕРИСТИКАМИ ==========
+        function updateCharProjectSelect() {
+            const select = document.getElementById('charProjectSelect');
+            if (!select) return;
+            const projects = state.scripts.map(s => s.title).filter(p => p);
+            select.innerHTML = '<option value="">— выберите проект —</option>' +
+                projects.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        function updateCharValueOptions() {
+            const paramSelect = document.getElementById('charParamSelect');
+            const valueSelect = document.getElementById('charValueSelect');
+            const param = paramSelect.value;
+            if (!param) {
+                valueSelect.innerHTML = '<option value="">— выберите значение —</option>';
+                return;
+            }
+            const values = parameterOptions[param]?.values || [];
+            valueSelect.innerHTML = '<option value="">— выберите значение —</option>' +
+                values.map(v => `<option value="${v}">${v}</option>`).join('');
+        }
+
+        function openCharacteristicModal() {
+            // Обновляем список проектов перед открытием
+            updateCharProjectSelect();
+            // Сбрасываем выбор параметра и значения
+            document.getElementById('charParamSelect').value = '';
+            document.getElementById('charValueSelect').innerHTML = '<option value="">— выберите значение —</option>';
+            document.getElementById('characteristicModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeCharacteristicModal() {
+            document.getElementById('characteristicModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        function saveCharacteristic() {
+            const project = document.getElementById('charProjectSelect').value;
+            const param = document.getElementById('charParamSelect').value;
+            const value = document.getElementById('charValueSelect').value;
+
+            if (!project || !param || !value) {
+                showNotification('Заполните все поля', 'error');
+                return;
+            }
+
+            // Добавляем в состояние
+            state.characteristics.push({ project, param, value });
+            // Сохраняем в localStorage для демонстрации (позже будет на сервер)
+            localStorage.setItem('characteristics', JSON.stringify(state.characteristics));
+            closeCharacteristicModal();
+            renderContent(); // перерисовываем текущую вкладку
+            showNotification('Характеристика добавлена', 'success');
+        }
+
+        function deleteCharacteristic(index) {
+            if (confirm('Удалить характеристику?')) {
+                state.characteristics.splice(index, 1);
+                localStorage.setItem('characteristics', JSON.stringify(state.characteristics));
+                renderContent();
+                showNotification('Удалено', 'success');
+            }
+        }
+
+        // ========== ОБРАБОТКА ИЗМЕНЕНИЙ В ГРАФИКЕ (без изменений) ==========
         function handleTimeChange(input) {
             const type = input.dataset.type;
             const project = input.dataset.project;
@@ -1711,7 +1894,6 @@
                             state.recruiters.push(saved.recruiter);
                         }
                     } else {
-                        // Для редактирования используем тот же saveRecruiter с id
                         const oldItem = state.recruiters[editingId];
                         response = await fetch('/.netlify/functions/saveRecruiter', {
                             method: 'POST',
