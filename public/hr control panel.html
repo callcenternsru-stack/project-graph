@@ -275,7 +275,7 @@
             background: #111111;
             border-radius: 24px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-            width: 900px; /* увеличена ширина */
+            width: 1000px; /* увеличена ширина для размещения всех полей */
             max-width: calc(100vw - 40px);
             z-index: 10000;
             display: none;
@@ -328,14 +328,14 @@
 
         .modal-content .form-row {
             display: flex;
+            flex-wrap: wrap;
             gap: 20px;
-            align-items: flex-end;
             margin-bottom: 20px;
         }
 
         .modal-content .form-group {
-            flex: 1;
-            min-width: 0;
+            flex: 1 1 calc(33.333% - 20px);
+            min-width: 200px;
         }
 
         .modal-content label {
@@ -790,40 +790,83 @@
         </div>
     </div>
 
-    <!-- Новое модальное окно для добавления характеристики (увеличенное, с горизонтальным расположением) -->
+    <!-- Новое модальное окно для добавления всех характеристик проекта (увеличенное) -->
     <div id="characteristicModal" class="modal">
         <div class="modal-header">
-            <span>Добавить характеристику для проекта</span>
+            <span>Характеристики проекта</span>
             <button class="modal-close" onclick="closeCharacteristicModal()">✕</button>
         </div>
         <div class="modal-content">
             <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" style="flex: 1 1 100%;">
                     <label>Проект</label>
                     <select id="charProjectSelect">
                         <option value="">— выберите проект —</option>
                     </select>
                 </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
-                    <label>Параметр</label>
-                    <select id="charParamSelect" onchange="updateCharValueOptions()">
-                        <option value="">— выберите параметр —</option>
-                        <option value="os">Операционная система</option>
-                        <option value="connectionType">Тип подключения</option>
-                        <option value="internetSpeed">Скорость интернета</option>
-                        <option value="ram">Оперативная память (RAM)</option>
-                        <option value="cores">Кол-во ядер</option>
-                        <option value="cpuFreq">частота процессора МБ/сек</option>
+                    <label>Операционная система</label>
+                    <select id="charOsSelect">
+                        <option value="">— выберите —</option>
+                        <option value="Windows 10">Windows 10</option>
+                        <option value="Windows 10 Pro">Windows 10 Pro</option>
+                        <option value="Windows 11">Windows 11</option>
+                        <option value="Windows 11 Pro">Windows 11 Pro</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Значение</label>
-                    <select id="charValueSelect">
-                        <option value="">— выберите значение —</option>
+                    <label>Тип подключения</label>
+                    <select id="charConnectionSelect">
+                        <option value="">— выберите —</option>
+                        <option value="Wi-Fi">Wi-Fi</option>
+                        <option value="LAN">LAN</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Скорость интернета</label>
+                    <select id="charInternetSpeedSelect">
+                        <option value="">— выберите —</option>
+                        <option value="20 Мбит/с">20 Мбит/с</option>
+                        <option value="40 Мбит/с">40 Мбит/с</option>
+                        <option value="60 Мбит/с">60 Мбит/с</option>
+                        <option value="80 Мбит/с">80 Мбит/с</option>
                     </select>
                 </div>
             </div>
-            <button class="save-btn" onclick="saveCharacteristic()">Сохранить</button>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Оперативная память (RAM)</label>
+                    <select id="charRamSelect">
+                        <option value="">— выберите —</option>
+                        <option value="2 ГБ">2 ГБ</option>
+                        <option value="4 ГБ">4 ГБ</option>
+                        <option value="8 ГБ">8 ГБ</option>
+                        <option value="16 ГБ">16 ГБ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Кол-во ядер</label>
+                    <select id="charCoresSelect">
+                        <option value="">— выберите —</option>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="6">6</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Частота процессора (ГГц)</label>
+                    <select id="charCpuFreqSelect">
+                        <option value="">— выберите —</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveCharacteristics()">Сохранить характеристики</button>
         </div>
     </div>
 
@@ -847,35 +890,7 @@
             autoForms: [],
             manualForms: [],
             allForms: [],
-            characteristics: [] // новое поле для характеристик
-        };
-
-        // Фиксированные параметры и их возможные значения
-        const parameterOptions = {
-            os: {
-                label: "Операционная система",
-                values: ["Windows 10", "Windows 10 Pro", "Windows 11", "Windows 11 Pro"]
-            },
-            connectionType: {
-                label: "Тип подключения",
-                values: ["Wi-Fi", "LAN"]
-            },
-            internetSpeed: {
-                label: "Скорость интернета",
-                values: ["20 Мбит/с", "40 Мбит/с", "60 Мбит/с", "80 Мбит/с"]
-            },
-            ram: {
-                label: "Оперативная память (RAM)",
-                values: ["2 ГБ", "4 ГБ", "8 ГБ", "16 ГБ"]
-            },
-            cores: {
-                label: "Кол-во ядер",
-                values: ["2", "4", "6", "8"]
-            },
-            cpuFreq: {
-                label: "частота процессора МБ/сек",
-                values: ["2", "3", "4"]
-            }
+            characteristics: [] // новое поле для характеристик (объект с проектом и всеми параметрами)
         };
 
         let currentTab = 'recruiters';
@@ -969,8 +984,7 @@
                 const autoRes = await fetch('/.netlify/functions/getResults');
                 state.autoForms = await autoRes.json();
 
-                // Здесь можно загрузить характеристики, если есть серверная функция
-                // пока оставим пустым или загрузим из localStorage для демо
+                // Загружаем характеристики из localStorage (для демо)
                 const savedChars = localStorage.getItem('characteristics');
                 if (savedChars) {
                     state.characteristics = JSON.parse(savedChars);
@@ -986,7 +1000,6 @@
             if (scheduleOnly) return;
             currentTab = tabId;
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => btn.classList.remove('active'));
-            // обновим индексы для кнопок (добавили characteristics)
             const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'allForms', 'auto', 'manual', 'characteristics'].indexOf(tabId);
             if (index !== -1) {
                 document.querySelectorAll('.side-menu .menu-btn')[index].classList.add('active');
@@ -1440,15 +1453,14 @@
             let html = `
                 <div class="section-header">
                     <h2>Характеристики для проверки кандидатов</h2>
-                    <button class="add-btn" onclick="openCharacteristicModal()">+ Добавить характеристику</button>
+                    <button class="add-btn" onclick="openCharacteristicModal()">+ Добавить характеристики для проекта</button>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Проект</th>
-                                <th>Параметр</th>
-                                <th>Значение</th>
+                                <th>Параметры</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -1456,15 +1468,15 @@
             `;
 
             if (state.characteristics.length === 0) {
-                html += '<tr><td colspan="4" style="text-align:center;">Нет характеристик</td></tr>';
+                html += '<tr><td colspan="3" style="text-align:center;">Нет характеристик</td></tr>';
             } else {
                 state.characteristics.forEach((char, index) => {
-                    const paramLabel = parameterOptions[char.param]?.label || char.param;
+                    // Формируем строку с параметрами
+                    const paramsStr = `ОС: ${char.os || '—'}, Подкл.: ${char.connectionType || '—'}, Скорость: ${char.internetSpeed || '—'}, RAM: ${char.ram || '—'}, Ядра: ${char.cores || '—'}, Частота: ${char.cpuFreq || '—'} ГГц`;
                     html += `
                         <tr>
                             <td>${char.project || '—'}</td>
-                            <td>${paramLabel}</td>
-                            <td>${char.value}</td>
+                            <td>${paramsStr}</td>
                             <td class="actions">
                                 <button class="delete-btn" onclick="deleteCharacteristic(${index})">✕</button>
                             </td>
@@ -1485,25 +1497,16 @@
                 projects.map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
-        function updateCharValueOptions() {
-            const paramSelect = document.getElementById('charParamSelect');
-            const valueSelect = document.getElementById('charValueSelect');
-            const param = paramSelect.value;
-            if (!param) {
-                valueSelect.innerHTML = '<option value="">— выберите значение —</option>';
-                return;
-            }
-            const values = parameterOptions[param]?.values || [];
-            valueSelect.innerHTML = '<option value="">— выберите значение —</option>' +
-                values.map(v => `<option value="${v}">${v}</option>`).join('');
-        }
-
         function openCharacteristicModal() {
             // Обновляем список проектов перед открытием
             updateCharProjectSelect();
-            // Сбрасываем выбор параметра и значения
-            document.getElementById('charParamSelect').value = '';
-            document.getElementById('charValueSelect').innerHTML = '<option value="">— выберите значение —</option>';
+            // Сбрасываем все select'ы
+            document.getElementById('charOsSelect').value = '';
+            document.getElementById('charConnectionSelect').value = '';
+            document.getElementById('charInternetSpeedSelect').value = '';
+            document.getElementById('charRamSelect').value = '';
+            document.getElementById('charCoresSelect').value = '';
+            document.getElementById('charCpuFreqSelect').value = '';
             document.getElementById('characteristicModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
@@ -1513,27 +1516,41 @@
             document.body.classList.remove('menu-open');
         }
 
-        function saveCharacteristic() {
+        function saveCharacteristics() {
             const project = document.getElementById('charProjectSelect').value;
-            const param = document.getElementById('charParamSelect').value;
-            const value = document.getElementById('charValueSelect').value;
+            const os = document.getElementById('charOsSelect').value;
+            const connectionType = document.getElementById('charConnectionSelect').value;
+            const internetSpeed = document.getElementById('charInternetSpeedSelect').value;
+            const ram = document.getElementById('charRamSelect').value;
+            const cores = document.getElementById('charCoresSelect').value;
+            const cpuFreq = document.getElementById('charCpuFreqSelect').value;
 
-            if (!project || !param || !value) {
+            if (!project || !os || !connectionType || !internetSpeed || !ram || !cores || !cpuFreq) {
                 showNotification('Заполните все поля', 'error');
                 return;
             }
 
-            // Добавляем в состояние
-            state.characteristics.push({ project, param, value });
+            // Проверяем, есть ли уже характеристики для этого проекта
+            const existingIndex = state.characteristics.findIndex(c => c.project === project);
+            const newChar = { project, os, connectionType, internetSpeed, ram, cores, cpuFreq };
+
+            if (existingIndex !== -1) {
+                // Обновляем существующие
+                state.characteristics[existingIndex] = newChar;
+            } else {
+                // Добавляем новые
+                state.characteristics.push(newChar);
+            }
+
             // Сохраняем в localStorage для демонстрации (позже будет на сервер)
             localStorage.setItem('characteristics', JSON.stringify(state.characteristics));
             closeCharacteristicModal();
             renderContent(); // перерисовываем текущую вкладку
-            showNotification('Характеристика добавлена', 'success');
+            showNotification('Характеристики сохранены', 'success');
         }
 
         function deleteCharacteristic(index) {
-            if (confirm('Удалить характеристику?')) {
+            if (confirm('Удалить характеристики для этого проекта?')) {
                 state.characteristics.splice(index, 1);
                 localStorage.setItem('characteristics', JSON.stringify(state.characteristics));
                 renderContent();
