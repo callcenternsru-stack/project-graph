@@ -15,8 +15,8 @@ exports.handler = async (event) => {
     };
   }
 
-  // Формируем ключ файла: code/fileName
-  const fileKey = `${code}/${fileName}`;
+  // Формируем ключ файла с расширением (новый формат)
+  let fileKey = `${code}/${fileName}`;
 
   try {
     const store = getStore({
@@ -26,8 +26,18 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Получаем данные файла (как Buffer)
-    const fileData = await store.get(fileKey, { type: 'arrayBuffer' });
+    // Пытаемся получить файл по полному имени
+    let fileData = await store.get(fileKey, { type: 'arrayBuffer' });
+
+    // Если не найден, пробуем без расширения (для старых данных)
+    if (!fileData) {
+      const baseName = fileName.split('.').slice(0, -1).join('.');
+      if (baseName) {
+        fileKey = `${code}/${baseName}`;
+        fileData = await store.get(fileKey, { type: 'arrayBuffer' });
+      }
+    }
+
     if (!fileData) {
       return {
         statusCode: 404,
@@ -35,7 +45,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Определяем MIME-тип по расширению
+    // Определяем MIME-тип по расширению (если есть)
     let contentType = 'application/octet-stream';
     if (fileName.endsWith('.txt')) contentType = 'text/plain; charset=utf-8';
     else if (fileName.endsWith('.json')) contentType = 'application/json';
