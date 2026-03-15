@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рекрутер – вход и панель</title>
+    <style>
+        /* ===== ОБЩИЕ СТИЛИ ===== */
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px 20px 20px 60px;
+        }
+
+        .side-menu-trigger {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100vh;
+            background: transparent;
+            z-index: 1001;
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100vh;
+            background: #111111;
+            border-right: 2px solid #ffd700;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.7);
+            transition: left 0.3s ease;
+            z-index: 1002;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .side-menu-trigger:hover + .side-menu,
+        .side-menu:hover {
+            left: 0;
+        }
+
+        .side-menu .menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            border-left: 4px solid transparent;
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .side-menu .menu-btn:hover {
+            background: #1a1a1a;
+            border-left-color: #ffd700;
+        }
+
+        .side-menu .menu-btn.logout {
+            color: #ff6b6b;
+        }
+
+        .side-menu .menu-btn.logout:hover {
+            background: #ff6b6b;
+            color: #000000;
+            border-left-color: #ff6b6b;
+        }
+
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            margin: auto;
+            background: #111111;
+            border-radius: 24px;
+            padding: 40px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255,215,0,0.2);
+        }
+
+        .login-container h2 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #ffe44d;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .recruiter-interface {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .header {
+            background: #111111;
+            border-radius: 16px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            border: 1px solid #333333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header h1 {
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .schedule-btn {
+            padding: 10px 20px;
+            background: #6b8cff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .schedule-btn:hover {
+            background: #8aa5ff;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff8a8a;
+            transform: translateY(-2px);
+        }
+
+        .content-wrapper {
+            display: flex;
+            gap: 20px;
+        }
+
+        .left-panel {
+            flex: 2;
+            background: #111111;
+            border-radius: 24px;
+            padding: 20px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        .script-selector {
+            width: 100%;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .script-selector:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .script-item {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 12px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .script-item .title {
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+
+        .script-item .content {
+            color: #e0e0e0;
+            font-size: 14px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #111;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            word-wrap: break-word;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #111111;
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
+            max-height: 70vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .right-panel h3 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 5px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ffd700;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: #1a1a1a;
+            border: 2px solid #333333;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #ffffff;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: #222222;
+        }
+
+        .datetime-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .datetime-row select,
+        .datetime-row input {
+            flex: 1;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 16px;
+            background: #ffd700;
+            color: #000000;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 25px;
+        }
+
+        .save-btn:hover {
+            background: #ffe44d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #111111;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            z-index: 20000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            max-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            border-color: #4caf50;
+        }
+
+        .notification.error {
+            border-color: #ff6b6b;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .candidate-counter {
+            color: #8f9bb3;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="side-menu-trigger"></div>
+    <div class="side-menu">
+        <button class="menu-btn" onclick="showForm()">Главная</button>
+        <button class="menu-btn logout" onclick="logout()">Выйти</button>
+    </div>
+
+    <!-- Форма входа -->
+    <div class="login-container" id="loginContainer">
+        <h2>Вход для рекрутера</h2>
+        <div class="form-group">
+            <label>Логин (ФИО)</label>
+            <input type="text" id="loginUsername" placeholder="Иванов Иван">
+        </div>
+        <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="login-btn" onclick="login()">Войти</button>
+        <div class="error-message" id="loginError">Неверный логин или пароль</div>
+    </div>
+
+    <!-- Основная панель рекрутера -->
+    <div class="recruiter-interface" id="recruiterInterface">
+        <div class="header">
+            <h1>Панель рекрутера <span id="recruiterNameDisplay"></span></h1>
+            <div class="header-actions">
+                <button class="schedule-btn" onclick="window.location.href='hr control panel.html?tab=schedule-only'">График</button>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+        <div class="content-wrapper">
+            <div class="left-panel">
+                <select id="scriptSelector" class="script-selector">
+                    <option value="">— выберите скрипт —</option>
+                </select>
+                <div id="selectedScriptContainer" style="display: none;">
+                    <div class="script-item">
+                        <div class="title" id="selectedScriptTitle"></div>
+                        <div class="content" id="selectedScriptContent"></div>
+                    </div>
+                </div>
+                <div id="noScriptMessage" style="color: #8f9bb3; text-align: center;">Нет доступных скриптов</div>
+            </div>
+            <div class="right-panel">
+                <h3>Обработка кандидата</h3>
+                <div id="candidateCounter" class="candidate-counter"></div>
+                <form id="candidateForm">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>ФИО кандидата <span style="color: #ff6b6b;">*</span></label>
+                            <input type="text" id="fullName" placeholder="Иванов Иван Иванович" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Номер телефона <span style="color: #ff6b6b;">*</span></label>
+                            <input type="tel" id="phoneNumber" placeholder="+7 999 999-99-99" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Проект <span style="color: #ff6b6b;">*</span></label>
+                            <select id="project" required>
+                                <option value="">— выберите проект —</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Страна</label>
+                            <select id="country">
+                                <option value="Кыргызстан">Кыргызстан</option>
+                                <option value="Узбекистан">Узбекистан</option>
+                                <option value="Россия">Россия</option>
+                                <option value="Казахстан">Казахстан</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Дата обучения</label>
+                            <select id="trainingDateSelect">
+                                <option value="">— выберите дату —</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Время обучения</label>
+                            <input type="text" id="trainingTimeInput" placeholder="чч:мм">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Результат звонка</label>
+                            <select id="callResult">
+                                <option value="">— выберите —</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Тип обращения</label>
+                            <select id="contactType">
+                                <option value="">— выберите —</option>
+                            </select>
+                        </div>
+
+                        <input type="hidden" id="recruiterField">
+                        <input type="hidden" id="candidateIndexField" value="-1">
+
+                        <div class="form-group full-width">
+                            <label>Комментарий</label>
+                            <textarea id="comment" rows="4" placeholder="Дополнительная информация..."></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="save-btn">Сохранить кандидата</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        let currentRecruiter = null;
+        let myCandidates = [];
+        let currentCandidateIndex = -1;
+        let currentScriptTitle = null;
+        let appData = {
+            projects: [],
+            callResults: [],
+            contactTypes: [],
+            scripts: [],
+            projectTrainings: {}  // для дат обучения
+        };
+
+        // ========== УВЕДОМЛЕНИЯ ==========
+        function showNotification(message, type = 'info') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 5000);
+        }
+
+        // ========== ВХОД ==========
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            if (!username || !password) {
+                showLoginError('Введите логин и пароль');
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/loginRecruiter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Ошибка входа');
+                }
+                currentRecruiter = data.recruiter;
+                sessionStorage.setItem('recruiter', JSON.stringify(currentRecruiter));
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('recruiterInterface').style.display = 'block';
+                initInterface();
+            } catch (error) {
+                console.error(error);
+                showLoginError('Неверный логин или пароль');
+            }
+        }
+
+        function showLoginError(msg) {
+            const err = document.getElementById('loginError');
+            err.textContent = msg;
+            err.style.display = 'block';
+        }
+
+        // ========== ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ВХОДА ==========
+        async function initInterface() {
+            document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
+            document.getElementById('recruiterField').value = currentRecruiter.name;
+
+            await loadReferenceData();
+            await loadScripts();
+            await loadMyCandidates();
+
+            if (myCandidates.length > 0) {
+                currentCandidateIndex = 0;
+                loadCandidateIntoForm(0);
+            } else {
+                currentCandidateIndex = -1;
+                loadCandidateIntoForm(-1);
+            }
+        }
+
+        // ========== ЗАГРУЗКА СПРАВОЧНИКОВ ==========
+        async function loadReferenceData() {
+            try {
+                const [projectsRes, callResultsRes, contactTypesRes, trainingsRes] = await Promise.all([
+                    fetch('/.netlify/functions/getProjects'),
+                    fetch('/.netlify/functions/getCallResults'),
+                    fetch('/.netlify/functions/getContactTypes'),
+                    fetch('/.netlify/functions/getProjectTrainings')
+                ]);
+                appData.projects = await projectsRes.json();
+                appData.callResults = await callResultsRes.json();
+                appData.contactTypes = await contactTypesRes.json();
+                appData.projectTrainings = await trainingsRes.json();
+
+                fillProjects();
+                fillCallResults();
+                fillContactTypes();
+            } catch (error) {
+                console.error('Ошибка загрузки справочников:', error);
+                showNotification('Не удалось загрузить данные', 'error');
+            }
+        }
+
+        // ========== ЗАГРУЗКА СКРИПТОВ ==========
+        async function loadScripts() {
+            try {
+                const res = await fetch('/.netlify/functions/getScripts');
+                appData.scripts = await res.json();
+                updateScriptsUI();
+            } catch (error) {
+                console.error('Ошибка загрузки скриптов:', error);
+            }
+        }
+
+        // ========== ЗАГРУЗКА МОИХ КАНДИДАТОВ ==========
+        async function loadMyCandidates() {
+            try {
+                const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
+                if (response.ok) {
+                    myCandidates = await response.json();
+                    myCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                } else {
+                    console.error('Ошибка загрузки кандидатов');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // ========== ЗАПОЛНЕНИЕ SELECTОВ ==========
+        function fillProjects() {
+            const select = document.getElementById('project');
+            const projects = appData.projects.map(p => p.name || p);
+            select.innerHTML = '<option value="">— выберите проект —</option>' +
+                projects.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        function fillCallResults() {
+            const select = document.getElementById('callResult');
+            const results = appData.callResults.map(r => r.name);
+            select.innerHTML = '<option value="">— выберите —</option>' +
+                results.map(r => `<option value="${r}">${r}</option>`).join('');
+        }
+
+        function fillContactTypes() {
+            const select = document.getElementById('contactType');
+            const types = appData.contactTypes.map(t => t.name);
+            select.innerHTML = '<option value="">— выберите —</option>' +
+                types.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
+
+        // ========== РАБОТА СО СКРИПТАМИ ==========
+        function updateScriptsUI() {
+            const selector = document.getElementById('scriptSelector');
+            const container = document.getElementById('selectedScriptContainer');
+            const noMsg = document.getElementById('noScriptMessage');
+            const previousTitle = currentScriptTitle;
+
+            selector.innerHTML = '<option value="">— выберите скрипт —</option>';
+
+            if (!appData.scripts || appData.scripts.length === 0) {
+                container.style.display = 'none';
+                noMsg.style.display = 'block';
+                return;
+            }
+
+            appData.scripts.forEach((script, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = script.title;
+                selector.appendChild(option);
+            });
+
+            let selectedIndex = -1;
+            if (previousTitle) {
+                const foundIndex = appData.scripts.findIndex(s => s.title === previousTitle);
+                if (foundIndex !== -1) selectedIndex = foundIndex;
+            }
+            if (selectedIndex === -1 && appData.scripts.length > 0) {
+                selectedIndex = 0;
+            }
+
+            if (selectedIndex !== -1) {
+                selector.value = selectedIndex;
+                currentScriptTitle = appData.scripts[selectedIndex].title;
+                displayScript(selectedIndex);
+                container.style.display = 'block';
+                noMsg.style.display = 'none';
+                setProjectFromScript(currentScriptTitle);
+            } else {
+                container.style.display = 'none';
+                noMsg.style.display = 'block';
+                currentScriptTitle = null;
+            }
+        }
+
+        function displayScript(index) {
+            const script = appData.scripts[index];
+            if (!script) return;
+            document.getElementById('selectedScriptTitle').textContent = script.title;
+            document.getElementById('selectedScriptContent').innerHTML = script.content;
+        }
+
+        function setProjectFromScript(scriptTitle) {
+            if (!scriptTitle) return;
+            if (!appData.projects.some(p => (p.name || p) === scriptTitle)) {
+                appData.projects.push({ name: scriptTitle });
+                fillProjects();
+            }
+            document.getElementById('project').value = scriptTitle;
+            updateTrainingDates(scriptTitle);
+        }
+
+        // ========== ДАТЫ ОБУЧЕНИЯ ==========
+        function updateTrainingDates(project) {
+            const select = document.getElementById('trainingDateSelect');
+            if (!project) {
+                select.innerHTML = '<option value="">— нет данных —</option>';
+                return;
+            }
+
+            const dates = [];
+            for (const key in appData.projectTrainings) {
+                if (key.startsWith(project + '_')) {
+                    const parts = key.split('_');
+                    if (parts.length === 3) {
+                        const dateStr = `${parts[1]}-${parts[2].padStart(2, '0')}`;
+                        dates.push({
+                            date: dateStr,
+                            time: appData.projectTrainings[key]
+                        });
+                    }
+                }
+            }
+
+            dates.sort((a, b) => a.date.localeCompare(b.date));
+
+            let options = '<option value="">— выберите дату —</option>';
+            dates.forEach(d => {
+                options += `<option value="${d.date}" data-time="${d.time}">${d.date}</option>`;
+            });
+
+            select.innerHTML = options;
+        }
+
+        function onTrainingDateChange() {
+            const select = document.getElementById('trainingDateSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            const time = selectedOption ? selectedOption.getAttribute('data-time') : '';
+            document.getElementById('trainingTimeInput').value = time || '';
+        }
+
+        document.getElementById('project').addEventListener('change', function(e) {
+            const project = e.target.value;
+            updateTrainingDates(project);
+        });
+
+        document.getElementById('trainingDateSelect').addEventListener('change', onTrainingDateChange);
+
+        // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ ==========
+        function loadCandidateIntoForm(idx) {
+            if (idx < 0 || idx >= myCandidates.length) {
+                document.getElementById('fullName').value = '';
+                document.getElementById('phoneNumber').value = '';
+                if (currentScriptTitle) {
+                    setProjectFromScript(currentScriptTitle);
+                } else {
+                    document.getElementById('project').value = '';
+                    updateTrainingDates('');
+                }
+                document.getElementById('country').value = 'Кыргызстан';
+                document.getElementById('trainingDateSelect').value = '';
+                document.getElementById('trainingTimeInput').value = '';
+                document.getElementById('callResult').value = '';
+                document.getElementById('contactType').value = '';
+                document.getElementById('comment').value = '';
+                document.getElementById('candidateIndexField').value = '-1';
+                document.getElementById('candidateCounter').textContent = 'Нет кандидатов для обработки';
+                return;
+            }
+
+            const candidate = myCandidates[idx];
+            document.getElementById('fullName').value = candidate.fullName || '';
+            document.getElementById('phoneNumber').value = candidate.phone || '';
+
+            if (candidate.project) {
+                document.getElementById('project').value = candidate.project;
+                updateTrainingDates(candidate.project);
+            } else if (currentScriptTitle) {
+                setProjectFromScript(currentScriptTitle);
+            } else {
+                document.getElementById('project').value = '';
+                updateTrainingDates('');
+            }
+
+            // Определяем страну по телефону (опционально)
+            const digits = candidate.phone.replace(/\D/g, '');
+            if (digits.startsWith('996')) document.getElementById('country').value = 'Кыргызстан';
+            else if (digits.startsWith('998')) document.getElementById('country').value = 'Узбекистан';
+            else if (digits.startsWith('77')) document.getElementById('country').value = 'Казахстан';
+            else if (digits.startsWith('79')) document.getElementById('country').value = 'Россия';
+            else if (candidate.country) document.getElementById('country').value = candidate.country;
+
+            if (candidate.trainingDate) {
+                const select = document.getElementById('trainingDateSelect');
+                let optionExists = false;
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === candidate.trainingDate) {
+                        select.selectedIndex = i;
+                        optionExists = true;
+                        break;
+                    }
+                }
+                if (!optionExists) {
+                    const option = document.createElement('option');
+                    option.value = candidate.trainingDate;
+                    option.text = candidate.trainingDate;
+                    option.setAttribute('data-time', candidate.trainingTime || '');
+                    select.appendChild(option);
+                    select.value = candidate.trainingDate;
+                }
+                document.getElementById('trainingTimeInput').value = candidate.trainingTime || '';
+            } else {
+                document.getElementById('trainingDateSelect').value = '';
+                document.getElementById('trainingTimeInput').value = '';
+            }
+
+            document.getElementById('callResult').value = candidate.callResult || '';
+            document.getElementById('contactType').value = candidate.contactType || '';
+            document.getElementById('comment').value = candidate.comment || '';
+            document.getElementById('candidateIndexField').value = idx;
+
+            const total = myCandidates.length;
+            document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
+        }
+
+        // ========== СОХРАНЕНИЕ КАНДИДАТА ==========
+        document.getElementById('candidateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const project = document.getElementById('project').value;
+
+            if (!fullName || !phoneNumber || !project) {
+                showNotification('Заполните обязательные поля (ФИО, телефон, проект)', 'error');
+                return;
+            }
+
+            const idx = parseInt(document.getElementById('candidateIndexField').value, 10);
+            if (idx < 0 || idx >= myCandidates.length) {
+                showNotification('Нет активного кандидата для обновления', 'error');
+                return;
+            }
+
+            const candidate = myCandidates[idx];
+            candidate.fullName = fullName;
+            candidate.phone = phoneNumber;
+            candidate.project = project;
+            candidate.country = document.getElementById('country').value;
+            candidate.trainingDate = document.getElementById('trainingDateSelect').value;
+            candidate.trainingTime = document.getElementById('trainingTimeInput').value.trim();
+            candidate.meetingTime = candidate.trainingTime;
+            candidate.callResult = document.getElementById('callResult').value;
+            candidate.contactType = document.getElementById('contactType').value;
+            candidate.comment = document.getElementById('comment').value.trim();
+
+            try {
+                const response = await fetch('/.netlify/functions/submitCandidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(candidate)
+                });
+                if (response.ok) {
+                    showNotification('Кандидат сохранён', 'success');
+                    goToNextCandidate();
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            }
+        });
+
+        // ========== ПЕРЕХОД К СЛЕДУЮЩЕМУ КАНДИДАТУ ==========
+        function goToNextCandidate() {
+            if (myCandidates.length === 0) {
+                currentCandidateIndex = -1;
+                loadCandidateIntoForm(-1);
+                return;
+            }
+
+            if (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length - 1) {
+                currentCandidateIndex++;
+            } else {
+                currentCandidateIndex = 0;
+            }
+            loadCandidateIntoForm(currentCandidateIndex);
+        }
+
+        // ========== ВЫХОД ==========
+        function logout() {
+            sessionStorage.removeItem('recruiter');
+            location.reload();
+        }
+
+        function showForm() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
+        document.getElementById('scriptSelector').addEventListener('change', function(e) {
+            const index = e.target.value;
+            if (index === '') {
+                document.getElementById('selectedScriptContainer').style.display = 'none';
+                document.getElementById('noScriptMessage').style.display = 'block';
+                currentScriptTitle = null;
+                return;
+            }
+            const idx = parseInt(index, 10);
+            if (!isNaN(idx) && idx >= 0 && idx < appData.scripts.length) {
+                currentScriptTitle = appData.scripts[idx].title;
+                displayScript(idx);
+                document.getElementById('selectedScriptContainer').style.display = 'block';
+                document.getElementById('noScriptMessage').style.display = 'none';
+                setProjectFromScript(currentScriptTitle);
+            }
+        });
+
+        // ========== ВОССТАНОВЛЕНИЕ СЕССИИ ==========
+        window.addEventListener('load', () => {
+            const saved = sessionStorage.getItem('recruiter');
+            if (saved) {
+                try {
+                    currentRecruiter = JSON.parse(saved);
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('recruiterInterface').style.display = 'block';
+                    initInterface();
+                } catch (e) {
+                    sessionStorage.removeItem('recruiter');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

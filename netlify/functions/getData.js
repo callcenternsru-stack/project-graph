@@ -16,7 +16,7 @@ exports.handler = async () => {
       name: 'app-data',
       siteID,
       token,
-      apiURL: 'https://api.netlify.com' // можно опустить, это значение по умолчанию
+      apiURL: 'https://api.netlify.com'
     });
 
     let data = await store.get('appData', { type: 'json' });
@@ -29,8 +29,19 @@ exports.handler = async () => {
         employeeData: {},
         entries: {},
         partners: [],
-        comments: {}
+        comments: {},
+        // новые поля для рекрутинга
+        recruiters: [],
+        callResults: [],
+        contactTypes: [],
+        candidates: []
       };
+    } else {
+      // Если данные уже есть, но новых полей нет, добавим их с пустыми значениями
+      if (!data.recruiters) data.recruiters = [];
+      if (!data.callResults) data.callResults = [];
+      if (!data.contactTypes) data.contactTypes = [];
+      if (!data.candidates) data.candidates = [];
     }
 
     return {

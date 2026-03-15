@@ -2,7 +2,8 @@
   "name": "project-graph",
   "version": "1.0.0",
   "dependencies": {
-    "@netlify/blobs": "^7.0.0"
+    "@netlify/blobs": "^7.4.0",
+    "busboy": "^1.6.0"
   },
   "description": "",
   "main": "index.js",
