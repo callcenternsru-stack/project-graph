@@ -797,7 +797,8 @@
             projectTrainingComments: {},
             scheduleMonths: [],
             autoForms: [],
-            manualForms: []
+            manualForms: [],      // запятая здесь была пропущена — ИСПРАВЛЕНО
+            allForms: []          // добавлено новое поле
         };
 
         let currentTab = 'recruiters';
@@ -855,7 +856,8 @@
                     meetingCommentsRes,
                     trainingCommentsRes,
                     monthsRes,
-                    manualFormsRes
+                    manualFormsRes,
+                    allFormsRes                // добавлен новый запрос
                 ] = await Promise.all([
                     fetch('/.netlify/functions/getRecruiters'),
                     fetch('/.netlify/functions/getCallResults'),
@@ -868,7 +870,8 @@
                     fetch('/.netlify/functions/getProjectMeetingComments'),
                     fetch('/.netlify/functions/getProjectTrainingComments'),
                     fetch('/.netlify/functions/getScheduleMonths'),
-                    fetch('/.netlify/functions/getManualForms')
+                    fetch('/.netlify/functions/getManualForms'),
+                    fetch('/.netlify/functions/getAllForms')   // новый вызов
                 ]);
 
                 state.recruiters = await recruitersRes.json();
@@ -883,6 +886,7 @@
                 state.projectTrainingComments = await trainingCommentsRes.json();
                 state.scheduleMonths = await monthsRes.json();
                 state.manualForms = await manualFormsRes.json();
+                state.allForms = await allFormsRes.json();      // сохранение данных
 
                 // Автоанкеты загружаются отдельно (они могут быть большими)
                 const autoRes = await fetch('/.netlify/functions/getResults');
@@ -1211,23 +1215,23 @@
             `;
         }
 
-        // ========== АНКЕТЫ АВТО (С СЕРВЕРА) ==========
+        // ========== АНКЕТЫ АВТО (ВСЕ АНКЕТЫ, включая ожидающие) ==========
         async function renderAutoForms(container) {
             container.innerHTML = '<div class="loader">Загрузка данных...</div>';
 
             try {
-                // Данные уже загружены в state.autoForms
-                const data = state.autoForms;
+                const forms = state.allForms; // используем все анкеты
 
                 let html = `
                     <div class="section-header">
-                        <h2>Автоматические анкеты (с сервера)</h2>
+                        <h2>Автоматические анкеты (все)</h2>
                     </div>
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Дата</th>
+                                    <th>Статус</th>
                                     <th>Проект</th>
                                     <th>ФИО</th>
                                     <th>Псевдоним</th>
@@ -1241,27 +1245,44 @@
                             <tbody>
                 `;
 
-                if (!data || data.length === 0) {
-                    html += '<tr><td colspan="9" style="text-align:center;">Нет данных с сервера</td></tr>';
+                if (!forms || forms.length === 0) {
+                    html += '<tr><td colspan="10" style="text-align:center;">Нет анкет</td></tr>';
                 } else {
-                    data.forEach(item => {
-                        const date = item.completedAt ? new Date(item.completedAt).toLocaleString() : (item.createdAt ? new Date(item.createdAt).toLocaleString() : '—');
+                    // Базовый URL для скачивания файлов через getFile
+                    const baseUrl = `${window.location.protocol}//${window.location.host}/.netlify/functions/getFile`;
+
+                    forms.forEach(item => {
+                        const date = item.createdAt ? new Date(item.createdAt).toLocaleString() : '—';
+                        const status = item.status === 'completed' ? '✅ Завершено' : '⏳ Ожидает';
                         const form = item.formData || {};
-                        const files = item.files || {};
+                        const code = item.code || '';
+
+                        // Ссылки на файлы только для completed
+                        const reportLink = (item.status === 'completed')
+                            ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=report.txt" class="download-btn" target="_blank">📄 report.txt</a>`
+                            : '—';
+                        const resultsLink = (item.status === 'completed')
+                            ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=results.json" class="download-btn" target="_blank">📊 results.json</a>`
+                            : '—';
+                        const voiceLink = (item.status === 'completed')
+                            ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=voice_recording.wav" class="download-btn" target="_blank">🎤 voice.wav</a>`
+                            : '—';
+
                         html += `
                             <tr>
                                 <td>${date}</td>
+                                <td>${status}</td>
                                 <td>${form.project || 'РОССЕТТИ'}</td>
                                 <td>${form.fullName || ''}</td>
                                 <td>${form.nickname || ''}</td>
                                 <td>${form.telegram || ''}</td>
                                 <td>${form.phone || ''}</td>
                                 <td>${form.email || ''}</td>
-                                <td><code>${item.code || ''}</code></td>
+                                <td><code>${code}</code></td>
                                 <td class="actions">
-                                    ${files.report ? `<a href="${files.report}" class="download-btn" target="_blank">📄 report.txt</a>` : ''}
-                                    ${files.resultsJson ? `<a href="${files.resultsJson}" class="download-btn" target="_blank">📊 results.json</a>` : ''}
-                                    ${files.voice ? `<a href="${files.voice}" class="download-btn" target="_blank">🎤 voice.wav</a>` : ''}
+                                    ${reportLink}
+                                    ${resultsLink}
+                                    ${voiceLink}
                                 </td>
                             </tr>
                         `;
@@ -1270,13 +1291,13 @@
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
             } catch (error) {
-                console.error('Ошибка загрузки с сервера:', error);
+                console.error('Ошибка загрузки анкет:', error);
                 container.innerHTML = `
                     <div class="section-header">
                         <h2>Автоматические анкеты</h2>
                     </div>
                     <div style="color:#ff6b6b; text-align:center; padding:50px;">
-                        Не удалось загрузить данные с сервера. Пожалуйста, попробуйте позже.
+                        Не удалось загрузить данные. Пожалуйста, попробуйте позже.
                     </div>
                 `;
             }
