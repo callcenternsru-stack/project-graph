@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -274,7 +275,7 @@
             background: #111111;
             border-radius: 24px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-            width: 700px;
+            width: 900px; /* увеличена ширина */
             max-width: calc(100vw - 40px);
             z-index: 10000;
             display: none;
@@ -325,8 +326,16 @@
             background: #111111;
         }
 
-        .modal-content .form-group {
+        .modal-content .form-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
             margin-bottom: 20px;
+        }
+
+        .modal-content .form-group {
+            flex: 1;
+            min-width: 0;
         }
 
         .modal-content label {
@@ -781,36 +790,38 @@
         </div>
     </div>
 
-    <!-- Новое модальное окно для добавления характеристики -->
+    <!-- Новое модальное окно для добавления характеристики (увеличенное, с горизонтальным расположением) -->
     <div id="characteristicModal" class="modal">
         <div class="modal-header">
-            <span>Добавить характеристику</span>
+            <span>Добавить характеристику для проекта</span>
             <button class="modal-close" onclick="closeCharacteristicModal()">✕</button>
         </div>
         <div class="modal-content">
-            <div class="form-group">
-                <label>Проект</label>
-                <select id="charProjectSelect">
-                    <option value="">— выберите проект —</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Параметр</label>
-                <select id="charParamSelect" onchange="updateCharValueOptions()">
-                    <option value="">— выберите параметр —</option>
-                    <option value="os">Операционная система</option>
-                    <option value="connectionType">Тип подключения</option>
-                    <option value="internetSpeed">Скорость интернета</option>
-                    <option value="ram">Оперативная память (RAM)</option>
-                    <option value="cores">Кол-во ядер</option>
-                    <option value="cpuFreq">частота процессора МБ/сек</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Значение</label>
-                <select id="charValueSelect">
-                    <option value="">— выберите значение —</option>
-                </select>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Проект</label>
+                    <select id="charProjectSelect">
+                        <option value="">— выберите проект —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Параметр</label>
+                    <select id="charParamSelect" onchange="updateCharValueOptions()">
+                        <option value="">— выберите параметр —</option>
+                        <option value="os">Операционная система</option>
+                        <option value="connectionType">Тип подключения</option>
+                        <option value="internetSpeed">Скорость интернета</option>
+                        <option value="ram">Оперативная память (RAM)</option>
+                        <option value="cores">Кол-во ядер</option>
+                        <option value="cpuFreq">частота процессора МБ/сек</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Значение</label>
+                    <select id="charValueSelect">
+                        <option value="">— выберите значение —</option>
+                    </select>
+                </div>
             </div>
             <button class="save-btn" onclick="saveCharacteristic()">Сохранить</button>
         </div>
@@ -2117,3 +2128,4 @@
     </script>
 </body>
 </html>
+```
