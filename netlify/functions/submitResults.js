@@ -7,7 +7,6 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // Проверяем, что заголовок Content-Type содержит multipart/form-data
   const contentType = event.headers['content-type'] || '';
   if (!contentType.includes('multipart/form-data')) {
     return {
@@ -30,10 +29,10 @@ exports.handler = async (event) => {
 
     busboy.on('file', (fieldname, file, info) => {
       const { filename, encoding, mimeType } = info;
-      // Сохраняем файл в буфер
       const chunks = [];
       file.on('data', (chunk) => chunks.push(chunk));
       file.on('end', () => {
+        // Сохраняем информацию о файле, включая оригинальное имя
         files[fieldname] = {
           filename,
           mimeType,
@@ -59,7 +58,7 @@ exports.handler = async (event) => {
           apiURL: 'https://api.netlify.com'
         });
 
-        // Проверяем, существует ли кандидат и имеет ли статус pending
+        // Проверяем существование кандидата
         const candidateData = await store.get(code, { type: 'json' });
         if (!candidateData) {
           resolve({
@@ -76,13 +75,13 @@ exports.handler = async (event) => {
           return;
         }
 
-        // Сохраняем каждый файл в отдельный блоб
+        // Сохраняем файлы с использованием оригинальных имён
         for (const [fieldname, fileInfo] of Object.entries(files)) {
-          const fileKey = `${code}/${fieldname}`; // например, ROSSETI-XXXX/report.txt
+          const fileKey = `${code}/${fileInfo.filename}`; // Исправлено: теперь используется оригинальное имя файла
           await store.set(fileKey, fileInfo.data);
         }
 
-        // Обновляем статус кандидата на completed
+        // Обновляем статус кандидата
         candidateData.status = 'completed';
         candidateData.completedAt = new Date().toISOString();
         await store.setJSON(code, candidateData);
@@ -107,7 +106,6 @@ exports.handler = async (event) => {
       });
     });
 
-    // Передаём тело запроса в busboy
     const buffer = Buffer.from(event.body, 'base64');
     const readable = Readable.from(buffer);
     readable.pipe(busboy);
