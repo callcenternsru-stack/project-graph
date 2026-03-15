@@ -1,17 +1,14 @@
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
-  // Разрешаем только POST-запросы
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
   try {
-    // Получаем данные из тела запроса
     const data = JSON.parse(event.body);
     const { code, formData } = data;
 
-    // Проверяем обязательные поля
     if (!code || !formData) {
       return {
         statusCode: 400,
@@ -19,7 +16,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Получаем доступ к хранилищу
     const store = getStore({
       name: 'candidates-data',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -27,13 +23,40 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Сохраняем данные кандидата по ключу = code
-    const candidateData = {
-      formData,
-      status: 'pending',       // начальный статус – ожидание проверки
-      createdAt: new Date().toISOString()
+    // Получаем список всех ключей в хранилище
+    const { blobs } = await store.list();
+
+    // Функция для сравнения двух объектов анкет (без учёта кода и временных меток)
+    const isSameCandidate = (a, b) => {
+      return a.fullName === b.fullName &&
+             a.nickname === b.nickname &&
+             a.telegram === b.telegram &&
+             a.phone === b.phone &&
+             a.email === b.email &&
+             a.project === b.project;
     };
 
+    // Перебираем все ключи и ищем дубликат
+    for (const blob of blobs) {
+      // Пропускаем ключи, которые содержат слеш (это файлы, а не анкеты)
+      if (blob.key.includes('/')) continue;
+
+      const existing = await store.get(blob.key, { type: 'json' });
+      if (existing && existing.formData && isSameCandidate(existing.formData, formData)) {
+        // Нашли дубликат – удаляем его
+        await store.delete(blob.key);
+        console.log(`Deleted duplicate form with key ${blob.key}`);
+        // Прерываем цикл, так как дубликат может быть только один
+        break;
+      }
+    }
+
+    // Сохраняем новую анкету
+    const candidateData = {
+      formData,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
     await store.setJSON(code, candidateData);
 
     return {
