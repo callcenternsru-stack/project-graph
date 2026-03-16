@@ -92,7 +92,7 @@ exports.handler = async (event) => {
           projectId: fields.projectId,
           status: fields.status || 'draft',
           submittedAt: new Date().toISOString(),
-          recruitmentStatus: fields.status || 'draft'   // NEW: инициализация статуса
+          recruitmentStatus: fields.status || 'draft'
         };
 
         if (fields.taskAnswers) {
@@ -106,8 +106,8 @@ exports.handler = async (event) => {
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
           await store.set(fileKey, fileInfo.data);
-          // FIX: кодируем имя файла для безопасного использования в URL
-          fileUrls[name] = `/.netlify/functions/getFile?code=${recordId}&file=${encodeURIComponent(fileInfo.filename)}`;
+          // ВАЖНО: добавляем type=manual, чтобы getFile знал, из какого хранилища брать файл
+          fileUrls[name] = `/.netlify/functions/getFile?code=${recordId}&file=${encodeURIComponent(fileInfo.filename)}&type=manual`;
         }
         if (Object.keys(fileUrls).length > 0) {
           record.files = fileUrls;
