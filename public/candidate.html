@@ -216,6 +216,12 @@
             cursor: not-allowed;
         }
 
+        .btn.loading {
+            opacity: 0.7;
+            cursor: wait;
+            pointer-events: none;
+        }
+
         .required-note {
             color: #8f9bb3;
             font-size: 14px;
@@ -387,7 +393,7 @@
 
         .task-link {
             display: inline-block;
-            margin: 10px 0 15px;
+            margin: 10px 10px 15px 0;
             padding: 10px 20px;
             background: #1a1a1a;
             border: 2px solid #ffd700;
@@ -502,10 +508,58 @@
             display: block;
         }
 
-        .quiz-question textarea {
-            width: 100%;
-            min-height: 80px;
-            resize: vertical;
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e0e0e0;
+        }
+
+        .quiz-option input[type="radio"] {
+            width: auto;
+            margin-right: 5px;
+            accent-color: #ffd700;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top-color: #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @keyframes fadeIn {
@@ -567,9 +621,18 @@
         .info-card .value {
             color: #fff;
         }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Идет загрузка...</div>
+    </div>
+
     <div class="container">
         <h1>РОССЕТТИ · Анкета кандидата</h1>
         
@@ -748,8 +811,8 @@
 
                 <!-- Две кнопки -->
                 <div class="button-group">
-                    <button type="button" class="btn" onclick="startAutoVerification()">✅ Пройти проверку автоматически</button>
-                    <button type="button" class="btn secondary" onclick="startManualVerification()">✍️ Пройти проверку вручную</button>
+                    <button type="button" class="btn" id="autoBtn" onclick="startAutoVerification()">✅ Пройти проверку автоматически</button>
+                    <button type="button" class="btn secondary" id="manualBtn" onclick="startManualVerification()">✍️ Пройти проверку вручную</button>
                 </div>
             </form>
 
@@ -797,6 +860,19 @@
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
+        }
+
+        // --- Управление загрузкой ---
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            document.getElementById('autoBtn').disabled = true;
+            document.getElementById('manualBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('autoBtn').disabled = false;
+            document.getElementById('manualBtn').disabled = false;
         }
 
         // --- Загрузка списка проектов с сервера ---
@@ -892,6 +968,8 @@
                 return;
             }
 
+            showLoading();
+
             const code = generateUniqueCode();
             document.getElementById('codeDisplay').textContent = code;
 
@@ -907,6 +985,8 @@
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Свяжитесь с поддержкой.', 'error');
+            } finally {
+                hideLoading();
             }
 
             document.getElementById('autoVerificationBlock').classList.add('show');
@@ -938,23 +1018,91 @@
                 title: "Задание №3 Пройдите тест на основы знания компьютера",
                 instruction: "Ответьте на вопросы ниже. Все вопросы обязательны.",
                 questions: [
-                    "Как открыть диспетчер задач?",
-                    "Где можно удалить программу?",
-                    "Как сделать скриншот экрана?",
-                    "Что делать, если пропал звук?",
-                    "Какие браузеры существуют? (перечислите варианты)",
-                    "Как копировать выделенный элемент/текст?",
-                    "Через какие приложения можно открыть файлы типа .rar, .zip, .7zip?",
-                    "Что такое ПКМ и ЛКМ?",
-                    "Как скачать файл или программу из браузера? (опишите действия)",
-                    "Как вставить скопированный файл или элемент?",
-                    "Как найти файл на компьютере?",
-                    "Как открыть проводник Windows?",
-                    "Что такое архиватор и какие бывают программы для работы с архивами?",
-                    "Как быстро заблокировать компьютер?",
-                    "Как посмотреть информацию о системе (процессор, память)?",
-                    "Если вы дважды кликните по кнопке «Обновить страницу», сайт обновится сильнее?",
-                    "Как увеличить масштаб на экране?"
+                    {
+                        text: "Как открыть диспетчер задач?",
+                        options: ["Ctrl+Alt+Del", "Ctrl+Shift+Esc", "Win+R → taskmgr", "Все вышеперечисленное"],
+                        correct: 3
+                    },
+                    {
+                        text: "Где можно удалить программу?",
+                        options: ["Панель управления → Удаление программ", "Корзина", "Диспетчер задач", "Мой компьютер"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как сделать скриншот экрана?",
+                        options: ["Кнопка Print Screen", "Win+Shift+S", "Ножницы", "Все вышеперечисленное"],
+                        correct: 3
+                    },
+                    {
+                        text: "Что делать, если пропал звук?",
+                        options: ["Проверить подключение колонок", "Проверить настройки звука", "Перезагрузить компьютер", "Все вышеперечисленное"],
+                        correct: 3
+                    },
+                    {
+                        text: "Какие браузеры существуют? (выберите один вариант)",
+                        options: ["Google Chrome", "Microsoft Word", "Adobe Photoshop", "Skype"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как копировать выделенный элемент/текст?",
+                        options: ["Ctrl+C", "Ctrl+V", "Ctrl+X", "Ctrl+Z"],
+                        correct: 0
+                    },
+                    {
+                        text: "Через какие приложения можно открыть файлы типа .rar, .zip, .7zip?",
+                        options: ["WinRAR", "7-Zip", "Архиватор Windows", "Все вышеперечисленное"],
+                        correct: 3
+                    },
+                    {
+                        text: "Что такое ПКМ и ЛКМ?",
+                        options: ["Правая и левая кнопки мыши", "Персональный компьютер и монитор", "Программа и команда мыши", "Панель контроля мыши"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как скачать файл или программу из браузера? (выберите правильную последовательность)",
+                        options: ["Нажать на ссылку → Выбрать 'Сохранить'", "Кликнуть правой кнопкой → 'Сохранить как'", "Перетащить файл на рабочий стол", "Все варианты подходят"],
+                        correct: 3
+                    },
+                    {
+                        text: "Как вставить скопированный файл или элемент?",
+                        options: ["Ctrl+V", "Ctrl+C", "Ctrl+X", "Ctrl+Z"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как найти файл на компьютере?",
+                        options: ["Использовать поиск в Проводнике", "Просмотреть все папки вручную", "Открыть каждый диск", "Использовать командную строку"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как открыть проводник Windows?",
+                        options: ["Win+E", "Мой компьютер", "Пуск → Проводник", "Все вышеперечисленное"],
+                        correct: 3
+                    },
+                    {
+                        text: "Что такое архиватор и какие бывают программы для работы с архивами?",
+                        options: ["Программа для сжатия файлов (WinRAR, 7-Zip)", "Антивирусная программа", "Текстовый редактор", "Графический редактор"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как быстро заблокировать компьютер?",
+                        options: ["Win+L", "Ctrl+Alt+Del → Блокировать", "Кнопка питания", "Выключить монитор"],
+                        correct: 0
+                    },
+                    {
+                        text: "Как посмотреть информацию о системе (процессор, память)?",
+                        options: ["Win+Pause/Break", "Диспетчер задач", "Панель управления → Система", "Все вышеперечисленное"],
+                        correct: 3
+                    },
+                    {
+                        text: "Если вы дважды кликните по кнопке «Обновить страницу», сайт обновится сильнее?",
+                        options: ["Да", "Нет", "Зависит от браузера", "Обновится дважды"],
+                        correct: 1
+                    },
+                    {
+                        text: "Как увеличить масштаб на экране?",
+                        options: ["Ctrl+Колесико мыши", "Ctrl++", "Настройки экрана", "Все вышеперечисленное"],
+                        correct: 3
+                    }
                 ],
                 fileRequired: false
             },
@@ -971,7 +1119,9 @@
                 instruction: "1. Необходимо перейти по ссылке для скачивания ниже\n2. В правом верхнем углу, нажимаете кнопку скачать.\n3. После скачивания устанавливаете программу\n4. Открываете программу и вписываете код AnyDesk",
                 link: "https://anydesk.com/ru",
                 linkText: "Скачать AnyDesk",
-                extraText: "Пример номера AnyDesk: https://ibb.co/j9kJBV6P\n\nВведите номер вашего AnyDesk:",
+                exampleLink: "https://ibb.co/j9kJBV6P",
+                exampleText: "Пример номера",
+                extraText: "Введите номер вашего AnyDesk:",
                 fileRequired: false,
                 inputPlaceholder: "Введите номер AnyDesk"
             },
@@ -1023,26 +1173,32 @@
                 html += `<a href="${task.link}" target="_blank" class="task-link">${task.linkText || 'Перейти'}</a>`;
             }
             
-            // Обработка extraText с преобразованием URL в ссылки
+            // Кнопка для примера AnyDesk
+            if (task.exampleLink) {
+                html += `<a href="${task.exampleLink}" target="_blank" class="task-link">${task.exampleText || 'Пример'}</a>`;
+            }
+            
             if (task.extraText) {
-                let extraHtml = task.extraText.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="task-link" style="display:inline; margin:0; padding:0;">$1</a>');
-                html += `<div class="task-extra">${extraHtml}</div>`;
+                html += `<div class="task-extra">${task.extraText}</div>`;
             }
 
-            // Если есть вопросы (тест)
+            // Если есть вопросы (тест с вариантами)
             if (task.questions) {
                 html += `<div class="quiz-section">`;
                 task.questions.forEach((q, idx) => {
-                    const answer = (taskAnswers[currentTaskIndex] && taskAnswers[currentTaskIndex][idx]) || '';
+                    const selected = (taskAnswers[currentTaskIndex] && taskAnswers[currentTaskIndex][idx] !== undefined) ? taskAnswers[currentTaskIndex][idx] : -1;
                     html += `
                         <div class="quiz-question">
-                            <label>${idx+1}. ${q}</label>
-                            <textarea 
-                                id="quiz_${currentTaskIndex}_${idx}"
-                                oninput="handleQuizAnswer(${currentTaskIndex}, ${idx}, this.value)"
-                                placeholder="Ваш ответ">${answer}</textarea>
-                        </div>
-                    `;
+                            <label>${idx+1}. ${q.text}</label>
+                            <div class="quiz-options">`;
+                    q.options.forEach((opt, optIdx) => {
+                        html += `
+                            <label class="quiz-option">
+                                <input type="radio" name="q_${currentTaskIndex}_${idx}" value="${optIdx}" ${selected === optIdx ? 'checked' : ''} onchange="handleQuizAnswer(${currentTaskIndex}, ${idx}, ${optIdx})">
+                                ${opt}
+                            </label>`;
+                    });
+                    html += `</div></div>`;
                 });
                 html += `</div>`;
             }
@@ -1098,7 +1254,6 @@
 
             prevBtn.disabled = currentTaskIndex === 0;
 
-            // Проверка, можно ли перейти дальше
             let canProceed = true;
             if (task.fileRequired && !taskFiles[currentTaskIndex]) {
                 canProceed = false;
@@ -1111,7 +1266,7 @@
             if (task.questions) {
                 const answers = taskAnswers[currentTaskIndex] || {};
                 for (let i = 0; i < task.questions.length; i++) {
-                    if (!answers[i] || answers[i].trim() === '') {
+                    if (answers[i] === undefined) {
                         canProceed = false;
                         break;
                     }
@@ -1120,7 +1275,6 @@
 
             nextBtn.disabled = !canProceed;
 
-            // Если последнее задание, меняем текст кнопки
             if (currentTaskIndex === tasks.length - 1) {
                 nextBtn.textContent = 'Отправить';
                 nextBtn.classList.add('submit');
@@ -1146,12 +1300,32 @@
             }
         }
 
+        function calculateQuizScore(taskIndex) {
+            const task = tasks[taskIndex];
+            if (!task.questions) return null;
+            
+            const answers = taskAnswers[taskIndex] || {};
+            let correct = 0;
+            for (let i = 0; i < task.questions.length; i++) {
+                if (answers[i] === task.questions[i].correct) {
+                    correct++;
+                }
+            }
+            return {
+                correct: correct,
+                total: task.questions.length,
+                percentage: Math.round((correct / task.questions.length) * 100)
+            };
+        }
+
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
                 alert('Ошибка: не удалось определить проект.');
                 return;
             }
+
+            showLoading();
 
             const data = new FormData();
             data.append('fullName', formData.fullName);
@@ -1162,6 +1336,7 @@
             data.append('project', formData.project);
             data.append('projectId', formData.projectId);
 
+            // Добавляем результаты тестов
             for (let i = 0; i < tasks.length; i++) {
                 if (taskFiles[i]) {
                     data.append(`task_${i}`, taskFiles[i]);
@@ -1171,6 +1346,13 @@
                 }
                 if (taskAnswers[i]) {
                     data.append(`task_${i}_answers`, JSON.stringify(taskAnswers[i]));
+                }
+                // Добавляем результаты теста знаний
+                if (tasks[i].questions) {
+                    const score = calculateQuizScore(i);
+                    if (score) {
+                        data.append(`task_${i}_score`, JSON.stringify(score));
+                    }
                 }
             }
 
@@ -1186,6 +1368,8 @@
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Попробуйте позже.', 'error');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -1201,6 +1385,11 @@
                 return;
             }
 
+            showLoading();
+
+            // Имитация загрузки (можно убрать если не нужно)
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             currentTaskIndex = 0;
             taskFiles = {};
             taskInputs = {};
@@ -1209,6 +1398,8 @@
             document.getElementById('autoVerificationBlock').classList.remove('show');
             document.getElementById('manualVerificationBlock').classList.add('show');
             renderTask();
+
+            hideLoading();
         }
 
         function copyCode() {
