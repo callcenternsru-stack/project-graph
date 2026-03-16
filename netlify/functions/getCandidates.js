@@ -13,13 +13,26 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Читаем весь массив (если кандидатов много, можно хранить в одном ключе)
-    const candidates = await store.get('_all', { type: 'json' }) || [];
-    // Сортируем по дате создания (новые сверху)
-    candidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    // Возвращаем только последние 50 для быстрой загрузки
+    // Читаем индекс
+    const index = await store.get('_index', { type: 'json' }) || [];
     const MAX_CANDIDATES = 50;
-    const limited = candidates.slice(0, MAX_CANDIDATES);
+    const recentIds = index.slice(-MAX_CANDIDATES).map(item => item.id);
+
+    // Загружаем параллельно
+    const candidates = await Promise.all(
+      recentIds.map(async (id) => {
+        try {
+          const data = await store.get(id, { type: 'json' });
+          return data || null;
+        } catch (e) {
+          console.error(`Error loading candidate ${id}:`, e);
+          return null;
+        }
+      })
+    );
+
+    const filtered = candidates.filter(c => c !== null);
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {
       statusCode: 200,
@@ -27,7 +40,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=120'
       },
-      body: JSON.stringify(limited)
+      body: JSON.stringify(filtered)
     };
   } catch (error) {
     console.error('Error in getCandidates:', error);

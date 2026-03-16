@@ -17,7 +17,9 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    let candidates = await store.get('_all', { type: 'json' }) || [];
+    // Читаем индекс
+    const indexKey = '_index';
+    let index = await store.get(indexKey, { type: 'json' }) || [];
 
     const newCandidate = {
       ...candidate,
@@ -25,11 +27,14 @@ exports.handler = async (event) => {
       updatedAt: new Date().toISOString(),
       createdAt: candidate.createdAt || new Date().toISOString()
     };
-    candidates.push(newCandidate);
-    // Ограничим размер хранимого массива (например, последние 500)
-    if (candidates.length > 500) candidates = candidates.slice(-500);
 
-    await store.setJSON('_all', candidates);
+    // Сохраняем кандидата
+    await store.setJSON(newCandidate.id, newCandidate);
+
+    // Обновляем индекс
+    index.push({ id: newCandidate.id, createdAt: newCandidate.createdAt });
+    if (index.length > 500) index = index.slice(-500); // храним только последние 500 ID
+    await store.setJSON(indexKey, index);
 
     return {
       statusCode: 200,

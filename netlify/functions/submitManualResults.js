@@ -47,7 +47,7 @@ exports.handler = async (event) => {
           apiURL: 'https://api.netlify.com'
         });
 
-        // Определяем ID записи: если передан, используем его, иначе генерируем новый
+        // Определяем ID записи
         const recordId = fields.id || `manual_${Date.now()}`;
 
         // Сохраняем текстовые поля
@@ -60,27 +60,19 @@ exports.handler = async (event) => {
           email: fields.email,
           project: fields.project,
           projectId: fields.projectId,
-          status: fields.status || 'draft', // draft, completed
+          status: fields.status || 'draft',
           submittedAt: new Date().toISOString()
         };
 
-        // Если есть дополнительные поля (ответы на тесты, результаты), добавляем их
+        // Парсим дополнительные поля
         if (fields.taskAnswers) {
-          try {
-            record.taskAnswers = JSON.parse(fields.taskAnswers);
-          } catch (e) {
-            console.error('Error parsing taskAnswers', e);
-          }
+          try { record.taskAnswers = JSON.parse(fields.taskAnswers); } catch (e) {}
         }
         if (fields.taskScores) {
-          try {
-            record.taskScores = JSON.parse(fields.taskScores);
-          } catch (e) {
-            console.error('Error parsing taskScores', e);
-          }
+          try { record.taskScores = JSON.parse(fields.taskScores); } catch (e) {}
         }
 
-        // Сохраняем файлы, если они есть
+        // Сохраняем файлы
         const fileUrls = {};
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
@@ -91,8 +83,18 @@ exports.handler = async (event) => {
           record.files = fileUrls;
         }
 
-        // Сохраняем запись (перезаписываем, если уже существует)
+        // Сохраняем запись
         await store.setJSON(recordId, record);
+
+        // Обновляем индекс
+        const indexKey = '_index';
+        let index = await store.get(indexKey, { type: 'json' }) || [];
+        // Удаляем старую запись из индекса, если обновляем
+        index = index.filter(item => item.id !== recordId);
+        index.push({ id: recordId, submittedAt: record.submittedAt, status: record.status });
+        // Оставляем только последние 200 записей в индексе
+        if (index.length > 200) index = index.slice(-200);
+        await store.setJSON(indexKey, index);
 
         resolve({
           statusCode: 200,
