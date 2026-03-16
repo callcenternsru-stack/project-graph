@@ -14,19 +14,28 @@ exports.handler = async () => {
       .map(item => item.key)
       .filter(key => !key.includes('/'));
 
-    // Собираем информацию о каждой анкете
     const index = [];
-    for (const key of candidateKeys) {
-      const data = await store.get(key, { type: 'json' });
-      if (data && data.createdAt) {
-        index.push({ code: key, createdAt: data.createdAt });
-      } else {
-        // fallback – используем текущее время, но это не идеально
-        index.push({ code: key, createdAt: new Date().toISOString() });
-      }
+    const batchSize = 10; // можно увеличить до 20, если анкет много
+
+    for (let i = 0; i < candidateKeys.length; i += batchSize) {
+      const batch = candidateKeys.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (key) => {
+          try {
+            const data = await store.get(key, { type: 'json' });
+            // Если есть поле createdAt – используем его, иначе ставим очень старую дату
+            const createdAt = data?.createdAt || new Date(0).toISOString();
+            return { code: key, createdAt };
+          } catch (e) {
+            console.error(`Error loading key ${key}:`, e);
+            return null;
+          }
+        })
+      );
+      index.push(...batchResults.filter(r => r !== null));
     }
 
-    // Сортируем по дате (старые сначала, новые в конце – так slice(-N) будет давать последние)
+    // Сортируем по дате (старые в начале, новые в конце – так slice(-N) будет давать последние)
     index.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     await store.setJSON('_index', index);
