@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     const bb = Busboy({
       headers: { 'content-type': contentType },
       limits: {
-        fileSize: 15 * 1024 * 1024, // 15 MB (но Netlify может обрезать раньше)
+        fileSize: 10 * 1024 * 1024, // 10 MB
         fieldSize: 10 * 1024 * 1024,
         fields: 50,
         files: 10
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
     const files = {};
 
     bb.on('field', (name, val) => {
-      console.log(`Field received: ${name}=${val.substring(0, 100)}...`);
+      console.log(`Field received: ${name}=${val.substring(0, 50)}...`);
       fields[name] = val;
     });
 
@@ -44,7 +44,7 @@ exports.handler = async (event) => {
       file.on('data', (chunk) => {
         chunks.push(chunk);
         fileSize += chunk.length;
-        if (fileSize > 15 * 1024 * 1024) {
+        if (fileSize > 10 * 1024 * 1024) {
           file.destroy(new Error('File too large'));
         }
       });
@@ -63,12 +63,12 @@ exports.handler = async (event) => {
 
     bb.on('finish', async () => {
       try {
-        console.log('All fields:', Object.keys(fields));
+        console.log('All fields keys:', Object.keys(fields));
+        // Проверка наличия обязательных полей
         const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
-        for (const field of requiredFields) {
-          if (!fields[field]) {
-            console.error(`Missing required field: ${field}`);
-          }
+        const missing = requiredFields.filter(f => !fields[f]);
+        if (missing.length > 0) {
+          throw new Error(`Missing required fields: ${missing.join(', ')}`);
         }
 
         const store = getStore({
@@ -79,6 +79,7 @@ exports.handler = async (event) => {
         });
 
         const recordId = fields.id || `manual_${Date.now()}`;
+        console.log('Record ID:', recordId);
 
         const record = {
           id: recordId,
@@ -111,6 +112,7 @@ exports.handler = async (event) => {
         }
 
         await store.setJSON(recordId, record);
+        console.log('Record saved:', recordId);
 
         // Обновляем индекс
         const indexKey = '_index';
@@ -119,6 +121,7 @@ exports.handler = async (event) => {
         index.push({ id: recordId, submittedAt: record.submittedAt, status: record.status });
         if (index.length > 200) index = index.slice(-200);
         await store.setJSON(indexKey, index);
+        console.log('Index updated');
 
         resolve({
           statusCode: 200,
