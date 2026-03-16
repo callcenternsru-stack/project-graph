@@ -43,10 +43,11 @@ exports.handler = async (event) => {
           formData: candidateData.formData,
           createdAt: candidateData.createdAt,
           completedAt: candidateData.completedAt,
+          // Добавлен параметр type=auto
           files: {
-            report: baseUrl + `?code=${encodeURIComponent(code)}&file=report.txt`,
-            resultsJson: baseUrl + `?code=${encodeURIComponent(code)}&file=results.json`,
-            voice: baseUrl + `?code=${encodeURIComponent(code)}&file=voice_recording.wav`
+            report: baseUrl + `?code=${encodeURIComponent(code)}&file=report.txt&type=auto`,
+            resultsJson: baseUrl + `?code=${encodeURIComponent(code)}&file=results.json&type=auto`,
+            voice: baseUrl + `?code=${encodeURIComponent(code)}&file=voice_recording.wav&type=auto`
           }
         });
       }

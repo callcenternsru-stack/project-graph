@@ -28,15 +28,16 @@ exports.handler = async (event) => {
             email: data.formData?.email || '',
             project: data.formData?.project || '',
             projectId: data.formData?.projectId || '',
-            status: data.status || 'pending',          // технический статус (pending/completed)
-            recruitmentStatus: data.recruitmentStatus || 'draft', // наш новый статус
+            status: data.status || 'pending',
+            recruitmentStatus: data.recruitmentStatus || 'draft',
             createdAt: data.createdAt || data.formData?.timestamp,
             completedAt: data.completedAt,
+            // Добавлен параметр type=auto
             files: data.status === 'completed'
               ? {
-                  report: `/.netlify/functions/getFile?code=${code}&file=report.txt`,
-                  results: `/.netlify/functions/getFile?code=${code}&file=results.json`,
-                  voice: `/.netlify/functions/getFile?code=${code}&file=voice_recording.wav`,
+                  report: `/.netlify/functions/getFile?code=${code}&file=report.txt&type=auto`,
+                  results: `/.netlify/functions/getFile?code=${code}&file=results.json&type=auto`,
+                  voice: `/.netlify/functions/getFile?code=${code}&file=voice_recording.wav&type=auto`,
                 }
               : {},
           };
@@ -71,7 +72,7 @@ exports.handler = async (event) => {
             status: data.status || 'draft',
             recruitmentStatus: data.recruitmentStatus || 'draft',
             createdAt: data.submittedAt,
-            files: data.files || {}, // объект со ссылками на загруженные файлы
+            files: data.files || {}, // уже содержат type=manual из submitManualResults
           };
         } catch (e) {
           return null;
