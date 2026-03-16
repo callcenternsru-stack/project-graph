@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1168,6 +1169,7 @@
             }
         }
 
+        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ КОНВЕРТАЦИИ WAV -> MP3 ==========
         async function convertWavToMp3(wavFile) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1175,12 +1177,21 @@
                     try {
                         const wavData = e.target.result;
                         const wavHeader = lamejs.WavHeader.readHeader(new DataView(wavData));
+
+                        // Проверка целостности WAV-файла
+                        if (wavHeader.dataOffset + wavHeader.dataLen > wavData.byteLength) {
+                            throw new Error('Invalid WAV file: data chunk exceeds file size');
+                        }
+                        if (wavHeader.dataLen % 2 !== 0) {
+                            throw new Error('Invalid WAV file: data length is not a multiple of 2');
+                        }
+
+                        const samples = new Int16Array(wavData, wavHeader.dataOffset, wavHeader.dataLen / 2);
                         const mp3Encoder = new lamejs.Mp3Encoder(
                             wavHeader.channels,
                             wavHeader.sampleRate,
                             96
                         );
-                        const samples = new Int16Array(wavData, wavHeader.dataOffset, wavHeader.dataLen / 2);
                         const mp3Data = [];
                         const blockSize = 1152;
                         for (let i = 0; i < samples.length; i += blockSize) {
@@ -1516,3 +1527,4 @@
     </script>
 </body>
 </html>
+```
