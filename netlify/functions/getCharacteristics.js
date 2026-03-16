@@ -15,9 +15,9 @@ exports.handler = async (event) => {
 
     const characteristics = await store.get('all', { type: 'json' }) || [];
 
-    const project = event.queryStringParameters?.project;
-    if (project) {
-      const filtered = characteristics.filter(c => c.project === project);
+    const projectId = event.queryStringParameters?.projectId;
+    if (projectId) {
+      const filtered = characteristics.filter(c => c.projectId === projectId);
       return {
         statusCode: 200,
         body: JSON.stringify(filtered)

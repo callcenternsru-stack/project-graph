@@ -1,7 +1,6 @@
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
-  // Разрешаем только GET-запросы с параметром code
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -22,10 +21,8 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Пытаемся получить данные кандидата
     const candidateData = await store.get(code, { type: 'json' });
 
-    // Если запись не найдена или статус не pending – код недействителен
     if (!candidateData) {
       return {
         statusCode: 200,
@@ -40,10 +37,18 @@ exports.handler = async (event) => {
       };
     }
 
-    // Всё хорошо, код действителен
+    // Возвращаем projectId из сохранённых данных кандидата
+    const projectId = candidateData.formData?.projectId || null;
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ valid: true })
+      body: JSON.stringify({
+        valid: true,
+        formData: {
+          ...candidateData.formData,
+          projectId
+        }
+      })
     };
   } catch (error) {
     console.error('Error in checkCode:', error);
