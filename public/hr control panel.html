@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -275,7 +274,7 @@
             background: #111111;
             border-radius: 24px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-            width: 1000px; /* увеличена ширина для размещения всех полей */
+            width: 1000px;
             max-width: calc(100vw - 40px);
             z-index: 10000;
             display: none;
@@ -367,7 +366,6 @@
             background: #222222;
         }
 
-        /* Компактная панель инструментов - все кнопки одинаковые */
         .toolbar {
             display: flex;
             gap: 6px;
@@ -486,7 +484,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Стили для графиков (из index.html) */
         .schedule-wrapper {
             background: #111111;
             border-radius: 16px;
@@ -723,7 +720,6 @@
         <button class="menu-btn" onclick="switchTab('allForms')">Все анкеты</button>
         <button class="menu-btn" onclick="switchTab('auto')">Анкеты авто</button>
         <button class="menu-btn" onclick="switchTab('manual')">Анкеты ручные</button>
-        <!-- Новая кнопка "Характеристики" -->
         <button class="menu-btn" onclick="switchTab('characteristics')">Характеристики</button>
     </div>
 
@@ -735,7 +731,6 @@
         <div class="content-card" id="contentArea"></div>
     </div>
 
-    <!-- Модальное окно для добавления месяца (без выбора проекта) -->
     <div id="addMonthModal" class="modal">
         <div class="modal-header">
             <span>Добавить месяц в график</span>
@@ -750,7 +745,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно для редактирования (из предыдущих частей) -->
     <div id="editModal" class="modal">
         <div class="modal-header">
             <span id="modalTitle">Добавить</span>
@@ -759,7 +753,6 @@
         <div class="modal-content" id="modalContent"></div>
     </div>
 
-    <!-- Модальное окно для ввода/просмотра ссылки на группу -->
     <div id="commentModal" class="modal">
         <div class="modal-header">
             <span id="commentModalTitle">Ссылка на группу</span>
@@ -790,7 +783,6 @@
         </div>
     </div>
 
-    <!-- Новое модальное окно для добавления всех характеристик проекта (увеличенное) -->
     <div id="characteristicModal" class="modal">
         <div class="modal-header">
             <span>Характеристики проекта</span>
@@ -870,7 +862,6 @@
         </div>
     </div>
 
-    <!-- Скрытый input для загрузки Excel -->
     <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display: none;">
 
     <script>
@@ -890,7 +881,7 @@
             autoForms: [],
             manualForms: [],
             allForms: [],
-            characteristics: [] // новое поле для характеристик (объект с проектом и всеми параметрами)
+            characteristics: []
         };
 
         let currentTab = 'recruiters';
@@ -902,7 +893,6 @@
         let candidatesSortColumn = 0;
         let candidatesSortDirection = 'desc';
 
-        // Проверяем URL-параметр tab=schedule-only
         const urlParams = new URLSearchParams(window.location.search);
         const scheduleOnly = urlParams.get('tab') === 'schedule-only';
 
@@ -924,7 +914,6 @@
             });
         }
 
-        // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
             const notif = document.createElement('div');
             notif.className = `notification ${type}`;
@@ -933,7 +922,36 @@
             setTimeout(() => notif.remove(), 5000);
         }
 
-        // ========== ЗАГРУЗКА ВСЕХ ДАННЫХ С СЕРВЕРА ==========
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ХАРАКТЕРИСТИКАМИ НА СЕРВЕРЕ ==========
+        async function loadCharacteristics() {
+            try {
+                const res = await fetch('/.netlify/functions/getCharacteristics');
+                if (res.ok) {
+                    state.characteristics = await res.json();
+                } else {
+                    console.error('Failed to load characteristics');
+                }
+            } catch (error) {
+                console.error('Error loading characteristics:', error);
+            }
+        }
+
+        async function saveCharacteristicsToServer() {
+            try {
+                const res = await fetch('/.netlify/functions/saveCharacteristics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(state.characteristics)
+                });
+                if (!res.ok) {
+                    showNotification('Ошибка сохранения характеристик', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving characteristics:', error);
+                showNotification('Ошибка сети при сохранении', 'error');
+            }
+        }
+
         async function loadAllData() {
             try {
                 const [
@@ -980,22 +998,17 @@
                 state.manualForms = await manualFormsRes.json();
                 state.allForms = await allFormsRes.json();
 
-                // Автоанкеты загружаются отдельно (они могут быть большими)
                 const autoRes = await fetch('/.netlify/functions/getResults');
                 state.autoForms = await autoRes.json();
 
-                // Загружаем характеристики из localStorage (для демо)
-                const savedChars = localStorage.getItem('characteristics');
-                if (savedChars) {
-                    state.characteristics = JSON.parse(savedChars);
-                }
+                await loadCharacteristics();
+
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
                 showNotification('Не удалось загрузить данные', 'error');
             }
         }
 
-        // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tabId) {
             if (scheduleOnly) return;
             currentTab = tabId;
@@ -1028,7 +1041,6 @@
             }
         }
 
-        // ========== РЕКРУТЕРЫ (без изменений) ==========
         function renderRecruiters(container) {
             let html = `
                 <div class="section-header">
@@ -1071,7 +1083,6 @@
             container.innerHTML = html;
         }
 
-        // ========== БАЗА КОНТАКТОВ (без изменений) ==========
         function renderCandidates(container) {
             const headers = [
                 { label: 'Дата', field: 'createdAt' },
@@ -1183,7 +1194,6 @@
             });
         }
 
-        // ========== СКРИПТЫ (без изменений) ==========
         function renderScripts(container) {
             let html = `
                 <div class="section-header">
@@ -1222,7 +1232,6 @@
             container.innerHTML = html;
         }
 
-        // ========== ГРАФИК (без изменений) ==========
         function renderSchedulePage(container) {
             let allMonths = [...state.scheduleMonths];
             if (!allMonths.includes(currentScheduleMonth)) {
@@ -1303,7 +1312,6 @@
             return html;
         }
 
-        // ========== ВСЕ АНКЕТЫ (без изменений) ==========
         function renderAllForms(container) {
             container.innerHTML = `
                 <div class="section-header">
@@ -1315,7 +1323,6 @@
             `;
         }
 
-        // ========== АНКЕТЫ АВТО (без изменений) ==========
         async function renderAutoForms(container) {
             container.innerHTML = '<div class="loader">Загрузка данных...</div>';
 
@@ -1401,7 +1408,6 @@
             }
         }
 
-        // ========== АНКЕТЫ РУЧНЫЕ (без изменений) ==========
         function renderManualForms(container) {
             let html = `
                 <div class="section-header">
@@ -1445,9 +1451,7 @@
             container.innerHTML = html;
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ ДЛЯ ХАРАКТЕРИСТИК ==========
         function renderCharacteristics(container) {
-            // Обновляем список проектов в модальном окне при открытии вкладки
             updateCharProjectSelect();
 
             let html = `
@@ -1471,7 +1475,6 @@
                 html += '<tr><td colspan="3" style="text-align:center;">Нет характеристик</td></tr>';
             } else {
                 state.characteristics.forEach((char, index) => {
-                    // Формируем строку с параметрами
                     const paramsStr = `ОС: ${char.os || '—'}, Подкл.: ${char.connectionType || '—'}, Скорость: ${char.internetSpeed || '—'}, RAM: ${char.ram || '—'}, Ядра: ${char.cores || '—'}, Частота: ${char.cpuFreq || '—'} ГГц`;
                     html += `
                         <tr>
@@ -1488,7 +1491,6 @@
             container.innerHTML = html;
         }
 
-        // ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ХАРАКТЕРИСТИКАМИ ==========
         function updateCharProjectSelect() {
             const select = document.getElementById('charProjectSelect');
             if (!select) return;
@@ -1498,9 +1500,7 @@
         }
 
         function openCharacteristicModal() {
-            // Обновляем список проектов перед открытием
             updateCharProjectSelect();
-            // Сбрасываем все select'ы
             document.getElementById('charOsSelect').value = '';
             document.getElementById('charConnectionSelect').value = '';
             document.getElementById('charInternetSpeedSelect').value = '';
@@ -1530,35 +1530,31 @@
                 return;
             }
 
-            // Проверяем, есть ли уже характеристики для этого проекта
             const existingIndex = state.characteristics.findIndex(c => c.project === project);
             const newChar = { project, os, connectionType, internetSpeed, ram, cores, cpuFreq };
 
             if (existingIndex !== -1) {
-                // Обновляем существующие
                 state.characteristics[existingIndex] = newChar;
             } else {
-                // Добавляем новые
                 state.characteristics.push(newChar);
             }
 
-            // Сохраняем в localStorage для демонстрации (позже будет на сервер)
-            localStorage.setItem('characteristics', JSON.stringify(state.characteristics));
+            saveCharacteristicsToServer();
+
             closeCharacteristicModal();
-            renderContent(); // перерисовываем текущую вкладку
+            renderContent();
             showNotification('Характеристики сохранены', 'success');
         }
 
         function deleteCharacteristic(index) {
             if (confirm('Удалить характеристики для этого проекта?')) {
                 state.characteristics.splice(index, 1);
-                localStorage.setItem('characteristics', JSON.stringify(state.characteristics));
+                saveCharacteristicsToServer();
                 renderContent();
                 showNotification('Удалено', 'success');
             }
         }
 
-        // ========== ОБРАБОТКА ИЗМЕНЕНИЙ В ГРАФИКЕ (без изменений) ==========
         function handleTimeChange(input) {
             const type = input.dataset.type;
             const project = input.dataset.project;
@@ -1705,7 +1701,6 @@
             return `${months[parseInt(month) - 1]} ${year}`;
         }
 
-        // ========== УДАЛЕНИЕ ЭЛЕМЕНТОВ (РЕКРУТЕРЫ, СКРИПТЫ) ==========
         async function deleteItem(type, index) {
             if (!confirm('Удалить элемент?')) return;
 
@@ -1736,7 +1731,6 @@
             showNotification('Элемент удалён', 'success');
         }
 
-        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ МОДАЛЬНЫХ ОКОН ==========
         function generatePassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let password = '';
@@ -1995,7 +1989,6 @@
             editingType = null;
         }
 
-        // ========== ИМПОРТ КАНДИДАТОВ ИЗ EXCEL ==========
         function importCandidates(recruiterIndex) {
             currentRecruiterForImport = recruiterIndex;
             const fileInput = document.getElementById('excelUpload');
@@ -2074,7 +2067,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // ========== СОХРАНЕНИЕ ДАННЫХ ГРАФИКОВ НА СЕРВЕР ==========
         async function saveProjectMeetings() {
             try {
                 await fetch('/.netlify/functions/saveProjectMeetings', {
@@ -2135,7 +2127,6 @@
             }
         }
 
-        // ========== ИНИЦИАЛИЗАЦИЯ ==========
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllData();
             if (!scheduleOnly) {
@@ -2145,4 +2136,3 @@
     </script>
 </body>
 </html>
-```
