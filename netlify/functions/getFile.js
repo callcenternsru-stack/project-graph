@@ -16,7 +16,15 @@ exports.handler = async (event) => {
     };
   }
 
-  const storeName = type === 'manual' ? 'manualForms' : 'candidates-data';
+  // Определяем хранилище: если код начинается с "manual_" — это ручная анкета,
+  // иначе используем параметр type (для обратной совместимости)
+  let storeName;
+  if (code.startsWith('manual_')) {
+    storeName = 'manualForms';
+  } else {
+    storeName = type === 'manual' ? 'manualForms' : 'candidates-data';
+  }
+
   console.log(`[getFile] Request for code: ${code}, file: ${fileName}, type: ${type}, store: ${storeName}`);
 
   try {
