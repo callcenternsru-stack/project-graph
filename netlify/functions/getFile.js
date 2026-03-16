@@ -7,7 +7,7 @@ exports.handler = async (event) => {
 
   const code = event.queryStringParameters?.code;
   const fileName = event.queryStringParameters?.file;
-  const type = event.queryStringParameters?.type || 'auto'; // по умолчанию auto для обратной совместимости
+  const type = event.queryStringParameters?.type || 'auto';
 
   if (!code || !fileName) {
     return {
@@ -16,9 +16,7 @@ exports.handler = async (event) => {
     };
   }
 
-  // Выбираем хранилище в зависимости от типа
   const storeName = type === 'manual' ? 'manualForms' : 'candidates-data';
-
   console.log(`[getFile] Request for code: ${code}, file: ${fileName}, type: ${type}, store: ${storeName}`);
 
   try {
@@ -34,7 +32,6 @@ exports.handler = async (event) => {
     let fileData = await store.get(fileKey, { type: 'arrayBuffer' });
 
     if (!fileData) {
-      // Fallback для старых файлов (без расширения)
       const baseName = fileName.split('.').slice(0, -1).join('.');
       if (baseName) {
         const oldKey = `${code}/${baseName}`;
@@ -51,7 +48,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Определяем MIME-тип по расширению
     let contentType = 'application/octet-stream';
     if (fileName.endsWith('.txt')) contentType = 'text/plain; charset=utf-8';
     else if (fileName.endsWith('.json')) contentType = 'application/json';

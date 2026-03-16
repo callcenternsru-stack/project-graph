@@ -71,58 +71,94 @@ exports.handler = async (event) => {
           throw new Error(`Missing required fields: ${missing.join(', ')}`);
         }
 
-        const store = getStore({
+        // Удаляем все существующие черновики с такими же контактными данными из обоих хранилищ
+        const autoStore = getStore({
+          name: 'candidates-data',
+          siteID: process.env.NETLIFY_SITE_ID,
+          token: process.env.NETLIFY_ACCESS_TOKEN,
+        });
+        const manualStore = getStore({
           name: 'manualForms',
           siteID: process.env.NETLIFY_SITE_ID,
           token: process.env.NETLIFY_ACCESS_TOKEN,
-          apiURL: 'https://api.netlify.com'
         });
+
+        const contactKey = `${fields.fullName}_${fields.phone}_${fields.email}_${fields.projectId}`;
+
+        // Удаляем из auto-хранилища
+        const autoList = await autoStore.list();
+        for (const blob of autoList.blobs) {
+          if (blob.key.includes('/')) continue;
+          const data = await autoStore.get(blob.key, { type: 'json' });
+          if (data && data.formData) {
+            const key = `${data.formData.fullName}_${data.formData.phone}_${data.formData.email}_${data.formData.projectId}`;
+            if (key === contactKey) {
+              await autoStore.delete(blob.key);
+              console.log(`Deleted auto draft with key ${blob.key}`);
+              // Также удаляем из индекса
+              const index = await autoStore.get('_index', { type: 'json' }) || [];
+              const newIndex = index.filter(item => item.code !== blob.key);
+              if (newIndex.length !== index.length) {
+                await autoStore.setJSON('_index', newIndex);
+              }
+            }
+          }
+        }
+
+        // Удаляем из manual-хранилища
+        const manualList = await manualStore.list();
+        for (const blob of manualList.blobs) {
+          if (blob.key.includes('/')) continue;
+          const data = await manualStore.get(blob.key, { type: 'json' });
+          if (data) {
+            const key = `${data.fullName}_${data.phone}_${data.email}_${data.projectId}`;
+            if (key === contactKey && blob.key !== fields.id) { // не удаляем текущий, если обновляем
+              await manualStore.delete(blob.key);
+              console.log(`Deleted manual draft with key ${blob.key}`);
+              const index = await manualStore.get('_index', { type: 'json' }) || [];
+              const newIndex = index.filter(item => item.id !== blob.key);
+              if (newIndex.length !== index.length) {
+                await manualStore.setJSON('_index', newIndex);
+              }
+            }
+          }
+        }
 
         const recordId = fields.id || `manual_${Date.now()}`;
         console.log('Record ID:', recordId);
 
+        // Сохраняем все поля в запись
         const record = {
           id: recordId,
-          fullName: fields.fullName,
-          nickname: fields.nickname,
-          telegram: fields.telegram,
-          phone: fields.phone,
-          email: fields.email,
-          project: fields.project,
-          projectId: fields.projectId,
-          status: fields.status || 'draft',
+          ...fields,
           submittedAt: new Date().toISOString(),
           recruitmentStatus: fields.status || 'draft'
         };
 
-        if (fields.taskAnswers) {
-          try { record.taskAnswers = JSON.parse(fields.taskAnswers); } catch (e) { console.error('Error parsing taskAnswers', e); }
-        }
-        if (fields.taskScores) {
-          try { record.taskScores = JSON.parse(fields.taskScores); } catch (e) { console.error('Error parsing taskScores', e); }
-        }
+        // Удаляем лишние поля, если нужно
+        delete record.id; // не дублировать
 
         const fileUrls = {};
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
-          await store.set(fileKey, fileInfo.data);
-          // ВАЖНО: добавляем type=manual, чтобы getFile знал, из какого хранилища брать файл
+          await manualStore.set(fileKey, fileInfo.data);
+          // ВАЖНО: добавляем type=manual
           fileUrls[name] = `/.netlify/functions/getFile?code=${recordId}&file=${encodeURIComponent(fileInfo.filename)}&type=manual`;
         }
         if (Object.keys(fileUrls).length > 0) {
           record.files = fileUrls;
         }
 
-        await store.setJSON(recordId, record);
+        await manualStore.setJSON(recordId, record);
         console.log('Record saved:', recordId);
 
         // Обновляем индекс
         const indexKey = '_index';
-        let index = await store.get(indexKey, { type: 'json' }) || [];
+        let index = await manualStore.get(indexKey, { type: 'json' }) || [];
         index = index.filter(item => item.id !== recordId);
         index.push({ id: recordId, submittedAt: record.submittedAt, status: record.status });
         if (index.length > 200) index = index.slice(-200);
-        await store.setJSON(indexKey, index);
+        await manualStore.setJSON(indexKey, index);
         console.log('Index updated');
 
         resolve({
