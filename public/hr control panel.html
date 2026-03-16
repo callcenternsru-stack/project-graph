@@ -6,7 +6,7 @@
     <title>Админ-панель рекрутинга</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ ===== */
+        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ ===== */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -138,6 +138,12 @@
             background: #ffe44d;
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+        }
+        .add-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         .table-container {
             overflow-x: auto;
@@ -621,7 +627,6 @@
 <body>
     <div class="side-menu-trigger"></div>
     <div class="side-menu">
-        <!-- NEW: добавлены data-tab для счетчиков -->
         <button class="menu-btn" data-tab="recruiters" onclick="switchTab('recruiters')">Рекрутеры</button>
         <button class="menu-btn" data-tab="candidates" onclick="switchTab('candidates')">База контактов</button>
         <button class="menu-btn" data-tab="scripts" onclick="switchTab('scripts')">Скрипты</button>
@@ -802,6 +807,10 @@
         let candidatesSortColumn = 0;
         let candidatesSortDirection = 'desc';
 
+        // ========== ПАГИНАЦИЯ ДЛЯ КАНДИДАТОВ ==========
+        let candidatesPage = 1;
+        const CANDIDATES_PER_PAGE = 20;
+
         const urlParams = new URLSearchParams(window.location.search);
         const scheduleOnly = urlParams.get('tab') === 'schedule-only';
 
@@ -863,13 +872,18 @@
 
         async function loadAllData() {
             try {
+                // Загружаем объединённые справочники
+                const refRes = await fetch('/.netlify/functions/getAllReferences');
+                const refData = await refRes.json();
+                state.recruiters = refData.recruiters || [];
+                state.callResults = refData.callResults || [];
+                state.contactTypes = refData.contactTypes || [];
+                state.projects = refData.projects || [];
+                state.scripts = refData.scripts || [];
+
+                // Остальные запросы параллельно
                 const [
-                    recruitersRes,
-                    callResultsRes,
-                    contactTypesRes,
-                    projectsRes,
                     candidatesRes,
-                    scriptsRes,
                     meetingsRes,
                     trainingsRes,
                     meetingCommentsRes,
@@ -878,12 +892,7 @@
                     manualFormsRes,
                     allFormsRes
                 ] = await Promise.all([
-                    fetch('/.netlify/functions/getRecruiters'),
-                    fetch('/.netlify/functions/getCallResults'),
-                    fetch('/.netlify/functions/getContactTypes'),
-                    fetch('/.netlify/functions/getProjects'),
                     fetch('/.netlify/functions/getCandidates'),
-                    fetch('/.netlify/functions/getScripts'),
                     fetch('/.netlify/functions/getProjectMeetings'),
                     fetch('/.netlify/functions/getProjectTrainings'),
                     fetch('/.netlify/functions/getProjectMeetingComments'),
@@ -893,12 +902,7 @@
                     fetch('/.netlify/functions/getAllForms')
                 ]);
 
-                state.recruiters = await recruitersRes.json();
-                state.callResults = await callResultsRes.json();
-                state.contactTypes = await contactTypesRes.json();
-                state.projects = await projectsRes.json(); // ожидается массив { id, name }
                 state.candidates = await candidatesRes.json();
-                state.scripts = await scriptsRes.json();
                 state.projectMeetings = await meetingsRes.json();
                 state.projectTrainings = await trainingsRes.json();
                 state.projectMeetingComments = await meetingCommentsRes.json();
@@ -912,15 +916,16 @@
 
                 await loadCharacteristics();
 
-                // NEW: обновляем счетчики на кнопках меню
                 updateMenuCounts();
+                // Сбрасываем страницу кандидатов при новой загрузке
+                candidatesPage = 1;
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
                 showNotification('Не удалось загрузить данные', 'error');
             }
         }
 
-        // ========== ОБНОВЛЕНИЕ СЧЕТЧИКОВ НА КНОПКАХ МЕНЮ ========== // NEW
+        // ========== ОБНОВЛЕНИЕ СЧЕТЧИКОВ НА КНОПКАХ МЕНЮ ==========
         function updateMenuCounts() {
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => {
                 const tab = btn.dataset.tab;
@@ -930,13 +935,12 @@
                     case 'recruiters': count = state.recruiters.length; break;
                     case 'candidates': count = state.candidates.length; break;
                     case 'scripts': count = state.scripts.length; break;
-                    case 'schedule': count = 0; break; // без счетчика
+                    case 'schedule': count = 0; break;
                     case 'allForms': count = state.allForms.length; break;
                     case 'auto': count = state.autoForms.length; break;
                     case 'manual': count = state.manualForms.length; break;
                     case 'characteristics': count = state.characteristics.length; break;
                 }
-                // Извлекаем базовый текст (без скобок)
                 let baseText = btn.innerText.replace(/\s*\(\d+\)$/, '');
                 if (count > 0) {
                     btn.innerText = `${baseText} (${count})`;
@@ -946,16 +950,13 @@
             });
         }
 
-        // ========== УДАЛЕНИЕ АНКЕТ ========== // NEW
+        // ========== УДАЛЕНИЕ АНКЕТ ==========
         async function deleteAutoForm(code) {
             if (!confirm('Удалить автоматическую анкету?')) return;
             try {
                 const res = await fetch(`/.netlify/functions/deleteAutoForm?code=${encodeURIComponent(code)}`, { method: 'DELETE' });
                 if (res.ok) {
                     state.allForms = state.allForms.filter(f => f.code !== code);
-                    // Обновляем также autoForms, если нужно (но autoForms формируется из getResults, его тоже надо обновить)
-                    // Проще перезагрузить autoForms отдельно или удалить из него по коду
-                    // Для простоты перезагрузим autoForms заново
                     const autoRes = await fetch('/.netlify/functions/getResults');
                     state.autoForms = await autoRes.json();
                     renderContent();
@@ -1062,7 +1063,22 @@
             container.innerHTML = html;
         }
 
-        // ========== БАЗА КОНТАКТОВ (без изменений) ==========
+        // ========== БАЗА КОНТАКТОВ С ПАГИНАЦИЕЙ ==========
+        function getPaginatedCandidates() {
+            const sorted = sortCandidatesData([...state.candidates]);
+            const start = (candidatesPage - 1) * CANDIDATES_PER_PAGE;
+            const end = start + CANDIDATES_PER_PAGE;
+            return sorted.slice(start, end);
+        }
+
+        function changeCandidatesPage(delta) {
+            candidatesPage += delta;
+            const maxPage = Math.ceil(state.candidates.length / CANDIDATES_PER_PAGE) || 1;
+            if (candidatesPage < 1) candidatesPage = 1;
+            if (candidatesPage > maxPage) candidatesPage = maxPage;
+            renderContent();
+        }
+
         function renderCandidates(container) {
             const headers = [
                 { label: 'Дата', field: 'createdAt' },
@@ -1088,9 +1104,16 @@
             });
             headerHtml += '</tr>';
 
+            const totalPages = Math.ceil(state.candidates.length / CANDIDATES_PER_PAGE) || 1;
+
             let html = `
                 <div class="section-header">
                     <h2>База контактов</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span>Страница ${candidatesPage} из ${totalPages}</span>
+                        <button class="add-btn" onclick="changeCandidatesPage(-1)" ${candidatesPage === 1 ? 'disabled' : ''}>← Назад</button>
+                        <button class="add-btn" onclick="changeCandidatesPage(1)" ${candidatesPage === totalPages || state.candidates.length === 0 ? 'disabled' : ''}>Вперёд →</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table>
@@ -1100,12 +1123,12 @@
                         <tbody>
             `;
 
-            const sorted = sortCandidatesData([...state.candidates]);
+            const paginated = getPaginatedCandidates();
 
-            if (sorted.length === 0) {
+            if (paginated.length === 0) {
                 html += '<tr><td colspan="11" style="text-align:center;">Нет контактов</td></tr>';
             } else {
-                sorted.forEach(c => {
+                paginated.forEach(c => {
                     const training = c.trainingDate && c.trainingTime ? `${c.trainingDate} ${c.trainingTime}` : '—';
                     const meeting = c.meetingTime ? c.meetingTime : '—';
                     html += `
@@ -1136,6 +1159,7 @@
                 candidatesSortColumn = columnIndex;
                 candidatesSortDirection = 'asc';
             }
+            candidatesPage = 1; // сбрасываем на первую страницу при сортировке
             renderContent();
         }
 
@@ -1174,7 +1198,7 @@
             });
         }
 
-        // ========== СКРИПТЫ (с выбором проекта) ==========
+        // ========== СКРИПТЫ (без изменений) ==========
         function renderScripts(container) {
             let html = `
                 <div class="section-header">
@@ -1215,7 +1239,7 @@
             container.innerHTML = html;
         }
 
-        // ========== ГРАФИК (проекты берутся из state.projects) ==========
+        // ========== ГРАФИК (без изменений) ==========
         function renderSchedulePage(container) {
             let allMonths = [...state.scheduleMonths];
             if (!allMonths.includes(currentScheduleMonth)) {
@@ -1240,7 +1264,7 @@
         }
 
         function renderEventGraph(type, title) {
-            const projects = state.projects.map(p => p.name); // теперь названия проектов
+            const projects = state.projects.map(p => p.name);
             if (projects.length === 0) {
                 return `<h3 class="graph-title">${title}</h3><div style="color: #8f9bb3; padding: 20px; text-align: center;">Нет проектов для отображения</div>`;
             }
@@ -1296,9 +1320,8 @@
             return html;
         }
 
-        // ========== ВСЕ АНКЕТЫ (обновлено с кнопкой удаления) ========== // NEW
+        // ========== ВСЕ АНКЕТЫ (без изменений) ==========
         function renderAllForms(container) {
-            // Пока не реализовано, но добавим заглушку с возможностью удаления, если появятся данные
             container.innerHTML = `
                 <div class="section-header">
                     <h2>Все анкеты</h2>
@@ -1309,11 +1332,11 @@
             `;
         }
 
-        // ========== АНКЕТЫ АВТО (обновлено с кнопкой удаления) ========== // NEW
+        // ========== АНКЕТЫ АВТО (без изменений) ==========
         async function renderAutoForms(container) {
             container.innerHTML = '<div class="loader">Загрузка данных...</div>';
             try {
-                const forms = state.allForms; // используем allForms, так как там полные данные
+                const forms = state.allForms;
                 let html = `
                     <div class="section-header">
                         <h2>Автоматические анкеты (все)</h2>
@@ -1332,7 +1355,7 @@
                                     <th>Email</th>
                                     <th>Код</th>
                                     <th>Отчёты</th>
-                                    <th>Удалить</th> <!-- NEW колонка -->
+                                    <th>Удалить</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1394,7 +1417,7 @@
             }
         }
 
-        // ========== АНКЕТЫ РУЧНЫЕ (обновлено с кнопкой удаления) ========== // NEW
+        // ========== АНКЕТЫ РУЧНЫЕ (без изменений) ==========
         function renderManualForms(container) {
             let html = `
                 <div class="section-header">
@@ -1411,7 +1434,7 @@
                                 <th>Telegram</th>
                                 <th>Телефон</th>
                                 <th>Email</th>
-                                <th>Удалить</th> <!-- NEW колонка -->
+                                <th>Удалить</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1481,7 +1504,7 @@
             container.innerHTML = html;
         }
 
-        // ========== ФУНКЦИИ ДЛЯ ХАРАКТЕРИСТИК ==========
+        // ========== ФУНКЦИИ ДЛЯ ХАРАКТЕРИСТИК (без изменений) ==========
         function updateCharProjectSelect() {
             const select = document.getElementById('charProjectSelect');
             if (!select) return;
@@ -1727,7 +1750,7 @@
             }
 
             renderContent();
-            updateMenuCounts(); // NEW: обновляем счетчики
+            updateMenuCounts();
             showNotification('Элемент удалён', 'success');
         }
 
@@ -1960,7 +1983,6 @@
                         return;
                     }
 
-                    // Находим название проекта
                     const project = state.projects.find(p => p.id === projectId);
                     const projectName = project ? project.name : '';
 
@@ -1979,7 +2001,6 @@
                         }
                     } else {
                         const oldItem = state.scripts[editingId];
-                        // Используем старый title как id (если нужно)
                         response = await fetch('/.netlify/functions/saveScript', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1998,7 +2019,7 @@
 
                 closeModal();
                 renderContent();
-                updateMenuCounts(); // NEW: обновляем счетчики
+                updateMenuCounts();
                 showNotification('Сохранено', 'success');
             } catch (error) {
                 console.error('Ошибка в saveModal:', error);
@@ -2079,7 +2100,7 @@
                         if (currentTab === 'candidates') {
                             renderContent();
                         }
-                        updateMenuCounts(); // NEW: обновляем счетчики
+                        updateMenuCounts();
                     } else {
                         showNotification('Не найдено валидных записей', 'error');
                     }

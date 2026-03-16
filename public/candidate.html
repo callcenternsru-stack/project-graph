@@ -981,7 +981,7 @@
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Ошибка сервера');
-                showNotification('Данные отправлены!', 'success');
+                // Уведомление об успехе убрано по требованию
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Свяжитесь с поддержкой.', 'error');
@@ -1424,7 +1424,7 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Ошибка отправки');
-                showNotification('Анкета отправлена! Ожидайте решения.', 'success');
+                // Уведомление об успехе убрано по требованию
                 document.getElementById('manualVerificationBlock').classList.remove('show');
             } catch (error) {
                 console.error(error);
@@ -1437,7 +1437,7 @@
         function copyCode() {
             const code = document.getElementById('codeDisplay').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                showNotification('Код скопирован!', 'success');
+                // Уведомление о копировании убрано (оставляем только алерт на случай ошибки)
             }).catch(() => alert('Не удалось скопировать код.'));
         }
 
