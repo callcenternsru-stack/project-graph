@@ -63,7 +63,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${fileName}"`
+        // Content-Disposition убран – браузер будет открывать файлы, которые может отобразить
       },
       body: base64,
       isBase64Encoded: true
