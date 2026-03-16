@@ -57,7 +57,8 @@ exports.handler = async (event) => {
     const candidateData = {
       formData,
       status: 'pending',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      recruitmentStatus: 'draft'  // <-- NEW: инициализация статуса
     };
     await store.setJSON(code, candidateData);
 

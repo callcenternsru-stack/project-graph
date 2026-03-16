@@ -91,7 +91,8 @@ exports.handler = async (event) => {
           project: fields.project,
           projectId: fields.projectId,
           status: fields.status || 'draft',
-          submittedAt: new Date().toISOString()
+          submittedAt: new Date().toISOString(),
+          recruitmentStatus: fields.status || 'draft'   // <-- NEW: инициализация статуса
         };
 
         if (fields.taskAnswers) {
