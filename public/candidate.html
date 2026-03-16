@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Анкета кандидата | РОССЕТТИ</title>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
     <style>
         /* ========== ПОЛНОСТЬЮ ВОССТАНОВЛЕННЫЙ ДИЗАЙН ========== */
         * {
@@ -852,7 +854,7 @@
         </section>
     </div>
 
-    <!-- Уведомление о копировании -->
+    <!-- Уведомление о копировании (для ошибок) -->
     <div id="notification" class="notification">Код скопирован!</div>
 
     <script>
@@ -873,6 +875,15 @@
             document.getElementById('loadingOverlay').classList.add('hidden');
             document.getElementById('autoBtn').disabled = false;
             document.getElementById('manualBtn').disabled = false;
+        }
+
+        // --- Уведомление ---
+        function showNotification(message, type = 'info') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = `notification ${type}`;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
         }
 
         // --- Загрузка списка проектов с сервера ---
@@ -946,15 +957,6 @@
             };
         }
 
-        // --- Уведомление ---
-        function showNotification(message, type = 'info') {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = `notification ${type}`;
-            notif.classList.add('show');
-            setTimeout(() => notif.classList.remove('show'), 3000);
-        }
-
         // --- Автоматическая проверка ---
         async function startAutoVerification() {
             if (!validateForm()) {
@@ -994,7 +996,7 @@
         }
 
         // ===================== РУЧНАЯ ПРОВЕРКА =====================
-        // Массив заданий
+        // Массив заданий (полностью скопирован из исходного candidate.html)
         const tasks = [
             {
                 title: "Задание №1 Пройдите тест на скорость интернета",
@@ -1150,6 +1152,57 @@
         let taskAnswers = {};
         let currentManualId = null;
 
+        // ========== ФУНКЦИИ СЖАТИЯ ==========
+        async function compressImage(file) {
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1280,
+                useWebWorker: true,
+                fileType: 'image/jpeg'
+            };
+            try {
+                return await imageCompression(file, options);
+            } catch (error) {
+                console.error('Ошибка сжатия изображения:', error);
+                return file;
+            }
+        }
+
+        async function convertWavToMp3(wavFile) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const wavData = e.target.result;
+                        const wavHeader = lamejs.WavHeader.readHeader(new DataView(wavData));
+                        const mp3Encoder = new lamejs.Mp3Encoder(
+                            wavHeader.channels,
+                            wavHeader.sampleRate,
+                            96
+                        );
+                        const samples = new Int16Array(wavData, wavHeader.dataOffset, wavHeader.dataLen / 2);
+                        const mp3Data = [];
+                        const blockSize = 1152;
+                        for (let i = 0; i < samples.length; i += blockSize) {
+                            const block = samples.subarray(i, i + blockSize);
+                            const mp3buf = mp3Encoder.encodeBuffer(block);
+                            if (mp3buf.length > 0) mp3Data.push(mp3buf);
+                        }
+                        const lastBuf = mp3Encoder.flush();
+                        if (lastBuf.length > 0) mp3Data.push(lastBuf);
+                        const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                        const mp3File = new File([mp3Blob], wavFile.name.replace('.wav', '.mp3'), { type: 'audio/mp3' });
+                        resolve(mp3File);
+                    } catch (err) {
+                        console.error('Ошибка конвертации WAV->MP3:', err);
+                        reject(err);
+                    }
+                };
+                reader.readAsArrayBuffer(wavFile);
+            });
+        }
+
+        // ========== ФУНКЦИИ РЕНДЕРИНГА И ОБРАБОТКИ ==========
         function renderTask() {
             const task = tasks[currentTaskIndex];
             const container = document.getElementById('taskContainer');
@@ -1174,7 +1227,6 @@
                 html += `<a href="${task.link}" target="_blank" class="task-link">${task.linkText || 'Перейти'}</a>`;
             }
             
-            // Кнопка для примера AnyDesk
             if (task.exampleLink) {
                 html += `<a href="${task.exampleLink}" target="_blank" class="task-link">${task.exampleText || 'Пример'}</a>`;
             }
@@ -1183,7 +1235,6 @@
                 html += `<div class="task-extra">${task.extraText}</div>`;
             }
 
-            // Если есть вопросы (тест с вариантами)
             if (task.questions) {
                 html += `<div class="quiz-section">`;
                 task.questions.forEach((q, idx) => {
@@ -1204,12 +1255,10 @@
                 html += `</div>`;
             }
 
-            // Поле для ввода (AnyDesk)
             if (task.inputPlaceholder) {
                 html += `<input type="text" id="taskInput_${currentTaskIndex}" class="task-input" placeholder="${task.inputPlaceholder}" value="${taskInputs[currentTaskIndex] || ''}" oninput="handleInputChange(${currentTaskIndex}, this.value)">`;
             }
 
-            // Загрузка файла
             if (task.fileLabel) {
                 const file = taskFiles[currentTaskIndex];
                 html += `<div class="file-upload">
@@ -1222,7 +1271,6 @@
             html += `</div>`;
             container.innerHTML = html;
 
-            // Обновление кнопок
             updateButtons();
         }
 
@@ -1319,7 +1367,7 @@
             };
         }
 
-        // ========== ФУНКЦИЯ startManualVerification ==========
+        // ========== СОЗДАНИЕ ЧЕРНОВИКА ==========
         async function startManualVerification() {
             if (!validateForm()) {
                 alert('Пожалуйста, заполните все обязательные поля.');
@@ -1334,7 +1382,6 @@
 
             showLoading();
 
-            // Создаём черновик анкеты на сервере
             try {
                 const draftData = new FormData();
                 draftData.append('fullName', formData.fullName);
@@ -1376,7 +1423,7 @@
             hideLoading();
         }
 
-        // ========== ФУНКЦИЯ submitManualResults (с отключёнными файлами) ==========
+        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1397,12 +1444,29 @@
             data.append('projectId', formData.projectId);
             data.append('status', 'completed');
 
-            // Добавляем результаты тестов (но без файлов для теста)
+            // Обрабатываем каждый файл
             for (let i = 0; i < tasks.length; i++) {
-                // ⚠️ ВРЕМЕННО ОТКЛЮЧАЕМ ОТПРАВКУ ФАЙЛОВ ДЛЯ ПРОВЕРКИ
-                // if (taskFiles[i]) {
-                //     data.append(`task_${i}`, taskFiles[i]);
-                // }
+                if (taskFiles[i]) {
+                    let fileToSend = taskFiles[i];
+                    
+                    // Если это изображение (задания 1,4,6,7)
+                    if (taskFiles[i].type.startsWith('image/')) {
+                        fileToSend = await compressImage(taskFiles[i]);
+                    }
+                    
+                    // Если это аудио (задание 2) и имеет расширение .wav
+                    if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
+                        try {
+                            fileToSend = await convertWavToMp3(taskFiles[i]);
+                        } catch (e) {
+                            console.error('Не удалось конвертировать WAV, отправляем оригинал');
+                            // оставляем fileToSend = taskFiles[i]
+                        }
+                    }
+                    
+                    data.append(`task_${i}`, fileToSend);
+                }
+                
                 if (taskInputs[i]) {
                     data.append(`task_${i}_input`, taskInputs[i]);
                 }
@@ -1437,7 +1501,7 @@
         function copyCode() {
             const code = document.getElementById('codeDisplay').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                // Уведомление о копировании убрано
+                // уведомление убрано
             }).catch(() => alert('Не удалось скопировать код.'));
         }
 
