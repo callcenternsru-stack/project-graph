@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 1. Автоматические анкеты (candidates-data)
+    // Автоматические анкеты
     const autoStore = getStore({
       name: 'candidates-data',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -32,7 +32,6 @@ exports.handler = async (event) => {
             recruitmentStatus: data.recruitmentStatus || 'draft',
             createdAt: data.createdAt || data.formData?.timestamp,
             completedAt: data.completedAt,
-            // Добавлен параметр type=auto
             files: data.status === 'completed'
               ? {
                   report: `/.netlify/functions/getFile?code=${code}&file=report.txt&type=auto`,
@@ -47,7 +46,7 @@ exports.handler = async (event) => {
       })
     );
 
-    // 2. Ручные анкеты (manualForms)
+    // Ручные анкеты
     const manualStore = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -59,6 +58,21 @@ exports.handler = async (event) => {
         try {
           const data = await manualStore.get(id, { type: 'json' });
           if (!data) return null;
+          // Собираем task-поля
+          const taskInputs = {};
+          const taskScores = {};
+          for (const key in data) {
+            if (key.startsWith('task_') && key.endsWith('_input')) {
+              taskInputs[key] = data[key];
+            }
+            if (key.startsWith('task_') && key.endsWith('_score')) {
+              try {
+                taskScores[key] = JSON.parse(data[key]);
+              } catch {
+                taskScores[key] = data[key];
+              }
+            }
+          }
           return {
             id: data.id,
             type: 'manual',
@@ -72,7 +86,9 @@ exports.handler = async (event) => {
             status: data.status || 'draft',
             recruitmentStatus: data.recruitmentStatus || 'draft',
             createdAt: data.submittedAt,
-            files: data.files || {}, // уже содержат type=manual из submitManualResults
+            files: data.files || {}, // уже содержат type=manual
+            taskInputs,
+            taskScores,
           };
         } catch (e) {
           return null;
@@ -80,7 +96,6 @@ exports.handler = async (event) => {
       })
     );
 
-    // 3. Объединение и сортировка (новые сверху)
     const all = [...autoForms, ...manualForms]
       .filter(f => f !== null)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

@@ -64,14 +64,13 @@ exports.handler = async (event) => {
     bb.on('finish', async () => {
       try {
         console.log('All fields keys:', Object.keys(fields));
-        // Проверка наличия обязательных полей
         const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
         const missing = requiredFields.filter(f => !fields[f]);
         if (missing.length > 0) {
           throw new Error(`Missing required fields: ${missing.join(', ')}`);
         }
 
-        // Удаляем все существующие черновики с такими же контактными данными из обоих хранилищ
+        // Удаляем все существующие черновики с такими же контактными данными
         const autoStore = getStore({
           name: 'candidates-data',
           siteID: process.env.NETLIFY_SITE_ID,
@@ -95,7 +94,6 @@ exports.handler = async (event) => {
             if (key === contactKey) {
               await autoStore.delete(blob.key);
               console.log(`Deleted auto draft with key ${blob.key}`);
-              // Также удаляем из индекса
               const index = await autoStore.get('_index', { type: 'json' }) || [];
               const newIndex = index.filter(item => item.code !== blob.key);
               if (newIndex.length !== index.length) {
@@ -105,14 +103,14 @@ exports.handler = async (event) => {
           }
         }
 
-        // Удаляем из manual-хранилища
+        // Удаляем из manual-хранилища (кроме текущего, если обновляем)
         const manualList = await manualStore.list();
         for (const blob of manualList.blobs) {
           if (blob.key.includes('/')) continue;
           const data = await manualStore.get(blob.key, { type: 'json' });
           if (data) {
             const key = `${data.fullName}_${data.phone}_${data.email}_${data.projectId}`;
-            if (key === contactKey && blob.key !== fields.id) { // не удаляем текущий, если обновляем
+            if (key === contactKey && blob.key !== fields.id) {
               await manualStore.delete(blob.key);
               console.log(`Deleted manual draft with key ${blob.key}`);
               const index = await manualStore.get('_index', { type: 'json' }) || [];
@@ -127,16 +125,13 @@ exports.handler = async (event) => {
         const recordId = fields.id || `manual_${Date.now()}`;
         console.log('Record ID:', recordId);
 
-        // Сохраняем все поля в запись
+        // Сохраняем все поля
         const record = {
           id: recordId,
           ...fields,
           submittedAt: new Date().toISOString(),
           recruitmentStatus: fields.status || 'draft'
         };
-
-        // Удаляем лишние поля, если нужно
-        delete record.id; // не дублировать
 
         const fileUrls = {};
         for (const [name, fileInfo] of Object.entries(files)) {
