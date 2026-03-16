@@ -9,15 +9,23 @@ exports.handler = async (event) => {
     if (!name) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Name required' }) };
     }
+
     const store = getStore({
       name: 'projects',
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const key = id || name;
-    const project = { name, updatedAt: new Date().toISOString() };
+
+    const key = id || name; // если id не передан, используем имя (для обратной совместимости)
+    const project = {
+      id: key,       // сохраняем id внутри объекта
+      name: name,
+      updatedAt: new Date().toISOString()
+    };
+
     await store.setJSON(key, project);
+
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, project })

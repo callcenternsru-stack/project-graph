@@ -11,12 +11,21 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
+
     const { blobs } = await store.list();
     const projects = [];
+
     for (const blob of blobs) {
       const data = await store.get(blob.key, { type: 'json' });
-      if (data) projects.push(data);
+      if (data) {
+        // Добавляем поле id из ключа блоба
+        projects.push({
+          id: blob.key,
+          name: data.name
+        });
+      }
     }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },

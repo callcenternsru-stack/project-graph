@@ -4,10 +4,12 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'DELETE') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
-  const name = event.queryStringParameters?.name;
-  if (!name) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Missing name' }) };
+
+  const id = event.queryStringParameters?.id;   // изменено с name на id
+  if (!id) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing id' }) };
   }
+
   try {
     const store = getStore({
       name: 'projects',
@@ -15,7 +17,8 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    await store.delete(name);
+
+    await store.delete(id);
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (error) {
     console.error('Error in deleteProject:', error);
