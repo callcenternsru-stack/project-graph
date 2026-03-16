@@ -1148,6 +1148,7 @@
         let taskFiles = {};
         let taskInputs = {};
         let taskAnswers = {};
+        let currentManualId = null; // NEW: ID текущей ручной анкеты (черновик)
 
         function renderTask() {
             const task = tasks[currentTaskIndex];
@@ -1318,6 +1319,65 @@
             };
         }
 
+        // ========== ИЗМЕНЁННАЯ ФУНКЦИЯ startManualVerification ==========
+        async function startManualVerification() {
+            if (!validateForm()) {
+                alert('Пожалуйста, заполните все обязательные поля.');
+                return;
+            }
+
+            const formData = getFormData();
+            if (!formData.projectId) {
+                alert('Ошибка: не удалось определить проект. Обратитесь к администратору.');
+                return;
+            }
+
+            showLoading();
+
+            // NEW: Создаём черновик анкеты на сервере
+            try {
+                const draftData = new FormData();
+                draftData.append('fullName', formData.fullName);
+                draftData.append('nickname', formData.nickname);
+                draftData.append('telegram', formData.telegram);
+                draftData.append('phone', formData.phone);
+                draftData.append('email', formData.email);
+                draftData.append('project', formData.project);
+                draftData.append('projectId', formData.projectId);
+                draftData.append('status', 'draft'); // черновик
+
+                const response = await fetch('/.netlify/functions/submitManualResults', {
+                    method: 'POST',
+                    body: draftData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при создании черновика');
+                }
+
+                const result = await response.json();
+                currentManualId = result.id; // сохраняем ID для последующего обновления
+            } catch (error) {
+                console.error(error);
+                showNotification('Не удалось создать анкету. Попробуйте позже.', 'error');
+                hideLoading();
+                return;
+            }
+
+            // Далее как раньше: сброс состояния и показ заданий
+            currentTaskIndex = 0;
+            taskFiles = {};
+            taskInputs = {};
+            taskAnswers = {};
+
+            document.getElementById('autoVerificationBlock').classList.remove('show');
+            document.getElementById('manualVerificationBlock').classList.add('show');
+            renderTask();
+
+            hideLoading();
+        }
+
+        // ========== ИЗМЕНЁННАЯ ФУНКЦИЯ submitManualResults ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1328,6 +1388,7 @@
             showLoading();
 
             const data = new FormData();
+            data.append('id', currentManualId); // NEW: передаём ID черновика
             data.append('fullName', formData.fullName);
             data.append('nickname', formData.nickname);
             data.append('telegram', formData.telegram);
@@ -1335,6 +1396,7 @@
             data.append('email', formData.email);
             data.append('project', formData.project);
             data.append('projectId', formData.projectId);
+            data.append('status', 'completed'); // завершённая анкета
 
             // Добавляем результаты тестов
             for (let i = 0; i < tasks.length; i++) {
@@ -1347,7 +1409,6 @@
                 if (taskAnswers[i]) {
                     data.append(`task_${i}_answers`, JSON.stringify(taskAnswers[i]));
                 }
-                // Добавляем результаты теста знаний
                 if (tasks[i].questions) {
                     const score = calculateQuizScore(i);
                     if (score) {
@@ -1371,35 +1432,6 @@
             } finally {
                 hideLoading();
             }
-        }
-
-        async function startManualVerification() {
-            if (!validateForm()) {
-                alert('Пожалуйста, заполните все обязательные поля.');
-                return;
-            }
-
-            const formData = getFormData();
-            if (!formData.projectId) {
-                alert('Ошибка: не удалось определить проект. Обратитесь к администратору.');
-                return;
-            }
-
-            showLoading();
-
-            // Имитация загрузки (можно убрать если не нужно)
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            currentTaskIndex = 0;
-            taskFiles = {};
-            taskInputs = {};
-            taskAnswers = {};
-
-            document.getElementById('autoVerificationBlock').classList.remove('show');
-            document.getElementById('manualVerificationBlock').classList.add('show');
-            renderTask();
-
-            hideLoading();
         }
 
         function copyCode() {
