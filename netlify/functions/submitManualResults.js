@@ -15,8 +15,18 @@ exports.handler = async (event) => {
     };
   }
 
+  console.log('Received POST to submitManualResults, body length:', event.body?.length);
+
   return new Promise((resolve, reject) => {
-    const bb = Busboy({ headers: { 'content-type': contentType } });
+    const bb = Busboy({
+      headers: { 'content-type': contentType },
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10 MB
+        fieldSize: 10 * 1024 * 1024, // 10 MB
+        fields: 50,
+        files: 10
+      }
+    });
 
     const fields = {};
     const files = {};
@@ -28,7 +38,14 @@ exports.handler = async (event) => {
     bb.on('file', (name, file, info) => {
       const { filename, encoding, mimeType } = info;
       const chunks = [];
-      file.on('data', (chunk) => chunks.push(chunk));
+      let fileSize = 0;
+      file.on('data', (chunk) => {
+        chunks.push(chunk);
+        fileSize += chunk.length;
+        if (fileSize > 10 * 1024 * 1024) {
+          file.destroy(new Error('File too large'));
+        }
+      });
       file.on('end', () => {
         files[name] = {
           filename,
@@ -36,10 +53,21 @@ exports.handler = async (event) => {
           data: Buffer.concat(chunks)
         };
       });
+      file.on('error', (err) => {
+        console.error('File stream error:', err);
+      });
     });
 
     bb.on('finish', async () => {
       try {
+        // Проверяем наличие обязательных полей
+        const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
+        for (const field of requiredFields) {
+          if (!fields[field]) {
+            throw new Error(`Missing required field: ${field}`);
+          }
+        }
+
         const store = getStore({
           name: 'manualForms',
           siteID: process.env.NETLIFY_SITE_ID,
@@ -47,10 +75,8 @@ exports.handler = async (event) => {
           apiURL: 'https://api.netlify.com'
         });
 
-        // Определяем ID записи
         const recordId = fields.id || `manual_${Date.now()}`;
 
-        // Сохраняем текстовые поля
         const record = {
           id: recordId,
           fullName: fields.fullName,
@@ -64,7 +90,6 @@ exports.handler = async (event) => {
           submittedAt: new Date().toISOString()
         };
 
-        // Парсим дополнительные поля
         if (fields.taskAnswers) {
           try { record.taskAnswers = JSON.parse(fields.taskAnswers); } catch (e) {}
         }
@@ -72,7 +97,6 @@ exports.handler = async (event) => {
           try { record.taskScores = JSON.parse(fields.taskScores); } catch (e) {}
         }
 
-        // Сохраняем файлы
         const fileUrls = {};
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
@@ -83,16 +107,13 @@ exports.handler = async (event) => {
           record.files = fileUrls;
         }
 
-        // Сохраняем запись
         await store.setJSON(recordId, record);
 
         // Обновляем индекс
         const indexKey = '_index';
         let index = await store.get(indexKey, { type: 'json' }) || [];
-        // Удаляем старую запись из индекса, если обновляем
         index = index.filter(item => item.id !== recordId);
         index.push({ id: recordId, submittedAt: record.submittedAt, status: record.status });
-        // Оставляем только последние 200 записей в индексе
         if (index.length > 200) index = index.slice(-200);
         await store.setJSON(indexKey, index);
 
@@ -110,14 +131,23 @@ exports.handler = async (event) => {
     });
 
     bb.on('error', (error) => {
+      console.error('Busboy error:', error);
       reject({
-        statusCode: 500,
+        statusCode: 400,
         body: JSON.stringify({ error: error.message })
       });
     });
 
-    const buffer = Buffer.from(event.body, 'base64');
-    const readable = Readable.from(buffer);
-    readable.pipe(bb);
+    try {
+      const buffer = Buffer.from(event.body, 'base64');
+      const readable = Readable.from(buffer);
+      readable.pipe(bb);
+    } catch (err) {
+      console.error('Error creating readable stream:', err);
+      reject({
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Internal server error' })
+      });
+    }
   });
 };
