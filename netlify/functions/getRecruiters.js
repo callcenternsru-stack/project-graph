@@ -20,7 +20,10 @@ exports.handler = async (event) => {
     recruiters.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300' // кэш 5 минут
+      },
       body: JSON.stringify(recruiters)
     };
   } catch (error) {

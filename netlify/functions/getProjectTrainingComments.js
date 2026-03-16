@@ -14,7 +14,10 @@ exports.handler = async (event) => {
     const data = await store.get('comments', { type: 'json' }) || {};
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60'
+      },
       body: JSON.stringify(data)
     };
   } catch (error) {

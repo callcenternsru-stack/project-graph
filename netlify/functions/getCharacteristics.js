@@ -20,12 +20,20 @@ exports.handler = async (event) => {
       const filtered = characteristics.filter(c => c.projectId === projectId);
       return {
         statusCode: 200,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300'
+        },
         body: JSON.stringify(filtered)
       };
     }
 
     return {
       statusCode: 200,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300'
+      },
       body: JSON.stringify(characteristics)
     };
   } catch (error) {

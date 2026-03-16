@@ -18,7 +18,6 @@ exports.handler = async (event) => {
     for (const blob of blobs) {
       const data = await store.get(blob.key, { type: 'json' });
       if (data) {
-        // Добавляем поле id из ключа блоба
         projects.push({
           id: blob.key,
           name: data.name
@@ -28,7 +27,10 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300'
+      },
       body: JSON.stringify(projects)
     };
   } catch (error) {

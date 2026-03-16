@@ -19,7 +19,10 @@ exports.handler = async (event) => {
     }
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300'
+      },
       body: JSON.stringify(items)
     };
   } catch (error) {

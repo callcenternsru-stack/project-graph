@@ -14,37 +14,35 @@ exports.handler = async (event) => {
     });
 
     const { blobs } = await store.list();
-    // Оставляем только ключи без слеша (основные анкеты)
     const candidateKeys = blobs
       .map(item => item.key)
       .filter(key => !key.includes('/'));
 
-    // Загружаем данные параллельно пачками по 10
-    const forms = [];
-    const batchSize = 10;
-    for (let i = 0; i < candidateKeys.length; i += batchSize) {
-      const batch = candidateKeys.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(async (key) => {
-          try {
-            const data = await store.get(key, { type: 'json' });
-            return data ? { code: key, ...data } : null;
-          } catch (e) {
-            console.error(`Error loading key ${key}:`, e);
-            return null;
-          }
-        })
-      );
-      forms.push(...batchResults.filter(d => d !== null));
-    }
+    const MAX_FORMS = 20;
+    const keysToLoad = candidateKeys.slice(-MAX_FORMS);
 
-    // Сортировка по дате создания (новые сверху)
-    forms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const forms = await Promise.all(
+      keysToLoad.map(async (key) => {
+        try {
+          const data = await store.get(key, { type: 'json' });
+          return data ? { code: key, ...data } : null;
+        } catch (e) {
+          console.error(`Error loading key ${key}:`, e);
+          return null;
+        }
+      })
+    );
+
+    const filteredForms = forms.filter(f => f !== null);
+    filteredForms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(forms)
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60'
+      },
+      body: JSON.stringify(filteredForms)
     };
   } catch (error) {
     console.error('Error in getAllForms:', error);
