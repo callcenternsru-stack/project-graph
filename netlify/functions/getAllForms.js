@@ -14,23 +14,31 @@ exports.handler = async (event) => {
     });
 
     const { blobs } = await store.list();
-
-    // Оставляем только основные ключи (без слеша) – это сами анкеты
-    const formKeys = blobs
+    // Оставляем только ключи без слеша (основные анкеты)
+    const candidateKeys = blobs
       .map(item => item.key)
       .filter(key => !key.includes('/'));
 
+    // Загружаем данные параллельно пачками по 10
     const forms = [];
-
-    for (const key of formKeys) {
-      const data = await store.get(key, { type: 'json' });
-      if (data) {
-        // Добавляем код в сам объект для удобства
-        forms.push({ code: key, ...data });
-      }
+    const batchSize = 10;
+    for (let i = 0; i < candidateKeys.length; i += batchSize) {
+      const batch = candidateKeys.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (key) => {
+          try {
+            const data = await store.get(key, { type: 'json' });
+            return data ? { code: key, ...data } : null;
+          } catch (e) {
+            console.error(`Error loading key ${key}:`, e);
+            return null;
+          }
+        })
+      );
+      forms.push(...batchResults.filter(d => d !== null));
     }
 
-    // Сортируем по дате создания (новые сверху)
+    // Сортировка по дате создания (новые сверху)
     forms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {

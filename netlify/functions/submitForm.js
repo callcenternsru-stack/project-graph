@@ -38,15 +38,11 @@ exports.handler = async (event) => {
 
     // Перебираем все ключи и ищем дубликат
     for (const blob of blobs) {
-      // Пропускаем ключи, которые содержат слеш (это файлы, а не анкеты)
       if (blob.key.includes('/')) continue;
-
       const existing = await store.get(blob.key, { type: 'json' });
       if (existing && existing.formData && isSameCandidate(existing.formData, formData)) {
-        // Нашли дубликат – удаляем его
         await store.delete(blob.key);
         console.log(`Deleted duplicate form with key ${blob.key}`);
-        // Прерываем цикл, так как дубликат может быть только один
         break;
       }
     }
