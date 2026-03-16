@@ -981,7 +981,7 @@
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Ошибка сервера');
-                // Уведомление об успехе убрано по требованию
+                // Уведомление об успехе убрано
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Свяжитесь с поддержкой.', 'error');
@@ -1148,7 +1148,7 @@
         let taskFiles = {};
         let taskInputs = {};
         let taskAnswers = {};
-        let currentManualId = null; // NEW: ID текущей ручной анкеты (черновик)
+        let currentManualId = null;
 
         function renderTask() {
             const task = tasks[currentTaskIndex];
@@ -1319,7 +1319,7 @@
             };
         }
 
-        // ========== ИЗМЕНЁННАЯ ФУНКЦИЯ startManualVerification ==========
+        // ========== ФУНКЦИЯ startManualVerification ==========
         async function startManualVerification() {
             if (!validateForm()) {
                 alert('Пожалуйста, заполните все обязательные поля.');
@@ -1334,7 +1334,7 @@
 
             showLoading();
 
-            // NEW: Создаём черновик анкеты на сервере
+            // Создаём черновик анкеты на сервере
             try {
                 const draftData = new FormData();
                 draftData.append('fullName', formData.fullName);
@@ -1344,7 +1344,7 @@
                 draftData.append('email', formData.email);
                 draftData.append('project', formData.project);
                 draftData.append('projectId', formData.projectId);
-                draftData.append('status', 'draft'); // черновик
+                draftData.append('status', 'draft');
 
                 const response = await fetch('/.netlify/functions/submitManualResults', {
                     method: 'POST',
@@ -1356,7 +1356,7 @@
                 }
 
                 const result = await response.json();
-                currentManualId = result.id; // сохраняем ID для последующего обновления
+                currentManualId = result.id;
             } catch (error) {
                 console.error(error);
                 showNotification('Не удалось создать анкету. Попробуйте позже.', 'error');
@@ -1364,7 +1364,6 @@
                 return;
             }
 
-            // Далее как раньше: сброс состояния и показ заданий
             currentTaskIndex = 0;
             taskFiles = {};
             taskInputs = {};
@@ -1377,7 +1376,7 @@
             hideLoading();
         }
 
-        // ========== ИЗМЕНЁННАЯ ФУНКЦИЯ submitManualResults ==========
+        // ========== ФУНКЦИЯ submitManualResults (с отключёнными файлами) ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1388,7 +1387,7 @@
             showLoading();
 
             const data = new FormData();
-            data.append('id', currentManualId); // NEW: передаём ID черновика
+            data.append('id', currentManualId);
             data.append('fullName', formData.fullName);
             data.append('nickname', formData.nickname);
             data.append('telegram', formData.telegram);
@@ -1396,13 +1395,14 @@
             data.append('email', formData.email);
             data.append('project', formData.project);
             data.append('projectId', formData.projectId);
-            data.append('status', 'completed'); // завершённая анкета
+            data.append('status', 'completed');
 
-            // Добавляем результаты тестов
+            // Добавляем результаты тестов (но без файлов для теста)
             for (let i = 0; i < tasks.length; i++) {
-                if (taskFiles[i]) {
-                    data.append(`task_${i}`, taskFiles[i]);
-                }
+                // ⚠️ ВРЕМЕННО ОТКЛЮЧАЕМ ОТПРАВКУ ФАЙЛОВ ДЛЯ ПРОВЕРКИ
+                // if (taskFiles[i]) {
+                //     data.append(`task_${i}`, taskFiles[i]);
+                // }
                 if (taskInputs[i]) {
                     data.append(`task_${i}_input`, taskInputs[i]);
                 }
@@ -1424,7 +1424,7 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Ошибка отправки');
-                // Уведомление об успехе убрано по требованию
+                // Уведомление об успехе убрано
                 document.getElementById('manualVerificationBlock').classList.remove('show');
             } catch (error) {
                 console.error(error);
@@ -1437,7 +1437,7 @@
         function copyCode() {
             const code = document.getElementById('codeDisplay').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                // Уведомление о копировании убрано (оставляем только алерт на случай ошибки)
+                // Уведомление о копировании убрано
             }).catch(() => alert('Не удалось скопировать код.'));
         }
 

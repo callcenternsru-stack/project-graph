@@ -1,4 +1,3 @@
-```javascript
 const { getStore } = require('@netlify/blobs');
 const Busboy = require('busboy');
 const { Readable } = require('stream');
@@ -22,7 +21,7 @@ exports.handler = async (event) => {
     const bb = Busboy({
       headers: { 'content-type': contentType },
       limits: {
-        fileSize: 15 * 1024 * 1024, // 15 MB
+        fileSize: 15 * 1024 * 1024, // 15 MB (но Netlify может обрезать раньше)
         fieldSize: 10 * 1024 * 1024,
         fields: 50,
         files: 10
@@ -39,7 +38,7 @@ exports.handler = async (event) => {
 
     bb.on('file', (name, file, info) => {
       const { filename, encoding, mimeType } = info;
-      console.log(`File received: ${name}, filename=${filename}, size? unknown`);
+      console.log(`File received: ${name}, filename=${filename}`);
       const chunks = [];
       let fileSize = 0;
       file.on('data', (chunk) => {
@@ -64,9 +63,7 @@ exports.handler = async (event) => {
 
     bb.on('finish', async () => {
       try {
-        // Логируем все полученные поля
         console.log('All fields:', Object.keys(fields));
-        // Проверяем наличие обязательных полей, но не прерываем, просто логируем
         const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
         for (const field of requiredFields) {
           if (!fields[field]) {
@@ -157,4 +154,3 @@ exports.handler = async (event) => {
     }
   });
 };
-```
