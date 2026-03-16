@@ -18,12 +18,26 @@ exports.handler = async (event) => {
     const MAX_FORMS = 20;
     const recentCodes = index.slice(-MAX_FORMS).map(item => item.code);
 
+    // Загружаем данные параллельно
+    const candidatesData = await Promise.all(
+      recentCodes.map(async (code) => {
+        try {
+          return await store.get(code, { type: 'json' });
+        } catch (e) {
+          console.error(`Error loading code ${code}:`, e);
+          return null;
+        }
+      })
+    );
+
+    const baseUrl = `${event.headers['x-forwarded-proto'] || 'https'}://${event.headers.host}/.netlify/functions/getFile`;
     const results = [];
-    for (const code of recentCodes) {
-      const candidateData = await store.get(code, { type: 'json' });
+
+    for (let i = 0; i < recentCodes.length; i++) {
+      const code = recentCodes[i];
+      const candidateData = candidatesData[i];
       if (!candidateData) continue;
       if (candidateData.status === 'completed') {
-        const baseUrl = `${event.headers['x-forwarded-proto'] || 'https'}://${event.headers.host}/.netlify/functions/getFile`;
         results.push({
           code,
           formData: candidateData.formData,

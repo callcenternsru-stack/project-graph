@@ -15,7 +15,6 @@ exports.handler = async (event) => {
 
     // Читаем индекс
     const index = await store.get('_index', { type: 'json' }) || [];
-    // Берём последние 20 кодов
     const MAX_FORMS = 20;
     const recentCodes = index.slice(-MAX_FORMS).map(item => item.code);
 
@@ -33,7 +32,6 @@ exports.handler = async (event) => {
     );
 
     const filteredForms = forms.filter(f => f !== null);
-    // Сортируем по дате (новые сверху)
     filteredForms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {
