@@ -13,27 +13,27 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    const { blobs } = await store.list();
-    const candidateKeys = blobs
-      .map(item => item.key)
-      .filter(key => !key.includes('/'));
-
+    // Читаем индекс
+    const index = await store.get('_index', { type: 'json' }) || [];
+    // Берём последние 20 кодов
     const MAX_FORMS = 20;
-    const keysToLoad = candidateKeys.slice(-MAX_FORMS);
+    const recentCodes = index.slice(-MAX_FORMS).map(item => item.code);
 
+    // Загружаем данные параллельно
     const forms = await Promise.all(
-      keysToLoad.map(async (key) => {
+      recentCodes.map(async (code) => {
         try {
-          const data = await store.get(key, { type: 'json' });
-          return data ? { code: key, ...data } : null;
+          const data = await store.get(code, { type: 'json' });
+          return data ? { code, ...data } : null;
         } catch (e) {
-          console.error(`Error loading key ${key}:`, e);
+          console.error(`Error loading code ${code}:`, e);
           return null;
         }
       })
     );
 
     const filteredForms = forms.filter(f => f !== null);
+    // Сортируем по дате (новые сверху)
     filteredForms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {

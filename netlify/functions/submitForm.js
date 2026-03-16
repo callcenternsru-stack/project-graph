@@ -43,6 +43,12 @@ exports.handler = async (event) => {
       if (existing && existing.formData && isSameCandidate(existing.formData, formData)) {
         await store.delete(blob.key);
         console.log(`Deleted duplicate form with key ${blob.key}`);
+        // Также удаляем из индекса
+        const index = await store.get('_index', { type: 'json' }) || [];
+        const newIndex = index.filter(item => item.code !== blob.key);
+        if (newIndex.length !== index.length) {
+          await store.setJSON('_index', newIndex);
+        }
         break;
       }
     }
@@ -54,6 +60,14 @@ exports.handler = async (event) => {
       createdAt: new Date().toISOString()
     };
     await store.setJSON(code, candidateData);
+
+    // Обновляем индекс
+    const indexKey = '_index';
+    let index = await store.get(indexKey, { type: 'json' }) || [];
+    index.push({ code, createdAt: candidateData.createdAt });
+    // Оставляем только последние 200 записей (чтобы индекс не рос бесконечно)
+    if (index.length > 200) index = index.slice(-200);
+    await store.setJSON(indexKey, index);
 
     return {
       statusCode: 200,

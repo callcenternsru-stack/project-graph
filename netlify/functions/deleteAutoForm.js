@@ -29,6 +29,13 @@ exports.handler = async (event) => {
 
     await Promise.all(filesToDelete.map(key => store.delete(key)));
 
+    // Удаляем из индекса
+    const index = await store.get('_index', { type: 'json' }) || [];
+    const newIndex = index.filter(item => item.code !== code);
+    if (newIndex.length !== index.length) {
+      await store.setJSON('_index', newIndex);
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, message: 'Auto form deleted' })

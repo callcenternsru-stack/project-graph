@@ -13,29 +13,26 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    const { blobs } = await store.list();
-    const candidateKeys = blobs
-      .map(item => item.key)
-      .filter(key => !key.includes('/'));
-
+    // Читаем индекс
+    const index = await store.get('_index', { type: 'json' }) || [];
     const MAX_FORMS = 20;
-    const keysToLoad = candidateKeys.slice(-MAX_FORMS);
+    const recentCodes = index.slice(-MAX_FORMS).map(item => item.code);
 
     const results = [];
-    for (const key of keysToLoad) {
-      const candidateData = await store.get(key, { type: 'json' });
+    for (const code of recentCodes) {
+      const candidateData = await store.get(code, { type: 'json' });
       if (!candidateData) continue;
       if (candidateData.status === 'completed') {
         const baseUrl = `${event.headers['x-forwarded-proto'] || 'https'}://${event.headers.host}/.netlify/functions/getFile`;
         results.push({
-          code: key,
+          code,
           formData: candidateData.formData,
           createdAt: candidateData.createdAt,
           completedAt: candidateData.completedAt,
           files: {
-            report: baseUrl + `?code=${encodeURIComponent(key)}&file=report.txt`,
-            resultsJson: baseUrl + `?code=${encodeURIComponent(key)}&file=results.json`,
-            voice: baseUrl + `?code=${encodeURIComponent(key)}&file=voice_recording.wav`
+            report: baseUrl + `?code=${encodeURIComponent(code)}&file=report.txt`,
+            resultsJson: baseUrl + `?code=${encodeURIComponent(code)}&file=results.json`,
+            voice: baseUrl + `?code=${encodeURIComponent(code)}&file=voice_recording.wav`
           }
         });
       }
