@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление проектами</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #000000;
+            color: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: #111111;
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255,215,0,0.2);
+        }
+        h1 {
+            color: #ffd700;
+            font-size: 28px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            color: #ffd700;
+            font-size: 22px;
+        }
+        .add-btn {
+            padding: 10px 20px;
+            background: #ffd700;
+            color: #000;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .add-btn:hover {
+            background: #ffe44d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+        }
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #000;
+            color: #ffd700;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #ffd700;
+        }
+        td {
+            padding: 12px 15px;
+            color: #ccc;
+            border-bottom: 1px solid #333;
+        }
+        tr:hover td {
+            background: #222;
+        }
+        .actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .edit-btn {
+            background: #6b8cff;
+            color: white;
+        }
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #111;
+            border-radius: 24px;
+            width: 500px;
+            max-width: 90vw;
+            border: 2px solid #ffd700;
+            display: none;
+            z-index: 10000;
+        }
+        .modal.show {
+            display: block;
+            animation: modalAppear 0.3s ease;
+        }
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translate(-50%, -45%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 2px solid #ffd700;
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: 600;
+            background: #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .modal-content {
+            padding: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ffd700;
+            color: #000;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .key-display {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            font-family: monospace;
+            font-size: 16px;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            background: #111;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            color: #fff;
+            z-index: 20000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Управление проектами</h1>
+        <div class="section-header">
+            <h2>Список проектов</h2>
+            <button class="add-btn" onclick="openAddModal()">+ Добавить проект</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Название проекта</th>
+                        <th>Уникальный ключ</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="projectsList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="projectModal" class="modal">
+        <div class="modal-header">
+            <span id="modalTitle">Добавить проект</span>
+            <span class="modal-close" onclick="closeModal()">✕</span>
+        </div>
+        <div class="modal-content">
+            <div class="form-group">
+                <label>Название проекта <span style="color:#ff6b6b;">*</span></label>
+                <input type="text" id="projectName" placeholder="Например: РОССЕТТИ" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label>Уникальный ключ (генерируется автоматически)</label>
+                <div class="key-display" id="projectKey">—</div>
+            </div>
+            <button class="save-btn" onclick="saveProject()">Сохранить</button>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let projects = [];
+        let editingId = null;
+
+        function showNotification(message, type = 'info') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.style.borderColor = type === 'success' ? '#4caf50' : '#ffd700';
+            notif.style.display = 'block';
+            setTimeout(() => notif.style.display = 'none', 3000);
+        }
+
+        function generateProjectKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let part1 = '', part2 = '';
+            for (let i = 0; i < 4; i++) {
+                part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+                part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `PROJ-${part1}-${part2}`;
+        }
+
+        async function loadProjects() {
+            try {
+                const res = await fetch('/.netlify/functions/getProjects');
+                if (res.ok) {
+                    projects = await res.json();
+                    renderProjects();
+                } else {
+                    showNotification('Ошибка загрузки проектов', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        async function saveProjectToServer(project) {
+            try {
+                const res = await fetch('/.netlify/functions/saveProject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(project)
+                });
+                if (!res.ok) throw new Error('Ошибка сохранения');
+                return true;
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сохранения', 'error');
+                return false;
+            }
+        }
+
+        async function deleteProjectFromServer(id) {
+            try {
+                const res = await fetch(`/.netlify/functions/deleteProject?name=${encodeURIComponent(id)}`, {
+                    method: 'DELETE'
+                });
+                if (!res.ok) throw new Error('Ошибка удаления');
+                return true;
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка удаления', 'error');
+                return false;
+            }
+        }
+
+        function renderProjects() {
+            const tbody = document.getElementById('projectsList');
+            tbody.innerHTML = '';
+            if (projects.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Нет проектов</td></tr>';
+                return;
+            }
+            projects.forEach(proj => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${proj.name}</td>
+                    <td><code>${proj.id}</code></td>
+                    <td class="actions">
+                        <button class="edit-btn" onclick="editProject('${proj.id}')">✏️</button>
+                        <button class="delete-btn" onclick="deleteProject('${proj.id}')">✕</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Добавить проект';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectKey').textContent = generateProjectKey();
+            document.getElementById('projectModal').classList.add('show');
+        }
+
+        function editProject(id) {
+            const proj = projects.find(p => p.id === id);
+            if (!proj) return;
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Редактировать проект';
+            document.getElementById('projectName').value = proj.name;
+            document.getElementById('projectKey').textContent = proj.id;
+            document.getElementById('projectModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('projectModal').classList.remove('show');
+        }
+
+        async function saveProject() {
+            const name = document.getElementById('projectName').value.trim();
+            let key = document.getElementById('projectKey').textContent;
+
+            if (!name) {
+                showNotification('Введите название проекта', 'error');
+                return;
+            }
+
+            if (!editingId) {
+                key = generateProjectKey(); // перегенерируем для нового проекта
+            }
+
+            const project = { id: key, name: name };
+
+            const success = await saveProjectToServer(project);
+            if (success) {
+                if (editingId) {
+                    const index = projects.findIndex(p => p.id === editingId);
+                    if (index !== -1) projects[index] = project;
+                } else {
+                    projects.push(project);
+                }
+                renderProjects();
+                closeModal();
+                showNotification('Проект сохранён', 'success');
+            }
+        }
+
+        async function deleteProject(id) {
+            if (!confirm('Удалить проект? Это действие нельзя отменить.')) return;
+            const success = await deleteProjectFromServer(id);
+            if (success) {
+                projects = projects.filter(p => p.id !== id);
+                renderProjects();
+                showNotification('Проект удалён', 'success');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProjects);
+    </script>
+</body>
+</html>
