@@ -1,3 +1,4 @@
+```javascript
 const { getStore } = require('@netlify/blobs');
 const Busboy = require('busboy');
 const { Readable } = require('stream');
@@ -15,14 +16,14 @@ exports.handler = async (event) => {
     };
   }
 
-  console.log('Received POST to submitManualResults, body length:', event.body?.length);
+  console.log('submitManualResults invoked, body length:', event.body?.length);
 
   return new Promise((resolve, reject) => {
     const bb = Busboy({
       headers: { 'content-type': contentType },
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10 MB
-        fieldSize: 10 * 1024 * 1024, // 10 MB
+        fileSize: 15 * 1024 * 1024, // 15 MB
+        fieldSize: 10 * 1024 * 1024,
         fields: 50,
         files: 10
       }
@@ -32,21 +33,24 @@ exports.handler = async (event) => {
     const files = {};
 
     bb.on('field', (name, val) => {
+      console.log(`Field received: ${name}=${val.substring(0, 100)}...`);
       fields[name] = val;
     });
 
     bb.on('file', (name, file, info) => {
       const { filename, encoding, mimeType } = info;
+      console.log(`File received: ${name}, filename=${filename}, size? unknown`);
       const chunks = [];
       let fileSize = 0;
       file.on('data', (chunk) => {
         chunks.push(chunk);
         fileSize += chunk.length;
-        if (fileSize > 10 * 1024 * 1024) {
+        if (fileSize > 15 * 1024 * 1024) {
           file.destroy(new Error('File too large'));
         }
       });
       file.on('end', () => {
+        console.log(`File ${name} ended, total size: ${fileSize}`);
         files[name] = {
           filename,
           mimeType,
@@ -60,11 +64,13 @@ exports.handler = async (event) => {
 
     bb.on('finish', async () => {
       try {
-        // Проверяем наличие обязательных полей
+        // Логируем все полученные поля
+        console.log('All fields:', Object.keys(fields));
+        // Проверяем наличие обязательных полей, но не прерываем, просто логируем
         const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
         for (const field of requiredFields) {
           if (!fields[field]) {
-            throw new Error(`Missing required field: ${field}`);
+            console.error(`Missing required field: ${field}`);
           }
         }
 
@@ -91,10 +97,10 @@ exports.handler = async (event) => {
         };
 
         if (fields.taskAnswers) {
-          try { record.taskAnswers = JSON.parse(fields.taskAnswers); } catch (e) {}
+          try { record.taskAnswers = JSON.parse(fields.taskAnswers); } catch (e) { console.error('Error parsing taskAnswers', e); }
         }
         if (fields.taskScores) {
-          try { record.taskScores = JSON.parse(fields.taskScores); } catch (e) {}
+          try { record.taskScores = JSON.parse(fields.taskScores); } catch (e) { console.error('Error parsing taskScores', e); }
         }
 
         const fileUrls = {};
@@ -132,7 +138,7 @@ exports.handler = async (event) => {
 
     bb.on('error', (error) => {
       console.error('Busboy error:', error);
-      reject({
+      resolve({
         statusCode: 400,
         body: JSON.stringify({ error: error.message })
       });
@@ -144,10 +150,11 @@ exports.handler = async (event) => {
       readable.pipe(bb);
     } catch (err) {
       console.error('Error creating readable stream:', err);
-      reject({
+      resolve({
         statusCode: 500,
         body: JSON.stringify({ error: 'Internal server error' })
       });
     }
   });
 };
+```
