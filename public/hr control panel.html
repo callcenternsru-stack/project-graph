@@ -4,17 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ-панель рекрутинга</title>
-    <!-- Подключаем SheetJS для чтения Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* ===== ОБЩИЕ СТИЛИ (ПОЛНОСТЬЮ СОХРАНЕНЫ) ===== */
+        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ ===== */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
         }
-
         body {
             background: #000000;
             margin: 0;
@@ -22,7 +20,6 @@
             min-height: 100vh;
             color: #ffffff;
         }
-
         body.menu-open::after {
             content: '';
             position: fixed;
@@ -34,7 +31,6 @@
             z-index: 999;
             pointer-events: none;
         }
-
         .side-menu-trigger {
             position: fixed;
             top: 0;
@@ -44,7 +40,6 @@
             background: transparent;
             z-index: 1001;
         }
-
         .side-menu {
             position: fixed;
             top: 0;
@@ -61,12 +56,10 @@
             flex-direction: column;
             gap: 5px;
         }
-
         .side-menu-trigger:hover + .side-menu,
         .side-menu:hover {
             left: 0;
         }
-
         .side-menu .menu-btn {
             display: flex;
             align-items: center;
@@ -83,23 +76,19 @@
             text-align: left;
             width: 100%;
         }
-
         .side-menu .menu-btn:hover {
             background: #1a1a1a;
             border-left-color: #ffd700;
         }
-
         .side-menu .menu-btn.active {
             background: #1a1a1a;
             border-left-color: #ffd700;
             font-weight: 600;
         }
-
         .admin-container {
             max-width: 1800px;
             margin: 0 auto;
         }
-
         .header {
             background: #111111;
             border-radius: 16px;
@@ -111,13 +100,11 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .header h1 {
             color: #ffd700;
             font-size: 24px;
             font-weight: 600;
         }
-
         .content-card {
             background: #111111;
             border-radius: 24px;
@@ -125,20 +112,17 @@
             border: 2px solid #ffd700;
             box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
         }
-
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
-
         .section-header h2 {
             color: #ffd700;
             font-size: 20px;
             font-weight: 600;
         }
-
         .add-btn {
             padding: 10px 20px;
             background: #ffd700;
@@ -150,26 +134,22 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-
         .add-btn:hover {
             background: #ffe44d;
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
         }
-
         .table-container {
             overflow-x: auto;
             border-radius: 12px;
             border: 1px solid #333333;
             background: #1a1a1a;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             min-width: 1200px;
         }
-
         th {
             background: #000000;
             color: #ffd700;
@@ -183,39 +163,32 @@
             position: relative;
             transition: background 0.2s;
         }
-
         th:hover {
             background: #1a1a1a;
         }
-
         th.sorted-asc::after {
             content: " ▲";
             font-size: 12px;
             margin-left: 5px;
         }
-
         th.sorted-desc::after {
             content: " ▼";
             font-size: 12px;
             margin-left: 5px;
         }
-
         td {
             padding: 12px 15px;
             color: #cccccc;
             border-bottom: 1px solid #333333;
         }
-
         tr:hover td {
             background: #222222;
         }
-
         .actions {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-
         .edit-btn, .delete-btn, .import-btn, .download-btn {
             padding: 6px 12px;
             border: none;
@@ -228,44 +201,34 @@
             text-decoration: none;
             display: inline-block;
         }
-
         .edit-btn {
             background: #6b8cff;
             color: white;
         }
-
         .edit-btn:hover {
             background: #8aa5ff;
         }
-
         .delete-btn {
             background: #ff6b6b;
             color: white;
         }
-
         .delete-btn:hover {
             background: #ff8a8a;
         }
-
         .import-btn {
             background: #4caf50;
             color: white;
         }
-
         .import-btn:hover {
             background: #66bb6a;
         }
-
         .download-btn {
             background: #ffd700;
             color: #000;
         }
-
         .download-btn:hover {
             background: #ffe44d;
         }
-
-        /* Модальное окно */
         .modal {
             position: fixed;
             top: 50%;
@@ -281,17 +244,14 @@
             border: 2px solid #ffd700;
             overflow: hidden;
         }
-
         .modal.show {
             display: block;
             animation: modalAppear 0.3s ease;
         }
-
         @keyframes modalAppear {
             from { opacity: 0; transform: translate(-50%, -45%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
-
         .modal-header {
             padding: 20px 25px;
             border-bottom: 2px solid #ffd700;
@@ -302,7 +262,6 @@
             display: flex;
             align-items: center;
         }
-
         .modal-header .modal-close {
             margin-left: auto;
             cursor: pointer;
@@ -314,29 +273,24 @@
             border: none;
             padding: 5px;
         }
-
         .modal-header .modal-close:hover {
             opacity: 1;
             transform: scale(1.1);
         }
-
         .modal-content {
             padding: 25px;
             background: #111111;
         }
-
         .modal-content .form-row {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             margin-bottom: 20px;
         }
-
         .modal-content .form-group {
             flex: 1 1 calc(33.333% - 20px);
             min-width: 200px;
         }
-
         .modal-content label {
             display: block;
             color: #ffd700;
@@ -344,7 +298,6 @@
             font-weight: 500;
             margin-bottom: 8px;
         }
-
         .modal-content input,
         .modal-content select,
         .modal-content textarea {
@@ -357,7 +310,6 @@
             color: #ffffff;
             transition: all 0.3s;
         }
-
         .modal-content input:focus,
         .modal-content select:focus,
         .modal-content textarea:focus {
@@ -365,7 +317,6 @@
             border-color: #ffd700;
             background: #222222;
         }
-
         .toolbar {
             display: flex;
             gap: 6px;
@@ -373,7 +324,6 @@
             flex-wrap: wrap;
             align-items: center;
         }
-
         .toolbar button {
             background: #1a1a1a;
             border: 1px solid #444;
@@ -390,33 +340,27 @@
             align-items: center;
             justify-content: center;
         }
-
         .toolbar button:hover {
             background: #222;
             border-color: #ffd700;
         }
-
         .toolbar .font-size-group {
             display: flex;
             gap: 4px;
         }
-
         .toolbar .font-size-group button {
             padding: 6px 8px;
             font-size: 12px;
         }
-
         .password-container {
             display: flex;
             gap: 8px;
             align-items: center;
         }
-
         .password-container input {
             flex: 1;
             min-width: 0;
         }
-
         .password-container button {
             width: auto;
             padding: 12px 15px;
@@ -429,12 +373,10 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-
         .password-container button:hover {
             background: #222222;
             border-color: #ffd700;
         }
-
         .modal-content .save-btn {
             width: 100%;
             padding: 14px;
@@ -448,13 +390,11 @@
             margin-top: 10px;
             transition: all 0.3s;
         }
-
         .modal-content .save-btn:hover {
             background: #ffe44d;
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
         }
-
         .notification {
             position: fixed;
             bottom: 20px;
@@ -470,20 +410,16 @@
             max-width: 300px;
             animation: slideIn 0.3s ease;
         }
-
         .notification.success {
             border-color: #4caf50;
         }
-
         .notification.error {
             border-color: #ff6b6b;
         }
-
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-
         .schedule-wrapper {
             background: #111111;
             border-radius: 16px;
@@ -494,26 +430,21 @@
             max-height: 500px;
             overflow: auto;
         }
-
         .schedule-wrapper::-webkit-scrollbar {
             width: 12px;
             height: 12px;
         }
-
         .schedule-wrapper::-webkit-scrollbar-track {
             background: #000000;
         }
-
         .schedule-wrapper::-webkit-scrollbar-thumb {
             background: #333333;
             border: 2px solid #000000;
             border-radius: 6px;
         }
-
         .schedule-wrapper::-webkit-scrollbar-thumb:hover {
             background: #ffd700;
         }
-
         .headers-container {
             display: flex;
             background: #000000;
@@ -523,7 +454,6 @@
             z-index: 100;
             min-width: min-content;
         }
-
         .fixed-headers {
             display: flex;
             flex: 0 0 auto;
@@ -533,7 +463,6 @@
             left: 0;
             z-index: 101;
         }
-
         .fixed-header-cell {
             padding: 15px 10px;
             font-weight: 600;
@@ -547,19 +476,16 @@
             justify-content: center;
             color: #ffd700;
         }
-
         .fixed-header-cell:first-child {
             width: 280px;
             text-align: left;
             padding-left: 20px;
             justify-content: flex-start;
         }
-
         .scrollable-headers {
             display: flex;
             flex: 1;
         }
-
         .scrollable-header-cell {
             flex: 0 0 100px;
             padding: 15px 10px;
@@ -575,28 +501,23 @@
             justify-content: center;
             color: #ffd700;
         }
-
         .day-week {
             font-size: 11px;
             color: #8f9bb3;
             font-weight: normal;
             margin-top: 2px;
         }
-
         .rows-container {
             min-width: min-content;
         }
-
         .data-row {
             display: flex;
             border-bottom: 1px solid #333333;
             min-height: 50px;
         }
-
         .data-row:hover {
             background: #1a1a1a;
         }
-
         .fixed-cells {
             display: flex;
             flex: 0 0 auto;
@@ -606,7 +527,6 @@
             left: 0;
             z-index: 90;
         }
-
         .fixed-cell {
             padding: 10px;
             border-right: 1px solid #333333;
@@ -616,19 +536,16 @@
             color: #cccccc;
             white-space: nowrap;
         }
-
         .fixed-cell:first-child {
             width: 280px;
             font-weight: 600;
             color: #ffd700;
             padding-left: 20px;
         }
-
         .scrollable-cells {
             display: flex;
             flex: 1;
         }
-
         .scrollable-cell {
             flex: 0 0 100px;
             padding: 6px;
@@ -638,7 +555,6 @@
             align-items: center;
             justify-content: center;
         }
-
         .time-input {
             width: 100%;
             padding: 6px;
@@ -651,18 +567,15 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-
         .time-input:focus {
             outline: none;
             border-color: #ffd700;
             background: #222;
         }
-
         .time-input.filled {
             border-color: #ffd700;
             color: #ffd700;
         }
-
         .graph-title {
             color: #ffd700;
             font-size: 20px;
@@ -670,7 +583,6 @@
             border-bottom: 2px solid #333;
             padding-bottom: 8px;
         }
-
         .month-selector {
             display: flex;
             gap: 20px;
@@ -678,7 +590,6 @@
             align-items: center;
             flex-wrap: wrap;
         }
-
         .month-selector select {
             background: #1a1a1a;
             border: 2px solid #333333;
@@ -688,12 +599,10 @@
             font-size: 14px;
             min-width: 200px;
         }
-
         .month-selector select:focus {
             outline: none;
             border-color: #ffd700;
         }
-
         .readonly-text {
             color: #ffd700;
             background: #1a1a1a;
@@ -701,7 +610,6 @@
             border-radius: 8px;
             border: 1px solid #333;
         }
-
         .loader {
             text-align: center;
             padding: 40px;
@@ -727,10 +635,10 @@
         <div class="header">
             <h1>Администрирование рекрутинга</h1>
         </div>
-
         <div class="content-card" id="contentArea"></div>
     </div>
 
+    <!-- Модальные окна (без изменений) -->
     <div id="addMonthModal" class="modal">
         <div class="modal-header">
             <span>Добавить месяц в график</span>
@@ -865,14 +773,14 @@
     <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display: none;">
 
     <script>
-        // ========== СОСТОЯНИЕ ПРИЛОЖЕНИЯ (ВСЁ С СЕРВЕРА) ==========
+        // ========== СОСТОЯНИЕ ==========
         let state = {
             recruiters: [],
             callResults: [],
             contactTypes: [],
-            projects: [],
+            projects: [],              // массив объектов { id, name }
             candidates: [],
-            scripts: [],
+            scripts: [],               // каждый скрипт содержит projectId, projectName
             projectMeetings: {},
             projectTrainings: {},
             projectMeetingComments: {},
@@ -881,7 +789,7 @@
             autoForms: [],
             manualForms: [],
             allForms: [],
-            characteristics: []
+            characteristics: []         // каждый объект содержит projectId, projectName
         };
 
         let currentTab = 'recruiters';
@@ -904,7 +812,6 @@
                 if (trigger) trigger.style.display = 'none';
                 if (sideMenu) sideMenu.style.display = 'none';
                 if (header) header.style.display = 'none';
-
                 currentTab = 'schedule';
                 window.renderContent = function() {
                     const area = document.getElementById('contentArea');
@@ -914,6 +821,7 @@
             });
         }
 
+        // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
             const notif = document.createElement('div');
             notif.className = `notification ${type}`;
@@ -922,7 +830,7 @@
             setTimeout(() => notif.remove(), 5000);
         }
 
-        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ХАРАКТЕРИСТИКАМИ НА СЕРВЕРЕ ==========
+        // ========== ЗАГРУЗКА ДАННЫХ С СЕРВЕРА ==========
         async function loadCharacteristics() {
             try {
                 const res = await fetch('/.netlify/functions/getCharacteristics');
@@ -987,7 +895,7 @@
                 state.recruiters = await recruitersRes.json();
                 state.callResults = await callResultsRes.json();
                 state.contactTypes = await contactTypesRes.json();
-                state.projects = await projectsRes.json();
+                state.projects = await projectsRes.json(); // ожидается массив { id, name }
                 state.candidates = await candidatesRes.json();
                 state.scripts = await scriptsRes.json();
                 state.projectMeetings = await meetingsRes.json();
@@ -1002,13 +910,13 @@
                 state.autoForms = await autoRes.json();
 
                 await loadCharacteristics();
-
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
                 showNotification('Не удалось загрузить данные', 'error');
             }
         }
 
+        // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tabId) {
             if (scheduleOnly) return;
             currentTab = tabId;
@@ -1041,6 +949,7 @@
             }
         }
 
+        // ========== РЕКРУТЕРЫ (без изменений) ==========
         function renderRecruiters(container) {
             let html = `
                 <div class="section-header">
@@ -1083,6 +992,7 @@
             container.innerHTML = html;
         }
 
+        // ========== БАЗА КОНТАКТОВ (без изменений) ==========
         function renderCandidates(container) {
             const headers = [
                 { label: 'Дата', field: 'createdAt' },
@@ -1194,6 +1104,7 @@
             });
         }
 
+        // ========== СКРИПТЫ (с выбором проекта) ==========
         function renderScripts(container) {
             let html = `
                 <div class="section-header">
@@ -1204,6 +1115,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>Проект</th>
                                 <th>Название</th>
                                 <th>Текст скрипта</th>
                                 <th>Действия</th>
@@ -1212,12 +1124,13 @@
                         <tbody>
             `;
             if (state.scripts.length === 0) {
-                html += '<tr><td colspan="3" style="text-align:center;">Нет скриптов</td></tr>';
+                html += '<tr><td colspan="4" style="text-align:center;">Нет скриптов</td></tr>';
             } else {
                 state.scripts.forEach((script, index) => {
                     const plainText = script.content.replace(/<[^>]*>/g, '');
                     html += `
                         <tr>
+                            <td>${script.projectName || '—'}</td>
                             <td>${script.title || ''}</td>
                             <td>${plainText.substring(0, 100)}${plainText.length > 100 ? '…' : ''}</td>
                             <td class="actions">
@@ -1232,6 +1145,7 @@
             container.innerHTML = html;
         }
 
+        // ========== ГРАФИК (проекты берутся из state.projects) ==========
         function renderSchedulePage(container) {
             let allMonths = [...state.scheduleMonths];
             if (!allMonths.includes(currentScheduleMonth)) {
@@ -1256,9 +1170,9 @@
         }
 
         function renderEventGraph(type, title) {
-            const projects = state.scripts.map(s => s.title).filter(p => p);
+            const projects = state.projects.map(p => p.name); // теперь названия проектов
             if (projects.length === 0) {
-                return `<h3 class="graph-title">${title}</h3><div style="color: #8f9bb3; padding: 20px; text-align: center;">Нет проектов (скриптов) для отображения</div>`;
+                return `<h3 class="graph-title">${title}</h3><div style="color: #8f9bb3; padding: 20px; text-align: center;">Нет проектов для отображения</div>`;
             }
 
             const [year, month] = currentScheduleMonth.split('-').map(Number);
@@ -1312,6 +1226,7 @@
             return html;
         }
 
+        // ========== ВСЕ АНКЕТЫ (без изменений) ==========
         function renderAllForms(container) {
             container.innerHTML = `
                 <div class="section-header">
@@ -1323,12 +1238,11 @@
             `;
         }
 
+        // ========== АНКЕТЫ АВТО (без изменений) ==========
         async function renderAutoForms(container) {
             container.innerHTML = '<div class="loader">Загрузка данных...</div>';
-
             try {
                 const forms = state.allForms;
-
                 let html = `
                     <div class="section-header">
                         <h2>Автоматические анкеты (все)</h2>
@@ -1351,18 +1265,15 @@
                             </thead>
                             <tbody>
                 `;
-
                 if (!forms || forms.length === 0) {
                     html += '<tr><td colspan="10" style="text-align:center;">Нет анкет</td></tr>';
                 } else {
                     const baseUrl = `${window.location.protocol}//${window.location.host}/.netlify/functions/getFile`;
-
                     forms.forEach(item => {
                         const date = item.createdAt ? new Date(item.createdAt).toLocaleString() : '—';
                         const status = item.status === 'completed' ? '✅ Завершено' : '⏳ Ожидает';
                         const form = item.formData || {};
                         const code = item.code || '';
-
                         const reportLink = (item.status === 'completed')
                             ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=report.txt" class="download-btn" target="_blank">📄 report.txt</a>`
                             : '—';
@@ -1408,6 +1319,7 @@
             }
         }
 
+        // ========== АНКЕТЫ РУЧНЫЕ (без изменений) ==========
         function renderManualForms(container) {
             let html = `
                 <div class="section-header">
@@ -1451,9 +1363,9 @@
             container.innerHTML = html;
         }
 
+        // ========== ХАРАКТЕРИСТИКИ (привязаны к projectId) ==========
         function renderCharacteristics(container) {
             updateCharProjectSelect();
-
             let html = `
                 <div class="section-header">
                     <h2>Характеристики для проверки кандидатов</h2>
@@ -1470,7 +1382,6 @@
                         </thead>
                         <tbody>
             `;
-
             if (state.characteristics.length === 0) {
                 html += '<tr><td colspan="3" style="text-align:center;">Нет характеристик</td></tr>';
             } else {
@@ -1478,7 +1389,7 @@
                     const paramsStr = `ОС: ${char.os || '—'}, Подкл.: ${char.connectionType || '—'}, Скорость: ${char.internetSpeed || '—'}, RAM: ${char.ram || '—'}, Ядра: ${char.cores || '—'}, Частота: ${char.cpuFreq || '—'} ГГц`;
                     html += `
                         <tr>
-                            <td>${char.project || '—'}</td>
+                            <td>${char.projectName || '—'}</td>
                             <td>${paramsStr}</td>
                             <td class="actions">
                                 <button class="delete-btn" onclick="deleteCharacteristic(${index})">✕</button>
@@ -1491,12 +1402,12 @@
             container.innerHTML = html;
         }
 
+        // ========== ФУНКЦИИ ДЛЯ ХАРАКТЕРИСТИК ==========
         function updateCharProjectSelect() {
             const select = document.getElementById('charProjectSelect');
             if (!select) return;
-            const projects = state.scripts.map(s => s.title).filter(p => p);
             select.innerHTML = '<option value="">— выберите проект —</option>' +
-                projects.map(p => `<option value="${p}">${p}</option>`).join('');
+                state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
         }
 
         function openCharacteristicModal() {
@@ -1517,7 +1428,15 @@
         }
 
         function saveCharacteristics() {
-            const project = document.getElementById('charProjectSelect').value;
+            const projectSelect = document.getElementById('charProjectSelect');
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                showNotification('Выберите проект', 'error');
+                return;
+            }
+            const projectId = selectedOption.value;
+            const projectName = selectedOption.text;
+
             const os = document.getElementById('charOsSelect').value;
             const connectionType = document.getElementById('charConnectionSelect').value;
             const internetSpeed = document.getElementById('charInternetSpeedSelect').value;
@@ -1525,13 +1444,13 @@
             const cores = document.getElementById('charCoresSelect').value;
             const cpuFreq = document.getElementById('charCpuFreqSelect').value;
 
-            if (!project || !os || !connectionType || !internetSpeed || !ram || !cores || !cpuFreq) {
+            if (!os || !connectionType || !internetSpeed || !ram || !cores || !cpuFreq) {
                 showNotification('Заполните все поля', 'error');
                 return;
             }
 
-            const existingIndex = state.characteristics.findIndex(c => c.project === project);
-            const newChar = { project, os, connectionType, internetSpeed, ram, cores, cpuFreq };
+            const existingIndex = state.characteristics.findIndex(c => c.projectId === projectId);
+            const newChar = { projectId, projectName, os, connectionType, internetSpeed, ram, cores, cpuFreq };
 
             if (existingIndex !== -1) {
                 state.characteristics[existingIndex] = newChar;
@@ -1540,7 +1459,6 @@
             }
 
             saveCharacteristicsToServer();
-
             closeCharacteristicModal();
             renderContent();
             showNotification('Характеристики сохранены', 'success');
@@ -1555,6 +1473,7 @@
             }
         }
 
+        // ========== ОБРАБОТКА ГРАФИКА (без изменений) ==========
         function handleTimeChange(input) {
             const type = input.dataset.type;
             const project = input.dataset.project;
@@ -1701,6 +1620,7 @@
             return `${months[parseInt(month) - 1]} ${year}`;
         }
 
+        // ========== УДАЛЕНИЕ ЭЛЕМЕНТОВ ==========
         async function deleteItem(type, index) {
             if (!confirm('Удалить элемент?')) return;
 
@@ -1731,6 +1651,7 @@
             showNotification('Элемент удалён', 'success');
         }
 
+        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
         function generatePassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let password = '';
@@ -1777,9 +1698,17 @@
                 `;
             } else if (type === 'script') {
                 title = 'Добавить скрипт';
+                const projectOptions = state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
                 fields = `
                     <div class="form-group">
-                        <label>Название <span style="color:#ff6b6b;">*</span></label>
+                        <label>Проект <span style="color:#ff6b6b;">*</span></label>
+                        <select id="scriptProjectSelect" required>
+                            <option value="">— выберите проект —</option>
+                            ${projectOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
                         <input type="text" id="scriptTitle" placeholder="Скрипт первичного звонка" required>
                     </div>
                     <div class="form-group">
@@ -1852,9 +1781,17 @@
                 `;
             } else if (type === 'script') {
                 title = 'Редактировать скрипт';
+                const projectOptions = state.projects.map(p => `<option value="${p.id}" ${p.id === item.projectId ? 'selected' : ''}>${p.name}</option>`).join('');
                 fields = `
                     <div class="form-group">
-                        <label>Название <span style="color:#ff6b6b;">*</span></label>
+                        <label>Проект <span style="color:#ff6b6b;">*</span></label>
+                        <select id="scriptProjectSelect" required>
+                            <option value="">— выберите проект —</option>
+                            ${projectOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
                         <input type="text" id="scriptTitle" value="${item.title || ''}" required>
                     </div>
                     <div class="form-group">
@@ -1929,20 +1866,25 @@
                     }
                     if (!response.ok) throw new Error('Ошибка сохранения');
                 } else if (editingType === 'script') {
+                    const projectSelect = document.getElementById('scriptProjectSelect');
                     const titleElem = document.getElementById('scriptTitle');
                     const contentElem = document.getElementById('scriptContent');
 
-                    if (!titleElem) throw new Error('Поле "Название" не найдено');
-                    if (!contentElem) throw new Error('Поле "Текст скрипта" не найдено');
-
+                    if (!projectSelect || !titleElem || !contentElem) throw new Error('Не все поля найдены');
+                    const projectId = projectSelect.value;
                     const title = titleElem.value.trim();
                     const content = contentElem.innerHTML.trim();
 
-                    if (!title || !content) {
+                    if (!projectId || !title || !content) {
                         alert('Заполните все поля');
                         return;
                     }
-                    const newItem = { title, content };
+
+                    // Находим название проекта
+                    const project = state.projects.find(p => p.id === projectId);
+                    const projectName = project ? project.name : '';
+
+                    const newItem = { projectId, projectName, title, content };
 
                     let response;
                     if (editingId === null) {
@@ -1957,6 +1899,7 @@
                         }
                     } else {
                         const oldItem = state.scripts[editingId];
+                        // Используем старый title как id (если нужно)
                         response = await fetch('/.netlify/functions/saveScript', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1989,6 +1932,7 @@
             editingType = null;
         }
 
+        // ========== ИМПОРТ КАНДИДАТОВ ИЗ EXCEL ==========
         function importCandidates(recruiterIndex) {
             currentRecruiterForImport = recruiterIndex;
             const fileInput = document.getElementById('excelUpload');
@@ -2067,6 +2011,7 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // ========== СОХРАНЕНИЕ ДАННЫХ ГРАФИКОВ ==========
         async function saveProjectMeetings() {
             try {
                 await fetch('/.netlify/functions/saveProjectMeetings', {
