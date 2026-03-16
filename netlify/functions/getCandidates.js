@@ -13,31 +13,21 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    const { blobs } = await store.list();
-    // Берём последние 50
-    const keysToLoad = blobs.map(b => b.key).slice(-50);
-
-    const candidates = await Promise.all(
-      keysToLoad.map(async (key) => {
-        try {
-          const data = await store.get(key, { type: 'json' });
-          return data || null;
-        } catch (e) {
-          return null;
-        }
-      })
-    );
-
-    const filtered = candidates.filter(c => c !== null);
-    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Читаем весь массив (если кандидатов много, можно хранить в одном ключе)
+    const candidates = await store.get('_all', { type: 'json' }) || [];
+    // Сортируем по дате создания (новые сверху)
+    candidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Возвращаем только последние 50 для быстрой загрузки
+    const MAX_CANDIDATES = 50;
+    const limited = candidates.slice(0, MAX_CANDIDATES);
 
     return {
       statusCode: 200,
       headers: { 
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=120' // 2 минуты
+        'Cache-Control': 'public, max-age=120'
       },
-      body: JSON.stringify(filtered)
+      body: JSON.stringify(limited)
     };
   } catch (error) {
     console.error('Error in getCandidates:', error);

@@ -15,7 +15,14 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    await store.delete(name);
+
+    let items = await store.get('_all', { type: 'json' }) || [];
+    const newItems = items.filter(i => i.name !== name);
+    if (newItems.length === items.length) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Item not found' }) };
+    }
+    await store.setJSON('_all', newItems);
+
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (error) {
     console.error('Error in deleteContactType:', error);

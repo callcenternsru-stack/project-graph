@@ -5,9 +5,9 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
   try {
-    const { title, content, id } = JSON.parse(event.body);
-    if (!title || !content) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Title and content required' }) };
+    const { projectId, projectName, title, content, id } = JSON.parse(event.body);
+    if (!projectId || !title || !content) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
     }
     const store = getStore({
       name: 'scripts',
@@ -15,12 +15,27 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const key = id || title;
-    const script = { title, content, updatedAt: new Date().toISOString() };
-    await store.setJSON(key, script);
+
+    let scripts = await store.get('_all', { type: 'json' }) || [];
+    const newScript = { projectId, projectName, title, content, updatedAt: new Date().toISOString() };
+
+    if (id) {
+      // обновление: ищем по старому title (id === старый title)
+      const index = scripts.findIndex(s => s.title === id);
+      if (index !== -1) {
+        scripts[index] = newScript;
+      } else {
+        scripts.push(newScript);
+      }
+    } else {
+      scripts.push(newScript);
+    }
+
+    await store.setJSON('_all', scripts);
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, script })
+      body: JSON.stringify({ success: true, script: newScript })
     };
   } catch (error) {
     console.error('Error in saveScript:', error);

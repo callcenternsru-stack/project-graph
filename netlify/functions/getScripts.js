@@ -11,12 +11,7 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const { blobs } = await store.list();
-    const scripts = [];
-    for (const blob of blobs) {
-      const data = await store.get(blob.key, { type: 'json' });
-      if (data) scripts.push(data);
-    }
+    const scripts = await store.get('_all', { type: 'json' }) || [];
     return {
       statusCode: 200,
       headers: { 

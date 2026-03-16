@@ -15,12 +15,31 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const key = id || name; // предполагаем, что имя уникально
-    const recruiter = { name, password, phone, email, updatedAt: new Date().toISOString() };
-    await store.setJSON(key, recruiter);
+
+    // Читаем текущий массив
+    let recruiters = await store.get('_all', { type: 'json' }) || [];
+
+    const newRecruiter = { name, password, phone, email, updatedAt: new Date().toISOString() };
+
+    if (id) {
+      // обновление: ищем по имени (id === старое имя)
+      const index = recruiters.findIndex(r => r.name === id);
+      if (index !== -1) {
+        recruiters[index] = newRecruiter;
+      } else {
+        // если не нашли, добавляем
+        recruiters.push(newRecruiter);
+      }
+    } else {
+      // добавление нового
+      recruiters.push(newRecruiter);
+    }
+
+    await store.setJSON('_all', recruiters);
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, recruiter })
+      body: JSON.stringify({ success: true, recruiter: newRecruiter })
     };
   } catch (error) {
     console.error('Error in saveRecruiter:', error);

@@ -9,19 +9,31 @@ exports.handler = async (event) => {
     if (!candidate.fullName || !candidate.phone || !candidate.recruiter) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
     }
+
     const store = getStore({
       name: 'candidates',
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const key = `${candidate.recruiter}_${Date.now()}`;
-    candidate.id = key;
-    candidate.updatedAt = new Date().toISOString();
-    await store.setJSON(key, candidate);
+
+    let candidates = await store.get('_all', { type: 'json' }) || [];
+
+    const newCandidate = {
+      ...candidate,
+      id: `${candidate.recruiter}_${Date.now()}`,
+      updatedAt: new Date().toISOString(),
+      createdAt: candidate.createdAt || new Date().toISOString()
+    };
+    candidates.push(newCandidate);
+    // Ограничим размер хранимого массива (например, последние 500)
+    if (candidates.length > 500) candidates = candidates.slice(-500);
+
+    await store.setJSON('_all', candidates);
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, candidate })
+      body: JSON.stringify({ success: true, candidate: newCandidate })
     };
   } catch (error) {
     console.error('Error in submitCandidate:', error);

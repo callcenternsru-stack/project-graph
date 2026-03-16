@@ -15,12 +15,28 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const key = id || name;
-    const item = { name, updatedAt: new Date().toISOString() };
-    await store.setJSON(key, item);
+
+    let items = await store.get('_all', { type: 'json' }) || [];
+    const newItem = { name, updatedAt: new Date().toISOString() };
+
+    if (id) {
+      // обновление: ищем по старому имени (id === старое имя)
+      const index = items.findIndex(i => i.name === id);
+      if (index !== -1) {
+        items[index] = newItem;
+      } else {
+        items.push(newItem);
+      }
+    } else {
+      // добавление нового
+      items.push(newItem);
+    }
+
+    await store.setJSON('_all', items);
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, item })
+      body: JSON.stringify({ success: true, item: newItem })
     };
   } catch (error) {
     console.error('Error in saveContactType:', error);

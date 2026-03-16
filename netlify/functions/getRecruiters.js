@@ -11,13 +11,8 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const { blobs } = await store.list();
-    const recruiters = [];
-    for (const blob of blobs) {
-      const data = await store.get(blob.key, { type: 'json' });
-      if (data) recruiters.push(data);
-    }
-    recruiters.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    // Читаем весь массив из одного ключа
+    const recruiters = await store.get('_all', { type: 'json' }) || [];
     return {
       statusCode: 200,
       headers: { 

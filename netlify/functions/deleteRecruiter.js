@@ -15,7 +15,14 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    await store.delete(name);
+
+    let recruiters = await store.get('_all', { type: 'json' }) || [];
+    const newRecruiters = recruiters.filter(r => r.name !== name);
+    if (newRecruiters.length === recruiters.length) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Recruiter not found' }) };
+    }
+    await store.setJSON('_all', newRecruiters);
+
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (error) {
     console.error('Error in deleteRecruiter:', error);

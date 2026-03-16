@@ -16,7 +16,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: { 
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=60' // 1 минута для графика
+        'Cache-Control': 'public, max-age=60'
       },
       body: JSON.stringify(data)
     };
