@@ -189,7 +189,7 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        .edit-btn, .delete-btn, .import-btn, .download-btn {
+        .edit-btn, .delete-btn, .import-btn, .download-btn, .delete-form-btn {
             padding: 6px 12px;
             border: none;
             border-radius: 8px;
@@ -208,11 +208,11 @@
         .edit-btn:hover {
             background: #8aa5ff;
         }
-        .delete-btn {
+        .delete-btn, .delete-form-btn {
             background: #ff6b6b;
             color: white;
         }
-        .delete-btn:hover {
+        .delete-btn:hover, .delete-form-btn:hover {
             background: #ff8a8a;
         }
         .import-btn {
@@ -621,14 +621,15 @@
 <body>
     <div class="side-menu-trigger"></div>
     <div class="side-menu">
-        <button class="menu-btn" onclick="switchTab('recruiters')">Рекрутеры</button>
-        <button class="menu-btn" onclick="switchTab('candidates')">База контактов</button>
-        <button class="menu-btn" onclick="switchTab('scripts')">Скрипты</button>
-        <button class="menu-btn" onclick="switchTab('schedule')">График</button>
-        <button class="menu-btn" onclick="switchTab('allForms')">Все анкеты</button>
-        <button class="menu-btn" onclick="switchTab('auto')">Анкеты авто</button>
-        <button class="menu-btn" onclick="switchTab('manual')">Анкеты ручные</button>
-        <button class="menu-btn" onclick="switchTab('characteristics')">Характеристики</button>
+        <!-- NEW: добавлены data-tab для счетчиков -->
+        <button class="menu-btn" data-tab="recruiters" onclick="switchTab('recruiters')">Рекрутеры</button>
+        <button class="menu-btn" data-tab="candidates" onclick="switchTab('candidates')">База контактов</button>
+        <button class="menu-btn" data-tab="scripts" onclick="switchTab('scripts')">Скрипты</button>
+        <button class="menu-btn" data-tab="schedule" onclick="switchTab('schedule')">График</button>
+        <button class="menu-btn" data-tab="allForms" onclick="switchTab('allForms')">Все анкеты</button>
+        <button class="menu-btn" data-tab="auto" onclick="switchTab('auto')">Анкеты авто</button>
+        <button class="menu-btn" data-tab="manual" onclick="switchTab('manual')">Анкеты ручные</button>
+        <button class="menu-btn" data-tab="characteristics" onclick="switchTab('characteristics')">Характеристики</button>
     </div>
 
     <div class="admin-container">
@@ -910,9 +911,78 @@
                 state.autoForms = await autoRes.json();
 
                 await loadCharacteristics();
+
+                // NEW: обновляем счетчики на кнопках меню
+                updateMenuCounts();
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
                 showNotification('Не удалось загрузить данные', 'error');
+            }
+        }
+
+        // ========== ОБНОВЛЕНИЕ СЧЕТЧИКОВ НА КНОПКАХ МЕНЮ ========== // NEW
+        function updateMenuCounts() {
+            document.querySelectorAll('.side-menu .menu-btn').forEach(btn => {
+                const tab = btn.dataset.tab;
+                if (!tab) return;
+                let count = 0;
+                switch (tab) {
+                    case 'recruiters': count = state.recruiters.length; break;
+                    case 'candidates': count = state.candidates.length; break;
+                    case 'scripts': count = state.scripts.length; break;
+                    case 'schedule': count = 0; break; // без счетчика
+                    case 'allForms': count = state.allForms.length; break;
+                    case 'auto': count = state.autoForms.length; break;
+                    case 'manual': count = state.manualForms.length; break;
+                    case 'characteristics': count = state.characteristics.length; break;
+                }
+                // Извлекаем базовый текст (без скобок)
+                let baseText = btn.innerText.replace(/\s*\(\d+\)$/, '');
+                if (count > 0) {
+                    btn.innerText = `${baseText} (${count})`;
+                } else {
+                    btn.innerText = baseText;
+                }
+            });
+        }
+
+        // ========== УДАЛЕНИЕ АНКЕТ ========== // NEW
+        async function deleteAutoForm(code) {
+            if (!confirm('Удалить автоматическую анкету?')) return;
+            try {
+                const res = await fetch(`/.netlify/functions/deleteAutoForm?code=${encodeURIComponent(code)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    state.allForms = state.allForms.filter(f => f.code !== code);
+                    // Обновляем также autoForms, если нужно (но autoForms формируется из getResults, его тоже надо обновить)
+                    // Проще перезагрузить autoForms отдельно или удалить из него по коду
+                    // Для простоты перезагрузим autoForms заново
+                    const autoRes = await fetch('/.netlify/functions/getResults');
+                    state.autoForms = await autoRes.json();
+                    renderContent();
+                    updateMenuCounts();
+                    showNotification('Анкета удалена', 'success');
+                } else {
+                    showNotification('Ошибка удаления', 'error');
+                }
+            } catch (e) {
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        async function deleteManualForm(id) {
+            if (!confirm('Удалить ручную анкету?')) return;
+            try {
+                const res = await fetch(`/.netlify/functions/deleteManualForm?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    state.manualForms = state.manualForms.filter(f => f.id !== id);
+                    renderContent();
+                    updateMenuCounts();
+                    showNotification('Анкета удалена', 'success');
+                } else {
+                    showNotification('Ошибка удаления', 'error');
+                }
+            } catch (e) {
+                showNotification('Ошибка сети', 'error');
             }
         }
 
@@ -1226,8 +1296,9 @@
             return html;
         }
 
-        // ========== ВСЕ АНКЕТЫ (без изменений) ==========
+        // ========== ВСЕ АНКЕТЫ (обновлено с кнопкой удаления) ========== // NEW
         function renderAllForms(container) {
+            // Пока не реализовано, но добавим заглушку с возможностью удаления, если появятся данные
             container.innerHTML = `
                 <div class="section-header">
                     <h2>Все анкеты</h2>
@@ -1238,11 +1309,11 @@
             `;
         }
 
-        // ========== АНКЕТЫ АВТО (без изменений) ==========
+        // ========== АНКЕТЫ АВТО (обновлено с кнопкой удаления) ========== // NEW
         async function renderAutoForms(container) {
             container.innerHTML = '<div class="loader">Загрузка данных...</div>';
             try {
-                const forms = state.allForms;
+                const forms = state.allForms; // используем allForms, так как там полные данные
                 let html = `
                     <div class="section-header">
                         <h2>Автоматические анкеты (все)</h2>
@@ -1261,12 +1332,13 @@
                                     <th>Email</th>
                                     <th>Код</th>
                                     <th>Отчёты</th>
+                                    <th>Удалить</th> <!-- NEW колонка -->
                                 </tr>
                             </thead>
                             <tbody>
                 `;
                 if (!forms || forms.length === 0) {
-                    html += '<tr><td colspan="10" style="text-align:center;">Нет анкет</td></tr>';
+                    html += '<tr><td colspan="11" style="text-align:center;">Нет анкет</td></tr>';
                 } else {
                     const baseUrl = `${window.location.protocol}//${window.location.host}/.netlify/functions/getFile`;
                     forms.forEach(item => {
@@ -1300,6 +1372,9 @@
                                     ${resultsLink}
                                     ${voiceLink}
                                 </td>
+                                <td>
+                                    <button class="delete-form-btn" onclick="deleteAutoForm('${code}')">✕</button>
+                                </td>
                             </tr>
                         `;
                     });
@@ -1319,7 +1394,7 @@
             }
         }
 
-        // ========== АНКЕТЫ РУЧНЫЕ (без изменений) ==========
+        // ========== АНКЕТЫ РУЧНЫЕ (обновлено с кнопкой удаления) ========== // NEW
         function renderManualForms(container) {
             let html = `
                 <div class="section-header">
@@ -1336,12 +1411,13 @@
                                 <th>Telegram</th>
                                 <th>Телефон</th>
                                 <th>Email</th>
+                                <th>Удалить</th> <!-- NEW колонка -->
                             </tr>
                         </thead>
                         <tbody>
             `;
             if (!state.manualForms || state.manualForms.length === 0) {
-                html += '<tr><td colspan="7" style="text-align:center;">Нет анкет</td></tr>';
+                html += '<tr><td colspan="8" style="text-align:center;">Нет анкет</td></tr>';
             } else {
                 const sorted = [...state.manualForms].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
                 sorted.forEach(item => {
@@ -1355,6 +1431,9 @@
                             <td>${item.telegram || ''}</td>
                             <td>${item.phone || ''}</td>
                             <td>${item.email || ''}</td>
+                            <td>
+                                <button class="delete-form-btn" onclick="deleteManualForm('${item.id}')">✕</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -1363,7 +1442,7 @@
             container.innerHTML = html;
         }
 
-        // ========== ХАРАКТЕРИСТИКИ (привязаны к projectId) ==========
+        // ========== ХАРАКТЕРИСТИКИ (без изменений) ==========
         function renderCharacteristics(container) {
             updateCharProjectSelect();
             let html = `
@@ -1648,6 +1727,7 @@
             }
 
             renderContent();
+            updateMenuCounts(); // NEW: обновляем счетчики
             showNotification('Элемент удалён', 'success');
         }
 
@@ -1918,6 +1998,7 @@
 
                 closeModal();
                 renderContent();
+                updateMenuCounts(); // NEW: обновляем счетчики
                 showNotification('Сохранено', 'success');
             } catch (error) {
                 console.error('Ошибка в saveModal:', error);
@@ -1998,6 +2079,7 @@
                         if (currentTab === 'candidates') {
                             renderContent();
                         }
+                        updateMenuCounts(); // NEW: обновляем счетчики
                     } else {
                         showNotification('Не найдено валидных записей', 'error');
                     }
