@@ -1043,10 +1043,11 @@
         });
 
         // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ИНТЕГРАЦИИ С GOOGLE ==========
-        function connectGoogle() {
-            // Перенаправляем на функцию auth-google-redirect
-            window.location.href = '/.netlify/functions/auth-google-redirect';
-        }
+      function connectGoogle() {
+    // Передаём имя рекрутера как state (можно использовать и другой уникальный ID)
+    const state = encodeURIComponent(currentRecruiter.name);
+    window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
+}
 
         async function sendTelegramInvite() {
             const phone = document.getElementById('phoneNumber').value.trim();

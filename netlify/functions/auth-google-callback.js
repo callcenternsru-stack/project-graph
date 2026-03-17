@@ -1,6 +1,4 @@
-// netlify/functions/auth-google-callback.js
 const { getStore } = require('@netlify/blobs');
-// const fetch = require('node-fetch'); // удалено – используем глобальный fetch
 
 exports.handler = async (event) => {
   const { code, state } = event.queryStringParameters;
@@ -11,6 +9,9 @@ exports.handler = async (event) => {
       body: 'Missing code parameter',
     };
   }
+
+  // Используем state как идентификатор рекрутера
+  const recruiterId = state || 'unknown';
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -37,9 +38,6 @@ exports.handler = async (event) => {
       throw new Error(tokens.error || 'Failed to exchange code');
     }
 
-    // В реальном проекте нужно получать ID рекрутера из параметра state
-    const recruiterId = 'test-recruiter'; // замените на реальный идентификатор
-
     const store = getStore({
       name: 'google-tokens',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -48,10 +46,21 @@ exports.handler = async (event) => {
 
     await store.set(recruiterId, tokens.refresh_token);
 
+    // Возвращаем страницу с сообщением и предлагаем обновить родительское окно
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'text/html' },
-      body: '<h1>Авторизация успешна! Теперь вы можете вернуться в панель рекрутера.</h1><script>setTimeout(() => window.close(), 3000);</script>',
+      body: `
+        <h1>Авторизация успешна!</h1>
+        <p>Теперь вы можете закрыть это окно и вернуться в панель рекрутера.</p>
+        <p><strong>Обновите страницу рекрутера, чтобы изменения вступили в силу.</strong></p>
+        <script>
+          if (window.opener) {
+            window.opener.location.reload();
+          }
+          setTimeout(() => window.close(), 3000);
+        </script>
+      `,
     };
   } catch (error) {
     console.error(error);
