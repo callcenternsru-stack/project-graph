@@ -18,8 +18,8 @@ exports.handler = async (event) => {
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${querystring.stringify(params)}`;
 
   return {
-    statusCode: 302,
-    headers: { Location: authUrl },
-    body: '',
+    statusCode: 200,
+    headers: { 'Content-Type': 'text/html' },
+    body: `<a href="${authUrl}">Перейти к авторизации</a><br><code>${authUrl}</code>`
   };
 };
