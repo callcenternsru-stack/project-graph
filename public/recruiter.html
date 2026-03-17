@@ -721,13 +721,13 @@
             </div>
         </div>
 
-        <!-- Панель обработки (список кандидатов, у которых нет результата звонка) -->
+        <!-- Панель обработки (все кандидаты, кроме "Проверка") -->
         <div id="processingPanel" class="processing-panel" style="display: none;">
             <h3>Список кандидатов на обработку</h3>
             <div id="processingList" class="processing-list"></div>
         </div>
 
-        <!-- Панель проверки (список кандидатов с результатом "Проверка") -->
+        <!-- Панель проверки (только "Проверка") -->
         <div id="verificationPanel" class="verification-panel" style="display: none;">
             <h3>Кандидаты на проверку</h3>
             <div id="verificationList" class="verification-list"></div>
@@ -828,9 +828,16 @@
             await loadMyCandidates();
             await checkGoogleStatus(); // проверяем статус Google
 
+            // Ищем первого кандидата без результата для отображения в форме
             if (myCandidates.length > 0) {
-                currentCandidateIndex = 0;
-                loadCandidateIntoForm(0);
+                const firstEmptyIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
+                if (firstEmptyIndex !== -1) {
+                    currentCandidateIndex = firstEmptyIndex;
+                    loadCandidateIntoForm(firstEmptyIndex);
+                } else {
+                    currentCandidateIndex = -1;
+                    loadCandidateIntoForm(-1);
+                }
             } else {
                 currentCandidateIndex = -1;
                 loadCandidateIntoForm(-1);
@@ -1187,7 +1194,7 @@
             }
         });
 
-        // ========== ПЕРЕХОД К СЛЕДУЮЩЕМУ КАНДИДАТУ ==========
+        // ========== ПЕРЕХОД К СЛЕДУЮЩЕМУ КАНДИДАТУ БЕЗ РЕЗУЛЬТАТА ==========
         function goToNextCandidate() {
             if (myCandidates.length === 0) {
                 currentCandidateIndex = -1;
@@ -1195,12 +1202,39 @@
                 return;
             }
 
-            if (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length - 1) {
-                currentCandidateIndex++;
+            // Ищем следующий индекс с пустым результатом, начиная с currentCandidateIndex+1
+            let nextIndex = -1;
+            if (currentCandidateIndex >= 0) {
+                for (let i = currentCandidateIndex + 1; i < myCandidates.length; i++) {
+                    if (!myCandidates[i].callResult || myCandidates[i].callResult.trim() === '') {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+                if (nextIndex === -1) {
+                    for (let i = 0; i < currentCandidateIndex; i++) {
+                        if (!myCandidates[i].callResult || myCandidates[i].callResult.trim() === '') {
+                            nextIndex = i;
+                            break;
+                        }
+                    }
+                }
             } else {
-                currentCandidateIndex = 0;
+                for (let i = 0; i < myCandidates.length; i++) {
+                    if (!myCandidates[i].callResult || myCandidates[i].callResult.trim() === '') {
+                        nextIndex = i;
+                        break;
+                    }
+                }
             }
-            loadCandidateIntoForm(currentCandidateIndex);
+
+            if (nextIndex === -1) {
+                currentCandidateIndex = -1;
+                loadCandidateIntoForm(-1);
+            } else {
+                currentCandidateIndex = nextIndex;
+                loadCandidateIntoForm(nextIndex);
+            }
         }
 
         // ========== ВЫХОД ==========
@@ -1234,11 +1268,11 @@
             renderVerificationList();
         }
 
-        // ========== РЕНДЕР СПИСКА ОБРАБОТКИ (только кандидаты без результата звонка) ==========
+        // ========== РЕНДЕР СПИСКА ОБРАБОТКИ (все кандидаты, кроме "Проверка") ==========
         function renderProcessingList() {
             const listContainer = document.getElementById('processingList');
-            // Фильтруем кандидатов: оставляем тех, у кого нет результата звонка (пусто)
-            const processingCandidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
+            // Оставляем всех, у кого результат не "Проверка"
+            const processingCandidates = myCandidates.filter(c => c.callResult !== "Проверка");
 
             if (processingCandidates.length === 0) {
                 listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов для обработки</div>';
@@ -1278,7 +1312,6 @@
         // ========== РЕНДЕР СПИСКА ПРОВЕРКИ (только "Проверка") ==========
         function renderVerificationList() {
             const listContainer = document.getElementById('verificationList');
-            // Фильтруем кандидатов: оставляем тех, у кого результат звонка "Проверка"
             const verificationCandidates = myCandidates.filter(c => c.callResult === "Проверка");
 
             if (verificationCandidates.length === 0) {
@@ -1288,7 +1321,6 @@
 
             let html = '';
             verificationCandidates.forEach(candidate => {
-                // Формируем дату и время обучения
                 const trainingInfo = candidate.trainingDate
                     ? `${candidate.trainingDate} ${candidate.trainingTime || ''}`
                     : '—';
@@ -1309,7 +1341,6 @@
             });
             listContainer.innerHTML = html;
 
-            // Добавляем обработчики клика на карточки
             document.querySelectorAll('#verificationList .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     const id = card.dataset.id;
@@ -1317,7 +1348,7 @@
                     if (index !== -1) {
                         currentCandidateIndex = index;
                         loadCandidateIntoForm(index);
-                        showForm(); // переключаемся на главную вкладку с формой
+                        showForm();
                     }
                 });
             });
@@ -1361,7 +1392,6 @@
 
         // ========== ФУНКЦИИ ДЛЯ ИНТЕГРАЦИИ С GOOGLE ==========
         function connectGoogle() {
-            // Передаём имя рекрутера как state
             const state = encodeURIComponent(currentRecruiter.name);
             window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
         }
@@ -1401,7 +1431,6 @@
             }
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ ДЛЯ WHATSAPP ==========
         async function sendWhatsApp() {
             const phone = document.getElementById('phoneNumber').value.trim();
             const fullName = document.getElementById('fullName').value.trim();
@@ -1433,7 +1462,6 @@
             }
         }
 
-        // Функции showLoading/hideLoading
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
@@ -1451,7 +1479,6 @@
             if (overlay) overlay.classList.add('hidden');
         }
 
-        // Добавляем стили для оверлея (уже есть в CSS, добавим на всякий случай)
         const style = document.createElement('style');
         style.textContent = `
             .loading-overlay {
