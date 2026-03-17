@@ -15,16 +15,11 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Читаем текущий массив всех кандидатов из ключа '_all'
     let candidates = await store.get('_all', { type: 'json' }) || [];
-
-    // Удаляем кандидата с заданным id
     const newCandidates = candidates.filter(c => c.id !== id);
     if (newCandidates.length === candidates.length) {
       return { statusCode: 404, body: JSON.stringify({ error: 'Candidate not found' }) };
     }
-
-    // Сохраняем обновлённый массив обратно
     await store.setJSON('_all', newCandidates);
 
     return { statusCode: 200, body: JSON.stringify({ success: true }) };

@@ -15,11 +15,9 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Читаем весь массив кандидатов из ключа '_all'
     const candidates = await store.get('_all', { type: 'json' }) || [];
-    
-    // Фильтруем по рекрутеру
     const filtered = candidates.filter(c => c.recruiter === recruiterName);
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {
       statusCode: 200,

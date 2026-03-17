@@ -16,7 +16,7 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Получаем текущий массив всех кандидатов
+    // Читаем текущий массив всех кандидатов
     let candidates = await store.get('_all', { type: 'json' }) || [];
 
     const candidateId = candidate.id || `${candidate.recruiter}_${Date.now()}`;
@@ -27,7 +27,7 @@ exports.handler = async (event) => {
       createdAt: candidate.createdAt || new Date().toISOString()
     };
 
-    // Если кандидат с таким id уже есть – заменяем, иначе добавляем
+    // Обновляем существующего или добавляем нового
     const index = candidates.findIndex(c => c.id === candidateId);
     if (index !== -1) {
       candidates[index] = updatedCandidate;
