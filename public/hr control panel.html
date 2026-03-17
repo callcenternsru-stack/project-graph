@@ -623,7 +623,7 @@
             font-size: 18px;
         }
 
-        /* NEW: Стили для модального окна деталей кандидата */
+        /* Стили для модального окна деталей кандидата */
         .file-list {
             list-style: none;
             padding: 0;
@@ -822,7 +822,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно для деталей анкеты кандидата (добавлено) -->
+    <!-- Модальное окно для деталей анкеты кандидата -->
     <div id="candidateDetailsModal" class="modal">
         <div class="modal-header">
             <span>Детали анкеты</span>
@@ -843,7 +843,7 @@
             contactTypes: [],
             projects: [],              // массив объектов { id, name }
             candidates: [],
-            scripts: [],               // каждый скрипт содержит projectId, projectName, statuses
+            scripts: [],               // каждый скрипт содержит projectId, projectName, title, content, statuses, type
             projectMeetings: {},
             projectTrainings: {},
             projectMeetingComments: {},
@@ -858,7 +858,7 @@
 
         let currentTab = 'recruiters';
         let editingId = null;
-        let editingType = null;
+        let editingType = null;          // может быть 'recruiter', 'script', 'testScript'
         let currentRecruiterForImport = null;
         let currentScheduleMonth = new Date().toISOString().slice(0, 7);
         let currentCommentContext = null;
@@ -944,6 +944,11 @@
                     return p;
                 });
                 state.scripts = refData.scripts || [];
+                // Для старых скриптов без type добавляем 'call'
+                state.scripts = state.scripts.map(s => {
+                    if (!s.type) s.type = 'call';
+                    return s;
+                });
 
                 const [
                     candidatesRes,
@@ -1089,7 +1094,7 @@
             }
         }
 
-        // ========== СТАРЫЕ ФУНКЦИИ РЕНДЕРА (ПОЛНОСТЬЮ СОХРАНЕНЫ) ==========
+        // ========== СТАРЫЕ ФУНКЦИИ РЕНДЕРА ==========
         function renderRecruiters(container) {
             let html = `
                 <div class="section-header">
@@ -1243,16 +1248,21 @@
             });
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ РЕНДЕРА СКРИПТОВ ==========
         function renderScripts(container) {
             let html = `
                 <div class="section-header">
                     <h2>Скрипты для рекрутеров</h2>
-                    <button class="add-btn" onclick="openAddModal('script')">+ Добавить скрипт</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="add-btn" onclick="openAddModal('script')">Добавить скрипт звонка</button>
+                        <button class="add-btn" onclick="openAddModal('testScript')">Добавить скрипт тест</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
+                                <th>Тип</th>
                                 <th>Проект</th>
                                 <th>Название</th>
                                 <th>Текст скрипта</th>
@@ -1262,17 +1272,19 @@
                         <tbody>
             `;
             if (state.scripts.length === 0) {
-                html += '<tr><td colspan="4" style="text-align:center;">Нет скриптов</td></tr>';
+                html += '<tr><td colspan="5" style="text-align:center;">Нет скриптов</td></tr>';
             } else {
                 state.scripts.forEach((script, index) => {
+                    const typeLabel = script.type === 'test' ? 'Тест' : 'Звонок';
                     const plainText = script.content.replace(/<[^>]*>/g, '');
                     html += `
                         <tr>
+                            <td>${typeLabel}</td>
                             <td>${script.projectName || '—'}</td>
                             <td>${script.title || ''}</td>
                             <td>${plainText.substring(0, 100)}${plainText.length > 100 ? '…' : ''}</td>
                             <td class="actions">
-                                <button class="edit-btn" onclick="openEditModal('script', ${index})">✏️</button>
+                                <button class="edit-btn" onclick="openEditModal('${script.type === 'test' ? 'testScript' : 'script'}', ${index})">✏️</button>
                                 <button class="delete-btn" onclick="deleteItem('script', ${index})">✕</button>
                             </td>
                         </tr>
@@ -1666,6 +1678,7 @@
             document.getElementById('scriptContent').focus();
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ ОТКРЫТИЯ МОДАЛКИ ==========
         function openAddModal(type) {
             editingType = type;
             editingId = null;
@@ -1696,9 +1709,17 @@
                         <input type="email" id="modalEmail" placeholder="ivanov@example.com">
                     </div>
                 `;
-            } else if (type === 'script') {
-                title = 'Добавить скрипт';
+            } else if (type === 'script' || type === 'testScript') {
+                title = type === 'script' ? 'Добавить скрипт звонка' : 'Добавить тестовый скрипт';
                 const projectOptions = state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                // Для тестового скрипта убираем поле статусов
+                const statusesField = type === 'script' ? `
+                    <div class="form-group">
+                        <label>Статусы звонков (через запятую)</label>
+                        <input type="text" id="scriptStatuses" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
+                    </div>
+                ` : '';
+
                 fields = `
                     <div class="form-group">
                         <label>Проект <span style="color:#ff6b6b;">*</span></label>
@@ -1711,10 +1732,7 @@
                         <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
                         <input type="text" id="scriptTitle" placeholder="Скрипт первичного звонка" required>
                     </div>
-                    <div class="form-group">
-                        <label>Статусы звонков (через запятую)</label>
-                        <input type="text" id="scriptStatuses" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
-                    </div>
+                    ${statusesField}
                     <div class="form-group">
                         <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
                         <div class="toolbar">
@@ -1749,13 +1767,14 @@
             if (passField) passField.value = newPass;
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ ОТКРЫТИЯ РЕДАКТИРОВАНИЯ ==========
         function openEditModal(type, index) {
             editingType = type;
             editingId = index;
 
             let item;
             if (type === 'recruiter') item = state.recruiters[index];
-            else if (type === 'script') item = state.scripts[index];
+            else if (type === 'script' || type === 'testScript') item = state.scripts[index];
 
             let title = 'Редактировать';
             let fields = '';
@@ -1783,9 +1802,16 @@
                         <input type="email" id="modalEmail" value="${item.email || ''}">
                     </div>
                 `;
-            } else if (type === 'script') {
-                title = 'Редактировать скрипт';
+            } else if (type === 'script' || type === 'testScript') {
+                title = type === 'script' ? 'Редактировать скрипт звонка' : 'Редактировать тестовый скрипт';
                 const projectOptions = state.projects.map(p => `<option value="${p.id}" ${p.id === item.projectId ? 'selected' : ''}>${p.name}</option>`).join('');
+                const statusesField = type === 'script' ? `
+                    <div class="form-group">
+                        <label>Статусы звонков (через запятую)</label>
+                        <input type="text" id="scriptStatuses" value="${item.statuses ? item.statuses.join(', ') : ''}" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
+                    </div>
+                ` : '';
+
                 fields = `
                     <div class="form-group">
                         <label>Проект <span style="color:#ff6b6b;">*</span></label>
@@ -1798,10 +1824,7 @@
                         <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
                         <input type="text" id="scriptTitle" value="${item.title || ''}" required>
                     </div>
-                    <div class="form-group">
-                        <label>Статусы звонков (через запятую)</label>
-                        <input type="text" id="scriptStatuses" value="${item.statuses ? item.statuses.join(', ') : ''}" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
-                    </div>
+                    ${statusesField}
                     <div class="form-group">
                         <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
                         <div class="toolbar">
@@ -1830,6 +1853,7 @@
             document.body.classList.add('menu-open');
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ ==========
         async function saveModal() {
             try {
                 if (editingType === 'recruiter') {
@@ -1873,7 +1897,7 @@
                         }
                     }
                     if (!response.ok) throw new Error('Ошибка сохранения');
-                } else if (editingType === 'script') {
+                } else if (editingType === 'script' || editingType === 'testScript') {
                     const projectSelect = document.getElementById('scriptProjectSelect');
                     const titleElem = document.getElementById('scriptTitle');
                     const contentElem = document.getElementById('scriptContent');
@@ -1883,8 +1907,13 @@
                     const projectId = projectSelect.value;
                     const title = titleElem.value.trim();
                     const content = contentElem.innerHTML.trim();
-                    const statusesInput = statusesElem ? statusesElem.value.trim() : '';
-                    const statuses = statusesInput ? statusesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+
+                    // Для тестового скрипта статусы не нужны
+                    let statuses = [];
+                    if (editingType === 'script' && statusesElem) {
+                        const statusesInput = statusesElem.value.trim();
+                        statuses = statusesInput ? statusesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+                    }
 
                     if (!projectId || !title || !content) {
                         alert('Заполните все поля');
@@ -1893,8 +1922,9 @@
 
                     const project = state.projects.find(p => p.id === projectId);
                     const projectName = project ? project.name : '';
+                    const type = editingType === 'script' ? 'call' : 'test';
 
-                    const newItem = { projectId, projectName, title, content, statuses };
+                    const newItem = { projectId, projectName, title, content, statuses, type };
 
                     let response;
                     if (editingId === null) {
@@ -1909,6 +1939,7 @@
                         }
                     } else {
                         const oldItem = state.scripts[editingId];
+                        // Для обновления используем старый title как id (если он не менялся)
                         response = await fetch('/.netlify/functions/saveScript', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
