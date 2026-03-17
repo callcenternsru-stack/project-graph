@@ -5,25 +5,42 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
   try {
-    const { projectId, projectName, title, content, id, statuses } = JSON.parse(event.body);
-    if (!projectId || !title || !content) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+    const body = JSON.parse(event.body);
+    const { projectIds, projectNames, title, content, id, statuses, type } = body;
+
+    if (!title || !content) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields: title, content' }) };
     }
+
+    // Поддержка старого формата (один проект) и нового (массивы)
+    let finalProjectIds = projectIds;
+    let finalProjectNames = projectNames;
+
+    if (!finalProjectIds && body.projectId) {
+      finalProjectIds = [body.projectId];
+      finalProjectNames = [body.projectName || body.projectId];
+    }
+
+    if (!finalProjectIds || finalProjectIds.length === 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'At least one project is required' }) };
+    }
+
     const store = getStore({
       name: 'scripts',
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
-      apiURL: 'https://api.netlify.com'
     });
 
     let scripts = await store.get('_all', { type: 'json' }) || [];
-    const newScript = { 
-      projectId, 
-      projectName, 
-      title, 
-      content, 
-      statuses: statuses || [], 
-      updatedAt: new Date().toISOString() 
+
+    const newScript = {
+      projectIds: finalProjectIds,
+      projectNames: finalProjectNames,
+      title,
+      content,
+      statuses: statuses || [],
+      type: type || 'call', // по умолчанию 'call'
+      updatedAt: new Date().toISOString()
     };
 
     if (id) {
