@@ -1433,7 +1433,7 @@
             hideLoading();
         }
 
-        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ ==========
+        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ (ИСПРАВЛЕНО) ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1461,7 +1461,9 @@
                     
                     // Если это изображение (задания 1,4,6,7)
                     if (taskFiles[i].type.startsWith('image/')) {
-                        fileToSend = await compressImage(taskFiles[i]);
+                        const compressedBlob = await compressImage(taskFiles[i]);
+                        // Создаём File из Blob с оригинальным именем
+                        fileToSend = new File([compressedBlob], taskFiles[i].name, { type: compressedBlob.type });
                     }
                     
                     // Если это аудио (задание 2) и имеет расширение .wav
