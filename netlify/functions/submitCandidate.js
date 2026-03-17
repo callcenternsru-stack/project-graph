@@ -14,24 +14,12 @@ exports.handler = async (event) => {
       name: 'candidates',
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
-      apiURL: 'https://api.netlify.com'
     });
 
-    // Определяем ID: если передан, используем его (обновление), иначе генерируем новый (создание)
+    // Получаем текущий массив всех кандидатов
+    let candidates = await store.get('_all', { type: 'json' }) || [];
+
     const candidateId = candidate.id || `${candidate.recruiter}_${Date.now()}`;
-
-    // Работа с индексом (только для новых кандидатов)
-    const indexKey = '_index';
-    let index = await store.get(indexKey, { type: 'json' }) || [];
-
-    if (!candidate.id) {
-      // Новый кандидат – добавляем в индекс
-      index.push({ id: candidateId, createdAt: candidate.createdAt || new Date().toISOString() });
-      if (index.length > 500) index = index.slice(-500);
-      await store.setJSON(indexKey, index);
-    }
-    // При обновлении существующего кандидата индекс не меняем (ID остаётся прежним)
-
     const updatedCandidate = {
       ...candidate,
       id: candidateId,
@@ -39,7 +27,16 @@ exports.handler = async (event) => {
       createdAt: candidate.createdAt || new Date().toISOString()
     };
 
-    await store.setJSON(candidateId, updatedCandidate);
+    // Если кандидат с таким id уже есть – заменяем, иначе добавляем
+    const index = candidates.findIndex(c => c.id === candidateId);
+    if (index !== -1) {
+      candidates[index] = updatedCandidate;
+    } else {
+      candidates.push(updatedCandidate);
+    }
+
+    // Сохраняем весь массив обратно
+    await store.setJSON('_all', candidates);
 
     return {
       statusCode: 200,

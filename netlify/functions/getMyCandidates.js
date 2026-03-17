@@ -13,18 +13,15 @@ exports.handler = async (event) => {
       name: 'candidates',
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
-      apiURL: 'https://api.netlify.com'
     });
-    const { blobs } = await store.list();
-    const candidates = [];
-    for (const blob of blobs) {
-      const data = await store.get(blob.key, { type: 'json' });
-      if (data && data.recruiter === recruiterName) candidates.push(data);
-    }
+
+    const candidates = await store.get('_all', { type: 'json' }) || [];
+    const filtered = candidates.filter(c => c.recruiter === recruiterName);
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(candidates)
+      body: JSON.stringify(filtered)
     };
   } catch (error) {
     console.error('Error in getMyCandidates:', error);
