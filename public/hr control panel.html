@@ -1747,7 +1747,6 @@
                 `;
             } else if (type === 'script' || type === 'testScript') {
                 title = type === 'script' ? 'Добавить скрипт звонка' : 'Добавить скрипт чат';
-                // Для скрипта звонка используем мультиселект, для чата – чекбоксы
                 if (type === 'script') {
                     const projectOptions = state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
                     const statusesField = `
@@ -1758,9 +1757,9 @@
                     `;
                     fields = `
                         <div class="form-group">
-                            <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
-                            <select id="scriptProjectSelect" multiple required size="5">
-                                <option value="" disabled>— выберите проекты —</option>
+                            <label>Проект <span style="color:#ff6b6b;">*</span></label>
+                            <select id="scriptProjectSelect" required>
+                                <option value="">— выберите проект —</option>
                                 ${projectOptions}
                             </select>
                         </div>
@@ -1879,7 +1878,7 @@
                 title = type === 'script' ? 'Редактировать скрипт звонка' : 'Редактировать скрипт чат';
 
                 if (type === 'script') {
-                    const projectOptions = state.projects.map(p => `<option value="${p.id}" ${item.projectIds && item.projectIds.includes(p.id) ? 'selected' : ''}>${p.name}</option>`).join('');
+                    const projectOptions = state.projects.map(p => `<option value="${p.id}" ${item.projectIds && item.projectIds[0] === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
                     const statusesField = `
                         <div class="form-group">
                             <label>Статусы звонков (через запятую)</label>
@@ -1888,9 +1887,9 @@
                     `;
                     fields = `
                         <div class="form-group">
-                            <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
-                            <select id="scriptProjectSelect" multiple required size="5">
-                                <option value="" disabled>— выберите проекты —</option>
+                            <label>Проект <span style="color:#ff6b6b;">*</span></label>
+                            <select id="scriptProjectSelect" required>
+                                <option value="">— выберите проект —</option>
                                 ${projectOptions}
                             </select>
                         </div>
@@ -2019,16 +2018,17 @@
                     let projectNames = [];
 
                     if (editingType === 'script') {
-                        // Для скрипта звонка – мультиселект
+                        // Для скрипта звонка – обычный select (одно значение)
                         const projectSelect = document.getElementById('scriptProjectSelect');
                         if (!projectSelect) throw new Error('Проекты не найдены');
-                        const selectedOptions = Array.from(projectSelect.selectedOptions);
-                        if (selectedOptions.length === 0) {
-                            alert('Выберите хотя бы один проект');
+                        const selectedValue = projectSelect.value;
+                        if (!selectedValue) {
+                            alert('Выберите проект');
                             return;
                         }
-                        projectIds = selectedOptions.map(opt => opt.value);
-                        projectNames = selectedOptions.map(opt => opt.text);
+                        projectIds = [selectedValue];
+                        const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+                        projectNames = [selectedOption ? selectedOption.text : selectedValue];
                     } else {
                         // Для чата – чекбоксы
                         const checkboxes = document.querySelectorAll('#projectCheckboxes input[type=checkbox]:checked');
