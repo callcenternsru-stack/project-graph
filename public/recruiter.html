@@ -489,8 +489,9 @@
             text-align: right;
         }
 
-        /* ===== СТИЛИ ДЛЯ ПАНЕЛИ ОБРАБОТКИ ===== */
-        .processing-panel {
+        /* ===== СТИЛИ ДЛЯ ПАНЕЛЕЙ ОБРАБОТКИ И ПРОВЕРКИ ===== */
+        .processing-panel,
+        .verification-panel {
             background: #111111;
             border-radius: 24px;
             padding: 30px;
@@ -499,7 +500,8 @@
             margin-top: 20px;
         }
 
-        .processing-panel h3 {
+        .processing-panel h3,
+        .verification-panel h3 {
             color: #ffd700;
             margin-bottom: 20px;
             font-size: 20px;
@@ -507,7 +509,8 @@
             padding-bottom: 10px;
         }
 
-        .processing-list {
+        .processing-list,
+        .verification-list {
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -523,8 +526,6 @@
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -552,6 +553,25 @@
             font-size: 14px;
         }
 
+        .candidate-details {
+            flex: 3;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            color: #cccccc;
+            font-size: 13px;
+        }
+
+        .candidate-details .project {
+            color: #ffd700;
+            font-weight: 500;
+        }
+
+        .candidate-details .training {
+            color: #8f9bb3;
+        }
+
         .candidate-status {
             background: #2d2d2d;
             padding: 6px 15px;
@@ -561,6 +581,8 @@
             color: #ffd700;
             border: 1px solid #444;
             white-space: nowrap;
+            align-self: center;
+            margin-left: auto;
         }
 
         .candidate-status.waiting {
@@ -580,6 +602,7 @@
     <div class="side-menu">
         <button class="menu-btn" onclick="showForm()">Главная</button>
         <button class="menu-btn" onclick="showProcessing()">Обработка</button>
+        <button class="menu-btn" onclick="showVerification()">Проверка</button>
         <button class="menu-btn logout" onclick="logout()">Выйти</button>
     </div>
 
@@ -698,10 +721,16 @@
             </div>
         </div>
 
-        <!-- Панель обработки (список кандидатов) -->
+        <!-- Панель обработки (список кандидатов, кроме "Проверка") -->
         <div id="processingPanel" class="processing-panel" style="display: none;">
             <h3>Список кандидатов на обработку</h3>
             <div id="processingList" class="processing-list"></div>
+        </div>
+
+        <!-- Панель проверки (список кандидатов с результатом "Проверка") -->
+        <div id="verificationPanel" class="verification-panel" style="display: none;">
+            <h3>Кандидаты на проверку</h3>
+            <div id="verificationList" class="verification-list"></div>
         </div>
     </div>
 
@@ -718,7 +747,7 @@
             scripts: [],
             projectTrainings: {}  // для дат обучения
         };
-        let currentView = 'main'; // 'main' или 'processing'
+        let currentView = 'main'; // 'main', 'processing', 'verification'
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1121,9 +1150,11 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат сохранён', 'success');
-                    // Если открыта вкладка обработки, обновляем список
+                    // Обновляем соответствующие списки в зависимости от текущей вкладки
                     if (currentView === 'processing') {
                         renderProcessingList();
+                    } else if (currentView === 'verification') {
+                        renderVerificationList();
                     }
                     goToNextCandidate();
                 } else {
@@ -1158,10 +1189,11 @@
             location.reload();
         }
 
-        // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ГЛАВНОЙ И ОБРАБОТКОЙ ==========
+        // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ВКЛАДКАМИ ==========
         function showForm() {
             document.querySelector('.content-wrapper').style.display = 'flex';
             document.getElementById('processingPanel').style.display = 'none';
+            document.getElementById('verificationPanel').style.display = 'none';
             currentView = 'main';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1169,15 +1201,25 @@
         function showProcessing() {
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('processingPanel').style.display = 'block';
+            document.getElementById('verificationPanel').style.display = 'none';
             currentView = 'processing';
             renderProcessingList();
         }
 
+        function showVerification() {
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('processingPanel').style.display = 'none';
+            document.getElementById('verificationPanel').style.display = 'block';
+            currentView = 'verification';
+            renderVerificationList();
+        }
+
+        // ========== РЕНДЕР СПИСКА ОБРАБОТКИ (без "Проверка") ==========
         function renderProcessingList() {
             const listContainer = document.getElementById('processingList');
             // Фильтруем кандидатов: исключаем тех, у кого результат звонка "Проверка"
             const processingCandidates = myCandidates.filter(c => c.callResult !== "Проверка");
-            
+
             if (processingCandidates.length === 0) {
                 listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов для обработки</div>';
                 return;
@@ -1200,7 +1242,55 @@
             listContainer.innerHTML = html;
 
             // Добавляем обработчики клика на карточки
-            document.querySelectorAll('.candidate-card').forEach(card => {
+            document.querySelectorAll('#processingList .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    const index = myCandidates.findIndex(c => c.id === id);
+                    if (index !== -1) {
+                        currentCandidateIndex = index;
+                        loadCandidateIntoForm(index);
+                        showForm(); // переключаемся на главную вкладку с формой
+                    }
+                });
+            });
+        }
+
+        // ========== РЕНДЕР СПИСКА ПРОВЕРКИ (только "Проверка") ==========
+        function renderVerificationList() {
+            const listContainer = document.getElementById('verificationList');
+            // Фильтруем кандидатов: оставляем тех, у кого результат звонка "Проверка"
+            const verificationCandidates = myCandidates.filter(c => c.callResult === "Проверка");
+
+            if (verificationCandidates.length === 0) {
+                listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
+                return;
+            }
+
+            let html = '';
+            verificationCandidates.forEach(candidate => {
+                // Формируем дату и время обучения
+                const trainingInfo = candidate.trainingDate
+                    ? `${candidate.trainingDate} ${candidate.trainingTime || ''}`
+                    : '—';
+
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}">
+                        <div class="candidate-info">
+                            <div class="name">${candidate.fullName}</div>
+                            <div class="phone">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-details">
+                            <div class="project">${candidate.project || '—'}</div>
+                            <div class="training">📅 ${trainingInfo}</div>
+                        </div>
+                        <div class="candidate-status">${candidate.callResult}</div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+
+            // Добавляем обработчики клика на карточки
+            document.querySelectorAll('#verificationList .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     const id = card.dataset.id;
                     const index = myCandidates.findIndex(c => c.id === id);
