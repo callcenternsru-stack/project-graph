@@ -824,7 +824,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно для деталей анкеты кандидата (добавлено) -->
+    <!-- Модальное окно для деталей анкеты кандидата -->
     <div id="candidateDetailsModal" class="modal">
         <div class="modal-header">
             <span>Детали анкеты</span>
@@ -938,6 +938,13 @@
                 state.callResults = refData.callResults || [];
                 state.contactTypes = refData.contactTypes || [];
                 state.projects = refData.projects || [];
+                // Нормализация проектов: если пришли строки, превращаем в объекты
+                state.projects = state.projects.map(p => {
+                    if (typeof p === 'string') {
+                        return { id: p, name: p };
+                    }
+                    return p;
+                });
                 state.scripts = refData.scripts || [];
 
                 const [
