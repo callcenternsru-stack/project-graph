@@ -749,6 +749,9 @@
         };
         let currentView = 'main'; // 'main', 'processing', 'verification'
 
+        // ДОБАВЛЕНО: список проектов, которые есть в скриптах
+        let scriptProjects = [];
+
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
             const notif = document.createElement('div');
@@ -850,7 +853,7 @@
                 appData.contactTypes = await contactTypesRes.json();
                 appData.projectTrainings = await trainingsRes.json();
 
-                fillProjects();
+                fillProjects(); // заполним проектами из скриптов (пока скрипты не загружены, будет пусто)
                 fillCallResults();
                 fillContactTypes();
             } catch (error) {
@@ -864,10 +867,26 @@
             try {
                 const res = await fetch('/.netlify/functions/getScripts');
                 appData.scripts = await res.json();
+                // ДОБАВЛЕНО: обновить список проектов из скриптов
+                updateScriptProjects();
+                fillProjects(); // перезаполнить список проектов
                 updateScriptsUI();
             } catch (error) {
                 console.error('Ошибка загрузки скриптов:', error);
             }
+        }
+
+        // ДОБАВЛЕНО: функция для сбора уникальных проектов из скриптов
+        function updateScriptProjects() {
+            const projectSet = new Set();
+            appData.scripts.forEach(script => {
+                if (script.projectNames && Array.isArray(script.projectNames)) {
+                    script.projectNames.forEach(name => projectSet.add(name));
+                } else if (script.projectName) {
+                    projectSet.add(script.projectName);
+                }
+            });
+            scriptProjects = Array.from(projectSet);
         }
 
         // ========== ЗАГРУЗКА МОИХ КАНДИДАТОВ ==========
@@ -886,11 +905,11 @@
         }
 
         // ========== ЗАПОЛНЕНИЕ SELECTОВ ==========
+        // ИЗМЕНЕНО: теперь используем scriptProjects вместо appData.projects
         function fillProjects() {
             const select = document.getElementById('project');
-            const projects = appData.projects.map(p => p.name || p);
             select.innerHTML = '<option value="">— выберите проект —</option>' +
-                projects.map(p => `<option value="${p}">${p}</option>`).join('');
+                scriptProjects.map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
         function fillCallResults() {
@@ -980,9 +999,10 @@
 
         function setProjectFromScript(scriptTitle) {
             if (!scriptTitle) return;
-            if (!appData.projects.some(p => (p.name || p) === scriptTitle)) {
-                appData.projects.push({ name: scriptTitle });
-                fillProjects();
+            // Проверяем, есть ли проект в scriptProjects, и добавляем, если нет (хотя он должен быть)
+            if (!scriptProjects.includes(scriptTitle)) {
+                scriptProjects.push(scriptTitle);
+                fillProjects(); // обновляем список
             }
             document.getElementById('project').value = scriptTitle;
             updateTrainingDates(scriptTitle);
@@ -1034,7 +1054,7 @@
 
         document.getElementById('trainingDateSelect').addEventListener('change', onTrainingDateChange);
 
-        // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ (исправленная) ==========
+        // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ ==========
         function loadCandidateIntoForm(idx) {
             if (idx < 0 || idx >= myCandidates.length) {
                 document.getElementById('fullName').value = '';
@@ -1094,10 +1114,8 @@
                     option.text = candidate.trainingDate;
                     option.setAttribute('data-time', candidate.trainingTime || '');
                     select.appendChild(option);
-                    // Устанавливаем значение после добавления опции
                     select.value = candidate.trainingDate;
                 }
-                // Всегда обновляем время из кандидата (оно могло измениться)
                 document.getElementById('trainingTimeInput').value = candidate.trainingTime || '';
             } else {
                 document.getElementById('trainingDateSelect').value = '';
