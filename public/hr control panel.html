@@ -323,6 +323,9 @@
             border-color: #ffd700;
             background: #222222;
         }
+        .modal-content select[multiple] {
+            height: 120px; /* задаём высоту для мультиселекта */
+        }
         .toolbar {
             display: flex;
             gap: 6px;
@@ -843,7 +846,7 @@
             contactTypes: [],
             projects: [],              // массив объектов { id, name }
             candidates: [],
-            scripts: [],               // каждый скрипт содержит projectId, projectName, title, content, statuses, type
+            scripts: [],               // каждый скрипт содержит projectIds, projectNames, title, content, statuses, type
             projectMeetings: {},
             projectTrainings: {},
             projectMeetingComments: {},
@@ -944,9 +947,14 @@
                     return p;
                 });
                 state.scripts = refData.scripts || [];
-                // Для старых скриптов без type добавляем 'call'
+                // Для старых скриптов без type добавляем 'call' и приводим к новому формату (если projectIds нет)
                 state.scripts = state.scripts.map(s => {
                     if (!s.type) s.type = 'call';
+                    // Если скрипт был в старом формате (один проект), преобразуем в массив
+                    if (s.projectId && !s.projectIds) {
+                        s.projectIds = [s.projectId];
+                        s.projectNames = [s.projectName || s.projectId];
+                    }
                     return s;
                 });
 
@@ -1255,7 +1263,7 @@
                     <h2>Скрипты для рекрутеров</h2>
                     <div style="display: flex; gap: 10px;">
                         <button class="add-btn" onclick="openAddModal('script')">Добавить скрипт звонка</button>
-                        <button class="add-btn" onclick="openAddModal('testScript')">Добавить скрипт тест</button>
+                        <button class="add-btn" onclick="openAddModal('testScript')">Добавить скрипт чат</button>
                     </div>
                 </div>
                 <div class="table-container">
@@ -1263,7 +1271,7 @@
                         <thead>
                             <tr>
                                 <th>Тип</th>
-                                <th>Проект</th>
+                                <th>Проекты</th>
                                 <th>Название</th>
                                 <th>Текст скрипта</th>
                                 <th>Действия</th>
@@ -1275,12 +1283,14 @@
                 html += '<tr><td colspan="5" style="text-align:center;">Нет скриптов</td></tr>';
             } else {
                 state.scripts.forEach((script, index) => {
-                    const typeLabel = script.type === 'test' ? 'Тест' : 'Звонок';
+                    const typeLabel = script.type === 'test' ? 'Чат' : 'Звонок';
                     const plainText = script.content.replace(/<[^>]*>/g, '');
+                    // Отображаем названия проектов через запятую
+                    const projectNames = script.projectNames ? script.projectNames.join(', ') : (script.projectName || '—');
                     html += `
                         <tr>
                             <td>${typeLabel}</td>
-                            <td>${script.projectName || '—'}</td>
+                            <td>${projectNames}</td>
                             <td>${script.title || ''}</td>
                             <td>${plainText.substring(0, 100)}${plainText.length > 100 ? '…' : ''}</td>
                             <td class="actions">
@@ -1710,7 +1720,7 @@
                     </div>
                 `;
             } else if (type === 'script' || type === 'testScript') {
-                title = type === 'script' ? 'Добавить скрипт звонка' : 'Добавить тестовый скрипт';
+                title = type === 'script' ? 'Добавить скрипт звонка' : 'Добавить скрипт чат';
                 const projectOptions = state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
                 // Для тестового скрипта убираем поле статусов
                 const statusesField = type === 'script' ? `
@@ -1722,9 +1732,9 @@
 
                 fields = `
                     <div class="form-group">
-                        <label>Проект <span style="color:#ff6b6b;">*</span></label>
-                        <select id="scriptProjectSelect" required>
-                            <option value="">— выберите проект —</option>
+                        <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
+                        <select id="scriptProjectSelect" multiple required size="5">
+                            <option value="" disabled>— выберите проекты —</option>
                             ${projectOptions}
                         </select>
                     </div>
@@ -1803,8 +1813,8 @@
                     </div>
                 `;
             } else if (type === 'script' || type === 'testScript') {
-                title = type === 'script' ? 'Редактировать скрипт звонка' : 'Редактировать тестовый скрипт';
-                const projectOptions = state.projects.map(p => `<option value="${p.id}" ${p.id === item.projectId ? 'selected' : ''}>${p.name}</option>`).join('');
+                title = type === 'script' ? 'Редактировать скрипт звонка' : 'Редактировать скрипт чат';
+                const projectOptions = state.projects.map(p => `<option value="${p.id}" ${item.projectIds && item.projectIds.includes(p.id) ? 'selected' : ''}>${p.name}</option>`).join('');
                 const statusesField = type === 'script' ? `
                     <div class="form-group">
                         <label>Статусы звонков (через запятую)</label>
@@ -1814,9 +1824,9 @@
 
                 fields = `
                     <div class="form-group">
-                        <label>Проект <span style="color:#ff6b6b;">*</span></label>
-                        <select id="scriptProjectSelect" required>
-                            <option value="">— выберите проект —</option>
+                        <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
+                        <select id="scriptProjectSelect" multiple required size="5">
+                            <option value="" disabled>— выберите проекты —</option>
                             ${projectOptions}
                         </select>
                     </div>
@@ -1904,7 +1914,16 @@
                     const statusesElem = document.getElementById('scriptStatuses');
 
                     if (!projectSelect || !titleElem || !contentElem) throw new Error('Не все поля найдены');
-                    const projectId = projectSelect.value;
+                    
+                    // Получаем выбранные проекты (мультиселект)
+                    const selectedOptions = Array.from(projectSelect.selectedOptions);
+                    if (selectedOptions.length === 0) {
+                        alert('Выберите хотя бы один проект');
+                        return;
+                    }
+                    const projectIds = selectedOptions.map(opt => opt.value);
+                    const projectNames = selectedOptions.map(opt => opt.text);
+
                     const title = titleElem.value.trim();
                     const content = contentElem.innerHTML.trim();
 
@@ -1915,16 +1934,14 @@
                         statuses = statusesInput ? statusesInput.split(',').map(s => s.trim()).filter(s => s) : [];
                     }
 
-                    if (!projectId || !title || !content) {
+                    if (!title || !content) {
                         alert('Заполните все поля');
                         return;
                     }
 
-                    const project = state.projects.find(p => p.id === projectId);
-                    const projectName = project ? project.name : '';
                     const type = editingType === 'script' ? 'call' : 'test';
 
-                    const newItem = { projectId, projectName, title, content, statuses, type };
+                    const newItem = { projectIds, projectNames, title, content, statuses, type };
 
                     let response;
                     if (editingId === null) {
