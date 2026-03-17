@@ -1,3 +1,4 @@
+// netlify/functions/saveProject.js
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
@@ -5,10 +6,15 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
   try {
-    const { name, id } = JSON.parse(event.body);
+    const {
+      id, name, area, lineType, about, duties, schedule,
+      conditions, requirements, workplaceRequirements
+    } = JSON.parse(event.body);
+    
     if (!name) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Name required' }) };
     }
+
     const store = getStore({
       name: 'projects',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -17,12 +23,22 @@ exports.handler = async (event) => {
     });
 
     let projects = await store.get('_all', { type: 'json' }) || [];
-    // Если id не передан, генерируем новый ключ (PROJ-XXXX-XXXX)
     const projectId = id || generateProjectKey();
-    const newProject = { id: projectId, name, updatedAt: new Date().toISOString() };
+    const newProject = {
+      id: projectId,
+      name,
+      area: area || '',
+      lineType: lineType || 'Входящая',
+      about: about || '',
+      duties: duties || '',
+      schedule: schedule || '',
+      conditions: conditions || '',
+      requirements: requirements || '',
+      workplaceRequirements: workplaceRequirements || '',
+      updatedAt: new Date().toISOString()
+    };
 
     if (id) {
-      // обновление: ищем по id
       const index = projects.findIndex(p => p.id === id);
       if (index !== -1) {
         projects[index] = newProject;
@@ -45,7 +61,6 @@ exports.handler = async (event) => {
   }
 };
 
-// Вспомогательная функция генерации ключа проекта
 function generateProjectKey() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let part1 = '', part2 = '';

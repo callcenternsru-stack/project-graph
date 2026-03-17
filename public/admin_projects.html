@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -111,6 +110,10 @@
             background: #4caf50;
             color: white;
         }
+        .details-btn {
+            background: #ffd700;
+            color: #000;
+        }
         /* Модальное окно */
         .modal {
             position: fixed;
@@ -119,11 +122,13 @@
             transform: translate(-50%, -50%);
             background: #111111;
             border-radius: 24px;
-            width: 500px;
+            width: 800px;
             max-width: 90vw;
             border: 2px solid #ffd700;
             display: none;
             z-index: 10000;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal.show {
             display: block;
@@ -143,6 +148,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         .modal-close {
             cursor: pointer;
@@ -159,7 +167,9 @@
             color: #ffd700;
             margin-bottom: 8px;
         }
-        .form-group input {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 12px;
             background: #1a1a1a;
@@ -168,9 +178,15 @@
             color: #ffffff;
             font-size: 14px;
         }
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #ffd700;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
         }
         .key-display {
             background: #1a1a1a;
@@ -231,7 +247,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно для добавления/редактирования проекта -->
+    <!-- Модальное окно для добавления/редактирования проекта (базовое) -->
     <div id="projectModal" class="modal">
         <div class="modal-header">
             <span id="modalTitle">Добавить проект</span>
@@ -250,11 +266,64 @@
         </div>
     </div>
 
+    <!-- Модальное окно для расширенного редактирования деталей проекта -->
+    <div id="projectDetailsModal" class="modal">
+        <div class="modal-header">
+            <span>Редактирование деталей проекта</span>
+            <span class="modal-close" onclick="closeDetailsModal()">✕</span>
+        </div>
+        <div class="modal-content">
+            <div class="form-group">
+                <label>Название проекта (только для чтения)</label>
+                <input type="text" id="detailsProjectName" readonly>
+            </div>
+            <div class="form-group">
+                <label>Область проекта</label>
+                <input type="text" id="projectArea" placeholder="например: Энергетика">
+            </div>
+            <div class="form-group">
+                <label>Тип линии</label>
+                <select id="projectLineType">
+                    <option value="Входящая">Входящая</option>
+                    <option value="Исходящая">Исходящая</option>
+                    <option value="Чат">Чат</option>
+                    <option value="Мультискилл">Мультискилл</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>О проекте</label>
+                <textarea id="projectAbout" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Что нужно делать (каждый пункт с новой строки)</label>
+                <textarea id="projectDuties" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>График работы (каждый пункт с новой строки)</label>
+                <textarea id="projectSchedule" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Условия сотрудничества (каждый пункт с новой строки)</label>
+                <textarea id="projectConditions" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Требования к кандидату (каждый пункт с новой строки)</label>
+                <textarea id="projectRequirements" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Требования к рабочему месту (каждый пункт с новой строки)</label>
+                <textarea id="projectWorkplace" rows="4"></textarea>
+            </div>
+            <button class="save-btn" onclick="saveProjectDetails()">Сохранить детали</button>
+        </div>
+    </div>
+
     <div id="notification" class="notification"></div>
 
     <script>
         let projects = [];
-        let editingId = null;
+        let editingId = null;          // для базового модального окна
+        let currentProjectIdForDetails = null; // для детального окна
 
         function showNotification(message, type = 'info') {
             const notif = document.getElementById('notification');
@@ -279,6 +348,19 @@
                 const res = await fetch('/.netlify/functions/getProjects');
                 if (res.ok) {
                     projects = await res.json();
+                    // Нормализуем: если у проекта нет новых полей, добавляем пустые
+                    projects = projects.map(p => ({
+                        id: p.id,
+                        name: p.name || '',
+                        area: p.area || '',
+                        lineType: p.lineType || 'Входящая',
+                        about: p.about || '',
+                        duties: p.duties || '',
+                        schedule: p.schedule || '',
+                        conditions: p.conditions || '',
+                        requirements: p.requirements || '',
+                        workplaceRequirements: p.workplaceRequirements || ''
+                    }));
                     renderProjects();
                 } else {
                     showNotification('Ошибка загрузки проектов', 'error');
@@ -307,7 +389,6 @@
 
         async function deleteProjectFromServer(id) {
             try {
-                // Используем параметр id, а не name
                 const res = await fetch(`/.netlify/functions/deleteProject?id=${encodeURIComponent(id)}`, {
                     method: 'DELETE'
                 });
@@ -338,6 +419,7 @@
                     </td>
                     <td class="actions">
                         <button class="edit-btn" onclick="editProject('${proj.id}')">✏️</button>
+                        <button class="details-btn" onclick="openProjectDetails('${proj.id}')">📝 Детали</button>
                         <button class="delete-btn" onclick="deleteProject('${proj.id}')">✕</button>
                     </td>
                 `;
@@ -353,6 +435,7 @@
             });
         }
 
+        // Базовое модальное окно (добавление/редактирование имени)
         function openAddModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = 'Добавить проект';
@@ -394,13 +477,76 @@
             if (success) {
                 if (editingId) {
                     const index = projects.findIndex(p => p.id === editingId);
-                    if (index !== -1) projects[index] = project;
+                    if (index !== -1) {
+                        // Сохраняем остальные поля из старого объекта
+                        projects[index] = { ...projects[index], ...project };
+                    }
                 } else {
-                    projects.push(project);
+                    // Новый проект: добавляем пустые поля
+                    projects.push({
+                        id: key,
+                        name: name,
+                        area: '',
+                        lineType: 'Входящая',
+                        about: '',
+                        duties: '',
+                        schedule: '',
+                        conditions: '',
+                        requirements: '',
+                        workplaceRequirements: ''
+                    });
                 }
                 renderProjects();
                 closeModal();
                 showNotification('Проект сохранён', 'success');
+            }
+        }
+
+        // Детальное модальное окно
+        function openProjectDetails(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            currentProjectIdForDetails = projectId;
+            document.getElementById('detailsProjectName').value = project.name || '';
+            document.getElementById('projectArea').value = project.area || '';
+            document.getElementById('projectLineType').value = project.lineType || 'Входящая';
+            document.getElementById('projectAbout').value = project.about || '';
+            document.getElementById('projectDuties').value = project.duties || '';
+            document.getElementById('projectSchedule').value = project.schedule || '';
+            document.getElementById('projectConditions').value = project.conditions || '';
+            document.getElementById('projectRequirements').value = project.requirements || '';
+            document.getElementById('projectWorkplace').value = project.workplaceRequirements || '';
+            document.getElementById('projectDetailsModal').classList.add('show');
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('projectDetailsModal').classList.remove('show');
+        }
+
+        async function saveProjectDetails() {
+            const project = projects.find(p => p.id === currentProjectIdForDetails);
+            if (!project) return;
+
+            const updatedProject = {
+                id: project.id,
+                name: document.getElementById('detailsProjectName').value.trim(),
+                area: document.getElementById('projectArea').value.trim(),
+                lineType: document.getElementById('projectLineType').value,
+                about: document.getElementById('projectAbout').value.trim(),
+                duties: document.getElementById('projectDuties').value.trim(),
+                schedule: document.getElementById('projectSchedule').value.trim(),
+                conditions: document.getElementById('projectConditions').value.trim(),
+                requirements: document.getElementById('projectRequirements').value.trim(),
+                workplaceRequirements: document.getElementById('projectWorkplace').value.trim()
+            };
+
+            const success = await saveProjectToServer(updatedProject);
+            if (success) {
+                // Обновляем локальный объект
+                Object.assign(project, updatedProject);
+                renderProjects(); // обновим отображение (имя могло измениться)
+                closeDetailsModal();
+                showNotification('Детали проекта сохранены', 'success');
             }
         }
 
@@ -418,4 +564,3 @@
     </script>
 </body>
 </html>
-```

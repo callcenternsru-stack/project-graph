@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Анкета кандидата | РОССЕТТИ</title>
+    <title>Анкета кандидата | Проект</title>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
     <style>
@@ -636,50 +636,37 @@
     </div>
 
     <div class="container">
-        <h1>РОССЕТТИ · Анкета кандидата</h1>
+        <h1 id="projectTitle">Загрузка...</h1>
         
         <!-- Информация о проекте -->
         <section>
             <h2>Информация о проекте</h2>
-            <p><span class="badge">⚡️ Энергетика</span> <span class="badge">Входящая линия</span></p>
-            <p><strong>О проекте:</strong> Вы будете принимать входящие звонки от граждан, столкнувшихся с проблемами энергоснабжения. Кто-то сидит без света, у кого-то скачет напряжение, случаются и ЧП. Ваша задача — быстро сориентировать человека, принять заявку и передать информацию для реагирования.</p>
+            <p>
+                <span class="badge" id="projectAreaBadge"></span>
+                <span class="badge" id="projectLineTypeBadge"></span>
+            </p>
+            <p id="projectAbout"></p>
             
             <div class="info-grid">
                 <div class="info-card">
                     <div class="title">Что нужно делать</div>
-                    <ul class="value">
-                        <li>Принимать входящие звонки от граждан</li>
-                        <li>Консультировать по вопросам отключений и перепадов напряжения</li>
-                        <li>Принимать и регистрировать заявки, особенно в ЧП</li>
-                        <li>Чётко фиксировать информацию для аварийных служб</li>
-                    </ul>
+                    <ul class="value" id="dutiesList"></ul>
                 </div>
                 <div class="info-card">
                     <div class="title">График работы</div>
-                    <ul class="value">
-                        <li>2/2 с 07:00 до 19:00 (МСК)</li>
-                        <li>2/2 с 19:00 до 07:00 (МСК)</li>
-                    </ul>
+                    <ul class="value" id="scheduleList"></ul>
                 </div>
                 <div class="info-card">
                     <div class="title">Условия сотрудничества</div>
-                    <ul class="value">
-                        <li>Оплачиваемое обучение: 4 дня (5 ч/день) — 100 ₽/час</li>
-                        <li>Ставка на линии: 200 ₽/час</li>
-                        <li>Формат работы: Удалённо</li>
-                        <li><strong>Важно:</strong> Выплата за обучение после отработки 100 часов на линии</li>
-                    </ul>
+                    <ul class="value" id="conditionsList"></ul>
                 </div>
                 <div class="info-card">
                     <div class="title">Требования к кандидату</div>
-                    <ul class="value">
-                        <li>Возраст: 18–55 лет (основная работа)</li>
-                        <li>ПК: Windows 10/11, ОЗУ от 4 ГБ, SSD/HDD от 256 ГБ</li>
-                        <li>Интернет от 20 Мбит/с (проводной или Wi‑Fi)</li>
-                        <li>Проводная гарнитура (USB)</li>
-                        <li>Владение ПК, Microsoft Office, браузером</li>
-                        <li>Русский язык без акцента, грамотная речь</li>
-                    </ul>
+                    <ul class="value" id="requirementsList"></ul>
+                </div>
+                <div class="info-card">
+                    <div class="title">Требования к рабочему месту</div>
+                    <ul class="value" id="workplaceRequirementsList"></ul>
                 </div>
             </div>
         </section>
@@ -899,34 +886,68 @@
             setTimeout(() => notif.classList.remove('show'), 3000);
         }
 
-        // --- Загрузка списка проектов с сервера ---
-        let projects = [];
-        async function loadProjects() {
+        // --- Загрузка информации о проекте ---
+        async function loadProjectInfo() {
+            const projectId = getQueryParam('projectId');
+            if (!projectId) {
+                console.error('No projectId in URL');
+                document.getElementById('projectTitle').textContent = 'Ошибка: проект не указан';
+                return;
+            }
             try {
-                const res = await fetch('/.netlify/functions/getProjects');
-                if (res.ok) {
-                    projects = await res.json();
-                    const projectIdFromUrl = getQueryParam('projectId');
-                    if (projectIdFromUrl) {
-                        const matched = projects.find(p => p.id === projectIdFromUrl);
-                        if (matched) {
-                            document.getElementById('projectId').value = matched.id;
-                            document.getElementById('projectName').value = matched.name;
-                        } else {
-                            console.error('Проект с таким ID не найден');
-                        }
-                    } else {
-                        console.error('Отсутствует параметр projectId в URL');
+                const res = await fetch(`/.netlify/functions/getProjectInfo?projectId=${encodeURIComponent(projectId)}`);
+                if (!res.ok) throw new Error('Failed to load project info');
+                const project = await res.json();
+
+                // Заполняем заголовок
+                document.getElementById('projectTitle').textContent = project.name || 'Проект';
+                document.getElementById('projectAreaBadge').textContent = project.area || '—';
+                document.getElementById('projectLineTypeBadge').textContent = project.lineType || '—';
+                document.getElementById('projectAbout').textContent = project.about || 'Информация отсутствует.';
+                
+                // Заполняем скрытые поля формы
+                document.getElementById('projectId').value = project.id;
+                document.getElementById('projectName').value = project.name || '';
+
+                // Функция для заполнения списка из текста (разделение по строкам)
+                const fillList = (elementId, text) => {
+                    const list = document.getElementById(elementId);
+                    list.innerHTML = '';
+                    if (!text) {
+                        list.innerHTML = '<li>—</li>';
+                        return;
                     }
-                } else {
-                    console.error('Ошибка загрузки проектов');
-                }
+                    const lines = text.split('\n').map(s => s.trim()).filter(s => s);
+                    if (lines.length === 0) {
+                        list.innerHTML = '<li>—</li>';
+                    } else {
+                        lines.forEach(line => {
+                            const li = document.createElement('li');
+                            li.textContent = line;
+                            list.appendChild(li);
+                        });
+                    }
+                };
+
+                fillList('dutiesList', project.duties);
+                fillList('scheduleList', project.schedule);
+                fillList('conditionsList', project.conditions);
+                fillList('requirementsList', project.requirements);
+                fillList('workplaceRequirementsList', project.workplaceRequirements);
             } catch (error) {
-                console.error('Ошибка сети при загрузке проектов', error);
+                console.error('Error loading project info:', error);
+                document.getElementById('projectTitle').textContent = 'Ошибка загрузки';
+                showNotification('Не удалось загрузить информацию о проекте', 'error');
             }
         }
 
-        window.addEventListener('load', loadProjects);
+        // Вызываем загрузку сразу при загрузке страницы
+        window.addEventListener('load', () => {
+            loadProjectInfo();
+            // Остальная инициализация (скрываем блоки проверки)
+            document.getElementById('autoVerificationBlock').classList.remove('show');
+            document.getElementById('manualVerificationBlock').classList.remove('show');
+        });
 
         // --- Генерация уникального кода (для авто) ---
         function generateUniqueCode() {
@@ -1446,7 +1467,7 @@
             hideLoading();
         }
 
-        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ (ИСПРАВЛЕНО) ==========
+        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1475,7 +1496,6 @@
                     // Если это изображение (задания 1,4,6,7)
                     if (taskFiles[i].type.startsWith('image/')) {
                         const compressedBlob = await compressImage(taskFiles[i]);
-                        // Создаём File из Blob с оригинальным именем
                         fileToSend = new File([compressedBlob], taskFiles[i].name, { type: compressedBlob.type });
                     }
                     
@@ -1485,7 +1505,6 @@
                             fileToSend = await convertWavToMp3(taskFiles[i]);
                         } catch (e) {
                             console.error('Не удалось конвертировать WAV, отправляем оригинал');
-                            // оставляем fileToSend = taskFiles[i]
                         }
                     }
                     
@@ -1514,7 +1533,7 @@
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Ошибка отправки');
 
-                // Вместо простого скрытия показываем модальное окно
+                // Показываем модальное окно благодарности
                 document.getElementById('manualVerificationBlock').classList.remove('show');
                 document.getElementById('thanksModal').classList.add('show');
                 document.body.classList.add('menu-open');
@@ -1543,9 +1562,7 @@
             if (faqItem) faqItem.classList.toggle('active');
         }
 
-        // Инициализация: скрываем блоки проверки
-        document.getElementById('autoVerificationBlock').classList.remove('show');
-        document.getElementById('manualVerificationBlock').classList.remove('show');
+        // Инициализация: скрываем блоки проверки (уже в load)
     </script>
 </body>
 </html>
