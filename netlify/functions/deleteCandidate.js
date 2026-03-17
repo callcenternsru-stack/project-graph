@@ -1,4 +1,3 @@
-// netlify/functions/deleteCandidate.js
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
@@ -16,7 +15,7 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Получаем текущий массив всех кандидатов
+    // Читаем текущий массив всех кандидатов из ключа '_all'
     let candidates = await store.get('_all', { type: 'json' }) || [];
 
     // Удаляем кандидата с заданным id
@@ -25,7 +24,7 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Candidate not found' }) };
     }
 
-    // Сохраняем обновлённый массив
+    // Сохраняем обновлённый массив обратно
     await store.setJSON('_all', newCandidates);
 
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
