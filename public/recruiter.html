@@ -678,6 +678,22 @@
                 types.map(t => `<option value="${t}">${t}</option>`).join('');
         }
 
+        // ========== ОБНОВЛЕНИЕ РЕЗУЛЬТАТОВ ЗВОНКА ПО СКРИПТУ ==========
+        function updateCallResults() {
+            const select = document.getElementById('callResult');
+            if (!currentScriptTitle) {
+                fillCallResults();
+                return;
+            }
+            const script = appData.scripts.find(s => s.title === currentScriptTitle);
+            if (script && script.statuses && script.statuses.length > 0) {
+                select.innerHTML = '<option value="">— выберите —</option>' +
+                    script.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else {
+                fillCallResults();
+            }
+        }
+
         // ========== РАБОТА СО СКРИПТАМИ ==========
         function updateScriptsUI() {
             const selector = document.getElementById('scriptSelector');
@@ -690,6 +706,7 @@
             if (!appData.scripts || appData.scripts.length === 0) {
                 container.style.display = 'none';
                 noMsg.style.display = 'block';
+                updateCallResults(); // сбрасываем статусы
                 return;
             }
 
@@ -716,10 +733,12 @@
                 container.style.display = 'block';
                 noMsg.style.display = 'none';
                 setProjectFromScript(currentScriptTitle);
+                updateCallResults(); // обновляем статусы в соответствии со скриптом
             } else {
                 container.style.display = 'none';
                 noMsg.style.display = 'block';
                 currentScriptTitle = null;
+                updateCallResults(); // сбрасываем статусы
             }
         }
 
@@ -946,6 +965,7 @@
                 document.getElementById('selectedScriptContainer').style.display = 'none';
                 document.getElementById('noScriptMessage').style.display = 'block';
                 currentScriptTitle = null;
+                updateCallResults(); // сбрасываем статусы
                 return;
             }
             const idx = parseInt(index, 10);
@@ -955,6 +975,7 @@
                 document.getElementById('selectedScriptContainer').style.display = 'block';
                 document.getElementById('noScriptMessage').style.display = 'none';
                 setProjectFromScript(currentScriptTitle);
+                updateCallResults(); // обновляем статусы
             }
         });
 

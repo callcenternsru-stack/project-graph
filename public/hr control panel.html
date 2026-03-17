@@ -843,7 +843,7 @@
             contactTypes: [],
             projects: [],              // массив объектов { id, name }
             candidates: [],
-            scripts: [],               // каждый скрипт содержит projectId, projectName
+            scripts: [],               // каждый скрипт содержит projectId, projectName, statuses
             projectMeetings: {},
             projectTrainings: {},
             projectMeetingComments: {},
@@ -1712,6 +1712,10 @@
                         <input type="text" id="scriptTitle" placeholder="Скрипт первичного звонка" required>
                     </div>
                     <div class="form-group">
+                        <label>Статусы звонков (через запятую)</label>
+                        <input type="text" id="scriptStatuses" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
+                    </div>
+                    <div class="form-group">
                         <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
                         <div class="toolbar">
                             <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
@@ -1795,6 +1799,10 @@
                         <input type="text" id="scriptTitle" value="${item.title || ''}" required>
                     </div>
                     <div class="form-group">
+                        <label>Статусы звонков (через запятую)</label>
+                        <input type="text" id="scriptStatuses" value="${item.statuses ? item.statuses.join(', ') : ''}" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
+                    </div>
+                    <div class="form-group">
                         <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
                         <div class="toolbar">
                             <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
@@ -1869,11 +1877,14 @@
                     const projectSelect = document.getElementById('scriptProjectSelect');
                     const titleElem = document.getElementById('scriptTitle');
                     const contentElem = document.getElementById('scriptContent');
+                    const statusesElem = document.getElementById('scriptStatuses');
 
                     if (!projectSelect || !titleElem || !contentElem) throw new Error('Не все поля найдены');
                     const projectId = projectSelect.value;
                     const title = titleElem.value.trim();
                     const content = contentElem.innerHTML.trim();
+                    const statusesInput = statusesElem ? statusesElem.value.trim() : '';
+                    const statuses = statusesInput ? statusesInput.split(',').map(s => s.trim()).filter(s => s) : [];
 
                     if (!projectId || !title || !content) {
                         alert('Заполните все поля');
@@ -1883,7 +1894,7 @@
                     const project = state.projects.find(p => p.id === projectId);
                     const projectName = project ? project.name : '';
 
-                    const newItem = { projectId, projectName, title, content };
+                    const newItem = { projectId, projectName, title, content, statuses };
 
                     let response;
                     if (editingId === null) {
@@ -2143,11 +2154,47 @@
             const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
             if (!candidate) return;
 
-            console.log('Candidate details:', candidate);
-
             const content = document.getElementById('candidateDetailsContent');
             let filesHtml = '';
+            let extraInfoHtml = '';
 
+            // Основные данные
+            let fullName = candidate.fullName || '';
+            let nickname = candidate.nickname || '';
+            let telegram = candidate.telegram || '';
+            let phone = candidate.phone || '';
+            let email = candidate.email || '';
+            let project = candidate.project || '';
+
+            // Для автоматических анкет данные лежат в formData
+            if (type === 'auto' && candidate.formData) {
+                fullName = candidate.formData.fullName || fullName;
+                nickname = candidate.formData.nickname || nickname;
+                telegram = candidate.formData.telegram || telegram;
+                phone = candidate.formData.phone || phone;
+                email = candidate.formData.email || email;
+                project = candidate.formData.project || project;
+            }
+
+            // Дополнительная информация для ручных анкет
+            if (type === 'manual') {
+                if (candidate.taskInputs && candidate.taskInputs['task_4_input']) {
+                    extraInfoHtml += `<p><strong>AnyDesk (задание 5):</strong> ${candidate.taskInputs['task_4_input']}</p>`;
+                }
+                if (candidate.taskScores && candidate.taskScores['task_2_score']) {
+                    try {
+                        const score = typeof candidate.taskScores['task_2_score'] === 'string'
+                            ? JSON.parse(candidate.taskScores['task_2_score'])
+                            : candidate.taskScores['task_2_score'];
+                        extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${score.correct} из ${score.total} (${score.percentage}%)</p>`;
+                    } catch (e) {
+                        console.error('Error parsing task score', e);
+                        extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${candidate.taskScores['task_2_score']} (ошибка парсинга)</p>`;
+                    }
+                }
+            }
+
+            // Файлы
             if (type === 'auto' && candidate.status === 'completed') {
                 filesHtml = `
                     <h3>Файлы автоматической проверки</h3>
@@ -2180,32 +2227,21 @@
                         filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">${taskFiles[i].filename}</a></li>`;
                     }
                 }
-                if (candidate.taskInputs && candidate.taskInputs['task_4_input']) {
-                    filesHtml += `<li><strong>AnyDesk (задание 5):</strong> ${candidate.taskInputs['task_4_input']}</li>`;
-                }
-                if (candidate.taskScores && candidate.taskScores['task_2_score']) {
-                    try {
-                        const score = typeof candidate.taskScores['task_2_score'] === 'string'
-                            ? JSON.parse(candidate.taskScores['task_2_score'])
-                            : candidate.taskScores['task_2_score'];
-                        filesHtml += `<li><strong>Тест (задание 3):</strong> ${score.correct} из ${score.total} (${score.percentage}%)</li>`;
-                    } catch (e) {
-                        console.error('Error parsing task score', e);
-                        filesHtml += `<li><strong>Тест (задание 3):</strong> ${candidate.taskScores['task_2_score']} (ошибка парсинга)</li>`;
-                    }
-                } else {
-                    console.log('task_2_score отсутствует в данных кандидата');
-                }
                 filesHtml += '</ul>';
             } else {
                 filesHtml = '<p>Файлы отсутствуют или проверка ещё не завершена.</p>';
             }
 
             content.innerHTML = `
-                <p><strong>ФИО:</strong> ${candidate.fullName}</p>
-                <p><strong>Проект:</strong> ${candidate.project}</p>
-                <p><strong>Тип проверки:</strong> ${candidate.type === 'auto' ? 'Автоматическая' : 'Ручная'}</p>
+                <p><strong>ФИО:</strong> ${fullName}</p>
+                <p><strong>Псевдоним:</strong> ${nickname}</p>
+                <p><strong>Telegram:</strong> ${telegram}</p>
+                <p><strong>Телефон:</strong> ${phone}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Проект:</strong> ${project}</p>
+                <p><strong>Тип проверки:</strong> ${type === 'auto' ? 'Автоматическая' : 'Ручная'}</p>
                 <p><strong>Дата создания:</strong> ${new Date(candidate.createdAt).toLocaleString()}</p>
+                ${extraInfoHtml}
                 ${filesHtml}
             `;
 

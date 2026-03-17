@@ -857,6 +857,19 @@
     <!-- Уведомление о копировании (для ошибок) -->
     <div id="notification" class="notification">Код скопирован!</div>
 
+    <!-- Модальное окно благодарности -->
+    <div id="thanksModal" class="modal">
+        <div class="modal-header">
+            <span>Спасибо!</span>
+            <button class="modal-close" onclick="closeThanksModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <p>Ваши ответы были успешно отправлены. Для уточнения статуса проверки напишите нам.</p>
+            <p>Телеграмм: @Rucontactservices</p>
+            <p>Вацап: +7 909 373 9341</p>
+        </div>
+    </div>
+
     <script>
         // --- Вспомогательная функция получения параметра из URL ---
         function getQueryParam(param) {
@@ -1500,14 +1513,22 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Ошибка отправки');
-                // Уведомление об успехе убрано
+
+                // Вместо простого скрытия показываем модальное окно
                 document.getElementById('manualVerificationBlock').classList.remove('show');
+                document.getElementById('thanksModal').classList.add('show');
+                document.body.classList.add('menu-open');
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Попробуйте позже.', 'error');
             } finally {
                 hideLoading();
             }
+        }
+
+        function closeThanksModal() {
+            document.getElementById('thanksModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
         }
 
         function copyCode() {

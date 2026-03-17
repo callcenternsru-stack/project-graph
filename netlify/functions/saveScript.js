@@ -5,7 +5,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
   try {
-    const { projectId, projectName, title, content, id } = JSON.parse(event.body);
+    const { projectId, projectName, title, content, id, statuses } = JSON.parse(event.body);
     if (!projectId || !title || !content) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
     }
@@ -17,7 +17,14 @@ exports.handler = async (event) => {
     });
 
     let scripts = await store.get('_all', { type: 'json' }) || [];
-    const newScript = { projectId, projectName, title, content, updatedAt: new Date().toISOString() };
+    const newScript = { 
+      projectId, 
+      projectName, 
+      title, 
+      content, 
+      statuses: statuses || [], 
+      updatedAt: new Date().toISOString() 
+    };
 
     if (id) {
       // обновление: ищем по старому title (id === старый title)
