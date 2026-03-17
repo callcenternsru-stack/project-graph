@@ -6,7 +6,7 @@
     <title>Админ-панель рекрутинга</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ ===== */
+        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ С ДОБАВЛЕНИЕМ ПЕРЕНОСОВ ===== */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -195,7 +195,7 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        .edit-btn, .delete-btn, .import-btn, .download-btn, .delete-form-btn {
+        .edit-btn, .delete-btn, .import-btn, .download-btn, .delete-form-btn, .delete-candidate-btn {
             padding: 6px 12px;
             border: none;
             border-radius: 8px;
@@ -214,11 +214,11 @@
         .edit-btn:hover {
             background: #8aa5ff;
         }
-        .delete-btn, .delete-form-btn {
+        .delete-btn, .delete-form-btn, .delete-candidate-btn {
             background: #ff6b6b;
             color: white;
         }
-        .delete-btn:hover, .delete-form-btn:hover {
+        .delete-btn:hover, .delete-form-btn:hover, .delete-candidate-btn:hover {
             background: #ff8a8a;
         }
         .import-btn {
@@ -498,6 +498,7 @@
             left: 0;
             z-index: 101;
         }
+        /* ИСПРАВЛЕНИЕ: перенос текста для фиксированных заголовков */
         .fixed-header-cell {
             padding: 15px 10px;
             font-weight: 600;
@@ -505,11 +506,15 @@
             border-right: 1px solid #333333;
             font-size: 13px;
             background: #000000;
-            white-space: nowrap;
+            color: #ffd700;
+            white-space: normal;        /* разрешаем перенос */
+            word-wrap: break-word;      /* перенос длинных слов */
+            overflow-wrap: break-word;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffd700;
+            min-width: 100px;            /* минимальная ширина */
+            max-width: 200px;             /* чтобы не слишком расширялось */
         }
         .fixed-header-cell:first-child {
             width: 280px;
@@ -521,6 +526,7 @@
             display: flex;
             flex: 1;
         }
+        /* ИСПРАВЛЕНИЕ: перенос для прокручиваемых заголовков */
         .scrollable-header-cell {
             flex: 0 0 100px;
             padding: 15px 10px;
@@ -529,12 +535,14 @@
             border-right: 1px solid #333333;
             font-size: 13px;
             background: #000000;
-            white-space: nowrap;
+            color: #ffd700;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #ffd700;
         }
         .day-week {
             font-size: 11px;
@@ -569,7 +577,10 @@
             align-items: center;
             background: #111111;
             color: #cccccc;
-            white-space: nowrap;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-width: 100px;
         }
         .fixed-cell:first-child {
             width: 280px;
@@ -699,6 +710,34 @@
         .task-info strong {
             color: #ffd700;
         }
+        /* Дополнительные стили для кнопок в модальном окне */
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal-actions .save-btn {
+            background: #ffd700;
+            color: #000;
+        }
+        .modal-actions .delete-time-btn {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+        .modal-actions .delete-time-btn:hover {
+            background: #ff8a8a;
+        }
     </style>
 </head>
 <body>
@@ -742,6 +781,7 @@
         <div class="modal-content" id="modalContent"></div>
     </div>
 
+    <!-- Модальное окно для комментариев (исправлено: добавлена кнопка удаления времени) -->
     <div id="commentModal" class="modal">
         <div class="modal-header">
             <span id="commentModalTitle">Ссылка на группу</span>
@@ -768,7 +808,10 @@
                 <label>Ссылка на группу:</label>
                 <input type="text" id="commentLink" placeholder="https://t.me/...">
             </div>
-            <button class="save-btn" onclick="saveComment()">Сохранить</button>
+            <div class="modal-actions">
+                <button class="save-btn" onclick="saveComment()">💾 Сохранить</button>
+                <button class="delete-time-btn" onclick="deleteTimeFromModal()">🗑 Удалить время</button>
+            </div>
         </div>
     </div>
 
@@ -902,7 +945,6 @@
         const scheduleOnly = urlParams.get('tab') === 'schedule-only';
 
         if (scheduleOnly) {
-            // Исправление: дожидаемся полной загрузки данных перед рендерингом
             document.addEventListener('DOMContentLoaded', async function() {
                 const trigger = document.querySelector('.side-menu-trigger');
                 const sideMenu = document.querySelector('.side-menu');
@@ -915,7 +957,6 @@
                     const area = document.getElementById('contentArea');
                     if (area) renderSchedulePage(area);
                 };
-                // Загружаем все данные и ждём их
                 await loadAllData();
                 renderContent();
             });
@@ -968,7 +1009,6 @@
                 state.callResults = refData.callResults || [];
                 state.contactTypes = refData.contactTypes || [];
                 state.projects = refData.projects || [];
-                // Нормализация проектов для графика
                 state.projects = state.projects.map(p => {
                     if (typeof p === 'string') {
                         return { id: p, name: p };
@@ -976,10 +1016,8 @@
                     return p;
                 });
                 state.scripts = refData.scripts || [];
-                // Для старых скриптов без type добавляем 'call' и приводим к новому формату (если projectIds нет)
                 state.scripts = state.scripts.map(s => {
                     if (!s.type) s.type = 'call';
-                    // Если скрипт был в старом формате (один проект), преобразуем в массив
                     if (s.projectId && !s.projectIds) {
                         s.projectIds = [s.projectId];
                         s.projectNames = [s.projectName || s.projectId];
@@ -1174,6 +1212,7 @@
             container.innerHTML = html;
         }
 
+        // ========== ИСПРАВЛЕНИЕ: добавлена кнопка удаления для базы контактов ==========
         function renderCandidates(container) {
             const headers = [
                 { label: 'Дата', field: 'createdAt' },
@@ -1186,16 +1225,17 @@
                 { label: 'Результат', field: 'callResult' },
                 { label: 'Тип', field: 'contactType' },
                 { label: 'Рекрутер', field: 'recruiter' },
-                { label: 'Комментарий', field: 'comment' }
+                { label: 'Комментарий', field: 'comment' },
+                { label: 'Действия', field: null } // новая колонка
             ];
 
             let headerHtml = '<tr>';
             headers.forEach((h, index) => {
                 let sortClass = '';
-                if (candidatesSortColumn === index) {
+                if (h.field && candidatesSortColumn === index) {
                     sortClass = candidatesSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc';
                 }
-                headerHtml += `<th class="${sortClass}" onclick="sortCandidates(${index})">${h.label}</th>`;
+                headerHtml += `<th class="${sortClass}" onclick="${h.field ? `sortCandidates(${index})` : ''}">${h.label}</th>`;
             });
             headerHtml += '</tr>';
 
@@ -1214,7 +1254,7 @@
             const sorted = sortCandidatesData([...state.candidates]);
 
             if (sorted.length === 0) {
-                html += '<tr><td colspan="11" style="text-align:center;">Нет контактов</td></tr>';
+                html += '<tr><td colspan="12" style="text-align:center;">Нет контактов</td></tr>';
             } else {
                 sorted.forEach(c => {
                     const training = c.trainingDate && c.trainingTime ? `${c.trainingDate} ${c.trainingTime}` : '—';
@@ -1232,6 +1272,7 @@
                             <td>${c.contactType || '—'}</td>
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
+                            <td><button class="delete-candidate-btn" onclick="deleteCandidateFromBase('${c.id}')">✕</button></td>
                         </tr>
                     `;
                 });
@@ -1285,6 +1326,25 @@
             });
         }
 
+        // ========== НОВАЯ ФУНКЦИЯ: удаление кандидата из базы контактов ==========
+        async function deleteCandidateFromBase(id) {
+            if (!confirm('Удалить этот контакт?')) return;
+            try {
+                const response = await fetch(`/.netlify/functions/deleteCandidate?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                if (response.ok) {
+                    state.candidates = state.candidates.filter(c => c.id !== id);
+                    renderContent();
+                    showNotification('Контакт удалён', 'success');
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка удаления: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
         // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ РЕНДЕРА СКРИПТОВ ==========
         function renderScripts(container) {
             let html = `
@@ -1314,7 +1374,6 @@
                 state.scripts.forEach((script, index) => {
                     const typeLabel = script.type === 'test' ? 'Чат' : 'Звонок';
                     const plainText = script.content.replace(/<[^>]*>/g, '');
-                    // Отображаем названия проектов через запятую
                     const projectNames = script.projectNames ? script.projectNames.join(', ') : (script.projectName || '—');
                     html += `
                         <tr>
@@ -1596,6 +1655,32 @@
 
             document.getElementById('commentModal').classList.add('show');
             document.body.classList.add('menu-open');
+        }
+
+        // ========== НОВАЯ ФУНКЦИЯ: удаление времени из модального окна ==========
+        function deleteTimeFromModal() {
+            if (!currentCommentContext) return;
+
+            const { type, project, month, day, inputElement } = currentCommentContext;
+            const key = `${project}_${month}_${day}`;
+
+            // Очищаем поле ввода
+            inputElement.value = '';
+            inputElement.classList.remove('filled');
+
+            // Удаляем данные из состояния
+            if (type === 'meeting') {
+                delete state.projectMeetings[key];
+                delete state.projectMeetingComments[key];
+                saveProjectMeetings();
+            } else {
+                delete state.projectTrainings[key];
+                delete state.projectTrainingComments[key];
+                saveProjectTrainings();
+            }
+
+            closeCommentModal();
+            showNotification('Время удалено', 'success');
         }
 
         function saveComment() {
@@ -2021,7 +2106,6 @@
                     let projectNames = [];
 
                     if (editingType === 'script') {
-                        // Для скрипта звонка – обычный select (одно значение)
                         const projectSelect = document.getElementById('scriptProjectSelect');
                         if (!projectSelect) throw new Error('Проекты не найдены');
                         const selectedValue = projectSelect.value;
@@ -2033,14 +2117,12 @@
                         const selectedOption = projectSelect.options[projectSelect.selectedIndex];
                         projectNames = [selectedOption ? selectedOption.text : selectedValue];
                     } else {
-                        // Для чата – чекбоксы
                         const checkboxes = document.querySelectorAll('#projectCheckboxes input[type=checkbox]:checked');
                         if (checkboxes.length === 0) {
                             alert('Выберите хотя бы один проект');
                             return;
                         }
                         projectIds = Array.from(checkboxes).map(cb => cb.value);
-                        // Получаем названия из state.projects
                         projectNames = projectIds.map(id => {
                             const proj = state.projects.find(p => p.id === id);
                             return proj ? proj.name : id;
@@ -2078,7 +2160,6 @@
                         }
                     } else {
                         const oldItem = state.scripts[editingId];
-                        // Для обновления используем старый title как id (если он не менялся)
                         response = await fetch('/.netlify/functions/saveScript', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -2328,7 +2409,6 @@
             let filesHtml = '';
             let extraInfoHtml = '';
 
-            // Основные данные
             let fullName = candidate.fullName || '';
             let nickname = candidate.nickname || '';
             let telegram = candidate.telegram || '';
@@ -2336,7 +2416,6 @@
             let email = candidate.email || '';
             let project = candidate.project || '';
 
-            // Для автоматических анкет данные лежат в formData
             if (type === 'auto' && candidate.formData) {
                 fullName = candidate.formData.fullName || fullName;
                 nickname = candidate.formData.nickname || nickname;
@@ -2346,7 +2425,6 @@
                 project = candidate.formData.project || project;
             }
 
-            // Дополнительная информация для ручных анкет
             if (type === 'manual') {
                 if (candidate.taskInputs && candidate.taskInputs['task_4_input']) {
                     extraInfoHtml += `<p><strong>AnyDesk (задание 5):</strong> ${candidate.taskInputs['task_4_input']}</p>`;
@@ -2364,7 +2442,6 @@
                 }
             }
 
-            // Файлы
             if (type === 'auto' && candidate.status === 'completed') {
                 filesHtml = `
                     <h3>Файлы автоматической проверки</h3>
