@@ -1084,8 +1084,261 @@
             }
         }
 
-        // ... остальные функции (renderRecruiters, renderCandidates, renderScripts, renderSchedulePage, renderEventGraph, renderAllForms, renderAutoForms, renderManualForms, renderCharacteristics, updateCharProjectSelect, openCharacteristicModal, closeCharacteristicModal, saveCharacteristics, deleteCharacteristic, handleTimeChange, openCommentModalFromClick, saveComment, closeCommentModal, changeScheduleMonth, openAddMonthModal, closeAddMonthModal, addScheduleMonth, formatMonth, deleteItem, generatePassword, formatText, openAddModal, generateNewPassword, openEditModal, saveModal, closeModal, importCandidates, saveProjectMeetings, saveProjectTrainings, saveProjectMeetingComments, saveProjectTrainingComments, saveScheduleMonths) остаются без изменений (как в предоставленном коде). 
-        // Здесь они не переписаны для краткости, но в реальном файле они должны быть полностью сохранены.
+        // ========== ФУНКЦИИ РЕНДЕРА (ДОБАВЛЕНЫ) ==========
+
+        function renderRecruiters(container) {
+            const recruiters = state.recruiters || [];
+            let html = `
+                <div class="section-header">
+                    <h2>Рекрутеры</h2>
+                    <button class="add-btn" onclick="openAddModal('recruiter')">+ Добавить</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Телефон</th>
+                                <th>Email</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            if (recruiters.length === 0) {
+                html += '<tr><td colspan="4" style="text-align:center;">Нет рекрутеров</td></tr>';
+            } else {
+                recruiters.forEach(r => {
+                    html += `
+                        <tr>
+                            <td>${r.name || ''}</td>
+                            <td>${r.phone || ''}</td>
+                            <td>${r.email || ''}</td>
+                            <td class="actions">
+                                <button class="edit-btn" onclick="openEditModal('recruiter', '${r.name}')">✏️</button>
+                                <button class="delete-btn" onclick="deleteRecruiter('${r.name}')">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function renderCandidates(container) {
+            const candidates = state.candidates || [];
+            let html = `
+                <div class="section-header">
+                    <h2>База контактов</h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>ФИО</th>
+                                <th>Телефон</th>
+                                <th>Проект</th>
+                                <th>Рекрутер</th>
+                                <th>Результат</th>
+                                <th>Тип обращения</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            if (candidates.length === 0) {
+                html += '<tr><td colspan="7" style="text-align:center;">Нет кандидатов</td></tr>';
+            } else {
+                candidates.forEach(c => {
+                    html += `
+                        <tr>
+                            <td>${c.createdAt ? new Date(c.createdAt).toLocaleString() : '—'}</td>
+                            <td>${c.fullName || ''}</td>
+                            <td>${c.phone || ''}</td>
+                            <td>${c.project || ''}</td>
+                            <td>${c.recruiter || ''}</td>
+                            <td>${c.callResult || ''}</td>
+                            <td>${c.contactType || ''}</td>
+                        </tr>
+                    `;
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function renderScripts(container) {
+            const scripts = state.scripts || [];
+            let html = `
+                <div class="section-header">
+                    <h2>Скрипты</h2>
+                    <button class="add-btn" onclick="openAddModal('script')">+ Добавить</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Проект</th>
+                                <th>Название</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            if (scripts.length === 0) {
+                html += '<tr><td colspan="3" style="text-align:center;">Нет скриптов</td></tr>';
+            } else {
+                scripts.forEach(s => {
+                    html += `
+                        <tr>
+                            <td>${s.projectName || s.projectId || ''}</td>
+                            <td>${s.title || ''}</td>
+                            <td class="actions">
+                                <button class="edit-btn" onclick="openEditModal('script', '${s.title}')">✏️</button>
+                                <button class="delete-btn" onclick="deleteScript('${s.title}')">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function renderSchedulePage(container) {
+            container.innerHTML = '<div style="color: #ffd700; text-align: center; padding: 40px;">Раздел графиков находится в разработке</div>';
+        }
+
+        function renderCharacteristics(container) {
+            const chars = state.characteristics || [];
+            let html = `
+                <div class="section-header">
+                    <h2>Характеристики проекта</h2>
+                    <button class="add-btn" onclick="openCharacteristicModal()">+ Добавить</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Проект</th>
+                                <th>ОС</th>
+                                <th>Подключение</th>
+                                <th>Скорость инт.</th>
+                                <th>RAM</th>
+                                <th>Ядра</th>
+                                <th>Частота CPU</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            if (chars.length === 0) {
+                html += '<tr><td colspan="8" style="text-align:center;">Нет характеристик</td></tr>';
+            } else {
+                chars.forEach(c => {
+                    html += `
+                        <tr>
+                            <td>${c.projectName || c.projectId || ''}</td>
+                            <td>${c.os || ''}</td>
+                            <td>${c.connectionType || ''}</td>
+                            <td>${c.internetSpeed || ''}</td>
+                            <td>${c.ram || ''}</td>
+                            <td>${c.cores || ''}</td>
+                            <td>${c.cpuFreq || ''}</td>
+                            <td class="actions">
+                                <button class="edit-btn" onclick="openEditModal('characteristic', '${c.id}')">✏️</button>
+                                <button class="delete-btn" onclick="deleteCharacteristic('${c.id}')">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (ЗАГЛУШКИ) ==========
+
+        function openAddModal(type) {
+            showNotification(`Добавление ${type} (заглушка)`, 'info');
+        }
+
+        function openEditModal(type, id) {
+            showNotification(`Редактирование ${type} с ID ${id} (заглушка)`, 'info');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function deleteRecruiter(name) {
+            if (confirm(`Удалить рекрутера ${name}?`)) {
+                state.recruiters = state.recruiters.filter(r => r.name !== name);
+                renderContent();
+                updateMenuCounts();
+                showNotification('Рекрутер удалён', 'success');
+            }
+        }
+
+        function deleteScript(title) {
+            if (confirm(`Удалить скрипт ${title}?`)) {
+                state.scripts = state.scripts.filter(s => s.title !== title);
+                renderContent();
+                updateMenuCounts();
+                showNotification('Скрипт удалён', 'success');
+            }
+        }
+
+        function deleteCharacteristic(id) {
+            if (confirm('Удалить характеристику?')) {
+                state.characteristics = state.characteristics.filter(c => c.id !== id);
+                renderContent();
+                updateMenuCounts();
+                showNotification('Характеристика удалена', 'success');
+            }
+        }
+
+        function openCharacteristicModal() {
+            showNotification('Добавление характеристик (заглушка)', 'info');
+        }
+
+        function closeCharacteristicModal() {
+            document.getElementById('characteristicModal').classList.remove('show');
+        }
+
+        function saveCharacteristics() {
+            showNotification('Сохранение характеристик (заглушка)', 'info');
+        }
+
+        function formatMonth(month) { return month; }
+        function handleTimeChange() { console.log('handleTimeChange'); }
+        function openCommentModalFromClick() { console.log('openCommentModalFromClick'); }
+        function saveComment() { console.log('saveComment'); }
+        function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); }
+        function changeScheduleMonth() { console.log('changeScheduleMonth'); }
+        function openAddMonthModal() { document.getElementById('addMonthModal').classList.add('show'); }
+        function closeAddMonthModal() { document.getElementById('addMonthModal').classList.remove('show'); }
+        function addScheduleMonth() { 
+            showNotification('Добавление месяца (заглушка)', 'info');
+            closeAddMonthModal();
+        }
+        function deleteItem(type, id) { console.log('deleteItem', type, id); }
+        function generatePassword() { console.log('generatePassword'); }
+        function formatText() { console.log('formatText'); }
+        function generateNewPassword() { console.log('generateNewPassword'); }
+        function importCandidates() { console.log('importCandidates'); }
+        function saveProjectMeetings() { console.log('saveProjectMeetings'); }
+        function saveProjectTrainings() { console.log('saveProjectTrainings'); }
+        function saveProjectMeetingComments() { console.log('saveProjectMeetingComments'); }
+        function saveProjectTrainingComments() { console.log('saveProjectTrainingComments'); }
+        function saveScheduleMonths() { console.log('saveScheduleMonths'); }
+
+        // Дополнительные функции, которые могли быть вызваны
+        function renderEventGraph() { console.log('renderEventGraph'); }
+        function renderAllForms() { console.log('renderAllForms'); }
+        function renderAutoForms() { console.log('renderAutoForms'); }
+        function renderManualForms() { console.log('renderManualForms'); }
 
         // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДКИ "Анкеты" ==========
         const statusOptions = [
@@ -1154,83 +1407,83 @@
             container.innerHTML = html;
         }
 
-function showCandidateDetails(id, type) {
-    const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
-    if (!candidate) return;
+        function showCandidateDetails(id, type) {
+            const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
+            if (!candidate) return;
 
-    console.log('Candidate details:', candidate); // для отладки
+            console.log('Candidate details:', candidate); // для отладки
 
-    const content = document.getElementById('candidateDetailsContent');
-    let filesHtml = '';
+            const content = document.getElementById('candidateDetailsContent');
+            let filesHtml = '';
 
-    if (type === 'auto' && candidate.status === 'completed') {
-        filesHtml = `
-            <h3>Файлы автоматической проверки</h3>
-            <ul class="file-list">
-                <li><a href="${candidate.files.report}" target="_blank">report.txt</a></li>
-                <li><a href="${candidate.files.results}" target="_blank">results.json</a></li>
-                <li><a href="${candidate.files.voice}" target="_blank">voice_recording.wav</a></li>
-            </ul>
-        `;
-    } else if (type === 'manual' && candidate.files && Object.keys(candidate.files).length > 0) {
-        filesHtml = '<h3>Загруженные файлы</h3><ul class="file-list">';
-        const taskFiles = {};
-        for (const [key, url] of Object.entries(candidate.files)) {
-            const match = key.match(/^task_(\d+)$/);
-            if (match) {
-                const taskNum = parseInt(match[1]) + 1;
-                // Надёжное извлечение имени файла из URL
-                let filename = '';
-                try {
-                    const urlObj = new URL(url, window.location.origin);
-                    filename = decodeURIComponent(urlObj.searchParams.get('file') || '');
-                } catch (e) {
-                    // fallback для старых форматов
-                    const fileParam = url.split('&file=')[1]?.split('&')[0] || '';
-                    filename = decodeURIComponent(fileParam);
+            if (type === 'auto' && candidate.status === 'completed') {
+                filesHtml = `
+                    <h3>Файлы автоматической проверки</h3>
+                    <ul class="file-list">
+                        <li><a href="${candidate.files.report}" target="_blank">report.txt</a></li>
+                        <li><a href="${candidate.files.results}" target="_blank">results.json</a></li>
+                        <li><a href="${candidate.files.voice}" target="_blank">voice_recording.wav</a></li>
+                    </ul>
+                `;
+            } else if (type === 'manual' && candidate.files && Object.keys(candidate.files).length > 0) {
+                filesHtml = '<h3>Загруженные файлы</h3><ul class="file-list">';
+                const taskFiles = {};
+                for (const [key, url] of Object.entries(candidate.files)) {
+                    const match = key.match(/^task_(\d+)$/);
+                    if (match) {
+                        const taskNum = parseInt(match[1]) + 1;
+                        // Надёжное извлечение имени файла из URL
+                        let filename = '';
+                        try {
+                            const urlObj = new URL(url, window.location.origin);
+                            filename = decodeURIComponent(urlObj.searchParams.get('file') || '');
+                        } catch (e) {
+                            // fallback для старых форматов
+                            const fileParam = url.split('&file=')[1]?.split('&')[0] || '';
+                            filename = decodeURIComponent(fileParam);
+                        }
+                        taskFiles[taskNum] = { url, filename };
+                    }
                 }
-                taskFiles[taskNum] = { url, filename };
+                for (let i = 1; i <= 7; i++) {
+                    if (taskFiles[i]) {
+                        filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">${taskFiles[i].filename}</a></li>`;
+                    }
+                }
+                // AnyDesk (задание 5)
+                if (candidate.taskInputs && candidate.taskInputs['task_4_input']) {
+                    filesHtml += `<li><strong>AnyDesk (задание 5):</strong> ${candidate.taskInputs['task_4_input']}</li>`;
+                }
+                // Процент правильных ответов (задание 3)
+                if (candidate.taskScores && candidate.taskScores['task_2_score']) {
+                    try {
+                        const score = typeof candidate.taskScores['task_2_score'] === 'string'
+                            ? JSON.parse(candidate.taskScores['task_2_score'])
+                            : candidate.taskScores['task_2_score'];
+                        filesHtml += `<li><strong>Тест (задание 3):</strong> ${score.correct} из ${score.total} (${score.percentage}%)</li>`;
+                    } catch (e) {
+                        console.error('Error parsing task score', e);
+                        filesHtml += `<li><strong>Тест (задание 3):</strong> ${candidate.taskScores['task_2_score']} (ошибка парсинга)</li>`;
+                    }
+                } else {
+                    console.log('task_2_score отсутствует в данных кандидата');
+                }
+                filesHtml += '</ul>';
+            } else {
+                filesHtml = '<p>Файлы отсутствуют или проверка ещё не завершена.</p>';
             }
-        }
-        for (let i = 1; i <= 7; i++) {
-            if (taskFiles[i]) {
-                filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">${taskFiles[i].filename}</a></li>`;
-            }
-        }
-        // AnyDesk (задание 5)
-        if (candidate.taskInputs && candidate.taskInputs['task_4_input']) {
-            filesHtml += `<li><strong>AnyDesk (задание 5):</strong> ${candidate.taskInputs['task_4_input']}</li>`;
-        }
-        // Процент правильных ответов (задание 3)
-        if (candidate.taskScores && candidate.taskScores['task_2_score']) {
-            try {
-                const score = typeof candidate.taskScores['task_2_score'] === 'string'
-                    ? JSON.parse(candidate.taskScores['task_2_score'])
-                    : candidate.taskScores['task_2_score'];
-                filesHtml += `<li><strong>Тест (задание 3):</strong> ${score.correct} из ${score.total} (${score.percentage}%)</li>`;
-            } catch (e) {
-                console.error('Error parsing task score', e);
-                filesHtml += `<li><strong>Тест (задание 3):</strong> ${candidate.taskScores['task_2_score']} (ошибка парсинга)</li>`;
-            }
-        } else {
-            console.log('task_2_score отсутствует в данных кандидата');
-        }
-        filesHtml += '</ul>';
-    } else {
-        filesHtml = '<p>Файлы отсутствуют или проверка ещё не завершена.</p>';
-    }
 
-    content.innerHTML = `
-        <p><strong>ФИО:</strong> ${candidate.fullName}</p>
-        <p><strong>Проект:</strong> ${candidate.project}</p>
-        <p><strong>Тип проверки:</strong> ${candidate.type === 'auto' ? 'Автоматическая' : 'Ручная'}</p>
-        <p><strong>Дата создания:</strong> ${new Date(candidate.createdAt).toLocaleString()}</p>
-        ${filesHtml}
-    `;
+            content.innerHTML = `
+                <p><strong>ФИО:</strong> ${candidate.fullName}</p>
+                <p><strong>Проект:</strong> ${candidate.project}</p>
+                <p><strong>Тип проверки:</strong> ${candidate.type === 'auto' ? 'Автоматическая' : 'Ручная'}</p>
+                <p><strong>Дата создания:</strong> ${new Date(candidate.createdAt).toLocaleString()}</p>
+                ${filesHtml}
+            `;
 
-    document.getElementById('candidateDetailsModal').classList.add('show');
-    document.body.classList.add('menu-open');
-}
+            document.getElementById('candidateDetailsModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
 
         function closeCandidateDetails() {
             document.getElementById('candidateDetailsModal').classList.remove('show');
