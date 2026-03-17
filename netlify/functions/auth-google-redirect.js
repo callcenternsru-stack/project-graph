@@ -2,7 +2,7 @@ const querystring = require('querystring');
 
 exports.handler = async (event) => {
   const state = event.queryStringParameters?.state || 'default';
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:8888/.netlify/functions/auth-google-callback';
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
   const params = {
@@ -20,6 +20,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'text/html' },
-    body: `<a href="${authUrl}">Перейти к авторизации</a><br><code>${authUrl}</code>`
+    body: `<a href="${authUrl}">Перейти к авторизации</a><br><pre>${authUrl}</pre>`
   };
 };
