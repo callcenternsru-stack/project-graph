@@ -17,6 +17,7 @@ exports.handler = async (event) => {
   }
 
   try {
+    // Получаем refresh token из хранилища google-tokens
     const store = getStore({
       name: 'google-tokens',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -31,6 +32,7 @@ exports.handler = async (event) => {
       };
     }
 
+    // Настраиваем OAuth2 клиент
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -40,6 +42,7 @@ exports.handler = async (event) => {
 
     const people = google.people({ version: 'v1', auth: oauth2Client });
 
+    // Создаём контакт (имя и телефон)
     const contact = {
       names: [{ givenName: fullName }],
       phoneNumbers: [{ value: phoneNumber, type: 'mobile' }],
@@ -50,7 +53,7 @@ exports.handler = async (event) => {
         requestBody: contact,
       });
     } catch (err) {
-      // Если контакт уже существует, игнорируем ошибку
+      // Если контакт уже существует, игнорируем
       if (err.code === 409) {
         console.log('Contact already exists, proceeding...');
       } else {
@@ -58,8 +61,10 @@ exports.handler = async (event) => {
       }
     }
 
+    // Очищаем номер от всего, кроме цифр
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const chatUrl = `tg://resolve?phone=${cleanPhone}`;
+    // Формируем ссылку на Telegram (универсальная)
+    const chatUrl = `https://t.me/+${cleanPhone}`;
 
     return {
       statusCode: 200,
