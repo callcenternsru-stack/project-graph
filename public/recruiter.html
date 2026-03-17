@@ -721,7 +721,7 @@
             </div>
         </div>
 
-        <!-- Панель обработки (список кандидатов, кроме "Проверка") -->
+        <!-- Панель обработки (список кандидатов, у которых нет результата звонка) -->
         <div id="processingPanel" class="processing-panel" style="display: none;">
             <h3>Список кандидатов на обработку</h3>
             <div id="processingList" class="processing-list"></div>
@@ -1234,11 +1234,11 @@
             renderVerificationList();
         }
 
-        // ========== РЕНДЕР СПИСКА ОБРАБОТКИ (без "Проверка") ==========
+        // ========== РЕНДЕР СПИСКА ОБРАБОТКИ (только кандидаты без результата звонка) ==========
         function renderProcessingList() {
             const listContainer = document.getElementById('processingList');
-            // Фильтруем кандидатов: исключаем тех, у кого результат звонка "Проверка"
-            const processingCandidates = myCandidates.filter(c => c.callResult !== "Проверка");
+            // Фильтруем кандидатов: оставляем тех, у кого нет результата звонка (пусто)
+            const processingCandidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
 
             if (processingCandidates.length === 0) {
                 listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов для обработки</div>';
