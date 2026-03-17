@@ -373,7 +373,7 @@
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
         }
 
-        /* ===== НОВЫЕ СТИЛИ ДЛЯ КНОПОК ИНТЕГРАЦИИ ===== */
+        /* ===== СТИЛИ ДЛЯ КНОПОК ИНТЕГРАЦИИ ===== */
         .telegram-btn {
             width: 100%;
             padding: 16px;
@@ -396,6 +396,31 @@
             background: #0077b5;
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(0,136,204,0.4);
+        }
+
+        /* Новая кнопка WhatsApp */
+        .whatsapp-btn {
+            width: 100%;
+            padding: 16px;
+            background: #25D366;
+            color: white;
+            border: 2px solid #25D366;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .whatsapp-btn:hover {
+            background: #20b859;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
         }
 
         .google-connect-btn {
@@ -576,9 +601,10 @@
                         </div>
                     </div>
 
-                    <!-- Кнопки: сохранить, Telegram, подключить Google -->
+                    <!-- Кнопки: сохранить, Telegram, WhatsApp, подключить Google -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
                     <button type="button" class="telegram-btn" onclick="sendTelegramInvite()">✈️ Отправить в Telegram</button>
+                    <button type="button" class="whatsapp-btn" onclick="sendWhatsApp()">📱 Отправить в WhatsApp</button>
                     <button type="button" class="google-connect-btn" id="googleConnectBtn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
                 </form>
             </div>
@@ -1106,6 +1132,38 @@
                     showNotification('Необходимо подключить Google Контакты', 'error');
                 } else {
                     showNotification(data.error || 'Ошибка при добавлении контакта', 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                showNotification('Ошибка сети: ' + error.message, 'error');
+            }
+        }
+
+        // ========== НОВАЯ ФУНКЦИЯ ДЛЯ WHATSAPP ==========
+        async function sendWhatsApp() {
+            const phone = document.getElementById('phoneNumber').value.trim();
+            const fullName = document.getElementById('fullName').value.trim();
+
+            if (!phone || !fullName) {
+                showNotification('Заполните ФИО и номер телефона', 'error');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/.netlify/functions/send-whatsapp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: phone })
+                });
+                const data = await response.json();
+                hideLoading();
+
+                if (response.ok) {
+                    window.open(data.whatsappUrl, '_blank');
+                } else {
+                    showNotification(data.error || 'Ошибка при открытии WhatsApp', 'error');
                 }
             } catch (error) {
                 hideLoading();
