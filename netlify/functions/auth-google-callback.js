@@ -1,6 +1,6 @@
 // netlify/functions/auth-google-callback.js
 const { getStore } = require('@netlify/blobs');
-const fetch = require('node-fetch');
+// const fetch = require('node-fetch'); // удалено – используем глобальный fetch
 
 exports.handler = async (event) => {
   const { code, state } = event.queryStringParameters;
@@ -37,9 +37,8 @@ exports.handler = async (event) => {
       throw new Error(tokens.error || 'Failed to exchange code');
     }
 
-    // Здесь нужно получить ID рекрутера из state или сессии.
-    // Пока используем фиктивный ID. В реальности вы должны передать его из интерфейса.
-    const recruiterId = 'test-recruiter'; // Замените на реальный идентификатор
+    // В реальном проекте нужно получать ID рекрутера из параметра state
+    const recruiterId = 'test-recruiter'; // замените на реальный идентификатор
 
     const store = getStore({
       name: 'google-tokens',
