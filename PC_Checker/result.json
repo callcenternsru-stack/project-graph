@@ -1,0 +1,13 @@
+﻿{
+    "VoiceRecorded":  false,
+    "Hardware":  null,
+    "Timestamp":  "2026-03-14 13:40:08",
+    "TypingTest":  null,
+    "CandidateID":  "test",
+    "InternetSpeed":  {
+                          "ServerName":  "Не измерялось",
+                          "UploadMbps":  0,
+                          "DownloadMbps":  0,
+                          "Ping":  0
+                      }
+}

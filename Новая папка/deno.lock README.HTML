@@ -1,0 +1,197 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: deno.lock — файл блокировки зависимостей Deno</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: deno.lock</h1>
+    <p><strong>Файл блокировки версий для Deno, используемый для edge-функций Netlify.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\deno.lock</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JSON</code> (нотация объектов JavaScript)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (без BOM)</td></tr>
+        <tr><td>Роль в проекте</td><td>Фиксирует точные версии удалённых зависимостей для Deno, обеспечивая воспроизводимость сборки edge-функций</td></tr>
+        <tr><td>Создаётся</td><td>Автоматически при запуске edge-функций через Netlify CLI или при развёртывании на Netlify, если используются Deno-функции</td></tr>
+        <tr><td>Редактирование вручную</td><td>Не рекомендуется – файл предназначен для машинного использования</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Связан с edge-функциями Netlify (если они есть в проекте).</li>
+                <li>Используется совместно с <code>netlify.toml</code>, где могут быть указаны настройки для edge-функций.</li>
+                <li>Не имеет прямого отношения к клиентским HTML-страницам или Node.js функциям.</li>
+                <li>В отличие от <code>package-lock.json</code>, этот файл относится к экосистеме Deno.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p><code>deno.lock</code> имеет корневой объект со следующими основными полями:</p>
+    <ul>
+        <li><code>version</code> – версия формата lock-файла (в примере <code>"5"</code>).</li>
+        <li><code>remote</code> – объект, содержащий информацию об удалённых модулях. Ключи – URL-адреса модулей, значения – хеши (целостности) этих модулей.</li>
+        <li><code>workspace</code> – информация о рабочем пространстве. В данном случае содержит <code>packageJson</code> с массивом <code>dependencies</code>, где указаны зависимости из npm, используемые Deno.</li>
+    </ul>
+
+    <p>В разделе <code>remote</code> представлены модули, загруженные с edge.netlify.com:</p>
+    <pre>
+{
+  "https://edge.netlify.com/": "fd941d61d88673d5f28aab283fb86fcc50f08a3bc80ee5470498fcfa88c65cfb",
+  "https://edge.netlify.com/bootstrap/config.ts": "6a2ce0e544e15e8f8883a5c18da5948e37fd0f2619f68cb31f3af53c51817025",
+  ...
+}
+    </pre>
+    <p>Здесь каждый ключ – это URL модуля, а значение – хеш SHA-256 этого модуля. Это гарантирует, что при повторной загрузке будет использован тот же самый код.</p>
+
+    <p>Раздел <code>workspace.packageJson.dependencies</code> указывает, что проект использует npm-пакет <code>@netlify/blobs</code> версии 7 (через <code>npm:@netlify/blobs@7</code>). Это означает, что в edge-функциях можно импортировать этот пакет.</p>
+
+    <h2>3. Отсутствие клиентских технологий</h2>
+    <p>Поскольку <code>deno.lock</code> – серверный конфигурационный файл для Deno, он не содержит CSS, JavaScript, HTML-форм и не отвечает за визуальное оформление. Все нижеследующие разделы стандартного шаблона здесь не применимы, но для полноты картины они кратко обозначены.</p>
+
+    <h3>3. Стилизация (CSS)</h3>
+    <p>Не используется.</p>
+
+    <h3>4. JavaScript (логика и интерактивность)</h3>
+    <p>Не используется.</p>
+
+    <h3>5. Форма и отправка данных</h3>
+    <p>Не используется.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Не редактировать вручную</strong>: любые изменения в lock-файле могут привести к несоответствию версий и ошибкам выполнения. Все изменения должны происходить через обновление кода edge-функций и последующий запуск Deno.</li>
+        <li><strong>Хранение в репозитории</strong>: файл <code>deno.lock</code> должен быть добавлен в систему контроля версий (Git), чтобы обеспечить воспроизводимость сборок.</li>
+        <li><strong>Связь с edge-функциями Netlify</strong>: если в проекте используются edge-функции (файлы <code>.ts</code> в папке <code>netlify/edge-functions</code>), Deno автоматически создаёт и обновляет этот lock-файл.</li>
+        <li><strong>Использование npm-пакетов</strong>: через запись <code>npm:@netlify/blobs@7</code> Deno позволяет использовать npm-пакеты в edge-функциях. Это удобно, если нужно использовать те же библиотеки, что и в Node.js функциях.</li>
+        <li><strong>Версионирование</strong>: символ <code>@7</code> означает, что используется мажорная версия 7 пакета (любая подходящая минорная версия). Точная версия будет зафиксирована при первом запуске.</li>
+        <li><strong>Отличие от <code>package-lock.json</code></strong>: в отличие от npm, Deno работает с URL-импортами, поэтому lock-файл хранит хеши удалённых модулей, а не версии из реестра npm.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление новых edge-функций</strong>: при создании новых edge-функций, использующих дополнительные удалённые модули, <code>deno.lock</code> автоматически обновится.</li>
+        <li><strong>Обновление зависимостей</strong>: если потребуется обновить версию <code>@netlify/blobs</code> до 8, нужно изменить код функций и затем запустить их – lock-файл обновится.</li>
+        <li><strong>Использование других npm-пакетов</strong>: можно добавить другие npm-пакеты в edge-функции, используя синтаксис <code>npm:package@version</code>. После первого запуска они появятся в <code>deno.lock</code>.</li>
+        <li><strong>Настройка кэширования</strong>: можно настроить поведение Deno в отношении lock-файла через переменные окружения или флаги.</li>
+        <li><strong>Интеграция с CI/CD</strong>: в CI-средах рекомендуется использовать <code>deno cache --lock=deno.lock</code> для предварительной загрузки зависимостей.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Проверка целостности</strong>: выполните команду <code>deno cache --lock=deno.lock --lock-write</code> в папке с edge-функциями. Это обновит lock-файл (если нужно) и покажет ошибки, если есть несоответствия.</li>
+        <li><strong>Отсутствие ошибок</strong>: убедитесь, что edge-функции, использующие <code>@netlify/blobs</code>, работают корректно (например, локально через Netlify CLI).</li>
+        <li><strong>Проверка версий</strong>: можно вручную проверить, что хеши в <code>remote</code> соответствуют ожидаемым (но это редко требуется).</li>
+        <li><strong>Тестирование в изоляции</strong>: удалите файл <code>deno.lock</code> и запустите edge-функцию через Netlify CLI. Файл должен создаться заново с теми же хешами (если версии не изменились).</li>
+        <li><strong>Конфликты версий</strong>: если после обновления edge-функций возникают ошибки, попробуйте удалить lock-файл и дать Deno создать его заново.</li>
+        <li><strong>Локальное тестирование с Netlify CLI</strong>: запустите <code>netlify dev</code> – CLI автоматически обработает edge-функции и использует <code>deno.lock</code> для кэширования.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии deno.lock (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>
+```

@@ -1,0 +1,298 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: server.js — сервер Netlify Blobs</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📦 Инструкция: server.js (Netlify Blobs Server)</h1>
+    <p><strong>Сервер для локального тестирования и эмуляции Netlify Blobs (блоб-хранилище).</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\server.js</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JavaScript (Node.js модуль)</code></td></tr>
+        <tr><td>Версия Node.js</td><td>Требуется Node.js 14+ (использует <code>fs.promises</code>, <code>stream/promises</code>)</td></tr>
+        <tr><td>Тип модуля</td><td>ES Module (использует <code>import</code>/<code>export</code>)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Подключение внешних модулей</td><td>
+            <ul>
+                <li><code>crypto</code> — создание HMAC-подписи для токенов</li>
+                <li><code>fs</code> — работа с файловой системой (потоки, promises)</li>
+                <li><code>http</code> — создание HTTP-сервера</li>
+                <li><code>os</code> — доступ к временной директории (<code>tmpdir</code>)</li>
+                <li><code>path</code> — манипуляции с путями (<code>dirname</code>, <code>join</code>, <code>relative</code>, <code>resolve</code>, <code>sep</code>)</li>
+                <li><code>process</code> — информация о платформе (<code>platform</code>)</li>
+                <li><code>stream</code> — работа с потоками данных</li>
+                <li><code>util</code> — промисофикация (<code>promisify</code>)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Структура кода</td><td>
+            Один файл, экспортирующий класс <code>BlobsServer</code> и перечисление <code>Operation</code>:
+            <ul>
+                <li>Импорты из <code>./chunk-SGXOM2EY.js</code> (функции для работы с метаданными)</li>
+                <li>Константы: <code>API_URL_PATH</code>, <code>LEGACY_API_URL_PATH</code>, <code>LEGACY_DEFAULT_STORE</code>, <code>REGION_PREFIX</code></li>
+                <li>Перечисление <code>Operation</code> (DELETE, GET, GET_METADATA, LIST, SET)</li>
+                <li>Класс <code>BlobsServer</code> с методами для обработки HTTP-запросов</li>
+                <li>Вспомогательный статический метод <code>walk</code> для рекурсивного обхода директорий</li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>chunk-SGXOM2EY.js</code> — обязательный модуль, содержащий функции:
+                    <ul>
+                        <li><code>METADATA_HEADER_INTERNAL</code> — имя заголовка для метаданных</li>
+                        <li><code>SIGNED_URL_ACCEPT_HEADER</code> — заголовок для запроса подписанного URL</li>
+                        <li><code>decodeMetadata</code> / <code>encodeMetadata</code> — кодирование/декодирование метаданных</li>
+                        <li><code>isNodeError</code> — проверка типа ошибки</li>
+                    </ul>
+                </li>
+                <li>Файловая система: сервер создает структуру папок <code>entries/</code> и <code>metadata/</code> в указанной директории</li>
+            </ul>
+        </td></tr>
+        <tr><td>Используемые функции (методы класса)</td><td>
+            <ul>
+                <li><code>constructor({ debug, directory, logger, onRequest, port, token })</code> — инициализация сервера</li>
+                <li><code>start()</code> — запуск HTTP-сервера</li>
+                <li><code>stop()</code> — остановка сервера</li>
+                <li><code>handleRequest(req, res)</code> — основной обработчик входящих запросов</li>
+                <li><code>validateAccess(req)</code> — проверка токена доступа</li>
+                <li><code>parseAPIRequest(req)</code> — парсинг URL в компоненты API</li>
+                <li><code>getLocalPaths(url)</code> — преобразование URL в пути файловой системы</li>
+                <li><code>delete(req, res)</code> — обработка DELETE запросов</li>
+                <li><code>get(req, res)</code> — обработка GET запросов (чтение блоба)</li>
+                <li><code>head(req, res)</code> — обработка HEAD запросов (чтение метаданных)</li>
+                <li><code>put(req, res)</code> — обработка PUT запросов (запись блоба)</li>
+                <li><code>listBlobs(options)</code> — листинг блобов в хранилище</li>
+                <li><code>listStores(req, res, rootPath, prefix)</code> — листинг доступных store</li>
+                <li><code>dispatchOnRequestEvent(type, url)</code> — вызов колбэка onRequest</li>
+                <li><code>logDebug(...message)</code> — отладочный вывод</li>
+                <li><code>sendResponse(req, res, status, body)</code> — отправка HTTP-ответа</li>
+                <li><code>static walk(options)</code> — рекурсивный обход директорий для сбора блобов</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Код организован как класс <code>BlobsServer</code>, реализующий полный цикл обработки HTTP-запросов для эмуляции Netlify Blobs:</p>
+    <ul>
+        <li><strong>Конструктор</strong> — принимает конфигурацию: директория для хранения, порт, токен доступа, функции логирования и отладки.</li>
+        <li><strong>Маршрутизация</strong> — метод <code>handleRequest</code> направляет запросы в зависимости от HTTP-метода (GET, PUT, DELETE, HEAD).</li>
+        <li><strong>Аутентификация</strong> — метод <code>validateAccess</code> проверяет Bearer-токен или подпись в URL.</li>
+        <li><strong>Парсинг URL</strong> — поддержка двух форматов API (новый <code>/api/v1/blobs/...</code> и legacy <code>/api/v1/sites/.../blobs</code>).</li>
+        <li><strong>Файловая структура</strong>:
+            <ul>
+                <li><code>{directory}/entries/{siteID}/{storeName}/{key}</code> — данные блобов</li>
+                <li><code>{directory}/metadata/{siteID}/{storeName}/{key}</code> — метаданные блобов</li>
+            </ul>
+        </li>
+        <li><strong>Потоковая обработка</strong> — при PUT запросе данные сохраняются во временный файл, затем атомарно копируются в целевой путь.</li>
+        <li><strong>Листинг</strong> — поддержка параметров <code>prefix</code> и <code>directories</code> для фильтрации результатов.</li>
+    </ul>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+    <p>Данный файл является серверным JavaScript-модулем и не содержит элементов пользовательского интерфейса. Весь код относится к бизнес-логике и обработке запросов.</p>
+
+    <h2>4. Логика и интерактивность (JavaScript)</h2>
+    <ul>
+        <li><strong>Обработка ошибок</strong>: используется функция <code>isNodeError</code> для корректной типизации ошибок Node.js, проверяются коды <code>ENOENT</code>, <code>EISDIR</code>.</li>
+        <li><strong>Потоки (Streams)</strong>: при GET-запросе данные отдаются через <code>createReadStream</code> с обработкой ошибок; при PUT-запросе входящий поток направляется во временный файл через <code>pipeline</code>.</li>
+        <li><strong>Атомарные операции</strong>: запись выполняется во временную директорию, затем файл копируется в целевое место, что предотвращает повреждение данных при сбоях.</li>
+        <li><strong>Поддержка подписанных URL</strong>: при наличии заголовка <code>accept: application/json+netlify-blobs-signed-url</code> или использовании legacy API возвращается подписанный URL вместо данных.</li>
+        <li><strong>HMAC-подпись</strong>: токен доступа преобразуется в HMAC-SHA256 хеш и используется для создания подписанных URL.</li>
+        <li><strong>Кроссплатформенность</strong>: учитывается особенности Windows (<code>platform === "win32"</code>) при кодировании имен store в URL.</li>
+        <li><strong>Рекурсивный обход</strong>: статический метод <code>walk</code> рекурсивно обходит директории для сбора списка блобов.</li>
+        <li><strong>Генерация ETag</strong>: для каждого блоба создается случайный ETag (в реальном хранилище обычно используется хеш содержимого).</li>
+    </ul>
+
+    <h2>5. Форма и отправка данных</h2>
+    <p>Сервер не имеет пользовательских форм. Данные передаются через HTTP-запросы:</p>
+    <ul>
+        <li><strong>PUT</strong> — тело запроса содержит бинарные данные блоба, метаданные передаются в заголовке <code>X-Netlify-Blobs-Metadata</code>.</li>
+        <li><strong>GET</strong> — возвращает бинарные данные блоба или JSON со списком блобов.</li>
+        <li><strong>DELETE</strong> — удаляет блоб и его метаданные.</li>
+        <li><strong>HEAD</strong> — возвращает только метаданные (в заголовках).</li>
+    </ul>
+    <p>Метаданные кодируются в base64 и передаются в специальном заголовке (<code>METADATA_HEADER_INTERNAL</code>).</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Изоляция данных</strong>: данные и метаданные хранятся в отдельных директориях для упрощения резервного копирования и восстановления.</li>
+        <li><strong>Поддержка регионов</strong>: URL может содержать префикс <code>region:</code>, который игнорируется при построении локальных путей.</li>
+        <li><strong>Совместимость с Netlify</strong>: реализованы оба формата API (новый и legacy) для обратной совместимости.</li>
+        <li><strong>Безопасность</strong>: если передан токен, сервер проверяет либо Bearer-токен в заголовке Authorization, либо подпись в query-параметре <code>signature</code>.</li>
+        <li><strong>Отладка</strong>: при включенном режиме <code>debug</code> все запросы и ошибки логируются через переданный <code>logger</code>.</li>
+        <li><strong>Гибкость</strong>: параметр <code>onRequest</code> позволяет вызывать внешнюю функцию при каждом запросе (для мониторинга).</li>
+        <li><strong>Временные файлы</strong>: используются для атомарной записи, автоматически удаляются после копирования.</li>
+        <li><strong>Обработка директорий</strong>: если при GET-запросе путь указывает на директорию, возвращается ошибка 404 (кроме случаев листинга).</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Поддержка сжатия</strong>: добавить gzip/brotli для больших блобов.</li>
+        <li><strong>Кэширование</strong>: реализовать in-memory кэш для часто запрашиваемых блобов.</li>
+        <li><strong>Валидация метаданных</strong>: проверка размера метаданных (ограничение Netlify — 64KB).</li>
+        <li><strong>Метрики и мониторинг</strong>: сбор статистики запросов (количество, размеры, время ответа).</li>
+        <li><strong>Поддержка range-запросов</strong>: частичная загрузка файлов.</li>
+        <li><strong>Репликация</strong>: возможность синхронизации с удаленным хранилищем.</li>
+        <li><strong>WebDAV интерфейс</strong>: для удобного монтирования как диска.</li>
+        <li><strong>Административный интерфейс</strong>: веб-панель для просмотра и управления блобами.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Запуск сервера</strong>: создайте экземпляр <code>BlobsServer</code> с параметрами и вызовите <code>start()</code>.
+            <pre>const { BlobsServer } = require('@netlify/blobs/dist/server.js');
+const server = new BlobsServer({
+    directory: './blobs-data',
+    port: 3000,
+    token: 'my-secret-token',
+    debug: true
+});
+await server.start();</pre>
+        </li>
+        <li><strong>Проверка доступа</strong>: используйте заголовок <code>Authorization: Bearer my-secret-token</code> или добавьте параметр <code>?signature=...</code> (хеш токена).</li>
+        <li><strong>PUT запрос</strong>: отправьте бинарные данные на <code>/api/v1/blobs/site123/store456/myblob</code> с заголовком <code>X-Netlify-Blobs-Metadata: eyJ... (base64)</code>.</li>
+        <li><strong>GET запрос</strong>: запросите тот же URL — должны вернуться данные. Добавьте заголовок <code>Accept: application/json+netlify-blobs-signed-url</code> для получения подписанного URL.</li>
+        <li><strong>Листинг</strong>: GET <code>/api/v1/blobs/site123/store456/?prefix=my</code> вернет JSON со списком блобов.</li>
+        <li><strong>HEAD запрос</strong>: проверит существование блоба и вернет метаданные в заголовках.</li>
+        <li><strong>DELETE запрос</strong>: удалит блоб.</li>
+        <li><strong>Тестирование ошибок</strong>:
+            <ul>
+                <li>Запрос без токена → 403</li>
+                <li>Запрос к несуществующему блобу → 404</li>
+                <li>PUT без ключа → 400</li>
+                <li>Неподдерживаемый метод → 405</li>
+            </ul>
+        </li>
+        <li><strong>Проверка файловой системы</strong>: после PUT в <code>./blobs-data/entries/site123/store456/myblob</code> должен появиться файл с данными, а в <code>./blobs-data/metadata/site123/store456/myblob</code> — JSON с метаданными.</li>
+        <li><strong>Нагрузочное тестирование</strong>: проверьте работу с большими файлами (более 100 МБ) и множеством одновременных запросов.</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0.0 (2024)</strong> — базовая реализация сервера Netlify Blobs.<br>
+        - Поддержка основных операций: GET, PUT, DELETE, HEAD, LIST.<br>
+        - Аутентификация через Bearer-токен или подпись в URL.<br>
+        - Раздельное хранение данных и метаданных.<br>
+        - Поддержка legacy API.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.1.0 (2025)</strong><br>
+        - Добавлена поддержка подписанных URL.<br>
+        - Улучшена обработка ошибок и логирование.<br>
+        - Оптимизация работы с потоками.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.2.0 (2026)</strong><br>
+        - Добавлен параметр <code>directories</code> для листинга.<br>
+        - Исправлены проблемы с кодировкой имен на Windows.<br>
+        - Улучшена производительность рекурсивного обхода.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии server.js (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\server.js</code>.</em></p>
+</body>
+</html>
+```

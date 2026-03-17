@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: package.json (пакет @netlify/blobs) — манифест npm-пакета</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📦 Инструкция: package.json (пакет @netlify/blobs)</h1>
+    <p><strong>Манифест npm-пакета <code>@netlify/blobs</code>, описывающий его метаданные, зависимости и скрипты сборки.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\package.json</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JSON</code> (нотация объектов JavaScript)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (без BOM)</td></tr>
+        <tr><td>Роль в проекте</td><td>Определяет метаданные пакета, его точку входа, экспорты, скрипты сборки и разработки, а также зависимости, необходимые для работы библиотеки <code>@netlify/blobs</code></td></tr>
+        <tr><td>Создаётся</td><td>Автоматически при публикации пакета в npm, редактируется разработчиками библиотеки</td></tr>
+        <tr><td>Редактирование</td><td>Не требуется для использования пакета, но может быть полезно для локальной разработки или форка</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Указывает на основные файлы пакета: <code>./dist/main.cjs</code>, <code>./dist/main.js</code>, <code>./dist/main.d.ts</code> и аналоги для серверной части.</li>
+                <li>Связан с файлами деклараций (<code>server.d.ts</code>), которые перечислены в поле <code>files</code>.</li>
+                <li>Содержит скрипты, которые используют инструменты из <code>devDependencies</code> (esbuild, tsup, typescript, vitest).</li>
+                <li>Не имеет прямого отношения к клиентским страницам, но необходим для работы Netlify Functions в проекте.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p><code>package.json</code> содержит следующие основные поля:</p>
+    <ul>
+        <li><code>name</code> – название пакета в реестре npm: <code>@netlify/blobs</code>.</li>
+        <li><code>version</code> – версия пакета (<code>7.4.0</code>).</li>
+        <li><code>description</code> – краткое описание: клиент для Netlify Blob Store.</li>
+        <li><code>type</code> – <code>"module"</code> указывает, что по умолчанию пакет использует ES-модули.</li>
+        <li><code>engines</code> – требуемая версия Node.js: <code>^14.16.0 || >=16.0.0</code>.</li>
+        <li><code>main</code>, <code>module</code>, <code>types</code> – точки входа для разных систем сборки (CommonJS, ESM, TypeScript).</li>
+        <li><code>exports</code> – современное описание точек входа с поддержкой разных условий (<code>require</code>, <code>import</code>). Определяет два основных экспорта:
+            <ul>
+                <li><code>"."</code> – основной экспорт (клиентская часть).</li>
+                <li><code>"./server"</code> – серверная часть (например, для работы в Node.js окружении).</li>
+                <li><code>"./package.json"</code> – доступ к самому манифесту.</li>
+            </ul>
+        </li>
+        <li><code>files</code> – массив файлов и папок, которые включаются в публикацию пакета. Здесь: <code>dist/**/*</code> и <code>server.d.ts</code>.</li>
+        <li><code>scripts</code> – набор команд для разработки и сборки:
+            <ul>
+                <li><code>build</code> – сборка пакета (запускает <code>build:*</code> последовательно).</li>
+                <li><code>build:check</code> – проверка типов TypeScript.</li>
+                <li><code>build:transpile</code> – транспиляция с помощью <code>build.mjs</code>.</li>
+                <li><code>dev</code> – сборка в режиме watch.</li>
+                <li><code>prepare</code> – установка husky (хуки git).</li>
+                <li><code>prepublishOnly</code> – запускается перед публикацией: чистая установка и тесты.</li>
+                <li><code>prepack</code> – сборка перед упаковкой.</li>
+                <li><code>test</code>, <code>test:dev</code>, <code>test:ci</code> – запуск тестов через vitest.</li>
+                <li><code>format</code>, <code>format:ci</code> – проверка и исправление форматирования (eslint, prettier).</li>
+            </ul>
+        </li>
+        <li><code>config</code> – пользовательские параметры для eslint и prettier.</li>
+        <li><code>license</code>, <code>repository</code>, <code>bugs</code>, <code>author</code> – метаданные об авторе и репозитории.</li>
+        <li><code>devDependencies</code> – зависимости, необходимые для разработки пакета (линтеры, тесты, сборщики).</li>
+    </ul>
+
+    <h2>3. Отсутствие клиентских технологий</h2>
+    <p>Поскольку это манифест npm-пакета, он не содержит CSS, JavaScript, HTML-форм и не отвечает за визуальное оформление. Все нижеследующие разделы стандартного шаблона здесь не применимы, но для полноты картины они кратко обозначены.</p>
+
+    <h3>3. Стилизация (CSS)</h3>
+    <p>Не используется.</p>
+
+    <h3>4. JavaScript (логика и интерактивность)</h3>
+    <p>Не используется.</p>
+
+    <h3>5. Форма и отправка данных</h3>
+    <p>Не используется.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Двойная поставка (dual package)</strong>: пакет предоставляет как CommonJS, так и ESM версии, что обеспечивает совместимость с любыми современными сборщиками и окружениями. Это достигается за счёт поля <code>exports</code> и отдельных файлов <code>.cjs</code>, <code>.js</code>.</li>
+        <li><strong>Типы TypeScript</strong>: включены декларации (<code>.d.ts</code> и <code>.d.cts</code>), что позволяет использовать пакет в проектах с TypeScript без дополнительной установки типов.</li>
+        <li><strong>Серверный и клиентский экспорт</strong>: через <code>"./server"</code> выделена серверная часть, что может быть полезно для окружений, где не нужны клиентские API (например, в pure Node.js).</li>
+        <li><strong>Скрипты сборки</strong>: используют современные инструменты: esbuild для быстрой транспиляции, tsup для упаковки, vitest для тестирования. Это обеспечивает высокую скорость разработки.</li>
+        <li><strong>Готовность к CI</strong>: наличие скриптов <code>test:ci</code> и <code>format:ci</code> указывает на интеграцию с непрерывной интеграцией.</li>
+        <li><strong>Зависимости только для разработки</strong>: все зависимости (<code>devDependencies</code>) не попадают в конечный пакет, что уменьшает его размер.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление новых экспортов</strong>: можно определить дополнительные подпути, например <code>"./node"</code> или <code>"./browser"</code>, если потребуется разделить логику для разных сред.</li>
+        <li><strong>Обновление версий зависимостей</strong>: регулярное обновление <code>devDependencies</code> для поддержания безопасности и производительности.</li>
+        <li><strong>Изменение системы сборки</strong>: переход на другой бандлер или добавление дополнительных этапов (минификация, обфускация).</li>
+        <li><strong>Публикация в другой реестр</strong>: можно добавить конфигурацию для публикации в GitHub Packages или другой реестр.</li>
+        <li><strong>Добавление примеров использования</strong>: включение директории <code>examples</code> в <code>files</code> для демонстрации.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Локальное тестирование пакета</strong>: если необходимо протестировать изменения в этом пакете в контексте основного проекта, можно использовать <code>npm link</code> или <code>yarn link</code>. Для этого нужно собрать пакет (<code>npm run build</code>) и затем связать.</li>
+        <li><strong>Запуск тестов</strong>: перейдите в папку пакета и выполните <code>npm test</code> – запустятся тесты через vitest. Убедитесь, что все тесты проходят.</li>
+        <li><strong>Проверка типов</strong>: выполните <code>npm run build:check</code> для проверки TypeScript без сборки.</li>
+        <li><strong>Линтинг и форматирование</strong>: <code>npm run format</code> проверит и исправит стиль кода.</li>
+        <li><strong>Сборка пакета</strong>: выполните <code>npm run build</code> – в папке <code>dist</code> должны появиться все необходимые файлы.</li>
+        <li><strong>Проверка совместимости</strong>: убедитесь, что пакет правильно импортируется в CommonJS (<code>require('@netlify/blobs')</code>) и ESM (<code>import {...} from '@netlify/blobs'</code>).</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии package.json пакета @netlify/blobs (версия 7.4.0, март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии пакета 7.4.0).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления пакета.</em></li>
+    </ul>
+</body>
+</html>

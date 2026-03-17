@@ -1,0 +1,241 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: server.d.ts — TypeScript декларации для Netlify Blobs сервера</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: server.d.ts</h1>
+    <p><strong>Файл деклараций TypeScript для сервера Netlify Blobs (описание типов, интерфейсов и классов).</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\server.d.ts</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>TypeScript Declaration File (.d.ts)</code></td></tr>
+        <tr><td>Версия TypeScript</td><td>Совместим с TypeScript 4.x и выше</td></tr>
+        <tr><td>Тип модуля</td><td>ES Module (использует <code>import</code>/<code>export</code>)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Подключение внешних типов</td><td>
+            <ul>
+                <li><code>node:http</code> — типы для HTTP сервера (<code>IncomingMessage</code>, <code>ServerResponse</code>)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Структура кода</td><td>
+            Один файл, содержащий:
+            <ul>
+                <li>Тип <code>Logger</code> — функция логирования</li>
+                <li>Перечисление <code>Operation</code> — возможные операции (DELETE, GET, GET_METADATA, LIST, SET)</li>
+                <li>Тип <code>OnRequestCallback</code> — колбэк для отслеживания запросов</li>
+                <li>Интерфейс <code>BlobsServerOptions</code> — параметры конструктора сервера</li>
+                <li>Класс <code>BlobsServer</code> — полное описание методов и свойств</li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>server.js</code> — реализация сервера, для которого этот файл предоставляет типы</li>
+                <li>Используется IDE и компилятором TypeScript для автодополнения и проверки типов</li>
+            </ul>
+        </td></tr>
+        <tr><td>Экспортируемые элементы</td><td>
+            <ul>
+                <li><code>BlobsServer</code> — класс сервера</li>
+                <li><code>OnRequestCallback</code> — тип колбэка</li>
+                <li><code>Operation</code> — перечисление операций</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Файл деклараций описывает публичный API модуля <code>@netlify/blobs/dist/server.js</code> и включает:</p>
+    <ul>
+        <li><strong>Базовые типы</strong>:
+            <ul>
+                <li><code>type Logger = (...message: unknown[]) => void</code> — функция для логирования</li>
+                <li><code>enum Operation</code> — строковое перечисление возможных операций (используется в <code>onRequest</code>)</li>
+                <li><code>type OnRequestCallback</code> — колбэк с параметрами <code>{ type: Operation; url: string }</code></li>
+            </ul>
+        </li>
+        <li><strong>Интерфейс <code>BlobsServerOptions</code></strong> — описывает все настройки для создания сервера:
+            <ul>
+                <li><code>debug</code> — включение отладочного режима</li>
+                <li><code>directory</code> — базовая директория для хранения файлов</li>
+                <li><code>logger</code> — кастомная функция логирования</li>
+                <li><code>onRequest</code> — колбэк для мониторинга запросов</li>
+                <li><code>port</code> — порт сервера</li>
+                <li><code>token</code> — токен аутентификации</li>
+            </ul>
+        </li>
+        <li><strong>Класс <code>BlobsServer</code></strong> — основная часть декларации:
+            <ul>
+                <li>Конструктор с параметрами <code>BlobsServerOptions</code></li>
+                <li>Публичные методы: <code>start()</code>, <code>stop()</code>, <code>delete()</code>, <code>get()</code>, <code>head()</code>, <code>put()</code>, <code>listBlobs()</code>, <code>listStores()</code>, <code>handleRequest()</code>, <code>parseAPIRequest()</code>, <code>validateAccess()</code>, <code>getLocalPaths()</code>, <code>sendResponse()</code>, <code>logDebug()</code></li>
+                <li>Приватные поля: <code>address</code>, <code>server</code>, <code>tokenHash</code> и др.</li>
+                <li>Статический метод <code>walk()</code> (помечен как private)</li>
+            </ul>
+        </li>
+    </ul>
+    <p>Семантика файла — полностью описательная, не содержит исполняемого кода.</p>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+    <p>Данный файл является декларацией типов и не содержит элементов пользовательского интерфейса или стилей.</p>
+
+    <h2>4. JavaScript (логика и интерактивность) — не применимо</h2>
+    <p>Файл <code>.d.ts</code> не содержит исполняемого JavaScript-кода. Он используется исключительно для статического анализа типов в проектах на TypeScript.</p>
+
+    <h2>5. Форма и отправка данных — не применимо</h2>
+    <p>Декларации не описывают формы или отправку данных, только типы для соответствующих методов.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Полнота описания</strong>: файл покрывает все публичные методы класса <code>BlobsServer</code> с правильными типами параметров и возвращаемых значений.</li>
+        <li><strong>Поддержка перегрузок</strong>: метод <code>getLocalPaths</code> описан с тремя возможными возвращаемыми типами (через union).</li>
+        <li><strong>Асинхронность</strong>: все методы, работающие с файловой системой, помечены как <code>Promise&lt;void&gt;</code> или <code>Promise&lt;...&gt;</code>.</li>
+        <li><strong>Типизация HTTP</strong>: используются встроенные типы Node.js <code>http.IncomingMessage</code> и <code>http.ServerResponse</code>.</li>
+        <li><strong>Опциональные поля</strong>: многие параметры в интерфейсах помечены как опциональные (<code>?</code>), что отражает реализацию.</li>
+        <li><strong>Строгая типизация</strong>: использование <code>unknown[]</code> для логгера, <code>string | undefined</code> для ключей и т.д.</li>
+        <li><strong>Совместимость с JavaScript</strong>: декларации позволяют использовать библиотеку в проектах как с TypeScript, так и с JavaScript (с автодополнением в IDE).</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление generic-типов</strong>: например, для метаданных можно было бы добавить дженерик <code>BlobsServer&lt;T&gt;</code>.</li>
+        <li><strong>Расширение типов ошибок</strong>: описание специфических ошибок, которые может выбрасывать сервер.</li>
+        <li><strong>Типизация событий</strong>: более детальное описание событий для <code>onRequest</code>.</li>
+        <li><strong>Поддержка строгих режимов</strong>: добавление utility-типов для stricter null checks.</li>
+        <li><strong>Документирование в JSDoc</strong>: уже присутствует, но можно добавить примеры использования.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Проверка типов</strong>: в проекте TypeScript можно скомпилировать код, использующий <code>BlobsServer</code>, и убедиться в отсутствии ошибок типов.</li>
+        <li><strong>Автодополнение</strong>: в IDE (VS Code, WebStorm) при импорте из <code>@netlify/blobs/dist/server</code> должны подсказываться все методы и их параметры.</li>
+        <li><strong>Валидация интерфейсов</strong>: при создании объекта <code>BlobsServerOptions</code> TypeScript проверит наличие обязательных полей и типы.</li>
+        <li><strong>Тестирование перегрузок</strong>: вызов <code>getLocalPaths</code> должен корректно определять возвращаемый тип в зависимости от контекста.</li>
+        <li><strong>Соответствие реализации</strong>: декларации должны точно соответствовать сигнатурам методов в <code>server.js</code>. Несоответствие вызовет ошибки в рантайме.</li>
+        <li><strong>Проверка экспортов</strong>: убедиться, что все экспортируемые элементы доступны для импорта.</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0.0 (2024)</strong> — базовая версия деклараций.<br>
+        - Описание основных методов и интерфейсов.<br>
+        - Соответствует версии 1.0.0 server.js.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.1.0 (2025)</strong><br>
+        - Добавлен тип <code>OnRequestCallback</code> и параметр <code>onRequest</code> в опции.<br>
+        - Уточнены возвращаемые типы для <code>getLocalPaths</code>.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.2.0 (2026)</strong><br>
+        - Добавлен статический метод <code>walk</code> (помечен как private).<br>
+        - Обновлены типы для поддержки параметра <code>directories</code> в листинге.<br>
+        - Исправлены неточности в типах для Windows-платформ.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии server.d.ts (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\server.d.ts</code>.</em></p>
+</body>
+</html>
+```

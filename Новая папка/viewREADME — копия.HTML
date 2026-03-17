@@ -1,0 +1,252 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: view.html — публичный просмотр графиков работы</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: view.html</h1>
+    <p><strong>Страница публичного просмотра графиков работы (модуль учёта рабочего времени, режим «только чтение»).</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\public\view.html</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>HTML5</code> (<code>&lt;!DOCTYPE html&gt;</code>)</td></tr>
+        <tr><td>Язык страницы</td><td><code>ru</code> (атрибут <code>lang="ru"</code>)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (метатег <code>&lt;meta charset="UTF-8"&gt;</code>)</td></tr>
+        <tr><td>Адаптивный метатег</td><td><code>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</code></td></tr>
+        <tr><td>Подключение стилей</td><td>Встроенные в <code>&lt;style&gt;</code> внутри файла (никаких внешних CSS)</td></tr>
+        <tr><td>Подключение скриптов</td><td>Встроенный JavaScript в конце файла (перед <code>&lt;/body&gt;</code>)</td></tr>
+        <tr><td>Структура кода</td><td>Один HTML-файл, содержащий: <code>&lt;style&gt;</code> (все стили), <code>&lt;body&gt;</code> (разметка), <code>&lt;script&gt;</code> (логика)</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Отправляет GET-запрос к Netlify Function: <code>/.netlify/functions/getData</code> для получения всех данных учёта времени.</li>
+                <li>Использует ту же структуру данных, что и <code>index.html</code> (админ-панель) и <code>partner.html</code> (панель партнёра).</li>
+                <li>Не требует аутентификации, доступен всем.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Страница состоит из простых семантических блоков:</p>
+    <ul>
+        <li><strong>Шапка (<code>.header</code>)</strong> – содержит заголовок «Графики работы» и панель управления с двумя выпадающими списками: выбор проекта (<code>#projectSelect</code>) и выбор месяца (<code>#monthSelect</code>).</li>
+        <li><strong>Контейнер графика (<code>#scheduleContainer</code>)</strong> – изначально отображает индикатор загрузки (<code>.loader</code>). После загрузки данных здесь строится таблица графика (<code>.schedule-wrapper</code>).</li>
+        <li><strong>Таблица графика</strong> – реализована с помощью <code>flex</code> и состоит из:
+            <ul>
+                <li>фиксированной левой части (<code>.fixed-headers</code> и <code>.fixed-cells</code>) с колонками: ФИО, Смена, Время.</li>
+                <li>прокручиваемой правой части (<code>.scrollable-headers</code> и <code>.scrollable-cells</code>) с ячейками для каждого дня месяца.</li>
+            </ul>
+        </li>
+    </ul>
+    <p>Вся вёрстка рассчитана на широкие экраны и горизонтальный скролл при необходимости. Сообщения об ошибках или отсутствии данных отображаются в том же контейнере.</p>
+
+    <h2>3. Стилизация (CSS)</h2>
+    <p>Корпоративная тёмная тема: фон <code>#000</code> и <code>#111</code>, акцентный цвет <code>#ffd700</code> (золотой/жёлтый), текст белый/серый.</p>
+    <ul>
+        <li><strong>Шапка</strong> – тёмная карточка с рамкой, заголовок жёлтый. Элементы управления (select) стилизованы под тёмную тему, при фокусе получают жёлтую рамку.</li>
+        <li><strong>Таблица графика</strong>:
+            <ul>
+                <li>Фиксированные заголовки и ячейки имеют жёлтый текст, фон <code>#000</code> или <code>#111</code>.</li>
+                <li>Ячейки времени (<code>.time-value</code>) имеют тёмный фон, рамку, скругление. При наличии значения добавляется класс <code>filled</code> (не используется в JS, но есть в CSS).</li>
+                <li>Статусы ячеек окрашиваются через классы: <code>.late</code> (жёлтый фон), <code>.overtime</code> (зелёный), <code>.absent</code> (красный), <code>.sick</code> (синий), <code>.vacation</code> (синий), <code>.dayoff</code> (серый).</li>
+            </ul>
+        </li>
+        <li><strong>Индикатор загрузки</strong> (<code>.loader</code>) – жёлтый текст по центру.</li>
+        <li><strong>Сообщения об ошибках</strong> (<code>.error-message</code>) – красный текст.</li>
+        <li><strong>Сообщение об отсутствии данных</strong> (<code>.no-data</code>) – серый текст.</li>
+    </ul>
+    <p>Стили полностью самодостаточны и не используют внешние библиотеки.</p>
+
+    <h2>4. JavaScript (логика и интерактивность)</h2>
+    <p>Код написан на чистом JavaScript (ES6) и включает следующие функции:</p>
+    <ul>
+        <li><strong>Глобальные переменные</strong>:
+            <ul>
+                <li><code>GET_DATA_URL</code> – адрес функции <code>getData</code>.</li>
+                <li><code>allData</code> – объект, содержащий полные данные, загруженные с сервера.</li>
+            </ul>
+        </li>
+        <li><strong>Загрузка данных</strong>:
+            <ul>
+                <li><code>loadData()</code> – асинхронно загружает данные через fetch, проверяет успешность, сохраняет в <code>allData</code> и вызывает <code>fillProjectSelect()</code>. При ошибке показывает сообщение через <code>showError()</code>.</li>
+                <li><code>showError(msg)</code> – заменяет содержимое контейнера графика на сообщение об ошибке.</li>
+            </ul>
+        </li>
+        <li><strong>Заполнение селектов</strong>:
+            <ul>
+                <li><code>fillProjectSelect()</code> – заполняет <code>#projectSelect</code> списком проектов из <code>allData.projects</code>. Если проектов нет, показывает соответствующую опцию. Затем вызывает <code>updateMonthSelect(true)</code> для загрузки месяцев и отображения графика.</li>
+                <li><code>updateMonthSelect(shouldLoad)</code> – по выбранному проекту получает массив месяцев из <code>allData.monthsByProject</code>, сортирует по убыванию и заполняет <code>#monthSelect</code> отформатированными названиями (используя <code>formatMonth()</code>). Если <code>shouldLoad</code> истинно, вызывает <code>loadSchedule()</code>.</li>
+            </ul>
+        </li>
+        <li><strong>Вспомогательные функции для дат и времени</strong>:
+            <ul>
+                <li><code>formatMonth(monthStr)</code> – преобразует строку <code>ГГГГ-ММ</code> в название месяца и год (например, «Март 2026»).</li>
+                <li><code>getDaysInMonth(monthStr)</code> – возвращает количество дней в указанном месяце.</li>
+                <li><code>getDayOfWeek(monthStr, day)</code> – возвращает сокращённое название дня недели (<code>вс</code> … <code>сб</code>).</li>
+                <li><code>getDuration(t)</code> – внутренняя функция, вычисляет продолжительность временного интервала в минутах из строки вида <code>ЧЧ:ММ-ЧЧ:ММ</code>.</li>
+                <li><code>getCellStatus(value, baseTime)</code> – определяет статус ячейки на основе значения и базового времени. Возвращает класс: <code>late</code>, <code>overtime</code>, <code>absent</code>, <code>sick</code>, <code>vacation</code>, <code>dayoff</code> или пустую строку.</li>
+                <li><code>cleanEmployeeName(fullName)</code> – удаляет суффикс <code> (партнёр)</code> из имени сотрудника для отображения чистого ФИО.</li>
+            </ul>
+        </li>
+        <li><strong>Построение графика</strong>:
+            <ul>
+                <li><code>loadSchedule()</code> – основная функция рендеринга. Получает выбранные проект и месяц, проверяет наличие данных. Если есть сотрудники для указанного периода, строит HTML-таблицу с фиксированными колонками и прокручиваемыми днями. Для каждого сотрудника извлекает базовые данные (смена, время) и для каждого дня – значение из <code>allData.entries</code>, вычисляет статус и применяет соответствующий класс. После вставки HTML корректирует ширину фиксированных колонок, чтобы они совпадали с шириной заголовков.</li>
+            </ul>
+        </li>
+        <li><strong>Обработчики событий</strong>:
+            <ul>
+                <li><code>document.getElementById('projectSelect').addEventListener('change', ...)</code> – при смене проекта вызывает <code>updateMonthSelect(true)</code>.</li>
+                <li><code>document.getElementById('monthSelect').addEventListener('change', loadSchedule)</code> – при смене месяца перерисовывает график.</li>
+                <li><code>window.addEventListener('load', loadData)</code> – при загрузке страницы инициирует получение данных.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>5. Форма и отправка данных</h2>
+    <p>На странице нет форм для отправки данных. Она только загружает и отображает информацию. Единственное взаимодействие с сервером – GET-запрос к <code>/.netlify/functions/getData</code>. Никакие изменения не сохраняются.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Только чтение</strong>: страница предназначена для публичного доступа, поэтому не содержит элементов редактирования (нет input'ов, кнопок сохранения и т.д.).</li>
+        <li><strong>Синхронизация с админкой</strong>: использует те же структуры данных (<code>projects</code>, <code>monthsByProject</code>, <code>employees</code>, <code>employeeData</code>, <code>entries</code>), что и <code>index.html</code> и <code>partner.html</code>. Это гарантирует, что любые изменения, сделанные в админке, сразу видны на публичной странице (после перезагрузки).</li>
+        <li><strong>Обработка имён сотрудников с суффиксом партнёра</strong>: функция <code>cleanEmployeeName()</code> отрезает часть <code> (Имя партнёра)</code>, чтобы показывать только ФИО оператора. Это делает отображение более чистым.</li>
+        <li><strong>Сортировка месяцев</strong>: месяцы отображаются в обратном хронологическом порядке (сначала новые), что удобно для просмотра актуальных данных.</li>
+        <li><strong>Адаптация ширины фиксированных колонок</strong>: после рендеринга ширина блока <code>.fixed-cells</code> устанавливается равной ширине блока <code>.fixed-headers</code>, чтобы левая часть таблицы не съезжала при скролле.</li>
+        <li><strong>Цветовая индикация</strong>: статусы ячеек вычисляются по тем же правилам, что и в панели партнёра, что обеспечивает единообразие.</li>
+        <li><strong>Обработка ошибок</strong>: при неудачной загрузке данных или отсутствии проектов/месяцев/сотрудников показываются понятные сообщения.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Фильтр по сотрудникам</strong>: добавить поле поиска или выпадающий список для выбора конкретного сотрудника (сейчас отображаются все).</li>
+        <li><strong>Экспорт в Excel/PDF</strong>: добавить кнопку для выгрузки текущего графика в формате CSV или Excel.</li>
+        <li><strong>Легенда цветов</strong>: добавить пояснение, что означают цвета ячеек (как на странице партнёра).</li>
+        <li><strong>Кэширование данных</strong>: можно сохранять загруженные данные в <code>localStorage</code> и показывать их при повторном посещении, фоном обновляя.</li>
+        <li><strong>Периодическое обновление</strong>: автоматически перезагружать данные каждые несколько минут, чтобы отображать актуальную информацию без перезагрузки страницы.</li>
+        <li><strong>Параметры URL</strong>: добавить возможность передавать проект и месяц в query-параметрах, чтобы можно было давать прямую ссылку на конкретный график.</li>
+        <li><strong>Мобильная версия</strong>: улучшить адаптивность для маленьких экранов (например, сворачивать фиксированные колонки в выпадающий список).</li>
+        <li><strong>Подсветка выходных</strong>: добавить визуальное выделение суббот и воскресений.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Необходимость сервера</strong>: страница требует работающей Netlify Function <code>getData</code>. При локальном открытии <code>file://</code> запрос не сможет выполниться. Для тестирования используйте развёрнутый сайт или Netlify CLI.</li>
+        <li><strong>Проверка загрузки</strong>: при открытии страницы должен появиться индикатор загрузки, затем – селекты проектов и месяцев. Если данные не загружаются, отобразится сообщение об ошибке.</li>
+        <li><strong>Выбор проекта и месяца</strong>: убедитесь, что при смене проекта список месяцев обновляется, а при смене месяца – перерисовывается график.</li>
+        <li><strong>Отображение данных</strong>: проверьте, что для выбранного периода отображаются сотрудники, их смены, базовое время и значения по дням. Ячейки должны иметь правильные цвета в зависимости от статуса.</li>
+        <li><strong>Горизонтальный скролл</strong>: если дней в месяце много, должна появиться горизонтальная полоса прокрутки. Фиксированные колонки (ФИО, смена, время) должны оставаться на месте при скролле.</li>
+        <li><strong>Пустые состояния</strong>: проверьте проект, в котором нет месяцев, или месяц, в котором нет сотрудников – должно отобразиться соответствующее сообщение.</li>
+        <li><strong>Корректность имён</strong>: убедитесь, что имена сотрудников отображаются без суффикса партнёра (например, «Иванов Иван» вместо «Иванов Иван (ООО Партнёр)»).</li>
+        <li><strong>Цветовая схема</strong>: при вводе тестовых значений (например, «прг», «б», времени меньше/больше базового) ячейки должны окрашиваться в соответствующие цвета.</li>
+        <li><strong>Консоль браузера</strong>: при выполнении всех операций не должно быть ошибок в консоли.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии view.html (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>
+```

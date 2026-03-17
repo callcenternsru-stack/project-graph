@@ -1,0 +1,227 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: ci.yml — GitHub Actions workflow для busboy</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚙️ Инструкция: ci.yml (GitHub Actions CI для busboy)</h1>
+    <p><strong>Файл конфигурации непрерывной интеграции (Continuous Integration) для проекта busboy, использующий GitHub Actions.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\busboy\.github\workflows\ci.yml</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>YAML (.yml)</code> — конфигурационный файл GitHub Actions</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Структура кода</td><td>
+            Иерархическая структура YAML, состоящая из:
+            <ul>
+                <li><code>name</code> — название workflow ("CI")</li>
+                <li><code>on</code> — триггеры запуска: pull_request и push в ветку master</li>
+                <li><code>jobs</code> — определение заданий:
+                    <ul>
+                        <li><code>tests-linux</code> — задание для Linux</li>
+                        <li><code>runs-on</code> — окружение ubuntu-latest</li>
+                        <li><code>strategy.matrix.node-version</code> — матрица версий Node.js для тестирования</li>
+                        <li><code>steps</code> — шаги выполнения: checkout, установка Node, установка модулей, запуск тестов</li>
+                    </ul>
+                </li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>package.json</code> — определяет скрипт <code>test</code>, который запускается на шаге <code>npm test</code></li>
+                <li>Код проекта busboy (непосредственно тестируемый)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Используемые функции</td><td>Не функции, а действия GitHub Actions:
+            <ul>
+                <li><code>actions/checkout@v2</code> — клонирование репозитория</li>
+                <li><code>actions/setup-node@v1</code> — установка указанной версии Node.js</li>
+                <li>Команды shell: <code>npm install</code>, <code>npm test</code></li>
+            </ul>
+        </td></tr>
+        <tr><td>Язык страницы</td><td>Не применимо (YAML)</td></tr>
+        <tr><td>Адаптивный метатег</td><td>Не применимо</td></tr>
+        <tr><td>Подключение стилей и скриптов</td><td>Не применимо</td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Workflow предназначен для автоматического запуска тестов при каждом пуше в ветку <code>master</code> и при создании pull request. Он гарантирует, что изменения не ломают проект на различных версиях Node.js.</p>
+    <ul>
+        <li><strong>name</strong>: "CI" — отображается в интерфейсе GitHub Actions.</li>
+        <li><strong>on</strong>: определяет события, активирующие workflow:
+            <ul>
+                <li><code>pull_request</code> — запуск при создании/обновлении PR</li>
+                <li><code>push</code> — запуск при пуше в ветку master</li>
+            </ul>
+        </li>
+        <li><strong>jobs.tests-linux</strong>: задание, выполняющееся на Ubuntu.
+            <ul>
+                <li><code>strategy.matrix</code>: позволяет запускать задание с разными версиями Node.js параллельно. Матрица включает: 10.16.0, 10.x, 12.x, 14.x, 16.x.</li>
+                <li><code>fail-fast: false</code>: при ошибке в одной из версий остальные продолжат выполнение.</li>
+                <li><code>steps</code>:
+                    <ol>
+                        <li>Checkout репозитория.</li>
+                        <li>Установка нужной версии Node.js.</li>
+                        <li><code>npm install</code> — установка зависимостей.</li>
+                        <li><code>npm test</code> — запуск тестов (определён в package.json).</li>
+                    </ol>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+
+    <h2>4. JavaScript (логика и интерактивность) — не применимо</h2>
+    <p>Файл является конфигурационным и не содержит исполняемого кода на JavaScript.</p>
+
+    <h2>5. Форма и отправка данных — не применимо</h2>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Матричное тестирование</strong>: позволяет проверить совместимость с несколькими версиями Node.js, включая конкретную минорную версию 10.16.0 (вероятно, минимально поддерживаемую) и последние в каждой мажорной линейке.</li>
+        <li><strong>fail-fast: false</strong>: важно для диагностики — если тесты падают на одной версии, мы всё равно видим результаты на других.</li>
+        <li><strong>Использование v1 actions</strong>: <code>actions/setup-node@v1</code> — старая версия, но всё ещё работает. В современных проектах рекомендуется использовать v3/v4.</li>
+        <li><strong>Отсутствие кэширования</strong>: <code>npm install</code> выполняется каждый раз с нуля, что увеличивает время выполнения.</li>
+        <li><strong>Только Linux</strong>: тесты запускаются только на Ubuntu, нет проверок на Windows или macOS.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление других ОС</strong>: включить в матрицу <code>windows-latest</code> и <code>macos-latest</code> для кросс-платформенного тестирования.</li>
+        <li><strong>Кэширование зависимостей</strong>: использовать <code>actions/cache</code> для ускорения установки.</li>
+        <li><strong>Обновление версий actions</strong>: перейти на <code>actions/checkout@v4</code> и <code>actions/setup-node@v4</code>.</li>
+        <li><strong>Добавление новых версий Node.js</strong>: например, 18.x, 20.x, 22.x.</li>
+        <li><strong>Параллельное выполнение линтеров и сборки</strong>: добавить отдельные jobs для lint, build.</li>
+        <li><strong>Уведомления</strong>: добавить шаги для отправки уведомлений в Slack или Telegram при падении.</li>
+        <li><strong>Публикация отчётов о покрытии</strong>: интеграция с Codecov или Coveralls.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Локальный запуск</strong>: нельзя запустить workflow локально без эмулятора GitHub Actions (например, <code>act</code>).</li>
+        <li><strong>Проверка статуса</strong>: после пуша в ветку master на GitHub необходимо зайти в раздел Actions и убедиться, что workflow запустился и завершился успешно.</li>
+        <li><strong>Тестирование на разных версиях</strong>: убедиться, что все версии Node из матрицы проходят тесты. Если какая-то версия падает, это может указывать на несовместимость.</li>
+        <li><strong>Имитация pull request</strong>: создать тестовый PR и проверить, что workflow запускается.</li>
+        <li><strong>Логи</strong>: при падении проверить логи конкретной задачи для диагностики.</li>
+        <li><strong>Взаимодействие с package.json</strong>: проверить, что скрипт <code>test</code> определён и работает корректно.</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0 (начальная)</strong> — создание базового CI для busboy.<br>
+        - Тестирование на Linux с матрицей Node.js 10.x, 12.x, 14.x, 16.x.<br>
+        - Триггеры: push в master и pull_request.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Актуальная версия (без даты)</strong> — файл остаётся без изменений длительное время, что говорит о стабильности проекта.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии ci.yml (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\busboy\.github\workflows\ci.yml</code>.</em></p>
+</body>
+</html>
+```

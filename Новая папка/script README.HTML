@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: script.iss — скрипт сборки установщика Inno Setup</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: script.iss</h1>
+    <p><strong>Скрипт для компиляции установщика программы SystemCheckPRO с помощью Inno Setup.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\PC_Checker\script.iss</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td>Скрипт Inno Setup (язык Pascal-подобного синтаксиса, специфичный для Inno Setup)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> с BOM (рекомендуется) или ANSI (зависит от настроек компилятора)</td></tr>
+        <tr><td>Роль в проекте</td><td>Автоматизирует создание установочного файла <code>SystemCheckPRO_Setup.exe</code>, включая все необходимые файлы программы, библиотеки, иконки и настройки</td></tr>
+        <tr><td>Создаётся</td><td>Вручную с помощью Inno Setup Script Wizard или текстового редактора</td></tr>
+        <tr><td>Редактирование</td><td>Текстовый файл, можно редактировать любым редактором</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Ссылается на множество файлов из папки <code>PC_Checker</code>: исполняемые файлы (<code>SystemCheckPRO.exe</code>, <code>sox.exe</code>, <code>speedtest.exe</code>), DLL-библиотеки, документацию, иконки.</li>
+                <li>Генерирует <code>SystemCheckPRO_Setup.exe</code> (установщик), который затем размещается в папке <code>public</code> для скачивания с сайта.</li>
+                <li>Использует файл иконки <code>favicon.ico</code> (должен находиться по указанному пути).</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Скрипт Inno Setup разделён на секции, каждая из которых начинается с имени в квадратных скобках. В данном файле присутствуют следующие секции:</p>
+    <ul>
+        <li><strong>Определения пользовательских констант (<code>#define</code>)</strong> – в начале файла задаются символические имена для названия приложения, версии, издателя, URL и имени исполняемого файла. Это облегчает поддержку скрипта.</li>
+        <li><strong>[Setup]</strong> – обязательная секция, содержащая основные параметры установки:
+            <ul>
+                <li><code>AppId</code> – уникальный идентификатор приложения (GUID).</li>
+                <li><code>AppName</code>, <code>AppVersion</code>, <code>AppPublisher</code>, <code>AppPublisherURL</code>, <code>AppSupportURL</code>, <code>AppUpdatesURL</code> – метаданные приложения.</li>
+                <li><code>DefaultDirName</code> – папка установки по умолчанию (<code>{autopf}</code> – папка Program Files).</li>
+                <li><code>UninstallDisplayIcon</code> – иконка, отображаемая в списке установленных программ.</li>
+                <li><code>ArchitecturesAllowed</code> и <code>ArchitecturesInstallIn64BitMode</code> – поддержка 64-битных систем.</li>
+                <li><code>DisableProgramGroupPage</code> – отключает создание папки в меню "Пуск".</li>
+                <li><code>OutputDir</code> и <code>OutputBaseFilename</code> – папка и имя выходного файла установщика.</li>
+                <li><code>SolidCompression</code> – включает сжатие.</li>
+                <li><code>WizardStyle</code> – стиль мастера установки.</li>
+                <li><code>SetupIconFile</code> – путь к иконке для установщика.</li>
+                <li><code>PrivilegesRequired</code> – требует права администратора для установки.</li>
+            </ul>
+        </li>
+        <li><strong>[Languages]</strong> – определяет языки мастера установки (здесь только английский).</li>
+        <li><strong>[Tasks]</strong> – задаёт дополнительные задачи, которые пользователь может выбрать при установке. В данном случае – создание ярлыка на рабочем столе (по умолчанию выключено).</li>
+        <li><strong>[Files]</strong> – самая объёмная секция, перечисляет все файлы, которые необходимо скопировать в папку установки. Каждая запись содержит исходный путь и путь назначения. Флаг <code>ignoreversion</code> означает, что при обновлении существующие файлы не будут проверяться на версию.</li>
+        <li><strong>[Icons]</strong> – создаёт ярлыки в меню "Пуск" и (опционально) на рабочем столе.</li>
+        <li><strong>[Run]</strong> – указывает, что после завершения установки можно запустить программу (опция с флагами <code>nowait postinstall skipifsilent</code>).</li>
+    </ul>
+
+    <h2>3. Отсутствие клиентских технологий</h2>
+    <p>Поскольку <code>script.iss</code> – это скрипт для сборки установщика, он не содержит CSS, JavaScript, HTML-форм и не отвечает за визуальное оформление веб-страниц. Все нижеследующие разделы стандартного шаблона здесь не применимы, но для полноты картины они кратко обозначены.</p>
+
+    <h3>3. Стилизация (CSS)</h3>
+    <p>Не используется.</p>
+
+    <h3>4. JavaScript (логика и интерактивность)</h3>
+    <p>Не используется.</p>
+
+    <h3>5. Форма и отправка данных</h3>
+    <p>Не используется.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Пути к файлам</strong>: все исходные пути жёстко прописаны как абсолютные (<code>C:\Users\Контакт-Сервис\Desktop\prodect\PC_Checker\...</code>). Это делает скрипт немобильным – для сборки на другом компьютере потребуется либо точно такая же структура папок, либо изменение всех путей.</li>
+        <li><strong>Иконка установщика</strong>: <code>SetupIconFile</code> указывает на <code>favicon.ico</code>. Если файл отсутствует, компиляция завершится ошибкой.</li>
+        <li><strong>Права администратора</strong>: <code>PrivilegesRequired=admin</code> гарантирует, что установщик запросит повышение прав (UAC). Это необходимо, так как программа устанавливается в <code>Program Files</code> и требует прав для записи.</li>
+        <li><strong>Архитектура</strong>: <code>ArchitecturesInstallIn64BitMode=x64compatible</code> означает, что установщик будет работать как на 32-битных, так и на 64-битных системах, но в 64-битном режиме будет использовать 64-битные пути (например, <code>Program Files</code> вместо <code>Program Files (x86)</code>).</li>
+        <li><strong>Множество DLL</strong>: в секции <code>[Files]</code> перечислено множество DLL-библиотек, необходимых для работы <code>sox.exe</code> и, возможно, других утилит. Это гарантирует, что программа будет работать на любом компьютере без предустановленных зависимостей.</li>
+        <li><strong>Дублирующиеся файлы</strong>: в списке есть <code>report.txt</code>, <code>result.json</code>, <code>results.json</code>, <code>results.rar</code> – это, вероятно, примеры или временные файлы. Некоторые из них могут быть лишними.</li>
+        <li><strong>Ярлыки</strong>: создаётся ярлык в меню "Пуск" (всегда) и опционально на рабочем столе (если пользователь выбрал задачу).</li>
+        <li><strong>Запуск после установки</strong>: секция <code>[Run]</code> предлагает пользователю запустить программу сразу после установки (галочка в мастере).</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Относительные пути</strong>: заменить абсолютные пути на относительные, используя директиву <code>Source: "PC_Checker\*"</code> или разместив скрипт в корне проекта. Это сделает сборку переносимой.</li>
+        <li><strong>Добавление лицензионного соглашения</strong>: можно включить файл лицензии (<code>LicenseFile</code>) и показывать его пользователю перед установкой.</li>
+        <li><strong>Регистрация в реестре</strong>: при необходимости можно добавить записи в реестр (секция <code>[Registry]</code>), например, для ассоциации файлов.</li>
+        <li><strong>Проверка наличия .NET Framework или других компонентов</strong>: через секцию <code>[Run]</code> с условиями.</li>
+        <li><strong>Многоязычность</strong>: добавить русский язык в секцию <code>[Languages]</code> и соответствующие файлы сообщений.</li>
+        <li><strong>Удаление старых версий</strong>: можно добавить проверку и удаление предыдущей установки (через <code>[InstallDelete]</code> или код на Pascal).</li>
+        <li><strong>Цифровая подпись</strong>: добавить параметры подписи (<code>SignTool</code>) для подписывания установщика.</li>
+        <li><strong>Сжатие</strong>: можно изменить метод сжатия (<code>Compression</code>) для оптимизации размера или скорости.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Компиляция скрипта</strong>: для компиляции требуется установленный Inno Setup (желательно последней версии). Откройте скрипт в среде Inno Setup и нажмите "Compile" (или выполните <code>iscc script.iss</code> из командной строки).</li>
+        <li><strong>Проверка наличия всех файлов</strong>: перед компиляцией убедитесь, что все перечисленные файлы существуют по указанным путям. Отсутствие любого файла приведёт к ошибке компиляции.</li>
+        <li><strong>Тестирование установки</strong>: запустите сгенерированный <code>SystemCheckPRO_Setup.exe</code> на чистой системе (или в виртуальной машине). Проверьте:
+            <ul>
+                <li>Запрос прав администратора (UAC).</li>
+                <li>Корректность предлагаемой папки установки.</li>
+                <li>Создание ярлыков в меню "Пуск" и на рабочем столе (если выбрано).</li>
+                <li>Запуск программы после установки (если отмечено).</li>
+                <li>Корректную работу программы (возможность ввести код и пройти тесты).</li>
+            </ul>
+        </li>
+        <li><strong>Тестирование удаления</strong>: после установки проверьте, что приложение можно удалить через "Панель управления" -> "Программы и компоненты". Убедитесь, что все файлы удалены.</li>
+        <li><strong>Проверка целостности</strong>: после установки проверьте, что все необходимые DLL и утилиты находятся в папке установки (особенно <code>sox.exe</code>, <code>speedtest.exe</code>).</li>
+        <li><strong>Логирование</strong>: при возникновении ошибок установки можно включить логирование Inno Setup, добавив параметр <code>/LOG</code> при запуске установщика.</li>
+        <li><strong>Размер установщика</strong>: проверьте, что итоговый файл не слишком велик (если да, можно исключить ненужные файлы, например, дублирующиеся <code>results.*</code>).</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии script.iss (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>

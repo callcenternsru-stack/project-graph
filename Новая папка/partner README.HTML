@@ -1,0 +1,286 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: partner.html — панель партнёра (учёт рабочего времени)</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: partner.html</h1>
+    <p><strong>Панель партнёра для управления графиком работы сотрудников (модуль учёта рабочего времени).</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\public\partner.html</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>HTML5</code> (<code>&lt;!DOCTYPE html&gt;</code>)</td></tr>
+        <tr><td>Язык страницы</td><td><code>ru</code> (атрибут <code>lang="ru"</code>)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (метатег <code>&lt;meta charset="UTF-8"&gt;</code>)</td></tr>
+        <tr><td>Адаптивный метатег</td><td><code>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</code></td></tr>
+        <tr><td>Подключение стилей</td><td>Встроенные в <code>&lt;style&gt;</code> внутри файла (никаких внешних CSS)</td></tr>
+        <tr><td>Подключение скриптов</td><td>Встроенный JavaScript в конце файла (перед <code>&lt;/body&gt;</code>)</td></tr>
+        <tr><td>Структура кода</td><td>Один HTML-файл, содержащий: <code>&lt;style&gt;</code> (все стили), <code>&lt;body&gt;</code> (разметка), <code>&lt;script&gt;</code> (логика)</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Отправляет запросы на Netlify Functions: <code>/.netlify/functions/getData</code> (загрузка) и <code>/.netlify/functions/saveData</code> (сохранение).</li>
+                <li>Данные синхронизируются с теми же Blobs, что и <code>index.html</code> (админ-панель учёта времени).</li>
+                <li>Использует <code>localStorage</code> для кеширования и временного хранения (ключи с префиксом <code>v10_</code>).</li>
+                <li>Не зависит от других страниц модуля рекрутинга, но может открываться параллельно.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Страница разделена на логические блоки, оформленные с помощью семантических и пользовательских элементов.</p>
+    <ul>
+        <li><strong>Боковое меню (выезжающее)</strong> – <code>.side-menu-trigger</code> + <code>.side-menu</code> с кнопками: Статистика, Фильтр, Сотрудники, График, Скрыть поля, Выйти.</li>
+        <li><strong>Форма входа</strong> (<code>.login-container</code>) – появляется первой, содержит поля логин/пароль и кнопку «Войти».</li>
+        <li><strong>Основной интерфейс партнёра</strong> (<code>.partner-container</code>) – скрыт до успешного входа.</li>
+        <li><strong>Шапка партнёра</strong> (<code>.partner-header</code>) – отображает название партнёра, текущий месяц и индикатор синхронизации.</li>
+        <li><strong>Вкладки проектов</strong> (<code>.project-tabs</code>) – динамически формируются из проектов, доступных партнёру.</li>
+        <li><strong>Основная область контента</strong> (<code>#mainContent</code>) – сюда рендерится либо страница графика (<code>.schedule-wrapper</code>), либо страница статистики (<code>.stats-page</code>).</li>
+        <li><strong>Инструкция по цветам</strong> (<code>.instruction</code>) – пояснение цветовых маркеров для статусов ячеек.</li>
+        <li><strong>Контекстные меню (модальные окна)</strong> – <code>.context-menu</code> для фильтра, сотрудников, графика, комментариев и сводной таблицы. Появляются по клику на соответствующие пункты бокового меню.</li>
+    </ul>
+    <p>Вёрстка адаптивная: используются <code>grid</code> для вкладок и карточек статистики, <code>flex</code> для шапки, медиазапросы (неявно через <code>grid-template-columns</code> с auto-fit).</p>
+
+    <h2>3. Стилизация (CSS)</h2>
+    <p>Корпоративная тёмная тема: фон <code>#000</code> и <code>#111</code>, акцентный цвет <code>#ffd700</code> (золотой/жёлтый), текст белый/серый.</p>
+    <ul>
+        <li><strong>Боковое меню</strong> – выезжает при наведении на левый край экрана (<code>.side-menu-trigger</code>). Пункты меню с жёлтым текстом, при наведении появляется левая жёлтая граница.</li>
+        <li><strong>Форма входа</strong> – тёмная карточка с жёлтой рамкой, поля ввода с фокусом жёлтые.</li>
+        <li><strong>Вкладки проектов</strong> – сетка из 10 колонок, активная вкладка с жёлтой нижней границей.</li>
+        <li><strong>График</strong> – сложная табличная структура с фиксированными левыми колонками и горизонтальным скроллом. Ячейки времени (<code>.time-cell input</code>) окрашиваются в зависимости от статуса (опоздание, переработка, отпуск и т.д.) – для этого используются классы <code>.late</code>, <code>.overtime</code>, <code>.vacation</code>, <code>.sick</code>, <code>.absent</code>, <code>.dayoff</code>.</li>
+        <li><strong>Индикатор комментария</strong> – маленький жёлтый кружок в ячейке, если есть комментарий.</li>
+        <li><strong>Контекстные меню</strong> – центрированные модальные окна с анимацией появления, с формой внутри.</li>
+        <li><strong>Статистика</strong> – карточки (<code>.stat-card</code>) с крупными цифрами, при клике на некоторые открывается сводная таблица. Таблица статистики с сортировкой по клику на заголовок.</li>
+        <li><strong>Скрытие полей</strong> – кнопка в меню переключает класс <code>.hidden</code> для дополнительных колонок (смена, время, телефон, тип).</li>
+    </ul>
+    <p>Все стили находятся внутри тега <code>&lt;style&gt;</code> и не используют внешние библиотеки.</p>
+
+    <h2>4. JavaScript (логика и интерактивность)</h2>
+    <p>Код написан на чистом JavaScript (ES6) и включает следующие ключевые функции и модули:</p>
+    <ul>
+        <li><strong>Работа с хранилищем</strong>:
+            <ul>
+                <li><code>loadFromSheets()</code> – загружает данные из Netlify Blobs через <code>getData</code> и сохраняет в <code>localStorage</code> (ключи <code>STORAGE_KEYS</code>).</li>
+                <li><code>saveToSheets()</code> – отправляет текущее состояние (из <code>localStorage</code>) на сервер через <code>saveData</code>.</li>
+                <li><code>loadData()</code> – читает данные из <code>localStorage</code>.</li>
+                <li><code>showSync()</code> / <code>showSyncError()</code> – меняют цвет индикатора синхронизации.</li>
+            </ul>
+        </li>
+        <li><strong>Аутентификация и сессия</strong>:
+            <ul>
+                <li><code>partnerLogin()</code> – проверяет логин/пароль по массиву <code>partners</code> из <code>loadData()</code>. При успехе сохраняет сессию в <code>sessionStorage</code> и инициализирует интерфейс.</li>
+                <li><code>logout()</code> – очищает сессию и возвращает к форме входа.</li>
+                <li><code>loadSession()</code> – восстанавливает сессию при загрузке страницы.</li>
+            </ul>
+        </li>
+        <li><strong>Управление меню</strong>:
+            <ul>
+                <li><code>toggleMenu(menuId)</code>, <code>closeMenu()</code>, <code>closeAllMenus()</code> – открывают/закрывают контекстные меню.</li>
+            </ul>
+        </li>
+        <li><strong>Работа с проектами и месяцами</strong>:
+            <ul>
+                <li><code>switchProject()</code> – переключает текущий проект, обновляет месяц и UI.</li>
+                <li><code>addMonth()</code>, <code>deleteMonth()</code> – добавление/удаление месяца для проекта.</li>
+                <li><code>updateMonthsList()</code> – обновляет список месяцев в меню «График».</li>
+            </ul>
+        </li>
+        <li><strong>Управление сотрудниками</strong>:
+            <ul>
+                <li><code>addEmployee()</code> – добавляет оператора (имя + (партнёр)) в выбранный проект/месяц.</li>
+                <li><code>deleteEmployee()</code> – удаляет оператора и все связанные записи.</li>
+                <li><code>updateEmployeeData()</code> – обновляет поля смены, времени, телефона сотрудника.</li>
+                <li><code>updateTimeEntry()</code> – сохраняет значение времени в конкретной ячейке дня, при необходимости вызывает модалку комментария.</li>
+                <li><code>getPartnerEmployees()</code> – фильтрует сотрудников, принадлежащих текущему партнёру.</li>
+            </ul>
+        </li>
+        <li><strong>Комментарии</strong>:
+            <ul>
+                <li><code>forceCommentModal()</code> – принудительно открывает окно комментария при опоздании/переработке/прогуле.</li>
+                <li><code>openCommentModal()</code>, <code>saveComment()</code>, <code>deleteComment()</code> – работа с комментариями.</li>
+                <li><code>getCommentKey()</code> – формирует уникальный ключ для комментария.</li>
+            </ul>
+        </li>
+        <li><strong>Отображение страниц</strong>:
+            <ul>
+                <li><code>renderSchedulePage()</code> – строит таблицу графика с учётом сортировки, скрытых колонок, статусов и комментариев.</li>
+                <li><code>renderStatsPage()</code> – строит страницу статистики с карточками и таблицей, поддерживает сортировку.</li>
+                <li><code>refreshUI()</code> – обновляет все элементы интерфейса после изменений.</li>
+            </ul>
+        </li>
+        <li><strong>Сортировка и фильтры</strong>:
+            <ul>
+                <li><code>sortSchedule()</code>, <code>sortStats()</code> – сортировка в графике и статистике.</li>
+                <li><code>applyFilter()</code> – применяет выбранный проект и месяц из меню «Фильтр».</li>
+            </ul>
+        </li>
+        <li><strong>Вспомогательные функции</strong>:
+            <ul>
+                <li><code>formatMonth()</code>, <code>getDaysInMonth()</code>, <code>getDayOfWeek()</code>, <code>validateTimeRange()</code>, <code>getDurationHours()</code>, <code>getCellStatus()</code> – работа с датами и временем.</li>
+                <li><code>exportToExcel()</code> – выгружает статистику в CSV.</li>
+                <li><code>showSummaryTable()</code>, <code>collectSummaryData()</code>, <code>renderSummaryTable()</code> – сводные таблицы по опозданиям/переработкам/прогулам.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>5. Формы и отправка данных</h2>
+    <p>На странице нет единой формы отправки, но есть несколько интерактивных элементов, которые инициируют сохранение:</p>
+    <ul>
+        <li><strong>Вход</strong> – форма с полями логин/пароль, отправка через <code>partnerLogin()</code> (проверка по данным из <code>localStorage</code>).</li>
+        <li><strong>Добавление сотрудника</strong> – поле ввода ФИО + кнопка «Добавить оператора»; данные сохраняются через <code>addEmployee()</code> и затем <code>saveToSheets()</code>.</li>
+        <li><strong>Редактирование полей сотрудника</strong> – <code>&lt;select&gt;</code> и <code>&lt;input&gt;</code> в фиксированных колонках вызывают <code>updateEmployeeData()</code> при изменении.</li>
+        <li><strong>Редактирование ячеек времени</strong> – <code>&lt;input&gt;</code> в каждой ячейке дня вызывают <code>updateTimeEntry()</code> при потере фокуса (<code>onchange</code>).</li>
+        <li><strong>Добавление месяца</strong> – поле <code>input type="month"</code> + кнопка в меню «График».</li>
+        <li><strong>Сохранение комментария</strong> – форма в модальном окне с полем <code>textarea</code> и кнопками «Сохранить» / «Удалить».</li>
+    </ul>
+    <p>Все изменения немедленно сохраняются в <code>localStorage</code> и, если возможно, отправляются на сервер через <code>saveToSheets()</code> (асинхронно).</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Двойное хранение данных</strong>: <code>localStorage</code> используется как основной кэш, сервер (Netlify Blobs) – как постоянное хранилище. При загрузке страницы данные сначала загружаются с сервера и помещаются в <code>localStorage</code>. При любых изменениях вызывается <code>saveToSheets()</code>, который отправляет полный слепок данных на сервер.</li>
+        <li><strong>Идентификация сотрудников партнёра</strong>: к имени сотрудника добавляется суффикс <code>(Имя партнёра)</code>, а в поле <code>partner</code> объекта <code>employeeData</code> сохраняется имя партнёра. Это позволяет фильтровать сотрудников, принадлежащих только данному партнёру.</li>
+        <li><strong>Принудительный комментарий</strong>: если пользователь вводит в ячейку значение, которое интерпретируется как опоздание, переработка или прогул, автоматически открывается модальное окно с требованием указать причину (поле обязательно). Без сохранения комментария изменение не фиксируется.</li>
+        <li><strong>Скрытие/показ колонок</strong>: реализовано через класс <code>.hidden</code> и пересчёт ширины фиксированных контейнеров (<code>fixedCells.style.width</code>).</li>
+        <li><strong>Сортировка в графике</strong>: сохраняется в <code>localStorage</code>, чтобы при перезагрузке страницы сортировка не сбрасывалась.</li>
+        <li><strong>Индикатор синхронизации</strong>: зелёный пульсирующий кружок при успешной загрузке/сохранении, красный при ошибке.</li>
+        <li><strong>Контекстные меню</strong>: реализованы как фиксированные модальные окна, которые показываются по клику на соответствующий пункт бокового меню. При открытии одного остальные закрываются.</li>
+        <li><strong>Валидация времени</strong>: функция <code>validateTimeRange()</code> проверяет формат <code>ЧЧ:ММ-ЧЧ:ММ</code>. При вводе неправильного формата показывается сообщение, и сохранение не происходит.</li>
+        <li><strong>Автоматическое заполнение ячеек</strong>: при установке базового времени сотрудника (<code>employeeData.time</code>) пустые ячейки всех дней автоматически заполняются этим значением (для удобства).</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Управление партнёрами через админку</strong>: сейчас партнёры хранятся в <code>partners</code> внутри <code>app-data</code>. Можно добавить интерфейс для создания/редактирования партнёров в админ-панели (<code>index.html</code>).</li>
+        <li><strong>Ролевая модель</strong>: расширить права партнёров (например, разрешить только просмотр, без редактирования).</li>
+        <li><strong>Уведомления об изменениях</strong>: добавить WebSocket или long polling для уведомления партнёров о внесённых изменениях другими пользователями.</li>
+        <li><strong>Экспорт графика в Excel</strong>: помимо статистики, можно добавить выгрузку всего графика.</li>
+        <li><strong>Фильтр по сотрудникам</strong>: в графике можно добавить поиск или фильтрацию по имени.</li>
+        <li><strong>История изменений</strong>: хранить лог изменений (кто и когда менял ячейки) для аудита.</li>
+        <li><strong>Поддержка мобильных устройств</strong>: улучшить адаптивность для маленьких экранов (возможно, упростить таблицу).</li>
+        <li><strong>Интеграция с календарями</strong>: позволить экспортировать график в iCal.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Локальное тестирование без сервера</strong>: при открытии <code>file://</code> запросы к <code>/.netlify/functions/...</code> будут неудачными. Для тестирования рекомендуется использовать Netlify CLI или развернуть сайт на Netlify.</li>
+        <li><strong>Тестовые учётные данные</strong>: в <code>localStorage</code> после первой загрузки с сервера должны появиться партнёры (например, из демо-данных). Можно создать партнёра через админ-панель.</li>
+        <li><strong>Проверка синхронизации</strong>: после внесения изменений зелёный индикатор должен мигнуть. При отключении интернета или ошибке сервера индикатор станет красным.</li>
+        <li><strong>Добавление сотрудника</strong>: в меню «Сотрудники» выберите проект и месяц, введите имя и нажмите «Добавить». Сотрудник должен появиться в графике.</li>
+        <li><strong>Редактирование ячеек</strong>: введите в ячейку время (например, <code>09:00-18:00</code>). Если оно меньше базового времени, ячейка должна подсветиться жёлтым (<code>.late</code>) и появиться модалка комментария.</li>
+        <li><strong>Комментарии</strong>: попробуйте сохранить комментарий – в ячейке появится жёлтый кружок. Клик на него снова откроет комментарий.</li>
+        <li><strong>Скрытие колонок</strong>: нажмите в боковом меню «Скрыть поля» – дополнительные колонки должны исчезнуть, ширина фиксированной части изменится.</li>
+        <li><strong>Статистика</strong>: переключитесь на страницу статистики. Карточки должны показывать суммы. Клик на карточки «Опоздания», «Переработки», «Прогулы» должен открывать сводную таблицу.</li>
+        <li><strong>Экспорт в Excel</strong>: на странице статистики нажмите «📥 Excel» – должен скачаться CSV-файл с данными.</li>
+        <li><strong>Добавление месяца</strong>: в меню «График» выберите проект и введите месяц, нажмите «Добавить». Месяц должен появиться в списке и стать текущим.</li>
+        <li><strong>Удаление месяца</strong>: в том же меню нажмите крестик рядом с месяцем – после подтверждения месяц и все связанные данные должны удалиться.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии partner.html (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>
+```

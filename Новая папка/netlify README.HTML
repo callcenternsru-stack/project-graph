@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: netlify.toml — конфигурационный файл Netlify</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: netlify.toml</h1>
+    <p><strong>Конфигурационный файл для платформы Netlify, определяющий настройки сборки, развёртывания и окружения.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\netlify.toml</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>TOML</code> (Tom's Obvious Minimal Language) – формат конфигурационных файлов, удобный для чтения человеком</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (без BOM)</td></tr>
+        <tr><td>Роль в проекте</td><td>Управляет процессом сборки и деплоя на Netlify, задаёт переменные окружения, указывает пути к функциям и статическим файлам</td></tr>
+        <tr><td>Редактирование</td><td>Можно и нужно редактировать вручную для изменения параметров деплоя</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Используется вместе с <code>package.json</code> – указывает, какие зависимости устанавливать и где находятся функции.</li>
+                <li>Переменные окружения, заданные в файле (<code>NETLIFY_SITE_ID</code>, <code>NETLIFY_ACCESS_TOKEN</code>), используются функциями для работы с Netlify Blobs.</li>
+                <li>Не имеет прямого отношения к клиентским HTML-страницам, но влияет на их доступность через настройки публикации.</li>
+                <li>В идеале должен находиться в корне репозитория.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Файл <code>netlify.toml</code> организован в виде секций (заголовков в квадратных скобках) и пар <code>ключ = значение</code>. В предоставленном файле присутствует только одна секция:</p>
+    <pre>
+[build.environment]
+NETLIFY_SITE_ID = "grafic1"
+NETLIFY_ACCESS_TOKEN = "nfp_zJunGW2Sp99uRfNhSYmmo4Tyui1YwB853381"
+    </pre>
+    <p>Здесь:</p>
+    <ul>
+        <li><code>[build.environment]</code> – секция, определяющая переменные окружения, доступные на этапе сборки (build time).</li>
+        <li><code>NETLIFY_SITE_ID</code> – идентификатор сайта на Netlify (используется для аутентификации при работе с Blobs).</li>
+        <li><code>NETLIFY_ACCESS_TOKEN</code> – персональный токен доступа к API Netlify (тоже для работы с Blobs).</li>
+    </ul>
+    <p>В типичном проекте также присутствуют секции:</p>
+    <ul>
+        <li><code>[build]</code> – основные настройки сборки: <code>publish</code> (папка с готовыми файлами), <code>functions</code> (папка с функциями).</li>
+        <li><code>[functions]</code> – дополнительные настройки для функций (например, <code>node_bundler = "esbuild"</code>).</li>
+        <li><code>[[redirects]]</code> – правила перенаправления.</li>
+        <li><code>[[headers]]</code> – пользовательские заголовки HTTP.</li>
+    </ul>
+
+    <h2>3. Отсутствие клиентских технологий</h2>
+    <p>Поскольку <code>netlify.toml</code> – серверный конфигурационный файл, он не содержит CSS, JavaScript, HTML-форм и не отвечает за визуальное оформление. Все нижеследующие разделы стандартного шаблона здесь не применимы, но для полноты картины они кратко обозначены.</p>
+
+    <h3>3. Стилизация (CSS)</h3>
+    <p>Не используется.</p>
+
+    <h3>4. JavaScript (логика и интерактивность)</h3>
+    <p>Не используется.</p>
+
+    <h3>5. Форма и отправка данных</h3>
+    <p>Не используется.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Безопасность</strong>: переменные <code>NETLIFY_SITE_ID</code> и <code>NETLIFY_ACCESS_TOKEN</code> являются чувствительными данными. Хранить их в открытом виде в репозитории не рекомендуется. Лучше задавать их через UI Netlify (в разделе Site settings > Environment variables) или использовать секреты в CI/CD. В текущем виде токен скомпрометирован – его следует немедленно отозвать и заменить.</li>
+        <li><strong>Приоритет переменных</strong>: переменные, заданные в UI Netlify, имеют более высокий приоритет, чем указанные в <code>netlify.toml</code>.</li>
+        <li><strong>Синтаксис TOML</strong>: строки заключаются в двойные кавычки. Ключи могут содержать точки (например, <code>build.publish</code>).</li>
+        <li><strong>Отсутствие обязательных секций</strong>: даже если файл содержит только <code>[build.environment]</code>, Netlify всё равно сможет развернуть проект, используя разумные значения по умолчанию (например, папка публикации – корень репозитория).</li>
+        <li><strong>Необходимость передеплоя</strong>: после изменения <code>netlify.toml</code> нужно перезапустить деплой (автоматически при пуше в репозиторий или вручную).</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление секции <code>[build]</code></strong>:
+            <pre>
+[build]
+publish = "public"
+functions = "netlify/functions"
+            </pre>
+            Указывает, что статические файлы находятся в папке <code>public</code>, а функции – в <code>netlify/functions</code>.
+        </li>
+        <li><strong>Настройка бандлинга функций</strong>:
+            <pre>
+[functions]
+node_bundler = "esbuild"
+            </pre>
+            Ускоряет сборку функций.
+        </li>
+        <li><strong>Перенаправления (redirects)</strong>:
+            <pre>
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/:splat"
+status = 200
+            </pre>
+        </li>
+        <li><strong>Переменные окружения для разных веток</strong>:
+            <pre>
+[context.production.environment]
+NODE_ENV = "production"
+
+[context.deploy-preview.environment]
+NODE_ENV = "staging"
+            </pre>
+        </li>
+        <li><strong>Заголовки безопасности</strong>:
+            <pre>
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+            </pre>
+        </li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Валидация синтаксиса</strong>: используйте онлайн-валидатор TOML (например, <a href="https://www.toml-lint.com/" target="_blank" style="color:#ffd700;">toml-lint.com</a>) для проверки отсутствия ошибок.</li>
+        <li><strong>Проверка переменных окружения</strong>: после деплоя зайдите в логи сборки на Netlify и убедитесь, что переменные <code>NETLIFY_SITE_ID</code> и <code>NETLIFY_ACCESS_TOKEN</code> доступны (они не выводятся в логи по соображениям безопасности, но можно проверить их наличие, добавив в функции вывод <code>console.log(process.env.NETLIFY_SITE_ID)</code> – но это тоже небезопасно).</li>
+        <li><strong>Локальное тестирование с Netlify CLI</strong>: установите Netlify CLI и выполните <code>netlify dev</code>. CLI автоматически прочитает <code>netlify.toml</code> и подставит переменные окружения. Проверьте, что функции, использующие Blobs, работают корректно.</li>
+        <li><strong>Безопасность токена</strong>: если токен был случайно опубликован, срочно сгенерируйте новый в настройках Netlify (User settings > Applications > Personal access tokens) и замените его в UI Netlify, удалив из файла.</li>
+        <li><strong>Проверка путей</strong>: если добавите секцию <code>[build]</code> с <code>publish</code> и <code>functions</code>, убедитесь, что указанные папки существуют в репозитории.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии netlify.toml (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>

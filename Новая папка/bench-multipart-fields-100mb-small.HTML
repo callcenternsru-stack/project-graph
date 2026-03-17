@@ -1,0 +1,232 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: bench-multipart-fields-100mb-small.js — бенчмарк парсеров multipart (много маленьких полей)</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>⏱️ Инструкция: bench-multipart-fields-100mb-small.js</h1>
+    <p><strong>Скрипт для сравнения производительности парсеров multipart/form-data (busboy, formidable, multiparty) при обработке множества небольших полей (100 полей по 1 МБ).</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\busboy\bench\bench-multipart-fields-100mb-small.js</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JavaScript (Node.js скрипт)</code></td></tr>
+        <tr><td>Версия Node.js</td><td>Требуется Node.js 10+ (использует Buffer, Stream, модули)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Структура кода</td><td>
+            Один файл, содержащий:
+            <ul>
+                <li>Функция <code>createMultipartBuffers</code> — генерация multipart-данных</li>
+                <li>Константы: <code>boundary</code>, <code>buffers</code>, <code>calls</code> (счётчик событий)</li>
+                <li>Чтение аргумента командной строки <code>moduleName</code></li>
+                <li>Switch по трём библиотекам: busboy, formidable, multiparty</li>
+                <li>Измерение времени через <code>console.time</code> / <code>console.timeEnd</code></li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>busboy</code> — тестируемая библиотека</li>
+                <li><code>formidable</code> — тестируемая библиотека</li>
+                <li><code>multiparty</code> — тестируемая библиотека</li>
+                <li>Стандартные модули Node.js: <code>stream</code> (Readable), <code>buffer</code></li>
+            </ul>
+            <p><strong>Примечание:</strong> Для запуска все три библиотеки должны быть установлены в проекте.</p>
+        </td></tr>
+        <tr><td>Используемые функции</td><td>
+            <ul>
+                <li><code>createMultipartBuffers(boundary, sizes)</code> — создаёт массив буферов, формирующих multipart-запрос с заданными размерами полей.</li>
+                <li><code>hijack(name, fn)</code> (для multiparty) — переопределяет внутренние методы для подсчёта событий.</li>
+                <li>Обработчики событий парсеров (<code>on('field')</code>, <code>on('data')</code>, <code>on('close')</code> и т.д.)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Язык страницы</td><td>Не применимо (JavaScript)</td></tr>
+        <tr><td>Адаптивный метатег</td><td>Не применимо</td></tr>
+        <tr><td>Подключение стилей и скриптов</td><td>Не применимо</td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Скрипт предназначен для бенчмаркинга и сравнения трёх популярных библиотек для разбора multipart/form-data. Он генерирует синтетический запрос, состоящий из 100 полей по 1 МБ (общий объём около 100 МБ), и измеряет время, затраченное каждой библиотекой на полную обработку. Это позволяет оценить производительность при работе с большим количеством мелких полей.</p>
+    <ul>
+        <li><strong>Генерация данных</strong>: функция <code>createMultipartBuffers</code> создаёт буферы, соответствующие multipart-сообщению с заданными размерами полей. Каждое поле заполняется повторяющимися символами '0'.</li>
+        <li><strong>Счётчик событий</strong>: объект <code>calls</code> подсчитывает количество вызовов различных этапов парсинга (начало части, заголовок, данные, конец). Это позволяет убедиться, что все библиотеки корректно обработали все 100 полей.</li>
+        <li><strong>Выбор библиотеки</strong>: через аргумент командной строки передаётся имя модуля (<code>busboy</code>, <code>formidable</code> или <code>multiparty</code>). В зависимости от этого выполняется соответствующий блок кода.</li>
+        <li><strong>Измерение времени</strong>: перед началом обработки вызывается <code>console.time(moduleName)</code>, по окончании (событие <code>close</code> или <code>end</code>) — <code>console.timeEnd(moduleName)</code>.</li>
+    </ul>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+
+    <h2>4. JavaScript (логика и интерактивность)</h2>
+    <ul>
+        <li><strong>Синхронная генерация данных</strong>: все буферы создаются заранее.</li>
+        <li><strong>Асинхронная обработка</strong>: парсеры работают в событийно-ориентированном стиле, данные передаются через вызовы <code>write()</code> или <code>push()</code>.</li>
+        <li><strong>Подсчёт событий</strong>:
+            <ul>
+                <li>Для <strong>busboy</strong> используется событие <code>field</code>, которое инкрементирует <code>partBegin</code>, <code>partData</code>, <code>partEnd</code>.</li>
+                <li>Для <strong>formidable</strong> используется событие <code>data</code>, где имя события (<code>partBegin</code>, <code>partData</code> и т.д.) инкрементирует соответствующий счётчик.</li>
+                <li>Для <strong>multiparty</strong> применяется «перехват» (hijack) внутренних методов <code>onParseHeaderField</code>, <code>onParseHeaderValue</code>, <code>onParsePartBegin</code>, <code>onParsePartData</code>, <code>onParsePartEnd</code> для увеличения счётчиков.</li>
+            </ul>
+        </li>
+        <li><strong>Обработка множества полей</strong>: 100 полей по 1 МБ, библиотеки должны работать с лимитами, установленными в <code>Infinity</code> (или аналогичными).</li>
+        <li><strong>Массив размеров</strong>: <code>(new Array(100)).fill(1)</code> создаёт массив из 100 элементов со значением 1, что соответствует 100 полям по 1 МБ.</li>
+    </ul>
+
+    <h2>5. Форма и отправка данных</h2>
+    <p>Скрипт не отправляет данные по сети; он симулирует получение multipart-запроса, передавая буферы напрямую парсеру. Это позволяет измерить чистое время парсинга без влияния сетевой задержки.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Гранулярный подсчёт событий</strong>: для каждого парсера используются разные методы подсчёта, чтобы получить сопоставимые данные о количестве обработанных частей.</li>
+        <li><strong>Бесконечные лимиты</strong>: для busboy и multiparty устанавливаются <code>fieldSizeLimit: Infinity</code> (или аналоги), чтобы избежать обрезания полей.</li>
+        <li><strong>Хитрый перехват в multiparty</strong>: поскольку multiparty не предоставляет прямых событий для каждого шага парсинга, скрипт временно заменяет внутренние методы, чтобы вести подсчёт.</li>
+        <li><strong>Использование Readable stream для multiparty</strong>: создаётся фиктивный HTTP-запрос (<code>new Readable</code>), в который последовательно передаются буферы.</li>
+        <li><strong>Отсутствие внешних зависимостей</strong>: кроме тестируемых библиотек, используются только встроенные модули Node.js.</li>
+        <li><strong>Сравнение сценариев</strong>: этот бенчмарк дополняет "big" версию (с несколькими большими полями), проверяя производительность на множестве мелких полей.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление новых парсеров</strong>: например, <code>@fastify/busboy</code>, <code>multer</code>.</li>
+        <li><strong>Изменение профиля нагрузки</strong>: варьировать количество полей (50, 200, 500), их размеры (512 КБ, 2 МБ), добавлять смешанные типы.</li>
+        <li><strong>Измерение других метрик</strong>: пиковое использование памяти, скорость в МБ/с, влияние размера чанков при записи.</li>
+        <li><strong>Параметризация через аргументы</strong>: передавать количество полей и их размер через командную строку.</li>
+        <li><strong>Вывод результатов в табличном виде</strong>: собирать данные и выводить сравнительную таблицу с усреднёнными значениями.</li>
+        <li><strong>Тестирование с разными версиями Node.js</strong>: для оценки влияния версии движка на производительность.</li>
+        <li><strong>Добавление измерения нагрузки на CPU</strong>: профилирование с использованием встроенных модулей.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Установка зависимостей</strong>: перед запуском убедитесь, что все три библиотеки установлены:
+            <pre>npm install busboy formidable multiparty</pre>
+        </li>
+        <li><strong>Запуск бенчмарка</strong>:
+            <pre>node bench-multipart-fields-100mb-small.js busboy
+node bench-multipart-fields-100mb-small.js formidable
+node bench-multipart-fields-100mb-small.js multiparty</pre>
+        </li>
+        <li><strong>Ожидаемый вывод</strong>: для каждого запуска будет показано время выполнения, например:
+            <pre>busboy: 234.567ms</pre>
+        </li>
+        <li><strong>Проверка корректности подсчёта</strong>: после завершения можно вывести содержимое объекта <code>calls</code> (добавив <code>console.log(calls)</code>), чтобы убедиться, что все 100 полей были обработаны (например, <code>partBegin</code> должно равняться 100).</li>
+        <li><strong>Ошибки при запуске</strong>: если библиотека не найдена, скрипт завершится с кодом 1 и сообщением об ошибке.</li>
+        <li><strong>Влияние окружения</strong>: производительность может сильно зависеть от мощности процессора и версии Node.js. Для достоверных сравнений запускайте несколько раз и усредняйте результаты.</li>
+        <li><strong>Мониторинг памяти</strong>: можно запускать с флагом <code>--trace-gc</code> для анализа сборки мусора.</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0 (предположительно 2020-2021)</strong> — создание бенчмарка для сравнения busboy, formidable и multiparty на множестве мелких полей.<br>
+        - 100 полей по 1 МБ, общий объём ~100 МБ.<br>
+        - Используются старые версии библиотек.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Текущая версия (без изменений)</strong> — файл остаётся актуальным как дополнительный тест производительности для сценария с большим количеством полей.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии bench-multipart-fields-100mb-small.js (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\busboy\bench\bench-multipart-fields-100mb-small.js</code>.</em></p>
+</body>
+</html>
+```

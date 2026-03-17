@@ -1,0 +1,226 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: lint.yml — GitHub Actions workflow для линтинга busboy</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Инструкция: lint.yml (GitHub Actions — линтинг для busboy)</h1>
+    <p><strong>Файл конфигурации непрерывной проверки кода (линтинга) для проекта busboy, использующий GitHub Actions.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\busboy\.github\workflows\lint.yml</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>YAML (.yml)</code> — конфигурационный файл GitHub Actions</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Структура кода</td><td>
+            Иерархическая структура YAML:
+            <ul>
+                <li><code>name: lint</code> — название workflow</li>
+                <li><code>on</code> — триггеры: pull_request и push в ветку master</li>
+                <li><code>env</code> — переменные окружения: <code>NODE_VERSION: 16.x</code></li>
+                <li><code>jobs.lint-js</code> — задание для линтинг-проверки:
+                    <ul>
+                        <li><code>runs-on: ubuntu-latest</code> — окружение</li>
+                        <li><code>steps</code> — последовательность действий</li>
+                    </ul>
+                </li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>package.json</code> — определяет скрипт <code>lint</code>, который запускается на шаге <code>npm run lint</code></li>
+                <li>Конфигурация ESLint (например, <code>.eslintrc</code>) — необходима для корректной работы линтера</li>
+                <li>Код проекта busjoy (исходные файлы, подлежащие проверке)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Используемые действия</td><td>
+            <ul>
+                <li><code>actions/checkout@v2</code> — клонирование репозитория</li>
+                <li><code>actions/setup-node@v1</code> — установка Node.js указанной версии</li>
+                <li>Команды shell: <code>npm install --only=dev</code>, <code>npm run lint</code></li>
+            </ul>
+        </td></tr>
+        <tr><td>Язык страницы</td><td>Не применимо (YAML)</td></tr>
+        <tr><td>Адаптивный метатег</td><td>Не применимо</td></tr>
+        <tr><td>Подключение стилей и скриптов</td><td>Не применимо</td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Workflow предназначен для автоматического запуска линтера при каждом пуше в ветку <code>master</code> и при создании pull request. Это гарантирует, что код соответствует стилистическим и синтаксическим правилам, заданным в конфигурации ESLint.</p>
+    <ul>
+        <li><strong>name: lint</strong> — отображается в интерфейсе GitHub Actions.</li>
+        <li><strong>on</strong> — активация workflow:
+            <ul>
+                <li><code>pull_request</code> — запуск при создании/обновлении PR</li>
+                <li><code>push</code> — запуск при пуше в ветку master</li>
+            </ul>
+        </li>
+        <li><strong>env.NODE_VERSION</strong> — задаёт версию Node.js, используемую во всех шагах (16.x).</li>
+        <li><strong>jobs.lint-js</strong>: единственное задание на Ubuntu.
+            <ul>
+                <li><code>steps</code>:
+                    <ol>
+                        <li>Checkout репозитория.</li>
+                        <li>Установка указанной версии Node.js.</li>
+                        <li>Установка только dev-зависимостей (<code>--only=dev</code>), что включает ESLint и связанные плагины, но не основные зависимости проекта (экономит время и ресурсы).</li>
+                        <li>Запуск скрипта <code>lint</code> из <code>package.json</code>.</li>
+                    </ol>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+
+    <h2>4. JavaScript (логика и интерактивность) — не применимо</h2>
+
+    <h2>5. Форма и отправка данных — не применимо</h2>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Использование <code>--only=dev</code></strong>: установка только dev-зависимостей ускоряет выполнение и снижает риск проблем с продакшн-зависимостями.</li>
+        <li><strong>Фиксированная версия Node.js</strong>: задана через <code>env</code> и используется на всех шагах, что обеспечивает консистентность окружения.</li>
+        <li><strong>Старые версии actions</strong>: используются <code>actions/checkout@v2</code> и <code>actions/setup-node@v1</code>. Это может быть связано с тем, что проект давно не обновлял workflow, но они всё ещё работают.</li>
+        <li><strong>Отсутствие кэширования</strong>: каждый раз npm install выполняется заново, что увеличивает время.</li>
+        <li><strong>Только линтинг</strong>: workflow не запускает тесты, только проверку стиля кода.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление кэширования</strong>: использовать <code>actions/cache</code> для кэширования <code>node_modules</code> и ускорения установки.</li>
+        <li><strong>Обновление версий actions</strong>: перейти на <code>actions/checkout@v4</code> и <code>actions/setup-node@v4</code> для улучшенной производительности и новых функций.</li>
+        <li><strong>Добавление других линтеров</strong>: например, <code>npm run lint:css</code> или <code>npm run lint:md</code>.</li>
+        <li><strong>Параллельное выполнение</strong>: можно разделить линтинг на несколько задач (ESLint, Prettier, TypeScript) и запускать их параллельно.</li>
+        <li><strong>Автоматическое исправление</strong>: добавить шаг с <code>npm run lint -- --fix</code> и создание PR с исправлениями (но осторожно, чтобы не закоммитить изменения автоматически).</li>
+        <li><strong>Уведомления</strong>: настроить отправку оповещений при падении линтинга.</li>
+        <li><strong>Добавление проверки на разных ОС</strong>: если линтинг зависит от платформы, можно расширить матрицу на Windows/macOS.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Локальный запуск</strong>: для проверки можно использовать инструмент <code>act</code> для эмуляции GitHub Actions локально, либо просто выполнить команды вручную: <code>npm install --only=dev && npm run lint</code>.</li>
+        <li><strong>Проверка на GitHub</strong>: после пуша в ветку master или создания PR зайти в раздел Actions и убедиться, что workflow "lint" запустился и завершился успешно.</li>
+        <li><strong>Ошибки линтинга</strong>: если линтер находит проблемы, задача завершится с ошибкой, и в логах будут указаны проблемные места.</li>
+        <li><strong>Проверка сценария pull request</strong>: создать тестовый PR с изменением кода, содержащим ошибку стиля, и убедиться, что workflow падает, а без ошибок — проходит.</li>
+        <li><strong>Взаимодействие с package.json</strong>: убедиться, что скрипт <code>lint</code> определён и корректно вызывает ESLint (например, <code>"lint": "eslint ."</code>).</li>
+        <li><strong>Проверка установки только dev-зависимостей</strong>: можно временно добавить в workflow шаг <code>ls node_modules</code> и убедиться, что продакшн-зависимости не установлены (опционально).</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0 (предположительно 2021-2022)</strong> — создание workflow для линтинга.<br>
+        - Использование Node.js 16.x.<br>
+        - Запуск ESLint через <code>npm run lint</code>.<br>
+        - Триггеры: push в master и pull_request.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Текущая версия (без изменений)</strong> — файл остаётся актуальным, так как линтинг не требует частых обновлений.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии lint.yml (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\busboy\.github\workflows\lint.yml</code>.</em></p>
+</body>
+</html>
+```

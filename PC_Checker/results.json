@@ -1,0 +1,26 @@
+﻿{
+    "voiceRecorded":  false,
+    "voiceFile":  null,
+    "hardware":  {
+                     "CPU":  "AMD Ryzen 5 Microsoft Surface (R) Edition | Ядер: 6 | Логических: 12",
+                     "RAM":  "15.45 GB",
+                     "OS":  "Майкрософт Windows 10 Pro",
+                     "SystemDisk":  "HDD | 237.83 GB (свободно 133.79 GB)"
+                 },
+    "timestamp":  "2026-03-15 17:43:31",
+    "typingTest":  {
+                       "Characters":  0,
+                       "Accuracy":  0,
+                       "CPM":  0,
+                       "TextIndex":  -1,
+                       "Duration":  0,
+                       "Errors":  0
+                   },
+    "candidateId":  "ADMIN123",
+    "internet":  {
+                     "download":  100.42,
+                     "server":  "Izhevsk",
+                     "upload":  62.287504,
+                     "ping":  33.768
+                 }
+}

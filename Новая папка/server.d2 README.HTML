@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: server.d.ts (корневой реэкспорт)</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: server.d.ts (корневой реэкспорт)</h1>
+    <p><strong>Файл деклараций TypeScript, который реэкспортирует типы серверной части Netlify Blobs из папки <code>dist</code>.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\server.d.ts</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>TypeScript Declaration File (.d.ts)</code></td></tr>
+        <tr><td>Содержимое</td><td><code>export * from './dist/server.d.ts'</code></td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Структура кода</td><td>Одна строка с реэкспортом всех типов из <code>./dist/server.d.ts</code></td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>./dist/server.d.ts</code> — целевой файл, содержащий фактические декларации для серверной части</li>
+                <li><code>package.json</code> — в секции <code>"exports"</code> указано, что импорт <code>"@netlify/blobs/server"</code> ведёт к этому файлу (через <code>"types": "./dist/server.d.ts"</code>, но корневой <code>server.d.ts</code> выступает как точка входа для TypeScript)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Используемые функции</td><td>Нет функций, только декларация экспорта</td></tr>
+        <tr><td>Язык страницы</td><td>TypeScript (не применимо)</td></tr>
+        <tr><td>Адаптивный метатег</td><td>Не применимо (файл не является HTML)</td></tr>
+        <tr><td>Подключение стилей и скриптов</td><td>Не применимо</td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Файл представляет собой минимальный реэкспорт, используемый для организации точек входа TypeScript в пакете. Он не содержит самостоятельных деклараций, а лишь перенаправляет импорты к основному файлу деклараций в папке <code>dist</code>. Это типичная практика для npm-пакетов, чтобы сохранить чистоту корневой директории и позволить пользователям импортировать типы как из корня, так и из вложенных путей.</p>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+
+    <h2>4. JavaScript (логика и интерактивность) — не применимо</h2>
+    <p>Файл содержит только декларацию TypeScript, без исполняемого кода.</p>
+
+    <h2>5. Форма и отправка данных — не применимо</h2>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Точка входа для TypeScript</strong>: благодаря этому файлу разработчики могут импортировать типы серверной части через <code>import type { BlobsServer } from '@netlify/blobs/server'</code>.</li>
+        <li><strong>Следование стандартам</strong>: использование реэкспорта соответствует рекомендациям по публикации пакетов с поддержкой TypeScript.</li>
+        <li><strong>Минимализм</strong>: файл не содержит лишних конструкций, что упрощает его поддержку.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление дополнительных экспортов</strong>: если потребуется экспортировать что-то ещё из корня серверного модуля, можно расширить этот файл, но текущий реэкспорт покрывает все типы из <code>dist/server.d.ts</code>.</li>
+        <li><strong>Версионирование</strong>: остаётся неизменным, пока структура экспортов в <code>dist</code> не меняется.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Проверка импортов</strong>: в тестовом проекте TypeScript убедитесь, что импорт <code>import { BlobsServer } from '@netlify/blobs/server'</code> работает и типы корректно резолвятся.</li>
+        <li><strong>Сравнение с <code>dist/server.d.ts</code></strong>: можно проверить, что содержимое реэкспорта совпадает с оригиналом (хотя это технически не требуется).</li>
+        <li><strong>Интеграция с <code>package.json</code></strong>: проверьте, что секция <code>"exports"</code> правильно указывает на этот файл для TypeScript (через <code>"types"</code>).</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 7.0.0 (2024)</strong> — добавлен корневой реэкспорт server.d.ts для удобства импорта серверных типов.<br>
+        - Реэкспорт из <code>./dist/server.d.ts</code>.<br>
+        - Соответствует структуре пакета с разделением на клиентскую и серверную части.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 7.4.0 (текущая)</strong> — без изменений, файл остаётся стабильным.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии server.d.ts (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\server.d.ts</code>.</em></p>
+</body>
+</html>

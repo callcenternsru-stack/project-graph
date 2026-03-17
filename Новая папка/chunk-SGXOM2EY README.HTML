@@ -1,0 +1,304 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: chunk-SGXOM2EY.js — общие утилиты Netlify Blobs</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧩 Инструкция: chunk-SGXOM2EY.js</h1>
+    <p><strong>Общий модуль с утилитами, классами ошибок, функциями для работы с метаданными, HTTP-клиентом и повторными попытками для Netlify Blobs.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\chunk-SGXOM2EY.js</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JavaScript (Node.js/браузерный модуль)</code></td></tr>
+        <tr><td>Версия Node.js</td><td>Требуется Node.js 14+ (использует <code>fetch</code>, <code>ReadableStream</code>, <code>setTimeout</code>)</td></tr>
+        <tr><td>Тип модуля</td><td>ES Module (использует <code>export</code>)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Поддержка окружений</td><td>Node.js, браузеры, Deno, Netlify Edge Functions</td></tr>
+        <tr><td>Структура кода</td><td>
+            Один файл, разделенный на логические секции:
+            <ul>
+                <li><strong>src/headers.ts</strong> — константы заголовков (<code>NF_ERROR</code>, <code>NF_REQUEST_ID</code>)</li>
+                <li><strong>src/util.ts</strong> — базовые утилиты (класс ошибки, сбор итератора, проверка Node-ошибки, base64 кодирование/декодирование)</li>
+                <li><strong>src/environment.ts</strong> — работа с окружением (получение переменных, контекст, ошибка отсутствия конфигурации)</li>
+                <li><strong>src/metadata.ts</strong> — работа с метаданными (кодирование/декодирование, заголовки, ограничения по размеру)</li>
+                <li><strong>src/consistency.ts</strong> — ошибка согласованности (<code>BlobsConsistencyError</code>)</li>
+                <li><strong>src/retry.ts</strong> — логика повторных запросов с экспоненциальной задержкой и обработкой rate limit</li>
+                <li><strong>src/client.ts</strong> — основной HTTP-клиент для взаимодействия с API Netlify Blobs</li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>main.js</code> — импортирует из этого модуля классы <code>Client</code>, <code>BlobsInternalError</code>, <code>MissingBlobsEnvironmentError</code> и функции для работы с метаданными и контекстом</li>
+                <li><code>server.js</code> — импортирует <code>METADATA_HEADER_INTERNAL</code>, <code>SIGNED_URL_ACCEPT_HEADER</code>, функции декодирования/кодирования метаданных и <code>isNodeError</code></li>
+                <li><code>server.d.ts</code> — TypeScript-декларации для этого модуля (независимо)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Экспортируемые элементы</td><td>
+            <ul>
+                <li><code>BlobsInternalError</code> — класс ошибки для внутренних проблем</li>
+                <li><code>collectIterator</code> — сбор асинхронного итератора в массив</li>
+                <li><code>isNodeError</code> — проверка, является ли ошибка Node.js Error</li>
+                <li><code>base64Decode</code> — декодирование из base64</li>
+                <li><code>getEnvironmentContext</code> — получение контекста окружения</li>
+                <li><code>setEnvironmentContext</code> — установка контекста окружения</li>
+                <li><code>MissingBlobsEnvironmentError</code> — ошибка отсутствия переменных окружения</li>
+                <li><code>METADATA_HEADER_INTERNAL</code> — внутренний заголовок для метаданных</li>
+                <li><code>encodeMetadata</code> — кодирование метаданных в base64 с префиксом</li>
+                <li><code>decodeMetadata</code> — декодирование метаданных из заголовка</li>
+                <li><code>getMetadataFromResponse</code> — извлечение метаданных из HTTP-ответа</li>
+                <li><code>SIGNED_URL_ACCEPT_HEADER</code> — заголовок Accept для запроса подписанного URL</li>
+                <li><code>Client</code> — класс HTTP-клиента</li>
+                <li><code>getClientOptions</code> — формирование опций клиента из параметров и контекста</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Файл представляет собой набор независимых утилит, объединенных в один модуль для внутреннего использования библиотекой Netlify Blobs:</p>
+    <ul>
+        <li><strong>Заголовки</strong>: определяет константы для заголовков ошибок (<code>NF_ERROR</code>, <code>NF_REQUEST_ID</code>).</li>
+        <li><strong>Утилиты</strong>:
+            <ul>
+                <li><code>BlobsInternalError</code> — формирует детализированное сообщение об ошибке из заголовков ответа.</li>
+                <li><code>collectIterator</code> — удобная функция для сбора всех элементов асинхронного итератора.</li>
+                <li><code>isNodeError</code> — type guard для ошибок Node.js.</li>
+                <li><code>base64Decode</code> / <code>base64Encode</code> — кроссплатформенная реализация (использует <code>Buffer</code> в Node.js, <code>atob/btoa</code> в браузере).</li>
+            </ul>
+        </li>
+        <li><strong>Окружение</strong>:
+            <ul>
+                <li><code>getEnvironment</code> — адаптер для доступа к переменным окружения в разных средах (Node.js, Deno, Netlify).</li>
+                <li><code>getEnvironmentContext</code> / <code>setEnvironmentContext</code> — управление глобальным контекстом (сериализуется в base64 и хранится в <code>NETLIFY_BLOBS_CONTEXT</code>).</li>
+                <li><code>MissingBlobsEnvironmentError</code> — ошибка, выбрасываемая при отсутствии обязательных параметров.</li>
+            </ul>
+        </li>
+        <li><strong>Метаданные</strong>:
+            <ul>
+                <li><code>METADATA_HEADER_INTERNAL</code> (<code>x-amz-meta-user</code>) и <code>METADATA_HEADER_EXTERNAL</code> (<code>netlify-blobs-metadata</code>) — заголовки для передачи метаданных.</li>
+                <li><code>encodeMetadata</code> — преобразует объект метаданных в строку формата <code>b64;base64</code>, проверяет размер (не более 2 КБ).</li>
+                <li><code>decodeMetadata</code> — обратное преобразование.</li>
+                <li><code>getMetadataFromResponse</code> — извлекает метаданные из ответа (сначала ищет внешний заголовок, затем внутренний).</li>
+            </ul>
+        </li>
+        <li><strong>Согласованность</strong>: <code>BlobsConsistencyError</code> — ошибка при запросе strong consistency без настроенного <code>uncachedEdgeURL</code>.</li>
+        <li><strong>Повторные попытки</strong>:
+            <ul>
+                <li><code>fetchAndRetry</code> — обертка вокруг fetch с повторными попытками при ошибках 429, 500+ или сетевых сбоях.</li>
+                <li><code>getDelay</code> — вычисление задержки с учетом заголовка <code>X-RateLimit-Reset</code>.</li>
+                <li><code>sleep</code> — простая задержка на Promise.</li>
+                <li><code>MAX_RETRY</code> = 5, <code>DEFAULT_RETRY_DELAY</code> = 5000 мс (или 1 мс в тестовом режиме).</li>
+            </ul>
+        </li>
+        <li><strong>HTTP-клиент</strong>:
+            <ul>
+                <li>Класс <code>Client</code> — основной клиент для взаимодействия с API.</li>
+                <li>Поддерживает два режима: через Edge URL (быстрый, кэширующий) и через API URL (прямой).</li>
+                <li>Генерирует подписанные URL для загрузки/скачивания.</li>
+                <li>Управляет заголовками авторизации и метаданными.</li>
+                <li>Обрабатывает consistency (eventual/strong).</li>
+                <li>Поддерживает регионы через параметр <code>region</code> или префикс <code>/region:{region}</code> в пути.</li>
+                <li><code>getClientOptions</code> — фабрика для создания опций клиента, объединяющая параметры из контекста и явно переданные значения.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+    <p>Данный файл является серверным/клиентским JavaScript-модулем и не содержит элементов пользовательского интерфейса.</p>
+
+    <h2>4. JavaScript (логика и интерактивность)</h2>
+    <ul>
+        <li><strong>Кроссплатформенность</strong>: все функции учитывают различные окружения (Node.js, Deno, браузер) и используют соответствующие глобальные объекты.</li>
+        <li><strong>Потоки</strong>: поддержка <code>ReadableStream</code> в теле запроса с установкой <code>duplex: "half"</code> для корректной работы в браузерах.</li>
+        <li><strong>Повторные попытки</strong>: реализованы с экспоненциальной задержкой и учетом rate limit.</li>
+        <li><strong>Обработка ошибок</strong>: специфические классы ошибок для разных ситуаций (внутренние, консистентность, отсутствие конфигурации).</li>
+        <li><strong>Метаданные</strong>: кодируются в base64 с префиксом для безопасной передачи в заголовках.</li>
+        <li><strong>Контекст окружения</strong>: глобальный объект <code>globalThis.netlifyBlobsContext</code> или переменная <code>NETLIFY_BLOBS_CONTEXT</code> хранят сериализованный контекст.</li>
+        <li><strong>Подписанные URL</strong>: клиент запрашивает подписанный URL для операций с данными, что повышает безопасность.</li>
+        <li><strong>Валидация</strong>: проверка наличия обязательных параметров (<code>siteID</code>, <code>token</code>) и выбрасывание <code>MissingBlobsEnvironmentError</code>.</li>
+    </ul>
+
+    <h2>5. Форма и отправка данных</h2>
+    <p>Модуль не содержит пользовательских форм. Он обеспечивает транспортный уровень для HTTP-запросов:</p>
+    <ul>
+        <li><strong>Формирование URL</strong>: в зависимости от режима (Edge/API) и параметров (регион, store, key).</li>
+        <li><strong>Заголовки</strong>: авторизация (Bearer token), метаданные, cache-control, accept.</li>
+        <li><strong>Тело запроса</strong>: может быть строкой, Buffer, Blob, ReadableStream.</li>
+        <li><strong>Ответы</strong>: обрабатываются с учетом статусов и заголовков.</li>
+    </ul>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Адаптивность окружения</strong>: через <code>getEnvironment</code> модуль работает в Node.js, Deno, браузерах и Netlify Edge.</li>
+        <li><strong>Безопасность</strong>: подписанные URL исключают необходимость передавать токен в каждом запросе.</li>
+        <li><strong>Консистентность</strong>: поддержка eventual и strong consistency через разные URL (cached/uncached).</li>
+        <li><strong>Регионы</strong>: поддержка регионов через параметр или префикс пути (для Edge).</li>
+        <li><strong>Rate limit handling</strong>: автоматические повторные попытки с учетом заголовка <code>X-RateLimit-Reset</code>.</li>
+        <li><strong>Размер метаданных</strong>: строгое ограничение в 2 КБ для предотвращения проблем с заголовками.</li>
+        <li><strong>Глобальный контекст</strong>: позволяет передавать конфигурацию между модулями без явных параметров.</li>
+        <li><strong>Тестирование</strong>: в режиме тестирования (<code>NODE_ENV=test</code>) задержка повторных попыток сокращается до 1 мс для ускорения тестов.</li>
+        <li><strong>Совместимость</strong>: используется везде, где есть <code>fetch</code>, включая Cloudflare Workers, Deno, современный Node.js.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Поддержка разных алгоритмов повторных попыток</strong>: добавить экспоненциальную задержку с jitter.</li>
+        <li><strong>Сжатие метаданных</strong>: для уменьшения размера при больших объектах.</li>
+        <li><strong>Кэширование подписанных URL</strong>: чтобы не запрашивать их повторно для одних и тех же операций.</li>
+        <li><strong>Мониторинг</strong>: добавить сбор метрик по количеству запросов, повторным попыткам, ошибкам.</li>
+        <li><strong>Поддержка HTTP/2</strong>: для улучшения производительности.</li>
+        <li><strong>Гибкая настройка таймаутов</strong>: возможность задать timeout для запросов.</li>
+        <li><strong>Логирование</strong>: встроенное логирование запросов для отладки.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Мокирование fetch</strong>: для тестирования можно подменить <code>globalThis.fetch</code> или передать свою реализацию в конструктор <code>Client</code>.</li>
+        <li><strong>Тестирование повторных попыток</strong>: установить <code>NODE_ENV=test</code> для сокращения задержек.</li>
+        <li><strong>Проверка кодирования метаданных</strong>:
+            <pre>const meta = { user: 'john' };
+const encoded = encodeMetadata(meta);
+const decoded = decodeMetadata(encoded);
+assert.deepEqual(decoded, meta);</pre>
+        </li>
+        <li><strong>Тестирование ошибок</strong>: проверить, что <code>BlobsInternalError</code> корректно извлекает заголовки.</li>
+        <li><strong>Тестирование контекста</strong>:
+            <pre>setEnvironmentContext({ siteID: 'test', token: '123' });
+const ctx = getEnvironmentContext();
+assert.equal(ctx.siteID, 'test');</pre>
+        </li>
+        <li><strong>Тестирование клиента с локальным сервером</strong>: запустить <code>BlobsServer</code> и передать его URL как <code>edgeURL</code>.</li>
+        <li><strong>Тестирование strong consistency</strong>: передать <code>uncachedEdgeURL</code> и проверить, что запросы идут на него.</li>
+        <li><strong>Тестирование rate limit</strong>: замокать ответ с заголовком <code>X-RateLimit-Reset</code> и проверить, что повторные попытки происходят с правильной задержкой.</li>
+        <li><strong>Кросс-средовое тестирование</strong>: проверить работу в Node.js, браузере (с <code>atob/btoa</code>), Deno.</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0.0 (2024)</strong> — базовая реализация.<br>
+        - Утилиты, работа с окружением, базовый клиент.<br>
+        - Поддержка eventual consistency.<br>
+        - Обработка ошибок через заголовки.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.1.0 (2025)</strong><br>
+        - Добавлена поддержка strong consistency.<br>
+        - Реализованы повторные попытки с rate limit.<br>
+        - Добавлены метаданные (кодирование/декодирование).<br>
+        - Поддержка регионов.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.2.0 (2026)</strong><br>
+        - Улучшена кроссплатформенность (Deno, браузеры).<br>
+        - Добавлен контекст окружения через глобальные переменные.<br>
+        - Оптимизация работы с потоками.<br>
+        - Исправлены проблемы с base64 в разных средах.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии chunk-SGXOM2EY.js (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\chunk-SGXOM2EY.js</code>.</em></p>
+</body>
+</html>
+```

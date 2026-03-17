@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: package.json — манифест Node.js проекта</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: package.json</h1>
+    <p><strong>Манифест Node.js-проекта, содержащий метаданные, список зависимостей и скрипты.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\package.json</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JSON</code> (нотация объектов JavaScript)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (без BOM)</td></tr>
+        <tr><td>Роль в проекте</td><td>Определяет имя, версию, зависимости, скрипты и другую метаинформацию для Node.js-среды (Netlify Functions)</td></tr>
+        <tr><td>Создаётся</td><td>Вручную при инициализации проекта (<code>npm init</code>) или автоматически при добавлении зависимостей</td></tr>
+        <tr><td>Редактирование</td><td>Можно и нужно редактировать вручную для изменения зависимостей, скриптов и метаданных</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Генерирует <code>package-lock.json</code> – точный слепок дерева зависимостей.</li>
+                <li>Используется при развёртывании на Netlify: на его основе устанавливаются зависимости для функций.</li>
+                <li>Связан с <code>netlify.toml</code>, где указывается папка с функциями и используется менеджер пакетов.</li>
+                <li>Не имеет прямого отношения к клиентским HTML-страницам, но необходим для работы серверной части.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p><code>package.json</code> содержит следующие основные поля (на основе предоставленного файла):</p>
+    <ul>
+        <li><code>name</code> – имя проекта (<code>"project-graph"</code>). Должно быть уникальным в рамках экосистемы (если публикуется).</li>
+        <li><code>version</code> – версия проекта в формате семантического версионирования (<code>"1.0.0"</code>).</li>
+        <li><code>dependencies</code> – объект, перечисляющий производственные зависимости, необходимые для работы приложения. В проекте:
+            <ul>
+                <li><code>@netlify/blobs</code> – библиотека для работы с Netlify Blobs (используется во всех функциях).</li>
+                <li><code>busboy</code> – парсер multipart/form-data (используется в <code>submitResults.js</code>).</li>
+            </ul>
+        </li>
+        <li><code>description</code> – краткое описание (пустое).</li>
+        <li><code>main</code> – точка входа (не используется, т.к. функции вызываются по отдельности).</li>
+        <li><code>scripts</code> – набор скриптов, которые можно запускать через <code>npm run</code>. Пока есть только тестовый скрипт <code>"test"</code>.</li>
+        <li><code>keywords</code> – массив ключевых слов (пустой).</li>
+        <li><code>author</code> – автор (пусто).</li>
+        <li><code>license</code> – тип лицензии (<code>"ISC"</code>).</li>
+        <li><code>type</code> – определяет модульную систему по умолчанию: <code>"commonjs"</code> (используется <code>require</code>). Если бы было <code>"module"</code>, использовались бы <code>import/export</code>.</li>
+    </ul>
+
+    <h2>3. Формат и оформление</h2>
+    <p>Хотя это не CSS, файл должен быть корректным JSON. Рекомендации:</p>
+    <ul>
+        <li>Используйте отступы в 2 пробела (стандарт npm).</li>
+        <li>Все строки должны быть в двойных кавычках.</li>
+        <li>Последняя запятая в объекте не допускается.</li>
+        <li>Кодировка – UTF-8 без BOM.</li>
+    </ul>
+    <p>Пример корректного форматирования:</p>
+    <pre>
+{
+  "name": "project-graph",
+  "version": "1.0.0",
+  "dependencies": {
+    "@netlify/blobs": "^7.4.0",
+    "busboy": "^1.6.0"
+  }
+}
+    </pre>
+
+    <h2>4. Логика и интерактивность (скрипты)</h2>
+    <p>Поле <code>scripts</code> определяет команды, которые можно выполнять через <code>npm run &lt;script&gt;</code>. В текущем проекте:</p>
+    <ul>
+        <li><code>test</code> – заглушка (<code>echo "Error: no test specified" && exit 1</code>). Можно заменить на реальные тесты (например, <code>jest</code>).</li>
+    </ul>
+    <p>Потенциально можно добавить скрипты для:</p>
+    <ul>
+        <li><code>start</code> – запуск локального сервера для разработки.</li>
+        <li><code>build</code> – сборка клиентских файлов (если появятся).</li>
+        <li><code>deploy</code> – деплой на Netlify через CLI.</li>
+    </ul>
+
+    <h2>5. Зависимости и их использование</h2>
+    <p>Зависимости, перечисленные в <code>dependencies</code>, устанавливаются при выполнении <code>npm install</code> и используются в коде через <code>require()</code> (или <code>import</code>, если <code>"type": "module"</code>).</p>
+    <ul>
+        <li><strong>@netlify/blobs</strong> – используется во всех Netlify Functions для чтения/записи в Blob-хранилища. Пример: <code>const { getStore } = require('@netlify/blobs');</code></li>
+        <li><strong>busboy</strong> – используется в <code>submitResults.js</code> для разбора multipart/form-data при загрузке файлов.</li>
+    </ul>
+    <p>В отличие от клиентских страниц, здесь нет HTML-форм; зависимости подключаются на серверной стороне.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Семантическое версионирование (semver)</strong>: символ <code>^</code> перед версией означает, что при установке могут подхватываться совместимые обновления (например, <code>^7.4.0</code> допускает <code>7.x.x</code>, но не <code>8.0.0</code>). Точные версии фиксируются в <code>package-lock.json</code>.</li>
+        <li><strong>Разделение зависимостей</strong>: в проекте нет <code>devDependencies</code>, но они могли бы появиться (инструменты тестирования, сборки).</li>
+        <li><strong>Поле <code>type</code></strong>: установлено в <code>"commonjs"</code>, что гарантирует использование <code>require/module.exports</code>. Это важно для совместимости с существующими функциями.</li>
+        <li><strong>Интеграция с Netlify</strong>: при деплое Netlify автоматически выполняет <code>npm ci</code> (или <code>npm install</code>) для установки зависимостей из <code>package-lock.json</code>, что обеспечивает воспроизводимость сборки.</li>
+        <li><strong>Отсутствие главного файла (<code>main</code>)</strong>: так как проект состоит из множества отдельных функций, поле <code>main</code> не используется.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление новых зависимостей</strong>: например, библиотека для валидации (<code>joi</code>), логирования (<code>winston</code>), работы с датами (<code>moment</code> или <code>date-fns</code>).</li>
+        <li><strong>Добавление <code>devDependencies</code></strong>: для инструментов разработки (препроцессоры, линтеры, тестовые фреймворки).</li>
+        <li><strong>Расширение скриптов</strong>: 
+            <ul>
+                <li><code>"start": "netlify dev"</code> – запуск локального сервера с функциями.</li>
+                <li><code>"lint": "eslint ."</code> – проверка кода.</li>
+                <li><code>"format": "prettier --write ."</code> – форматирование.</li>
+            </ul>
+        </li>
+        <li><strong>Изменение типа модулей</strong>: если проект перейдёт на ES-модули, нужно сменить <code>"type": "module"</code> и переписать все <code>require</code> на <code>import</code>.</li>
+        <li><strong>Публикация пакета</strong>: если потребуется опубликовать часть кода как npm-пакет, нужно будет заполнить поля <code>repository</code>, <code>bugs</code>, <code>homepage</code> и другие.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Проверка корректности JSON</strong>: можно открыть файл в любом редакторе с подсветкой синтаксиса или использовать онлайн-валидатор. Отсутствие синтаксических ошибок обязательно.</li>
+        <li><strong>Установка зависимостей</strong>: выполните <code>npm install</code> в корне проекта. Если нет ошибок, значит зависимости разрешены корректно.</li>
+        <li><strong>Проверка скриптов</strong>: запустите <code>npm run test</code> – должна вывестись ошибка (так и задумано). Можно заменить на реальную команду.</li>
+        <li><strong>Тестирование после изменений</strong>: после добавления новой зависимости убедитесь, что все функции, которые её используют, работают (например, локально через Netlify CLI).</li>
+        <li><strong>Воспроизводимость</strong>: удалите папку <code>node_modules</code> и выполните <code>npm ci</code> – должны установиться версии, точно соответствующие <code>package-lock.json</code>.</li>
+        <li><strong>Проверка поля <code>type</code></strong>: если вы пишете функции в стиле CommonJS, убедитесь, что <code>type</code> не установлен в <code>"module"</code>, иначе возникнут ошибки при использовании <code>require</code>.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии package.json (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>

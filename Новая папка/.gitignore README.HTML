@@ -1,0 +1,218 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: .gitignore — файл игнорирования для Git</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: .gitignore</h1>
+    <p><strong>Файл, указывающий Git, какие файлы и папки следует игнорировать при отслеживании версий.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\.gitignore</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td>Текстовый файл (plain text)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (рекомендуется)</td></tr>
+        <tr><td>Роль в проекте</td><td>Определяет набор файлов и директорий, которые не должны попадать в репозиторий Git (например, временные файлы, папки с зависимостями, локальные конфигурации)</td></tr>
+        <tr><td>Создаётся</td><td>Вручную при инициализации проекта или автоматически некоторыми инструментами</td></tr>
+        <tr><td>Редактирование</td><td>Можно и нужно редактировать вручную для добавления новых игнорируемых паттернов</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Работает совместно с системой контроля версий Git.</li>
+                <li>Не зависит от других файлов проекта, но влияет на то, какие файлы будут отслеживаться.</li>
+                <li>Правила игнорирования применяются ко всем файлам в репозитории, включая конфигурационные (<code>netlify.toml</code>, <code>package.json</code>) и служебные (<code>deno.lock</code>, <code>package-lock.json</code>).</li>
+                <li>Особенно важен для игнорирования папки <code>.netlify</code>, которая создаётся локально и содержит временные данные.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Файл <code>.gitignore</code> состоит из строк, каждая из которых задаёт шаблон (паттерн) для игнорирования. Поддерживаются следующие синтаксические конструкции:</p>
+    <ul>
+        <li><strong>Комментарии</strong> – строки, начинающиеся с <code>#</code>. Git игнорирует их. Используются для пояснений.</li>
+        <li><strong>Пустые строки</strong> – игнорируются, можно использовать для группировки.</li>
+        <li><strong>Имена файлов/папок</strong> – например, <code>.netlify</code> означает, что папка с таким именем будет игнорироваться.</li>
+        <li><strong>Слэш (<code>/</code>)</strong> – используется для указания относительных путей. Если путь начинается со слэша, он применяется относительно корня репозитория.</li>
+        <li><strong>Звёздочка (<code>*</code>)</strong> – соответствует любому количеству символов, кроме слэша.</li>
+        <li><strong>Двойная звёздочка (<code>**</code>)</strong> – соответствует любому количеству символов, включая слэши (используется для рекурсивного игнорирования).</li>
+        <li><strong>Восклицательный знак (<code>!</code>)</strong> – инвертирует правило (файл не игнорируется, даже если подходит под предыдущий паттерн).</li>
+    </ul>
+
+    <p>В предоставленном файле содержится:</p>
+    <pre>
+# Local Netlify folder
+.netlify
+    </pre>
+    <p>Здесь:</p>
+    <ul>
+        <li><code># Local Netlify folder</code> – комментарий, поясняющий назначение следующего правила.</li>
+        <li><code>.netlify</code> – правило, указывающее Git игнорировать папку <code>.netlify</code> в корне проекта (и во всех подпапках, так как не указан начальный слэш).</li>
+    </ul>
+
+    <h2>3. Отсутствие клиентских технологий</h2>
+    <p>Поскольку <code>.gitignore</code> – это служебный файл для системы контроля версий, он не содержит CSS, JavaScript, HTML-форм и не отвечает за визуальное оформление. Все нижеследующие разделы стандартного шаблона здесь не применимы, но для полноты картины они кратко обозначены.</p>
+
+    <h3>3. Стилизация (CSS)</h3>
+    <p>Не используется.</p>
+
+    <h3>4. JavaScript (логика и интерактивность)</h3>
+    <p>Не используется.</p>
+
+    <h3>5. Форма и отправка данных</h3>
+    <p>Не используется.</p>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Игнорирование уже отслеживаемых файлов</strong>: если файл уже был добавлен в репозиторий (commit), добавление его в <code>.gitignore</code> не заставит Git перестать его отслеживать. Для этого нужно удалить файл из индекса командой <code>git rm --cached</code>.</li>
+        <li><strong>Папка <code>.netlify</code></strong>: эта папка создаётся локально при использовании Netlify CLI (<code>netlify dev</code>, <code>netlify link</code> и т.д.). Она содержит временные файлы, кэш, конфигурации окружения, которые не должны попадать в репозиторий. Игнорирование этой папки – обязательная практика.</li>
+        <li><strong>Глобальный .gitignore</strong>: помимо локального файла, Git поддерживает глобальный файл игнорирования (обычно <code>~/.gitignore_global</code>), который применяется ко всем репозиториям на машине. В нём удобно задавать системные игнорирования (например, <code>.DS_Store</code> для macOS).</li>
+        <li><strong>Регистр символов</strong>: правила в <code>.gitignore</code> чувствительны к регистру (на Linux-системах). На Windows и macOS регистр может игнорироваться, но для совместимости лучше придерживаться точного регистра.</li>
+        <li><strong>Проверка игнорирования</strong>: команда <code>git check-ignore -v &lt;файл&gt;</code> показывает, какое правило привело к игнорированию данного файла.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Игнорирование системных файлов</strong>: добавить правила для файлов, создаваемых операционной системой или редакторами, например:
+            <pre>
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Редакторы
+*.swp
+*.swo
+*~
+            </pre>
+        </li>
+        <li><strong>Игнорирование зависимостей</strong>: обычно <code>node_modules</code> уже игнорируется, но можно добавить и другие директории с зависимостями (<code>vendor/</code>, <code>bower_components/</code>).</li>
+        <li><strong>Игнорирование файлов с секретами</strong>: например, <code>.env</code>, <code>.env.local</code>, <code>secrets.json</code>.</li>
+        <li><strong>Игнорирование логов и временных файлов</strong>: <code>*.log</code>, <code>tmp/</code>, <code>cache/</code>.</li>
+        <li><strong>Игнорирование файлов сборки</strong>: <code>dist/</code>, <code>build/</code>, <code>out/</code>.</li>
+        <li><strong>Исключения из правил</strong>: если нужно игнорировать все файлы определённого типа, но разрешить некоторые, можно использовать <code>!</code>, например:
+            <pre>
+*.log
+!important.log
+            </pre>
+        </li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Проверка синтаксиса</strong>: можно использовать онлайн-инструменты или команду <code>git check-ignore</code> для проверки, какие файлы будут проигнорированы.</li>
+        <li><strong>Тестирование правил</strong>: создайте тестовый файл, который должен игнорироваться, и выполните <code>git status --ignored</code>. Файл должен отображаться в разделе "Ignored files".</li>
+        <li><strong>Воспроизводимость</strong>: убедитесь, что при клонировании репозитория на новую машину и выполнении <code>git status</code> не появляются неожиданные файлы (например, <code>.netlify</code>).</li>
+        <li><strong>Проверка папки <code>.netlify</code></strong>: если вы уже запускали <code>netlify dev</code>, папка <code>.netlify</code> должна присутствовать локально, но <code>git status</code> не должен её показывать. Если она отображается как untracked, значит правило в <code>.gitignore</code> не работает (возможно, файл уже был добавлен в репозиторий ранее).</li>
+        <li><strong>Тестирование с разными Git-клиентами</strong>: убедитесь, что правила корректно работают как в консольном Git, так и в GUI-клиентах (GitHub Desktop, GitKraken и т.д.).</li>
+        <li><strong>Команда для проверки</strong>: <code>git ls-files --others --ignored --exclude-standard</code> показывает все игнорируемые файлы.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии .gitignore (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>
+```

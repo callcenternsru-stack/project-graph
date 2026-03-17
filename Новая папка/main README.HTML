@@ -1,0 +1,308 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: main.js — клиентская библиотека Netlify Blobs</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+        .history-entry {
+            border-left: 2px solid #ffd700;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📦 Инструкция: main.js (Netlify Blobs Client)</h1>
+    <p><strong>Клиентская библиотека для работы с Netlify Blobs — хранилищем блобов (двоичных данных) в экосистеме Netlify.</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\main.js</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JavaScript (Node.js/браузерный модуль)</code></td></tr>
+        <tr><td>Версия Node.js</td><td>Требуется Node.js 14+ (использует <code>TextEncoder</code>, <code>fetch</code>, <code>Symbol.asyncIterator</code>)</td></tr>
+        <tr><td>Тип модуля</td><td>ES Module (использует <code>import</code>/<code>export</code>)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code></td></tr>
+        <tr><td>Поддержка окружений</td><td>Node.js, браузеры, Netlify Functions, Netlify Edge Functions</td></tr>
+        <tr><td>Структура кода</td><td>
+            Один файл, состоящий из нескольких логических секций:
+            <ul>
+                <li>Импорты из <code>./chunk-SGXOM2EY.js</code> (общие утилиты и классы)</li>
+                <li>Функция <code>connectLambda</code> — для Lambda-совместимости</li>
+                <li>Класс <code>Store</code> — основной класс для работы с хранилищем</li>
+                <li>Функции <code>getDeployStore</code>, <code>getStore</code> — фабрики для создания Store</li>
+                <li>Функция <code>listStores</code> — получение списка хранилищ</li>
+                <li>Вспомогательные функции: <code>formatListStoreResponse</code>, <code>getListIterator</code></li>
+            </ul>
+        </td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li><code>chunk-SGXOM2EY.js</code> — обязательный модуль, содержащий:
+                    <ul>
+                        <li><code>BlobsInternalError</code> — класс ошибки</li>
+                        <li><code>Client</code> — HTTP-клиент для взаимодействия с API</li>
+                        <li><code>MissingBlobsEnvironmentError</code> — ошибка отсутствия переменных окружения</li>
+                        <li><code>base64Decode</code> — декодирование base64</li>
+                        <li><code>collectIterator</code> — сбор итератора в массив</li>
+                        <li><code>getClientOptions</code>, <code>getEnvironmentContext</code>, <code>setEnvironmentContext</code> — управление контекстом</li>
+                        <li><code>getMetadataFromResponse</code> — извлечение метаданных из ответа</li>
+                    </ul>
+                </li>
+                <li><code>server.js</code> — серверная часть (для локального тестирования)</li>
+            </ul>
+        </td></tr>
+        <tr><td>Экспортируемые элементы</td><td>
+            <ul>
+                <li><code>connectLambda</code> — инициализация контекста из Lambda-события</li>
+                <li><code>getDeployStore</code> — получение Store для конкретного деплоя</li>
+                <li><code>getStore</code> — получение Store по имени или параметрам</li>
+                <li><code>listStores</code> — список доступных хранилищ</li>
+                <li><code>setEnvironmentContext</code> — установка контекста окружения</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p>Файл организован как клиентская библиотека для работы с Netlify Blobs API:</p>
+    <ul>
+        <li><strong>Lambda-совместимость</strong>: функция <code>connectLambda</code> извлекает параметры из события Lambda (заголовки <code>x-nf-deploy-id</code>, <code>x-nf-site-id</code> и данные из <code>event.blobs</code>) и устанавливает контекст окружения.</li>
+        <li><strong>Класс <code>Store</code></strong> — центральный класс для всех операций с хранилищем:
+            <ul>
+                <li>Конструктор принимает <code>client</code> и либо <code>deployID</code>, либо <code>name</code>.</li>
+                <li>Автоматически формирует внутреннее имя хранилища с префиксами:
+                    <ul>
+                        <li><code>deploy:&lt;deployID&gt;[:&lt;name&gt;]</code> — для деплой-специфичных хранилищ</li>
+                        <li><code>netlify-internal/legacy-namespace/</code> — для обратной совместимости</li>
+                        <li><code>site:&lt;name&gt;</code> — для сайт-специфичных хранилищ</li>
+                    </ul>
+                </li>
+                <li>Методы: <code>delete()</code>, <code>get()</code>, <code>getMetadata()</code>, <code>getWithMetadata()</code>, <code>list()</code>, <code>set()</code>, <code>setJSON()</code>.</li>
+                <li>Валидация ключей и имён хранилищ (длина, запрещённые символы).</li>
+                <li>Поддержка пагинации через итераторы (<code>getListIterator</code>).</li>
+            </ul>
+        </li>
+        <li><strong>Фабрики Store</strong>:
+            <ul>
+                <li><code>getStore(input)</code> — универсальная фабрика, принимает строку (имя хранилища) или объект с параметрами (<code>name</code>, <code>deployID</code>, <code>siteID</code>, <code>token</code>, <code>apiURL</code> и др.).</li>
+                <li><code>getDeployStore(input)</code> — специализированная фабрика для деплой-хранилищ, с поддержкой экспериментальных регионов (<code>context</code>, <code>auto</code>).</li>
+            </ul>
+        </li>
+        <li><strong>Листинг хранилищ</strong>: <code>listStores(options)</code> возвращает список всех доступных хранилищ сайта (с фильтрацией деплой-хранилищ).</li>
+    </ul>
+
+    <h2>3. Стилизация (CSS) — не применимо</h2>
+    <p>Данный файл является серверным/клиентским JavaScript-модулем и не содержит элементов пользовательского интерфейса.</p>
+
+    <h2>4. JavaScript (логика и интерактивность)</h2>
+    <ul>
+        <li><strong>Асинхронность</strong>: все операции с хранилищем возвращают <code>Promise</code> и используют <code>async/await</code>.</li>
+        <li><strong>Итераторы</strong>: метод <code>list()</code> может возвращать асинхронный итератор (при <code>paginate: true</code>) для постраничной загрузки.</li>
+        <li><strong>Типы данных</strong>: поддержка различных форматов данных:
+            <ul>
+                <li><code>text</code> — строка UTF-8</li>
+                <li><code>arrayBuffer</code> — бинарные данные</li>
+                <li><code>blob</code> — объект Blob</li>
+                <li><code>json</code> — автоматический парсинг JSON</li>
+                <li><code>stream</code> — поток ReadableStream</li>
+            </ul>
+        </li>
+        <li><strong>Метаданные</strong>: поддержка пользовательских метаданных при установке и получении блобов.</li>
+        <li><strong>ETag и условные запросы</strong>: метод <code>getWithMetadata</code> поддерживает <code>if-none-match</code> для кэширования.</li>
+        <li><strong>Валидация</strong>:
+            <ul>
+                <li>Ключи не могут быть пустыми, не могут начинаться с <code>/</code> или <code>%2F</code>, максимальная длина UTF-8 — 600 байт.</li>
+                <li>Имена хранилищ не могут содержать <code>/</code>, максимальная длина — 64 байта.</li>
+                <li>Deploy ID должен соответствовать формату <code>\w{1,24}</code>.</li>
+            </ul>
+        </li>
+        <li><strong>Контекст окружения</strong>: глобальный контекст (<code>siteID</code>, <code>deployID</code>, <code>token</code>, <code>edgeURL</code>) устанавливается через <code>setEnvironmentContext</code> или автоматически из переменных окружения Netlify.</li>
+        <li><strong>Обработка ошибок</strong>: специфические ошибки <code>BlobsInternalError</code>, <code>MissingBlobsEnvironmentError</code>.</li>
+        <li><strong>Экспериментальные регионы</strong>: поддержка выбора региона через <code>experimentalRegion</code> со значениями <code>context</code> (из окружения) или <code>auto</code>.</li>
+    </ul>
+
+    <h2>5. Форма и отправка данных</h2>
+    <p>Библиотека не имеет пользовательских форм. Данные передаются через HTTP-запросы к API Netlify Blobs:</p>
+    <ul>
+        <li><strong>PUT</strong> — загрузка блоба (тело запроса содержит данные, метаданные в заголовке <code>X-Netlify-Blobs-Metadata</code>)</li>
+        <li><strong>GET</strong> — получение блоба (поддержка условных запросов через <code>If-None-Match</code>)</li>
+        <li><strong>HEAD</strong> — получение метаданных</li>
+        <li><strong>DELETE</strong> — удаление блоба</li>
+        <li><strong>GET с параметрами</strong> — листинг (параметры <code>prefix</code>, <code>cursor</code>, <code>directories</code>)</li>
+    </ul>
+
+    <h2>6. Особенности реализации</h2>
+    <ul>
+        <li><strong>Префиксы хранилищ</strong>: библиотека автоматически добавляет префиксы к именам хранилищ для изоляции данных между сайтами и деплоями.</li>
+        <li><strong>Обратная совместимость</strong>: поддержка legacy-формата <code>netlify-internal/legacy-namespace/</code> для миграции.</li>
+        <li><strong>Пагинация</strong>: реализована через асинхронные итераторы, что позволяет эффективно обрабатывать большие списки.</li>
+        <li><strong>Кэширование</strong>: через ETag и условные запросы.</li>
+        <li><strong>Lambda-интеграция</strong>: функция <code>connectLambda</code> позволяет легко интегрировать библиотеку в Netlify Functions.</li>
+        <li><strong>Гибкость конфигурации</strong>: поддержка различных способов передачи параметров (переменные окружения, явные параметры, контекст).</li>
+        <li><strong>Кроссплатформенность</strong>: работает в Node.js, браузерах и Edge-окружениях благодаря использованию <code>fetch</code> и <code>ReadableStream</code>.</li>
+        <li><strong>Типизация</strong>: хотя файл на JavaScript, он используется в связке с <code>.d.ts</code> файлами для TypeScript-поддержки.</li>
+    </ul>
+
+    <h2>7. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Сжатие данных</strong>: автоматическое сжатие/распаковка больших блобов.</li>
+        <li><strong>Шифрование</strong>: клиентское шифрование данных перед отправкой.</li>
+        <li><strong>Кэширование на клиенте</strong>: реализация локального кэша для уменьшения количества запросов.</li>
+        <li><strong>Batch-операции</strong>: массовое удаление или копирование блобов.</li>
+        <li><strong>Поддержка TTL</strong>: автоматическое удаление устаревших блобов.</li>
+        <li><strong>WebSocket уведомления</strong>: оповещения об изменениях в хранилище.</li>
+        <li><strong>Инструменты миграции</strong>: копирование между хранилищами или окружениями.</li>
+    </ul>
+
+    <h2>8. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Настройка тестового окружения</strong>: необходимо установить переменные окружения:
+            <pre>process.env.NETLIFY_BLOBS_CONTEXT = JSON.stringify({
+  deployID: 'test-deploy-123',
+  siteID: 'test-site-456',
+  token: 'test-token',
+  edgeURL: 'http://localhost:3000'
+});</pre>
+        </li>
+        <li><strong>Создание Store</strong>:
+            <pre>import { getStore } from '@netlify/blobs/dist/main.js';
+const store = getStore('my-store');</pre>
+        </li>
+        <li><strong>Базовые операции</strong>:
+            <pre>await store.set('key', 'Hello World');
+const data = await store.get('key'); // 'Hello World'
+await store.delete('key');</pre>
+        </li>
+        <li><strong>Тестирование с локальным сервером</strong>: можно запустить <code>BlobsServer</code> из <code>server.js</code> и указать <code>edgeURL</code> на него.</li>
+        <li><strong>Проверка валидации</strong>: попытаться создать ключ с недопустимыми символами — должна выбрасываться ошибка.</li>
+        <li><strong>Тестирование пагинации</strong>: создать много блобов и проверить, что итератор возвращает все страницы.</li>
+        <li><strong>Тестирование метаданных</strong>:
+            <pre>await store.set('key', 'data', { metadata: { author: 'John' } });
+const { metadata } = await store.getWithMetadata('key');</pre>
+        </li>
+        <li><strong>Тестирование условных запросов</strong>:
+            <pre>const { etag } = await store.getWithMetadata('key');
+const result = await store.getWithMetadata('key', { etag }); // status 304</pre>
+        </li>
+        <li><strong>Lambda-совместимость</strong>: вызвать <code>connectLambda</code> с корректным событием и проверить, что контекст установлен.</li>
+    </ul>
+
+    <h2>9. История версий</h2>
+    <div class="history-entry">
+        <strong>Версия 1.0.0 (2024)</strong> — базовая реализация клиента.<br>
+        - Поддержка основных операций: set, get, delete, list.<br>
+        - Интеграция с Netlify Functions через connectLambda.<br>
+        - Валидация ключей и имён хранилищ.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.1.0 (2025)</strong><br>
+        - Добавлен метод <code>setJSON</code>.<br>
+        - Поддержка метаданных и ETag.<br>
+        - Реализована пагинация через итераторы.<br>
+        - Добавлен параметр <code>directories</code> для листинга.<br>
+    </div>
+    <div class="history-entry">
+        <strong>Версия 1.2.0 (2026)</strong><br>
+        - Экспериментальная поддержка регионов (<code>experimentalRegion</code>).<br>
+        - Улучшена обработка ошибок.<br>
+        - Добавлена функция <code>getDeployStore</code>.<br>
+        - Оптимизация производительности для больших блобов.<br>
+    </div>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии main.js (апрель 2026) для расположения <code>C:\Users\Контакт-Сервис\Desktop\prodect\node_modules\@netlify\blobs\dist\main.js</code>.</em></p>
+</body>
+</html>
+```

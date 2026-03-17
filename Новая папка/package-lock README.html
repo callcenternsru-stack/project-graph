@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция: package-lock.json — файл блокировки версий npm</title>
+    <style>
+        /* Корпоративные цвета: чёрный, жёлтый, белый */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1, h2, h3 {
+            color: #ffd700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        p, li {
+            margin-bottom: 0.8em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #2d2d2d;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #ffd700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #333;
+            color: #ffd700;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .note {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-left: 5px solid #ffd700;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        hr {
+            margin: 40px 0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Инструкция: package-lock.json</h1>
+    <p><strong>Файл блокировки версий зависимостей npm (автоматически генерируемый).</strong></p>
+    <p>Файл расположен: <code>C:\Users\Контакт-Сервис\Desktop\prodect\package-lock.json</code></p>
+
+    <hr>
+
+    <h2>1. Базовые технические параметры</h2>
+    <table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Тип документа</td><td><code>JSON</code> (нотация объектов JavaScript)</td></tr>
+        <tr><td>Кодировка символов</td><td><code>UTF-8</code> (без BOM)</td></tr>
+        <tr><td>Роль в проекте</td><td>Фиксирует точные версии всех установленных пакетов и их зависимостей для обеспечения воспроизводимости сборки</td></tr>
+        <tr><td>Создаётся</td><td>Автоматически при выполнении <code>npm install</code>, <code>npm update</code> или ручной установке пакета</td></tr>
+        <tr><td>Редактирование вручную</td><td>Не рекомендуется – файл предназначен для машинного использования</td></tr>
+        <tr><td>Взаимосвязь с другими файлами</td><td>
+            <ul>
+                <li>Тесно связан с <code>package.json</code> – описывает зависимости, объявленные в <code>package.json</code>, и их подзависимости.</li>
+                <li>Используется инструментами npm/yarn для установки именно тех версий, которые были зафиксированы.</li>
+                <li>Не требуется для работы клиентских страниц напрямую, но необходим при развёртывании на Netlify для корректной установки функций.</li>
+            </ul>
+        </td></tr>
+    </table>
+
+    <h2>2. Структура и семантика</h2>
+    <p><code>package-lock.json</code> имеет корневой объект со следующими основными полями:</p>
+    <ul>
+        <li><code>name</code> – имя проекта (берётся из <code>package.json</code>).</li>
+        <li><code>version</code> – версия проекта.</li>
+        <li><code>lockfileVersion</code> – версия формата lock-файла (в примере <code>3</code>, что соответствует npm v7+).</li>
+        <li><code>requires</code> – булево значение, указывающее, используются ли точные версии.</li>
+        <li><code>packages</code> – объект, содержащий информацию обо всех пакетах, установленных в <code>node_modules</code>. Ключи – пути к пакетам (например, <code>""</code> для корневого проекта, <code>"node_modules/@netlify/blobs"</code> для конкретной зависимости).</li>
+        <li><code>dependencies</code> – устаревшее поле (для обратной совместимости), содержит информацию о зависимостях в старом формате.</li>
+    </ul>
+
+    <p>В разделе <code>packages</code> для каждого пакета указываются:</p>
+    <ul>
+        <li><code>version</code> – точная версия.</li>
+        <li><code>resolved</code> – URL, откуда был загружен пакет (обычно из реестра npm).</li>
+        <li><code>integrity</code> – хеш для проверки целостности (Subresource Integrity).</li>
+        <li><code>dependencies</code> – объект с зависимостями данного пакета (если есть).</li>
+        <li><code>dev</code> – флаг, указывающий, что пакет является разработческим (если установлен с <code>--save-dev</code>).</li>
+        <li><code>license</code> – лицензия пакета (может отсутствовать).</li>
+    </ul>
+
+    <p>Пример из вашего файла:</p>
+    <pre>
+{
+  "name": "project-graph",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "project-graph",
+      "version": "1.0.0",
+      "license": "ISC",
+      "dependencies": {
+        "@netlify/blobs": "^7.4.0",
+        "busboy": "^1.6.0"
+      }
+    },
+    "node_modules/@netlify/blobs": {
+      "version": "7.4.0",
+      "resolved": "https://registry.npmjs.org/@netlify/blobs/-/blobs-7.4.0.tgz",
+      "integrity": "sha512-7rdPzo8bggt3D2CVO+U1rmEtxxs8X7cLusDbHZRJaMlxqxBD05mXgThj5DUJMFOvmfVjhEH/S/3AyiLUbDQGDg==",
+      "license": "MIT",
+      "engines": {
+        "node": "^14.16.0 || >=16.0.0"
+      }
+    },
+    ...
+  }
+}
+    </pre>
+
+    <h2>3. Содержимое и зависимости</h2>
+    <p>В вашем проекте используются следующие прямые зависимости (указаны в <code>package.json</code>):</p>
+    <ul>
+        <li><code>@netlify/blobs</code> версии <code>^7.4.0</code> (в lock-файле зафиксирована версия <code>7.4.0</code>) – библиотека для работы с Netlify Blobs (используется в Netlify Functions).</li>
+        <li><code>busboy</code> версии <code>^1.6.0</code> (зафиксирована версия <code>1.6.0</code>) – парсер multipart/form-data, необходим для приёма файлов в функциях (например, <code>submitResults.js</code>).</li>
+    </ul>
+    <p>Кроме того, <code>busboy</code> имеет свою зависимость <code>streamsearch</code> версии <code>1.1.0</code>, которая также зафиксирована.</p>
+
+    <h2>4. Использование и автоматизация</h2>
+    <p>Файл <code>package-lock.json</code> используется следующими инструментами:</p>
+    <ul>
+        <li><strong>npm ci</strong> – команда для чистой установки зависимостей в CI-средах (Continuous Integration). Она использует lock-файл для установки точно указанных версий, игнорируя <code>package.json</code>. Это гарантирует, что сборка будет идентична разработческой.</li>
+        <li><strong>npm install</strong> – при наличии lock-файла npm старается установить версии, соответствующие lock-файлу, и обновляет его, если <code>package.json</code> был изменён.</li>
+        <li><strong>Netlify (при деплое)</strong> – при сборке проекта на Netlify автоматически выполняется <code>npm ci</code>, поэтому lock-файл необходим для воспроизводимой установки зависимостей функций.</li>
+    </ul>
+
+    <h2>5. Особенности реализации</h2>
+    <ul>
+        <li><strong>Не редактировать вручную</strong>: любые изменения в lock-файле могут привести к конфликтам и некорректной работе. Все изменения зависимостей должны производиться через <code>npm install &lt;package&gt;</code> или редактирование <code>package.json</code> с последующим запуском <code>npm install</code>.</li>
+        <li><strong>Хранение в репозитории</strong>: файл <code>package-lock.json</code> должен быть добавлен в систему контроля версий (Git), чтобы все члены команды и сборочные серверы использовали одни и те же версии.</li>
+        <li><strong>Конфликты слияния</strong>: при возникновении конфликтов в lock-файле их нужно разрешать, переустановив зависимости (<code>npm install</code>) после слияния веток.</li>
+        <li><strong>Связь с <code>deno.lock</code></strong>: в проекте также присутствует <code>deno.lock</code> – это аналогичный файл для Deno, но он используется для edge-функций Netlify (если они написаны на Deno).</li>
+    </ul>
+
+    <h2>6. Потенциальные точки расширения</h2>
+    <ul>
+        <li><strong>Добавление новых зависимостей</strong>: при необходимости добавить новую библиотеку (например, для валидации, логирования) нужно выполнить <code>npm install &lt;package&gt;</code>, что автоматически обновит <code>package.json</code> и <code>package-lock.json</code>.</li>
+        <li><strong>Обновление существующих зависимостей</strong>: можно выполнить <code>npm update</code> для обновления в рамках семантического версионирования, либо установить конкретную версию через <code>npm install &lt;package&gt;@&lt;version&gt;</code>.</li>
+        <li><strong>Удаление зависимостей</strong>: через <code>npm uninstall &lt;package&gt;</code>.</li>
+        <li><strong>Использование yarn</strong>: если команда предпочитает yarn, будет создан <code>yarn.lock</code>. Но в проекте используется npm, поэтому <code>package-lock.json</code> остаётся основным.</li>
+    </ul>
+
+    <h2>7. Особенности для тестирования</h2>
+    <ul>
+        <li><strong>Проверка целостности</strong>: выполните <code>npm ci</code> в чистой директории (без <code>node_modules</code>). Команда должна успешно выполниться и вывести отчёт об установленных пакетах.</li>
+        <li><strong>Отсутствие ошибок</strong>: убедитесь, что после <code>npm ci</code> все функции проекта работают корректно (особенно те, что используют <code>@netlify/blobs</code> и <code>busboy</code>).</li>
+        <li><strong>Проверка версий</strong>: можно вручную сверить версии в <code>package-lock.json</code> с теми, что реально устанавливаются – они должны совпадать.</li>
+        <li><strong>Тестирование в изоляции</strong>: удалите папку <code>node_modules</code> и выполните <code>npm ci</code> – это займёт некоторое время, но должно завершиться без ошибок.</li>
+        <li><strong>Конфликты версий</strong>: если после обновления каких-либо пакетов возникают ошибки в функциях, можно откатить версии, восстановив предыдущий lock-файл из репозитория и повторно выполнив <code>npm ci</code>.</li>
+    </ul>
+
+    <hr>
+    <p><em>Инструкция составлена на основе актуальной версии package-lock.json (март 2026).</em></p>
+
+    <hr>
+    <h2>📋 История версий</h2>
+    <ul>
+        <li><strong>16 марта 2026</strong> — создана инструкция (соответствует версии проекта 6.2).</li>
+        <li><em>В дальнейшем здесь будут фиксироваться изменения в инструкции по мере обновления проекта.</em></li>
+    </ul>
+</body>
+</html>

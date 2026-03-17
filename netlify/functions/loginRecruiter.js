@@ -15,7 +15,9 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
-    const recruiter = await store.get(username, { type: 'json' });
+    // Читаем массив рекрутеров
+    const recruiters = await store.get('_all', { type: 'json' }) || [];
+    const recruiter = recruiters.find(r => r.name === username);
     if (recruiter && recruiter.password === password) {
       const { password: _, ...safe } = recruiter;
       return {
