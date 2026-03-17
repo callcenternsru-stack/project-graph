@@ -56,11 +56,18 @@ exports.handler = async (event) => {
       };
     }
 
+    // Определяем MIME-тип по расширению файла
     let contentType = 'application/octet-stream';
-    if (fileName.endsWith('.txt')) contentType = 'text/plain; charset=utf-8';
-    else if (fileName.endsWith('.json')) contentType = 'application/json';
-    else if (fileName.endsWith('.wav')) contentType = 'audio/wav';
-    else if (fileName.endsWith('.mp3')) contentType = 'audio/mpeg';
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (ext === 'txt') contentType = 'text/plain; charset=utf-8';
+    else if (ext === 'json') contentType = 'application/json';
+    else if (ext === 'wav') contentType = 'audio/wav';
+    else if (ext === 'mp3') contentType = 'audio/mpeg';
+    else if (ext === 'png') contentType = 'image/png';
+    else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+    else if (ext === 'gif') contentType = 'image/gif';
+    else if (ext === 'pdf') contentType = 'application/pdf';
+    // добавьте другие типы при необходимости
 
     console.log(`[getFile] File found, size: ${fileData.byteLength} bytes, returning`);
 
@@ -71,7 +78,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': contentType,
-        // Content-Disposition убран для просмотра в браузере
+        'Content-Disposition': 'inline', // заставляем браузер открывать, а не скачивать
       },
       body: base64,
       isBase64Encoded: true
