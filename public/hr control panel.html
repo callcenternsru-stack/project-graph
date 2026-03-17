@@ -324,7 +324,33 @@
             background: #222222;
         }
         .modal-content select[multiple] {
-            height: 120px; /* задаём высоту для мультиселекта */
+            height: 120px;
+        }
+        /* Стили для контейнера чекбоксов */
+        .checkbox-group {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #333333;
+            border-radius: 12px;
+            padding: 10px;
+            background: #1a1a1a;
+        }
+        .checkbox-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: #ffd700;
+        }
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 14px;
         }
         .toolbar {
             display: flex;
@@ -1721,45 +1747,82 @@
                 `;
             } else if (type === 'script' || type === 'testScript') {
                 title = type === 'script' ? 'Добавить скрипт звонка' : 'Добавить скрипт чат';
-                const projectOptions = state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-                // Для тестового скрипта убираем поле статусов
-                const statusesField = type === 'script' ? `
-                    <div class="form-group">
-                        <label>Статусы звонков (через запятую)</label>
-                        <input type="text" id="scriptStatuses" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
-                    </div>
-                ` : '';
-
-                fields = `
-                    <div class="form-group">
-                        <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
-                        <select id="scriptProjectSelect" multiple required size="5">
-                            <option value="" disabled>— выберите проекты —</option>
-                            ${projectOptions}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
-                        <input type="text" id="scriptTitle" placeholder="Скрипт первичного звонка" required>
-                    </div>
-                    ${statusesField}
-                    <div class="form-group">
-                        <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
-                        <div class="toolbar">
-                            <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
-                            <button type="button" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
-                            <button type="button" onclick="formatText('underline')" title="Подчеркнутый"><u>U</u></button>
-                            <button type="button" onclick="formatText('justifyLeft')" title="По левому краю">←</button>
-                            <button type="button" onclick="formatText('justifyCenter')" title="По центру">↔</button>
-                            <button type="button" onclick="formatText('justifyRight')" title="По правому краю">→</button>
-                            <div class="font-size-group">
-                                <button type="button" onclick="formatText('fontSize', 1)" title="Уменьшить">A-</button>
-                                <button type="button" onclick="formatText('fontSize', 4)" title="Увеличить">A+</button>
+                // Для скрипта звонка используем мультиселект, для чата – чекбоксы
+                if (type === 'script') {
+                    const projectOptions = state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                    const statusesField = `
+                        <div class="form-group">
+                            <label>Статусы звонков (через запятую)</label>
+                            <input type="text" id="scriptStatuses" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
+                        </div>
+                    `;
+                    fields = `
+                        <div class="form-group">
+                            <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
+                            <select id="scriptProjectSelect" multiple required size="5">
+                                <option value="" disabled>— выберите проекты —</option>
+                                ${projectOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <input type="text" id="scriptTitle" placeholder="Скрипт первичного звонка" required>
+                        </div>
+                        ${statusesField}
+                        <div class="form-group">
+                            <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <div class="toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
+                                <button type="button" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
+                                <button type="button" onclick="formatText('underline')" title="Подчеркнутый"><u>U</u></button>
+                                <button type="button" onclick="formatText('justifyLeft')" title="По левому краю">←</button>
+                                <button type="button" onclick="formatText('justifyCenter')" title="По центру">↔</button>
+                                <button type="button" onclick="formatText('justifyRight')" title="По правому краю">→</button>
+                                <div class="font-size-group">
+                                    <button type="button" onclick="formatText('fontSize', 1)" title="Уменьшить">A-</button>
+                                    <button type="button" onclick="formatText('fontSize', 4)" title="Увеличить">A+</button>
+                                </div>
+                            </div>
+                            <div contenteditable="true" id="scriptContent" style="width:100%; height:300px; overflow-y:auto; background:#1a1a1a; border:2px solid #333; border-radius:12px; padding:12px; color:#fff; font-size:14px; white-space:pre-wrap;"></div>
+                        </div>
+                    `;
+                } else {
+                    // testScript – чекбоксы
+                    const checkboxes = state.projects.map(p => `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="project_${p.id}" value="${p.id}">
+                            <label for="project_${p.id}">${p.name}</label>
+                        </div>
+                    `).join('');
+                    fields = `
+                        <div class="form-group">
+                            <label>Проекты <span style="color:#ff6b6b;">*</span></label>
+                            <div class="checkbox-group" id="projectCheckboxes">
+                                ${checkboxes}
                             </div>
                         </div>
-                        <div contenteditable="true" id="scriptContent" style="width:100%; height:300px; overflow-y:auto; background:#1a1a1a; border:2px solid #333; border-radius:12px; padding:12px; color:#fff; font-size:14px; white-space:pre-wrap;"></div>
-                    </div>
-                `;
+                        <div class="form-group">
+                            <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <input type="text" id="scriptTitle" placeholder="Скрипт чата" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <div class="toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
+                                <button type="button" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
+                                <button type="button" onclick="formatText('underline')" title="Подчеркнутый"><u>U</u></button>
+                                <button type="button" onclick="formatText('justifyLeft')" title="По левому краю">←</button>
+                                <button type="button" onclick="formatText('justifyCenter')" title="По центру">↔</button>
+                                <button type="button" onclick="formatText('justifyRight')" title="По правому краю">→</button>
+                                <div class="font-size-group">
+                                    <button type="button" onclick="formatText('fontSize', 1)" title="Уменьшить">A-</button>
+                                    <button type="button" onclick="formatText('fontSize', 4)" title="Увеличить">A+</button>
+                                </div>
+                            </div>
+                            <div contenteditable="true" id="scriptContent" style="width:100%; height:300px; overflow-y:auto; background:#1a1a1a; border:2px solid #333; border-radius:12px; padding:12px; color:#fff; font-size:14px; white-space:pre-wrap;"></div>
+                        </div>
+                    `;
+                }
             }
 
             document.getElementById('modalTitle').textContent = title;
@@ -1814,44 +1877,82 @@
                 `;
             } else if (type === 'script' || type === 'testScript') {
                 title = type === 'script' ? 'Редактировать скрипт звонка' : 'Редактировать скрипт чат';
-                const projectOptions = state.projects.map(p => `<option value="${p.id}" ${item.projectIds && item.projectIds.includes(p.id) ? 'selected' : ''}>${p.name}</option>`).join('');
-                const statusesField = type === 'script' ? `
-                    <div class="form-group">
-                        <label>Статусы звонков (через запятую)</label>
-                        <input type="text" id="scriptStatuses" value="${item.statuses ? item.statuses.join(', ') : ''}" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
-                    </div>
-                ` : '';
 
-                fields = `
-                    <div class="form-group">
-                        <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
-                        <select id="scriptProjectSelect" multiple required size="5">
-                            <option value="" disabled>— выберите проекты —</option>
-                            ${projectOptions}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
-                        <input type="text" id="scriptTitle" value="${item.title || ''}" required>
-                    </div>
-                    ${statusesField}
-                    <div class="form-group">
-                        <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
-                        <div class="toolbar">
-                            <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
-                            <button type="button" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
-                            <button type="button" onclick="formatText('underline')" title="Подчеркнутый"><u>U</u></button>
-                            <button type="button" onclick="formatText('justifyLeft')" title="По левому краю">←</button>
-                            <button type="button" onclick="formatText('justifyCenter')" title="По центру">↔</button>
-                            <button type="button" onclick="formatText('justifyRight')" title="По правому краю">→</button>
-                            <div class="font-size-group">
-                                <button type="button" onclick="formatText('fontSize', 1)" title="Уменьшить">A-</button>
-                                <button type="button" onclick="formatText('fontSize', 4)" title="Увеличить">A+</button>
+                if (type === 'script') {
+                    const projectOptions = state.projects.map(p => `<option value="${p.id}" ${item.projectIds && item.projectIds.includes(p.id) ? 'selected' : ''}>${p.name}</option>`).join('');
+                    const statusesField = `
+                        <div class="form-group">
+                            <label>Статусы звонков (через запятую)</label>
+                            <input type="text" id="scriptStatuses" value="${item.statuses ? item.statuses.join(', ') : ''}" placeholder="Например: Дозвонился, Не дозвонился, Перезвонить">
+                        </div>
+                    `;
+                    fields = `
+                        <div class="form-group">
+                            <label>Проекты <span style="color:#ff6b6b;">*</span> (можно выбрать несколько)</label>
+                            <select id="scriptProjectSelect" multiple required size="5">
+                                <option value="" disabled>— выберите проекты —</option>
+                                ${projectOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <input type="text" id="scriptTitle" value="${item.title || ''}" required>
+                        </div>
+                        ${statusesField}
+                        <div class="form-group">
+                            <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <div class="toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
+                                <button type="button" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
+                                <button type="button" onclick="formatText('underline')" title="Подчеркнутый"><u>U</u></button>
+                                <button type="button" onclick="formatText('justifyLeft')" title="По левому краю">←</button>
+                                <button type="button" onclick="formatText('justifyCenter')" title="По центру">↔</button>
+                                <button type="button" onclick="formatText('justifyRight')" title="По правому краю">→</button>
+                                <div class="font-size-group">
+                                    <button type="button" onclick="formatText('fontSize', 1)" title="Уменьшить">A-</button>
+                                    <button type="button" onclick="formatText('fontSize', 4)" title="Увеличить">A+</button>
+                                </div>
+                            </div>
+                            <div contenteditable="true" id="scriptContent" style="width:100%; height:300px; overflow-y:auto; background:#1a1a1a; border:2px solid #333; border-radius:12px; padding:12px; color:#fff; font-size:14px; white-space:pre-wrap;">${item.content || ''}</div>
+                        </div>
+                    `;
+                } else {
+                    // testScript – чекбоксы
+                    const checkboxes = state.projects.map(p => `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="project_${p.id}" value="${p.id}" ${item.projectIds && item.projectIds.includes(p.id) ? 'checked' : ''}>
+                            <label for="project_${p.id}">${p.name}</label>
+                        </div>
+                    `).join('');
+                    fields = `
+                        <div class="form-group">
+                            <label>Проекты <span style="color:#ff6b6b;">*</span></label>
+                            <div class="checkbox-group" id="projectCheckboxes">
+                                ${checkboxes}
                             </div>
                         </div>
-                        <div contenteditable="true" id="scriptContent" style="width:100%; height:300px; overflow-y:auto; background:#1a1a1a; border:2px solid #333; border-radius:12px; padding:12px; color:#fff; font-size:14px; white-space:pre-wrap;">${item.content || ''}</div>
-                    </div>
-                `;
+                        <div class="form-group">
+                            <label>Название скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <input type="text" id="scriptTitle" value="${item.title || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Текст скрипта <span style="color:#ff6b6b;">*</span></label>
+                            <div class="toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
+                                <button type="button" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
+                                <button type="button" onclick="formatText('underline')" title="Подчеркнутый"><u>U</u></button>
+                                <button type="button" onclick="formatText('justifyLeft')" title="По левому краю">←</button>
+                                <button type="button" onclick="formatText('justifyCenter')" title="По центру">↔</button>
+                                <button type="button" onclick="formatText('justifyRight')" title="По правому краю">→</button>
+                                <div class="font-size-group">
+                                    <button type="button" onclick="formatText('fontSize', 1)" title="Уменьшить">A-</button>
+                                    <button type="button" onclick="formatText('fontSize', 4)" title="Увеличить">A+</button>
+                                </div>
+                            </div>
+                            <div contenteditable="true" id="scriptContent" style="width:100%; height:300px; overflow-y:auto; background:#1a1a1a; border:2px solid #333; border-radius:12px; padding:12px; color:#fff; font-size:14px; white-space:pre-wrap;">${item.content || ''}</div>
+                        </div>
+                    `;
+                }
             }
 
             document.getElementById('modalTitle').textContent = title;
@@ -1908,26 +2009,44 @@
                     }
                     if (!response.ok) throw new Error('Ошибка сохранения');
                 } else if (editingType === 'script' || editingType === 'testScript') {
-                    const projectSelect = document.getElementById('scriptProjectSelect');
                     const titleElem = document.getElementById('scriptTitle');
                     const contentElem = document.getElementById('scriptContent');
                     const statusesElem = document.getElementById('scriptStatuses');
 
-                    if (!projectSelect || !titleElem || !contentElem) throw new Error('Не все поля найдены');
-                    
-                    // Получаем выбранные проекты (мультиселект)
-                    const selectedOptions = Array.from(projectSelect.selectedOptions);
-                    if (selectedOptions.length === 0) {
-                        alert('Выберите хотя бы один проект');
-                        return;
+                    if (!titleElem || !contentElem) throw new Error('Не все поля найдены');
+
+                    let projectIds = [];
+                    let projectNames = [];
+
+                    if (editingType === 'script') {
+                        // Для скрипта звонка – мультиселект
+                        const projectSelect = document.getElementById('scriptProjectSelect');
+                        if (!projectSelect) throw new Error('Проекты не найдены');
+                        const selectedOptions = Array.from(projectSelect.selectedOptions);
+                        if (selectedOptions.length === 0) {
+                            alert('Выберите хотя бы один проект');
+                            return;
+                        }
+                        projectIds = selectedOptions.map(opt => opt.value);
+                        projectNames = selectedOptions.map(opt => opt.text);
+                    } else {
+                        // Для чата – чекбоксы
+                        const checkboxes = document.querySelectorAll('#projectCheckboxes input[type=checkbox]:checked');
+                        if (checkboxes.length === 0) {
+                            alert('Выберите хотя бы один проект');
+                            return;
+                        }
+                        projectIds = Array.from(checkboxes).map(cb => cb.value);
+                        // Получаем названия из state.projects
+                        projectNames = projectIds.map(id => {
+                            const proj = state.projects.find(p => p.id === id);
+                            return proj ? proj.name : id;
+                        });
                     }
-                    const projectIds = selectedOptions.map(opt => opt.value);
-                    const projectNames = selectedOptions.map(opt => opt.text);
 
                     const title = titleElem.value.trim();
                     const content = contentElem.innerHTML.trim();
 
-                    // Для тестового скрипта статусы не нужны
                     let statuses = [];
                     if (editingType === 'script' && statusesElem) {
                         const statusesInput = statusesElem.value.trim();
