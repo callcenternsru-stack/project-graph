@@ -679,9 +679,7 @@
         <button class="menu-btn" data-tab="candidates" onclick="switchTab('candidates')">База контактов</button>
         <button class="menu-btn" data-tab="scripts" onclick="switchTab('scripts')">Скрипты</button>
         <button class="menu-btn" data-tab="schedule" onclick="switchTab('schedule')">График</button>
-        <button class="menu-btn" data-tab="allForms" onclick="switchTab('allForms')">Все анкеты</button>
-        <button class="menu-btn" data-tab="auto" onclick="switchTab('auto')">Анкеты авто</button>
-        <button class="menu-btn" data-tab="manual" onclick="switchTab('manual')">Анкеты ручные</button>
+        <button class="menu-btn" data-tab="candidatesAll" onclick="switchTab('candidatesAll')">Анкеты</button>
         <button class="menu-btn" data-tab="characteristics" onclick="switchTab('characteristics')">Характеристики</button>
     </div>
 
@@ -824,7 +822,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно для деталей анкеты кандидата -->
+    <!-- Модальное окно для деталей анкеты кандидата (добавлено) -->
     <div id="candidateDetailsModal" class="modal">
         <div class="modal-header">
             <span>Детали анкеты</span>
@@ -855,7 +853,7 @@
             manualForms: [],
             allForms: [],
             characteristics: [],         // каждый объект содержит projectId, projectName
-            allCandidates: []
+            allCandidates: []            // новые данные для вкладки "Анкеты"
         };
 
         let currentTab = 'recruiters';
@@ -938,7 +936,7 @@
                 state.callResults = refData.callResults || [];
                 state.contactTypes = refData.contactTypes || [];
                 state.projects = refData.projects || [];
-                // Нормализация проектов: если пришли строки, превращаем в объекты
+                // Нормализация проектов для графика
                 state.projects = state.projects.map(p => {
                     if (typeof p === 'string') {
                         return { id: p, name: p };
@@ -1003,9 +1001,7 @@
                     case 'candidates': count = state.candidates.length; break;
                     case 'scripts': count = state.scripts.length; break;
                     case 'schedule': count = 0; break;
-                    case 'allForms': count = state.allForms.length; break;
-                    case 'auto': count = state.autoForms.length; break;
-                    case 'manual': count = state.manualForms.length; break;
+                    case 'candidatesAll': count = state.allCandidates.length; break;
                     case 'characteristics': count = state.characteristics.length; break;
                 }
                 let baseText = btn.innerText.replace(/\s*\(\d+\)$/, '');
@@ -1069,7 +1065,7 @@
             if (scheduleOnly) return;
             currentTab = tabId;
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => btn.classList.remove('active'));
-            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'allForms', 'auto', 'manual', 'characteristics'].indexOf(tabId);
+            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'candidatesAll', 'characteristics'].indexOf(tabId);
             if (index !== -1) {
                 document.querySelectorAll('.side-menu .menu-btn')[index].classList.add('active');
             }
@@ -1086,18 +1082,14 @@
                 renderScripts(area);
             } else if (currentTab === 'schedule') {
                 renderSchedulePage(area);
-            } else if (currentTab === 'allForms') {
-                renderAllForms(area);
-            } else if (currentTab === 'auto') {
-                renderAutoForms(area);
-            } else if (currentTab === 'manual') {
-                renderManualForms(area);
+            } else if (currentTab === 'candidatesAll') {
+                renderCandidatesAll(area);
             } else if (currentTab === 'characteristics') {
                 renderCharacteristics(area);
             }
         }
 
-        // ========== ФУНКЦИИ РЕНДЕРА (ИЗ СТАРОЙ ВЕРСИИ) ==========
+        // ========== СТАРЫЕ ФУНКЦИИ РЕНДЕРА (ПОЛНОСТЬЮ СОХРАНЕНЫ) ==========
         function renderRecruiters(container) {
             let html = `
                 <div class="section-header">
@@ -1369,148 +1361,6 @@
             html += '</div></div>';
 
             return html;
-        }
-
-        function renderAllForms(container) {
-            container.innerHTML = `
-                <div class="section-header">
-                    <h2>Все анкеты</h2>
-                </div>
-                <div style="color:#ffd700; text-align:center; padding:50px;">
-                    <p style="color:#fff;">Здесь будет сводная информация по всем анкетам (в разработке).</p>
-                </div>
-            `;
-        }
-
-        async function renderAutoForms(container) {
-            container.innerHTML = '<div class="loader">Загрузка данных...</div>';
-            try {
-                const forms = state.allForms;
-                let html = `
-                    <div class="section-header">
-                        <h2>Автоматические анкеты (все)</h2>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Дата</th>
-                                    <th>Статус</th>
-                                    <th>Проект</th>
-                                    <th>ФИО</th>
-                                    <th>Псевдоним</th>
-                                    <th>Telegram</th>
-                                    <th>Телефон</th>
-                                    <th>Email</th>
-                                    <th>Код</th>
-                                    <th>Отчёты</th>
-                                    <th>Удалить</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                if (!forms || forms.length === 0) {
-                    html += '<tr><td colspan="11" style="text-align:center;">Нет анкет</td></tr>';
-                } else {
-                    const baseUrl = `${window.location.protocol}//${window.location.host}/.netlify/functions/getFile`;
-                    forms.forEach(item => {
-                        const date = item.createdAt ? new Date(item.createdAt).toLocaleString() : '—';
-                        const status = item.status === 'completed' ? '✅ Завершено' : '⏳ Ожидает';
-                        const form = item.formData || {};
-                        const code = item.code || '';
-                        const reportLink = (item.status === 'completed')
-                            ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=report.txt" class="download-btn" target="_blank">📄 report.txt</a>`
-                            : '—';
-                        const resultsLink = (item.status === 'completed')
-                            ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=results.json" class="download-btn" target="_blank">📊 results.json</a>`
-                            : '—';
-                        const voiceLink = (item.status === 'completed')
-                            ? `<a href="${baseUrl}?code=${encodeURIComponent(code)}&file=voice_recording.wav" class="download-btn" target="_blank">🎤 voice.wav</a>`
-                            : '—';
-
-                        html += `
-                            <tr>
-                                <td>${date}</td>
-                                <td>${status}</td>
-                                <td>${form.project || 'РОССЕТТИ'}</td>
-                                <td>${form.fullName || ''}</td>
-                                <td>${form.nickname || ''}</td>
-                                <td>${form.telegram || ''}</td>
-                                <td>${form.phone || ''}</td>
-                                <td>${form.email || ''}</td>
-                                <td><code>${code}</code></td>
-                                <td class="actions">
-                                    ${reportLink}
-                                    ${resultsLink}
-                                    ${voiceLink}
-                                </td>
-                                <td>
-                                    <button class="delete-form-btn" onclick="deleteAutoForm('${code}')">✕</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('Ошибка загрузки анкет:', error);
-                container.innerHTML = `
-                    <div class="section-header">
-                        <h2>Автоматические анкеты</h2>
-                    </div>
-                    <div style="color:#ff6b6b; text-align:center; padding:50px;">
-                        Не удалось загрузить данные. Пожалуйста, попробуйте позже.
-                    </div>
-                `;
-            }
-        }
-
-        function renderManualForms(container) {
-            let html = `
-                <div class="section-header">
-                    <h2>Ручные анкеты</h2>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Дата</th>
-                                <th>Проект</th>
-                                <th>ФИО</th>
-                                <th>Псевдоним</th>
-                                <th>Telegram</th>
-                                <th>Телефон</th>
-                                <th>Email</th>
-                                <th>Удалить</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            if (!state.manualForms || state.manualForms.length === 0) {
-                html += '<tr><td colspan="8" style="text-align:center;">Нет анкет</td></tr>';
-            } else {
-                const sorted = [...state.manualForms].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-                sorted.forEach(item => {
-                    const date = item.submittedAt ? new Date(item.submittedAt).toLocaleString() : '—';
-                    html += `
-                        <tr>
-                            <td>${date}</td>
-                            <td>${item.project || 'РОССЕТТИ'}</td>
-                            <td>${item.fullName || ''}</td>
-                            <td>${item.nickname || ''}</td>
-                            <td>${item.telegram || ''}</td>
-                            <td>${item.phone || ''}</td>
-                            <td>${item.email || ''}</td>
-                            <td>
-                                <button class="delete-form-btn" onclick="deleteManualForm('${item.id}')">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            html += '</tbody></table></div>';
-            container.innerHTML = html;
         }
 
         function renderCharacteristics(container) {
