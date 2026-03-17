@@ -488,12 +488,98 @@
             margin-bottom: 10px;
             text-align: right;
         }
+
+        /* ===== СТИЛИ ДЛЯ ПАНЕЛИ ОБРАБОТКИ ===== */
+        .processing-panel {
+            background: #111111;
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .processing-panel h3 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .processing-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .candidate-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .candidate-card:hover {
+            border-color: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,215,0,0.2);
+        }
+
+        .candidate-info {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .candidate-info .name {
+            font-weight: 600;
+            color: #ffd700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .candidate-info .phone {
+            color: #cccccc;
+            font-size: 14px;
+        }
+
+        .candidate-status {
+            background: #2d2d2d;
+            padding: 6px 15px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #ffd700;
+            border: 1px solid #444;
+            white-space: nowrap;
+        }
+
+        .candidate-status.waiting {
+            color: #8f9bb3;
+        }
+
+        .no-candidates {
+            text-align: center;
+            color: #8f9bb3;
+            padding: 40px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="side-menu-trigger"></div>
     <div class="side-menu">
         <button class="menu-btn" onclick="showForm()">Главная</button>
+        <button class="menu-btn" onclick="showProcessing()">Обработка</button>
         <button class="menu-btn logout" onclick="logout()">Выйти</button>
     </div>
 
@@ -521,7 +607,9 @@
                 <button class="logout-btn" onclick="logout()">Выйти</button>
             </div>
         </div>
-        <div class="content-wrapper">
+
+        <!-- Основная рабочая область (скрипты + форма) -->
+        <div class="content-wrapper" id="mainContentWrapper">
             <div class="left-panel">
                 <select id="scriptSelector" class="script-selector">
                     <option value="">— выберите скрипт —</option>
@@ -609,6 +697,12 @@
                 </form>
             </div>
         </div>
+
+        <!-- Панель обработки (список кандидатов) -->
+        <div id="processingPanel" class="processing-panel" style="display: none;">
+            <h3>Список кандидатов на обработку</h3>
+            <div id="processingList" class="processing-list"></div>
+        </div>
     </div>
 
     <script>
@@ -624,6 +718,7 @@
             scripts: [],
             projectTrainings: {}  // для дат обучения
         };
+        let currentView = 'main'; // 'main' или 'processing'
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -708,6 +803,8 @@
                 currentCandidateIndex = -1;
                 loadCandidateIntoForm(-1);
             }
+            // По умолчанию показываем главную вкладку
+            showForm();
         }
 
         // ========== ЗАГРУЗКА СПРАВОЧНИКОВ ==========
@@ -1024,6 +1121,10 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат сохранён', 'success');
+                    // Если открыта вкладка обработки, обновляем список
+                    if (currentView === 'processing') {
+                        renderProcessingList();
+                    }
                     goToNextCandidate();
                 } else {
                     const err = await response.json();
@@ -1057,8 +1158,59 @@
             location.reload();
         }
 
+        // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ГЛАВНОЙ И ОБРАБОТКОЙ ==========
         function showForm() {
+            document.querySelector('.content-wrapper').style.display = 'flex';
+            document.getElementById('processingPanel').style.display = 'none';
+            currentView = 'main';
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showProcessing() {
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('processingPanel').style.display = 'block';
+            currentView = 'processing';
+            renderProcessingList();
+        }
+
+        function renderProcessingList() {
+            const listContainer = document.getElementById('processingList');
+            // Фильтруем кандидатов: исключаем тех, у кого результат звонка "Проверка"
+            const processingCandidates = myCandidates.filter(c => c.callResult !== "Проверка");
+            
+            if (processingCandidates.length === 0) {
+                listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов для обработки</div>';
+                return;
+            }
+
+            let html = '';
+            processingCandidates.forEach(candidate => {
+                const status = candidate.callResult || 'ожидает звонка';
+                const statusClass = candidate.callResult ? '' : 'waiting';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}">
+                        <div class="candidate-info">
+                            <div class="name">${candidate.fullName}</div>
+                            <div class="phone">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-status ${statusClass}">${status}</div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+
+            // Добавляем обработчики клика на карточки
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    const index = myCandidates.findIndex(c => c.id === id);
+                    if (index !== -1) {
+                        currentCandidateIndex = index;
+                        loadCandidateIntoForm(index);
+                        showForm(); // переключаемся на главную вкладку с формой
+                    }
+                });
+            });
         }
 
         // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
@@ -1189,7 +1341,7 @@
             if (overlay) overlay.classList.add('hidden');
         }
 
-        // Добавляем стили для оверлея
+        // Добавляем стили для оверлея (уже есть в CSS, добавим на всякий случай)
         const style = document.createElement('style');
         style.textContent = `
             .loading-overlay {
