@@ -45,12 +45,21 @@ exports.handler = async (event) => {
       phoneNumbers: [{ value: phoneNumber, type: 'mobile' }],
     };
 
-    await people.people.createContact({
-      requestBody: contact,
-    });
+    try {
+      await people.people.createContact({
+        requestBody: contact,
+      });
+    } catch (err) {
+      // Если контакт уже существует, игнорируем ошибку
+      if (err.code === 409) {
+        console.log('Contact already exists, proceeding...');
+      } else {
+        throw err;
+      }
+    }
 
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const chatUrl = `https://t.me/${cleanPhone}`;
+    const chatUrl = `tg://resolve?phone=${cleanPhone}`;
 
     return {
       statusCode: 200,

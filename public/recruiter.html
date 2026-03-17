@@ -412,7 +412,14 @@
             margin-top: 10px;
         }
 
-        .google-connect-btn:hover {
+        .google-connect-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #2a5ca0;
+            border-color: #2a5ca0;
+        }
+
+        .google-connect-btn:hover:not(:disabled) {
             background: #5a95f5;
             transform: translateY(-2px);
         }
@@ -572,7 +579,7 @@
                     <!-- Кнопки: сохранить, Telegram, подключить Google -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
                     <button type="button" class="telegram-btn" onclick="sendTelegramInvite()">✈️ Отправить в Telegram</button>
-                    <button type="button" class="google-connect-btn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
+                    <button type="button" class="google-connect-btn" id="googleConnectBtn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
                 </form>
             </div>
         </div>
@@ -637,6 +644,27 @@
             err.style.display = 'block';
         }
 
+        // ========== ПРОВЕРКА СТАТУСА ПОДКЛЮЧЕНИЯ GOOGLE ==========
+        async function checkGoogleStatus() {
+            if (!currentRecruiter) return;
+            try {
+                const res = await fetch(`/.netlify/functions/get-google-status?recruiterId=${encodeURIComponent(currentRecruiter.name)}`);
+                if (res.ok) {
+                    const { connected } = await res.json();
+                    const btn = document.getElementById('googleConnectBtn');
+                    if (connected) {
+                        btn.disabled = true;
+                        btn.textContent = '✅ Google подключён';
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = '🔗 Подключить Google Контакты';
+                    }
+                }
+            } catch (e) {
+                console.error('Ошибка проверки статуса Google', e);
+            }
+        }
+
         // ========== ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ВХОДА ==========
         async function initInterface() {
             document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
@@ -645,6 +673,7 @@
             await loadReferenceData();
             await loadScripts();
             await loadMyCandidates();
+            await checkGoogleStatus(); // проверяем статус Google
 
             if (myCandidates.length > 0) {
                 currentCandidateIndex = 0;
@@ -1042,12 +1071,12 @@
             }
         });
 
-        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ИНТЕГРАЦИИ С GOOGLE ==========
-      function connectGoogle() {
-    // Передаём имя рекрутера как state (можно использовать и другой уникальный ID)
-    const state = encodeURIComponent(currentRecruiter.name);
-    window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
-}
+        // ========== ФУНКЦИИ ДЛЯ ИНТЕГРАЦИИ С GOOGLE ==========
+        function connectGoogle() {
+            // Передаём имя рекрутера как state
+            const state = encodeURIComponent(currentRecruiter.name);
+            window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
+        }
 
         async function sendTelegramInvite() {
             const phone = document.getElementById('phoneNumber').value.trim();
@@ -1058,7 +1087,6 @@
                 return;
             }
 
-            // Используем имя рекрутера как идентификатор (можно заменить на id, если есть)
             const recruiterId = currentRecruiter ? currentRecruiter.name : 'test-recruiter';
 
             showLoading();
@@ -1085,10 +1113,8 @@
             }
         }
 
-        // Функции showLoading/hideLoading уже есть в candidate.html, но в recruiter.html их нет.
-        // Добавим их, чтобы они работали.
+        // Функции showLoading/hideLoading
         function showLoading() {
-            // Создаём оверлей, если его нет
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -1105,7 +1131,7 @@
             if (overlay) overlay.classList.add('hidden');
         }
 
-        // Добавляем стили для оверлея (скопированы из candidate.html)
+        // Добавляем стили для оверлея
         const style = document.createElement('style');
         style.textContent = `
             .loading-overlay {

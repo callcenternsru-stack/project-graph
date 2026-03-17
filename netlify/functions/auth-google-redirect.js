@@ -12,7 +12,7 @@ exports.handler = async (event) => {
     scope: 'https://www.googleapis.com/auth/contacts',
     access_type: 'offline',
     prompt: 'consent',
-    state: state, // передаём state, чтобы Google вернул его обратно
+    state: state,
   };
 
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${querystring.stringify(params)}`;
