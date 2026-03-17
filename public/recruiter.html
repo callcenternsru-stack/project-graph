@@ -373,6 +373,50 @@
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
         }
 
+        /* ===== НОВЫЕ СТИЛИ ДЛЯ КНОПОК ИНТЕГРАЦИИ ===== */
+        .telegram-btn {
+            width: 100%;
+            padding: 16px;
+            background: #0088cc;
+            color: white;
+            border: 2px solid #0088cc;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .telegram-btn:hover {
+            background: #0077b5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,136,204,0.4);
+        }
+
+        .google-connect-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4285f4;
+            color: white;
+            border: 2px solid #4285f4;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .google-connect-btn:hover {
+            background: #5a95f5;
+            transform: translateY(-2px);
+        }
+
         .notification {
             position: fixed;
             bottom: 20px;
@@ -524,7 +568,11 @@
                             <textarea id="comment" rows="4" placeholder="Дополнительная информация..."></textarea>
                         </div>
                     </div>
+
+                    <!-- Кнопки: сохранить, Telegram, подключить Google -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
+                    <button type="button" class="telegram-btn" onclick="sendTelegramInvite()">✈️ Отправить в Telegram</button>
+                    <button type="button" class="google-connect-btn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
                 </form>
             </div>
         </div>
@@ -993,6 +1041,107 @@
                 }
             }
         });
+
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ИНТЕГРАЦИИ С GOOGLE ==========
+        function connectGoogle() {
+            // Перенаправляем на функцию auth-google-redirect
+            window.location.href = '/.netlify/functions/auth-google-redirect';
+        }
+
+        async function sendTelegramInvite() {
+            const phone = document.getElementById('phoneNumber').value.trim();
+            const fullName = document.getElementById('fullName').value.trim();
+
+            if (!phone || !fullName) {
+                showNotification('Заполните ФИО и номер телефона', 'error');
+                return;
+            }
+
+            // Используем имя рекрутера как идентификатор (можно заменить на id, если есть)
+            const recruiterId = currentRecruiter ? currentRecruiter.name : 'test-recruiter';
+
+            showLoading();
+
+            try {
+                const response = await fetch('/.netlify/functions/add-google-contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recruiterId, phoneNumber: phone, fullName })
+                });
+                const data = await response.json();
+                hideLoading();
+
+                if (response.ok) {
+                    window.open(data.chatUrl, '_blank');
+                } else if (response.status === 401) {
+                    showNotification('Необходимо подключить Google Контакты', 'error');
+                } else {
+                    showNotification(data.error || 'Ошибка при добавлении контакта', 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                showNotification('Ошибка сети: ' + error.message, 'error');
+            }
+        }
+
+        // Функции showLoading/hideLoading уже есть в candidate.html, но в recruiter.html их нет.
+        // Добавим их, чтобы они работали.
+        function showLoading() {
+            // Создаём оверлей, если его нет
+            let overlay = document.getElementById('loadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.className = 'loading-overlay';
+                overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">Идет загрузка...</div>';
+                document.body.appendChild(overlay);
+            }
+            overlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        // Добавляем стили для оверлея (скопированы из candidate.html)
+        const style = document.createElement('style');
+        style.textContent = `
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 2000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .loading-overlay.hidden {
+                display: none;
+            }
+            .loading-spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid #333;
+                border-top-color: #ffd700;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            .loading-text {
+                color: #ffd700;
+                font-size: 24px;
+                font-weight: 600;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
