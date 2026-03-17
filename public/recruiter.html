@@ -1034,7 +1034,7 @@
 
         document.getElementById('trainingDateSelect').addEventListener('change', onTrainingDateChange);
 
-        // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ ==========
+        // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ (исправленная) ==========
         function loadCandidateIntoForm(idx) {
             if (idx < 0 || idx >= myCandidates.length) {
                 document.getElementById('fullName').value = '';
@@ -1094,8 +1094,10 @@
                     option.text = candidate.trainingDate;
                     option.setAttribute('data-time', candidate.trainingTime || '');
                     select.appendChild(option);
+                    // Устанавливаем значение после добавления опции
                     select.value = candidate.trainingDate;
                 }
+                // Всегда обновляем время из кандидата (оно могло измениться)
                 document.getElementById('trainingTimeInput').value = candidate.trainingTime || '';
             } else {
                 document.getElementById('trainingDateSelect').value = '';

@@ -902,7 +902,8 @@
         const scheduleOnly = urlParams.get('tab') === 'schedule-only';
 
         if (scheduleOnly) {
-            document.addEventListener('DOMContentLoaded', function() {
+            // Исправление: дожидаемся полной загрузки данных перед рендерингом
+            document.addEventListener('DOMContentLoaded', async function() {
                 const trigger = document.querySelector('.side-menu-trigger');
                 const sideMenu = document.querySelector('.side-menu');
                 const header = document.querySelector('.header');
@@ -914,6 +915,8 @@
                     const area = document.getElementById('contentArea');
                     if (area) renderSchedulePage(area);
                 };
+                // Загружаем все данные и ждём их
+                await loadAllData();
                 renderContent();
             });
         }
