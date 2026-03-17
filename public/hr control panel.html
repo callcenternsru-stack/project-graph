@@ -1414,6 +1414,17 @@
                 ${renderEventGraph('training', 'Обучения')}
             `;
             container.innerHTML = html;
+
+            // ИСПРАВЛЕНИЕ: выравнивание ширины фиксированных колонок после рендера
+            setTimeout(() => {
+                document.querySelectorAll('.schedule-wrapper').forEach(wrapper => {
+                    const fixedHeaders = wrapper.querySelector('.fixed-headers');
+                    const fixedCells = wrapper.querySelector('.fixed-cells');
+                    if (fixedHeaders && fixedCells) {
+                        fixedCells.style.width = fixedHeaders.offsetWidth + 'px';
+                    }
+                });
+            }, 0);
         }
 
         function renderEventGraph(type, title) {
