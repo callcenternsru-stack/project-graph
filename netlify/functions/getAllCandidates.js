@@ -30,6 +30,7 @@ exports.handler = async (event) => {
             projectId: data.formData?.projectId || '',
             status: data.status || 'pending',
             recruitmentStatus: data.recruitmentStatus || 'draft',
+            recruiter: data.recruiter || null,   // <-- ДОБАВЛЕНО
             createdAt: data.createdAt || data.formData?.timestamp,
             completedAt: data.completedAt,
             files: data.status === 'completed'
@@ -58,7 +59,6 @@ exports.handler = async (event) => {
         try {
           const data = await manualStore.get(id, { type: 'json' });
           if (!data) return null;
-          // Собираем task-поля
           const taskInputs = {};
           const taskScores = {};
           for (const key in data) {
@@ -85,8 +85,9 @@ exports.handler = async (event) => {
             projectId: data.projectId || '',
             status: data.status || 'draft',
             recruitmentStatus: data.recruitmentStatus || 'draft',
+            recruiter: data.recruiter || null,   // уже было, но для симметрии
             createdAt: data.submittedAt,
-            files: data.files || {}, // уже содержат type=manual
+            files: data.files || {},
             taskInputs,
             taskScores,
           };

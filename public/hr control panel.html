@@ -2596,6 +2596,7 @@
             return null;
         }
 
+        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateCandidateRecruiter ==========
         async function updateCandidateRecruiter(id, type, newRecruiter) {
             try {
                 const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
@@ -2607,6 +2608,7 @@
                     const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
                     if (candidate) candidate.recruiter = newRecruiter;
                     showNotification('Рекрутер обновлён', 'success');
+                    renderContent(); // <-- добавлено для немедленного обновления таблицы
                 } else {
                     const err = await response.json();
                     showNotification('Ошибка: ' + (err.error || ''), 'error');
