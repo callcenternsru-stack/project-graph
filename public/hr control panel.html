@@ -820,6 +820,22 @@
         .list-item .delete-btn:hover {
             background: #ff8a8a;
         }
+
+        /* ===== НОВЫЙ СТИЛЬ ДЛЯ СЕЛЕКТА РЕКРУТЕРА ===== */
+        .recruiter-select {
+            background: #1a1a1a;
+            color: #ffd700;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            width: 150px;
+        }
+        .recruiter-select:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
     </style>
 </head>
 <body>
@@ -2517,15 +2533,50 @@
             }
         }
 
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ РЕКРУТЕРА ==========
+        function findMatchingRecruiter(candidate) {
+            if (!state.candidates || state.candidates.length === 0) return null;
+            const { fullName, phone, project } = candidate;
+            for (const rc of state.candidates) {
+                let matches = 0;
+                if (rc.fullName && rc.fullName === fullName) matches++;
+                if (rc.phone && rc.phone === phone) matches++;
+                if (rc.project && rc.project === project) matches++;
+                if (matches >= 2) {
+                    return rc.recruiter;
+                }
+            }
+            return null;
+        }
+
+        async function updateCandidateRecruiter(id, type, newRecruiter) {
+            try {
+                const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, type, recruiter: newRecruiter })
+                });
+                if (response.ok) {
+                    const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) candidate.recruiter = newRecruiter;
+                    showNotification('Рекрутер обновлён', 'success');
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
         // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДКИ "Анкеты" ==========
         function renderCandidatesAll(container) {
             const candidates = state.allCandidates || [];
-            // Системные статусы, которые должны быть всегда
             const systemStatuses = ['draft', 'passed'];
-            // Статусы из справочника
             const customStatuses = state.callResults.map(r => r.name);
-            // Объединяем, убираем дубликаты
             const allStatuses = [...new Set([...systemStatuses, ...customStatuses])];
+            const recruiterOptions = ['Внешний', ...state.recruiters.map(r => r.name)];
 
             let html = `
                 <div class="section-header">
@@ -2539,6 +2590,7 @@
                                 <th>Дата</th>
                                 <th>ФИО</th>
                                 <th>Проект</th>
+                                <th>Рекрутер</th>
                                 <th>Тип</th>
                                 <th>Статус</th>
                                 <th>Действия</th>
@@ -2547,20 +2599,32 @@
                         <tbody>
             `;
             if (candidates.length === 0) {
-                html += '<tr><td colspan="6" style="text-align:center;">Нет анкет</td></tr>';
+                html += '<tr><td colspan="7" style="text-align:center;">Нет анкет</td></tr>';
             } else {
                 candidates.forEach(c => {
                     const date = c.createdAt ? new Date(c.createdAt).toLocaleString() : '—';
                     const typeLabel = c.type === 'auto' ? 'Авто' : 'Ручная';
                     const currentStatus = c.recruitmentStatus || 'draft';
+                    let matchedRecruiter = c.recruiter;
+                    if (!matchedRecruiter) {
+                        matchedRecruiter = findMatchingRecruiter(c) || 'Внешний';
+                    }
+                    let recruiterSelect = `<select class="recruiter-select" data-id="${c.id}" data-type="${c.type}" onchange="updateCandidateRecruiter('${c.id}', '${c.type}', this.value)">`;
+                    recruiterOptions.forEach(opt => {
+                        const selected = (opt === matchedRecruiter) ? 'selected' : '';
+                        recruiterSelect += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    recruiterSelect += '</select>';
+
                     html += `
-                        <tr data-id="${c.id}" data-type="${c.type}" onclick="showCandidateDetails('${c.id}', '${c.type}')" style="cursor:pointer;">
+                        <tr data-id="${c.id}" data-type="${c.type}">
                             <td>${date}</td>
                             <td>${c.fullName}</td>
                             <td>${c.project}</td>
+                            <td>${recruiterSelect}</td>
                             <td>${typeLabel}</td>
                             <td>
-                                <select class="status-select" data-id="${c.id}" data-type="${c.type}" onclick="event.stopPropagation();" onchange="updateCandidateStatus('${c.id}', '${c.type}', this.value)">
+                                <select class="status-select" data-id="${c.id}" data-type="${c.type}" onchange="updateCandidateStatus('${c.id}', '${c.type}', this.value)">
                                     ${allStatuses.map(opt => `<option value="${opt}" ${opt === currentStatus ? 'selected' : ''}>${opt}</option>`).join('')}
                                 </select>
                             </td>
