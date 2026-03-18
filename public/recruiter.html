@@ -1605,7 +1605,7 @@
         let currentDraftId = null;
 
         // Для редактирования внешнего кандидата (из вкладок Орг. встреча, Обучение, Отказы)
-        let editingExternalCandidate = null; // { id, type, originalStatus }
+        let editingExternalCandidate = null; // { id, type, originalStatus, trainingDate, trainingTime }
 
         // Для модального окна отправки сообщения
         let currentMessageType = null; // 'telegram' или 'whatsapp'
@@ -2000,12 +2000,38 @@
                 document.getElementById('phoneNumber').value = candidate.phone || '';
                 if (candidate.project) {
                     document.getElementById('project').value = candidate.project;
+                    updateTrainingDates(candidate.project);
                 } else if (currentScriptTitle) {
                     setProjectFromScript(currentScriptTitle);
                 } else {
                     document.getElementById('project').value = '';
+                    updateTrainingDates('');
                 }
                 document.getElementById('callResult').value = candidate.recruitmentStatus || '';
+                // Установка даты и времени обучения
+                if (candidate.trainingDate) {
+                    const select = document.getElementById('trainingDateSelect');
+                    let optionExists = false;
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === candidate.trainingDate) {
+                            select.selectedIndex = i;
+                            optionExists = true;
+                            break;
+                        }
+                    }
+                    if (!optionExists) {
+                        const option = document.createElement('option');
+                        option.value = candidate.trainingDate;
+                        option.text = candidate.trainingDate;
+                        option.setAttribute('data-time', candidate.trainingTime || '');
+                        select.appendChild(option);
+                        select.value = candidate.trainingDate;
+                    }
+                    document.getElementById('trainingTimeInput').value = candidate.trainingTime || '';
+                } else {
+                    document.getElementById('trainingDateSelect').value = '';
+                    document.getElementById('trainingTimeInput').value = '';
+                }
                 document.getElementById('candidateCounter').textContent = `Редактирование кандидата из списка`;
                 // Обновляем прогресс для этого кандидата
                 updateCandidateProgress(candidate.phone, candidate.project);
@@ -2279,6 +2305,7 @@
                 return cPhone === cleanPhone && c.project === project;
             });
             if (index !== -1) {
+                editingExternalCandidate = null; // сбрасываем внешнего кандидата
                 currentCandidateIndex = index;
                 loadCandidateIntoForm(index);
                 showForm(); // переходим на главную
@@ -2404,6 +2431,7 @@
                 card.addEventListener('click', (e) => {
                     const index = card.dataset.index;
                     if (index !== undefined) {
+                        editingExternalCandidate = null; // сбрасываем внешнего кандидата
                         currentCandidateIndex = parseInt(index);
                         loadCandidateIntoForm(currentCandidateIndex);
                         showForm();
@@ -2451,6 +2479,7 @@
                 card.addEventListener('click', (e) => {
                     const index = card.dataset.index;
                     if (index !== undefined) {
+                        editingExternalCandidate = null;
                         currentCandidateIndex = parseInt(index);
                         loadCandidateIntoForm(currentCandidateIndex);
                         showForm();
@@ -2491,6 +2520,7 @@
             let html = '';
             draftCandidates.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
+                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
                 html += `
                     <div class="candidate-card" data-id="${candidate.id}">
                         <div class="candidate-field">
@@ -2508,6 +2538,10 @@
                         <div class="candidate-field">
                             <div class="label">Проект</div>
                             <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Обучение</div>
+                            <div class="value">${trainingInfo}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Статус</div>
@@ -2583,6 +2617,7 @@
             let html = '';
             filteredList.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
+                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
                 html += `
                     <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
                         <div class="candidate-field">
@@ -2600,6 +2635,10 @@
                         <div class="candidate-field">
                             <div class="label">Проект</div>
                             <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Обучение</div>
+                            <div class="value">${trainingInfo}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Статус</div>
@@ -2625,7 +2664,9 @@
                             fullName: candidate.fullName,
                             phone: candidate.phone,
                             project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
+                            recruitmentStatus: candidate.recruitmentStatus,
+                            trainingDate: candidate.trainingDate,
+                            trainingTime: candidate.trainingTime
                         };
                         loadCandidateIntoForm(-1);
                         showForm();
@@ -2643,6 +2684,7 @@
             let html = '';
             filteredList.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
+                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
                 html += `
                     <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
                         <div class="candidate-field">
@@ -2660,6 +2702,10 @@
                         <div class="candidate-field">
                             <div class="label">Проект</div>
                             <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Обучение</div>
+                            <div class="value">${trainingInfo}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Статус</div>
@@ -2685,7 +2731,9 @@
                             fullName: candidate.fullName,
                             phone: candidate.phone,
                             project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
+                            recruitmentStatus: candidate.recruitmentStatus,
+                            trainingDate: candidate.trainingDate,
+                            trainingTime: candidate.trainingTime
                         };
                         loadCandidateIntoForm(-1);
                         showForm();
@@ -2703,6 +2751,7 @@
             let html = '';
             filteredList.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
+                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
                 html += `
                     <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
                         <div class="candidate-field">
@@ -2720,6 +2769,10 @@
                         <div class="candidate-field">
                             <div class="label">Проект</div>
                             <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Обучение</div>
+                            <div class="value">${trainingInfo}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Статус</div>
@@ -2745,7 +2798,9 @@
                             fullName: candidate.fullName,
                             phone: candidate.phone,
                             project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
+                            recruitmentStatus: candidate.recruitmentStatus,
+                            trainingDate: candidate.trainingDate,
+                            trainingTime: candidate.trainingTime
                         };
                         loadCandidateIntoForm(-1);
                         showForm();
@@ -2980,6 +3035,7 @@
             document.getElementById('candidatesPanel').style.display = 'block';
             document.getElementById('analyticsPanel').style.display = 'none';
             document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс на вкладке кандидатов
+            editingExternalCandidate = null; // сбрасываем внешнего кандидата
             currentView = 'candidates';
             updateBreadcrumbs();
             switchCandidatesTab('contacts');
