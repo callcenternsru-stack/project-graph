@@ -194,8 +194,9 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
         }
-        .edit-btn, .delete-btn, .import-btn, .download-btn, .delete-form-btn, .delete-candidate-btn {
+        .edit-btn, .delete-btn, .import-btn, .download-btn, .delete-form-btn, .delete-candidate-btn, .view-analytics-btn {
             padding: 6px 12px;
             border: none;
             border-radius: 8px;
@@ -234,6 +235,13 @@
         }
         .download-btn:hover {
             background: #ffe44d;
+        }
+        .view-analytics-btn {
+            background: #9c27b0;
+            color: white;
+        }
+        .view-analytics-btn:hover {
+            background: #ba68c8;
         }
         .modal {
             position: fixed;
@@ -817,6 +825,7 @@
         <button class="menu-btn" data-tab="schedule" onclick="switchTab('schedule')">График</button>
         <button class="menu-btn" data-tab="candidatesAll" onclick="switchTab('candidatesAll')">Анкеты</button>
         <button class="menu-btn" data-tab="characteristics" onclick="switchTab('characteristics')">Характеристики</button>
+        <button class="menu-btn" data-tab="analytics" onclick="switchTab('analytics')">Аналитика</button>
     </div>
 
     <div class="admin-container">
@@ -983,6 +992,36 @@
         </div>
     </div>
 
+    <!-- Модальное окно для добавления аналитики -->
+    <div id="analyticsModal" class="modal">
+        <div class="modal-header">
+            <span>Добавить запись аналитики</span>
+            <button class="modal-close" onclick="closeAnalyticsModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <form id="analyticsForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Выберите рекрутера <span style="color:#ff6b6b;">*</span></label>
+                    <select id="analyticsRecruiter" required>
+                        <option value="">— выберите рекрутера —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Описание звонка <span style="color:#ff6b6b;">*</span></label>
+                    <textarea id="analyticsDescription" rows="4" required placeholder="Введите описание звонка..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Прикрепить файл (необязательно)</label>
+                    <input type="file" id="analyticsFile" accept=".mp3,.wav,.ogg,.m4a">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="save-btn">💾 Сохранить</button>
+                    <button type="button" class="delete-time-btn" onclick="closeAnalyticsModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Модальное окно для деталей анкеты кандидата -->
     <div id="candidateDetailsModal" class="modal">
         <div class="modal-header">
@@ -1014,7 +1053,8 @@
             manualForms: [],
             allForms: [],
             characteristics: [],         // каждый объект содержит projectId, projectName
-            allCandidates: []            // новые данные для вкладки "Анкеты"
+            allCandidates: [],            // новые данные для вкладки "Анкеты"
+            analytics: []                 // массив записей аналитики
         };
 
         let currentTab = 'recruiters';
@@ -1071,6 +1111,19 @@
                 }
             } catch (error) {
                 console.error('Error loading characteristics:', error);
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const res = await fetch('/.netlify/functions/getAnalytics');
+                if (res.ok) {
+                    state.analytics = await res.json();
+                } else {
+                    console.error('Failed to load analytics');
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
             }
         }
 
@@ -1150,6 +1203,7 @@
                 state.autoForms = await autoRes.json();
 
                 await loadCharacteristics();
+                await loadAnalytics();
 
                 // Автоматически проставляем статус "Проверка пройдена" для завершённых анкет
                 await processCompletedCandidates();
@@ -1192,6 +1246,7 @@
                     case 'schedule': count = 0; break;
                     case 'candidatesAll': count = state.allCandidates.length; break;
                     case 'characteristics': count = state.characteristics.length; break;
+                    case 'analytics': count = state.analytics.length; break;
                 }
                 let baseText = btn.innerText.replace(/\s*\(\d+\)$/, '');
                 if (count > 0) {
@@ -1254,7 +1309,7 @@
             if (scheduleOnly) return;
             currentTab = tabId;
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => btn.classList.remove('active'));
-            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'candidatesAll', 'characteristics'].indexOf(tabId);
+            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'candidatesAll', 'characteristics', 'analytics'].indexOf(tabId);
             if (index !== -1) {
                 document.querySelectorAll('.side-menu .menu-btn')[index].classList.add('active');
             }
@@ -1275,6 +1330,8 @@
                 renderCandidatesAll(area);
             } else if (currentTab === 'characteristics') {
                 renderCharacteristics(area);
+            } else if (currentTab === 'analytics') {
+                renderAnalytics(area);
             }
         }
 
@@ -2740,6 +2797,164 @@
                 showNotification('Ошибка сети', 'error');
             }
         }
+
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ АНАЛИТИКИ ==========
+        function renderAnalytics(container) {
+            let html = `
+                <div class="section-header">
+                    <h2>Аналитика звонков</h2>
+                    <button class="add-btn" onclick="openAnalyticsModal()">+ Добавить запись</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Рекрутер</th>
+                                <th>Описание</th>
+                                <th>Файл</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            if (state.analytics.length === 0) {
+                html += '<tr><td colspan="4" style="text-align:center;">Нет записей</td></tr>';
+            } else {
+                state.analytics.forEach(entry => {
+                    const date = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '—';
+                    const recruiterName = entry.recruiterName || '—';
+                    const description = entry.description || '—';
+                    const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="download-btn">📁 Скачать</a>` : '—';
+                    html += `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${recruiterName}</td>
+                            <td>${description}</td>
+                            <td>${fileLink}</td>
+                        </tr>
+                    `;
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function openAnalyticsModal() {
+            // Заполняем список рекрутеров
+            const select = document.getElementById('analyticsRecruiter');
+            select.innerHTML = '<option value="">— выберите рекрутера —</option>' +
+                state.recruiters.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+            document.getElementById('analyticsDescription').value = '';
+            document.getElementById('analyticsFile').value = '';
+            document.getElementById('analyticsModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeAnalyticsModal() {
+            document.getElementById('analyticsModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        document.getElementById('analyticsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const recruiterName = document.getElementById('analyticsRecruiter').value;
+            const description = document.getElementById('analyticsDescription').value.trim();
+            const fileInput = document.getElementById('analyticsFile');
+
+            if (!recruiterName || !description) {
+                showNotification('Заполните все обязательные поля', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('recruiterName', recruiterName);
+            formData.append('description', description);
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+
+            showLoading();
+            try {
+                const response = await fetch('/.netlify/functions/saveAnalytics', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    showNotification('Запись сохранена', 'success');
+                    closeAnalyticsModal();
+                    // Обновляем данные
+                    await loadAnalytics();
+                    if (currentTab === 'analytics') {
+                        renderContent();
+                    }
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ ==========
+        function showLoading() {
+            let overlay = document.getElementById('loadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.className = 'loading-overlay';
+                overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">Идет загрузка...</div>';
+                document.body.appendChild(overlay);
+            }
+            overlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 2000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .loading-overlay.hidden {
+                display: none;
+            }
+            .loading-spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid #333;
+                border-top-color: #ffd700;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            .loading-text {
+                color: #ffd700;
+                font-size: 24px;
+                font-weight: 600;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
 
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllData();
