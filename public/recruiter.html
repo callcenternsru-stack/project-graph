@@ -876,13 +876,16 @@
             </div>
         </div>
 
-        <!-- Панель кандидатов (вкладки Контакты, Проверка, Черновик) -->
+        <!-- Панель кандидатов (вкладки Контакты, Проверка, Черновик, Орг. встреча, Обучение, Отказы) -->
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
             <div class="candidates-tabs">
                 <button class="candidates-tab active" id="tabContacts" onclick="switchCandidatesTab('contacts')">Контакты</button>
                 <button class="candidates-tab" id="tabVerification" onclick="switchCandidatesTab('verification')">Проверка</button>
                 <button class="candidates-tab" id="tabDraft" onclick="switchCandidatesTab('draft')">Черновик</button>
+                <button class="candidates-tab" id="tabOrgMeeting" onclick="switchCandidatesTab('orgMeeting')">Орг. встреча</button>
+                <button class="candidates-tab" id="tabTraining" onclick="switchCandidatesTab('training')">Обучение</button>
+                <button class="candidates-tab" id="tabRejects" onclick="switchCandidatesTab('rejects')">Отказы</button>
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
         </div>
@@ -922,7 +925,7 @@
             projectTrainings: {}  // для дат обучения
         };
         let currentView = 'main'; // 'main', 'candidates'
-        let candidatesTab = 'contacts'; // 'contacts', 'verification', 'draft'
+        let candidatesTab = 'contacts'; // 'contacts', 'verification', 'draft', 'orgMeeting', 'training', 'rejects'
 
         // ДОБАВЛЕНО: список проектов, которые есть в скриптах
         let scriptProjects = [];
@@ -933,6 +936,9 @@
         // Флаг, что текущий кандидат - черновик (чтобы обновлять статус через updateCandidateStatus)
         let currentIsDraft = false;
         let currentDraftId = null;
+
+        // Для редактирования внешнего кандидата (из вкладок Орг. встреча, Обучение, Отказы)
+        let editingExternalCandidate = null; // { id, type, originalStatus }
 
         // Для модального окна отправки сообщения
         let currentMessageType = null; // 'telegram' или 'whatsapp'
@@ -1013,7 +1019,7 @@
             await loadReferenceData();
             await loadScripts();
             await loadMyCandidates();
-            await loadAllCandidates();   // загружаем все анкеты для черновиков
+            await loadAllCandidates();   // загружаем все анкеты для черновиков и других вкладок
             await checkGoogleStatus();
 
             // Ищем первого кандидата без результата для отображения в форме
@@ -1269,6 +1275,24 @@
 
         // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ ==========
         function loadCandidateIntoForm(idx) {
+            // Если редактируется внешний кандидат, idx игнорируется, данные уже в editingExternalCandidate
+            if (editingExternalCandidate) {
+                const candidate = editingExternalCandidate;
+                document.getElementById('fullName').value = candidate.fullName || '';
+                document.getElementById('phoneNumber').value = candidate.phone || '';
+                if (candidate.project) {
+                    document.getElementById('project').value = candidate.project;
+                } else if (currentScriptTitle) {
+                    setProjectFromScript(currentScriptTitle);
+                } else {
+                    document.getElementById('project').value = '';
+                }
+                document.getElementById('callResult').value = candidate.recruitmentStatus || '';
+                // Другие поля оставляем пустыми или можно заполнить, если есть
+                document.getElementById('candidateCounter').textContent = `Редактирование кандидата из списка`;
+                return;
+            }
+
             if (idx < 0 || idx >= myCandidates.length) {
                 document.getElementById('fullName').value = '';
                 document.getElementById('phoneNumber').value = '';
@@ -1348,6 +1372,47 @@
         document.getElementById('candidateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Если редактируется внешний кандидат (из вкладок Орг. встреча, Обучение, Отказы)
+            if (editingExternalCandidate) {
+                const newStatus = document.getElementById('callResult').value;
+                if (!newStatus) {
+                    showNotification('Выберите статус', 'error');
+                    return;
+                }
+
+                showLoading();
+                try {
+                    const response = await fetch('/.netlify/functions/updateCandidateStatus', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: editingExternalCandidate.id,
+                            type: editingExternalCandidate.type,
+                            recruitmentStatus: newStatus
+                        })
+                    });
+                    if (response.ok) {
+                        showNotification('Статус кандидата обновлён', 'success');
+                        // Обновляем allCandidates
+                        await refreshAllCandidates();
+                        // Сбрасываем редактирование
+                        editingExternalCandidate = null;
+                        // Возвращаемся к панели кандидатов
+                        showCandidatesPanel();
+                    } else {
+                        const err = await response.json();
+                        showNotification('Ошибка обновления статуса: ' + (err.error || ''), 'error');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showNotification('Ошибка сети', 'error');
+                } finally {
+                    hideLoading();
+                }
+                return;
+            }
+
+            // Обычное сохранение кандидата рекрутера
             const fullName = document.getElementById('fullName').value.trim();
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const project = document.getElementById('project').value;
@@ -1465,13 +1530,22 @@
             document.getElementById('tabContacts').classList.toggle('active', tab === 'contacts');
             document.getElementById('tabVerification').classList.toggle('active', tab === 'verification');
             document.getElementById('tabDraft').classList.toggle('active', tab === 'draft');
+            document.getElementById('tabOrgMeeting').classList.toggle('active', tab === 'orgMeeting');
+            document.getElementById('tabTraining').classList.toggle('active', tab === 'training');
+            document.getElementById('tabRejects').classList.toggle('active', tab === 'rejects');
 
             if (tab === 'contacts') {
                 renderContactsCandidates();
             } else if (tab === 'verification') {
                 renderVerificationCandidates();
-            } else {
+            } else if (tab === 'draft') {
                 renderDraftCandidates();
+            } else if (tab === 'orgMeeting') {
+                renderOrgMeetingCandidates();
+            } else if (tab === 'training') {
+                renderTrainingCandidates();
+            } else if (tab === 'rejects') {
+                renderRejectsCandidates();
             }
         }
 
@@ -1642,7 +1716,7 @@
             });
             container.innerHTML = html;
 
-            // Добавляем обработчик клика для черновиков
+            // Добавляем обработчик клика для черновиков (взятие в работу)
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     const id = card.dataset.id;
@@ -1706,6 +1780,192 @@
             }
         }
 
+        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОРГ. ВСТРЕЧИ ==========
+        function renderOrgMeetingCandidates() {
+            const container = document.getElementById('candidatesListContainer');
+            const orgMeetingCandidates = allCandidates.filter(c => c.recruitmentStatus === 'org_meeting');
+
+            if (orgMeetingCandidates.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
+                return;
+            }
+
+            let html = '';
+            orgMeetingCandidates.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    const type = card.dataset.type;
+                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) {
+                        // Устанавливаем внешнего кандидата для редактирования
+                        editingExternalCandidate = {
+                            id: candidate.id,
+                            type: candidate.type,
+                            fullName: candidate.fullName,
+                            phone: candidate.phone,
+                            project: candidate.project,
+                            recruitmentStatus: candidate.recruitmentStatus
+                        };
+                        // Загружаем в форму
+                        loadCandidateIntoForm(-1); // -1 означает, что используем editingExternalCandidate
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОБУЧЕНИЯ ==========
+        function renderTrainingCandidates() {
+            const container = document.getElementById('candidatesListContainer');
+            const trainingCandidates = allCandidates.filter(c => c.recruitmentStatus === 'training');
+
+            if (trainingCandidates.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
+                return;
+            }
+
+            let html = '';
+            trainingCandidates.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    const type = card.dataset.type;
+                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) {
+                        editingExternalCandidate = {
+                            id: candidate.id,
+                            type: candidate.type,
+                            fullName: candidate.fullName,
+                            phone: candidate.phone,
+                            project: candidate.project,
+                            recruitmentStatus: candidate.recruitmentStatus
+                        };
+                        loadCandidateIntoForm(-1);
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОТКАЗОВ ==========
+        function renderRejectsCandidates() {
+            const container = document.getElementById('candidatesListContainer');
+            const rejectStatuses = ['reject_tx', 'reject_internet', 'reject_connection', 'reject_headset', 'reject_accent'];
+            const rejectsCandidates = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus));
+
+            if (rejectsCandidates.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет отказов</div>';
+                return;
+            }
+
+            let html = '';
+            rejectsCandidates.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    const type = card.dataset.type;
+                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) {
+                        editingExternalCandidate = {
+                            id: candidate.id,
+                            type: candidate.type,
+                            fullName: candidate.fullName,
+                            phone: candidate.phone,
+                            project: candidate.project,
+                            recruitmentStatus: candidate.recruitmentStatus
+                        };
+                        loadCandidateIntoForm(-1);
+                        showForm();
+                    }
+                });
+            });
+        }
+
         // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
         document.getElementById('scriptSelector').addEventListener('change', function(e) {
             const index = e.target.value;
@@ -1748,16 +2008,14 @@
             window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
         }
 
-        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ОТПРАВКИ СООБЩЕНИЙ ==========
+        // ========== ФУНКЦИИ ДЛЯ ОТПРАВКИ СООБЩЕНИЙ (без изменений) ==========
         function openMessageModal(type) {
-            // Проверяем, что выбран кандидат
             const phone = document.getElementById('phoneNumber').value.trim();
             const fullName = document.getElementById('fullName').value.trim();
             if (!phone || !fullName) {
                 showNotification('Заполните ФИО и номер телефона', 'error');
                 return;
             }
-            // Проверяем наличие скриптов чата
             if (!chatScripts || chatScripts.length === 0) {
                 showNotification('Нет доступных скриптов для чата', 'error');
                 return;
@@ -1766,11 +2024,9 @@
             currentMessageType = type;
             document.getElementById('messageModalTitle').textContent = type === 'telegram' ? 'Выберите сообщение для Telegram' : 'Выберите сообщение для WhatsApp';
             
-            // Рендерим список сообщений
             const listContainer = document.getElementById('messageList');
             let html = '';
             chatScripts.forEach((script, index) => {
-                // Очищаем HTML-теги из контента для предпросмотра
                 const plainText = script.content.replace(/<[^>]*>/g, '');
                 html += `
                     <div class="message-item ${selectedMessageIndex === index ? 'selected' : ''}" data-index="${index}">
@@ -1781,7 +2037,6 @@
             });
             listContainer.innerHTML = html;
 
-            // Добавляем обработчики клика
             document.querySelectorAll('.message-item').forEach(item => {
                 item.addEventListener('click', () => {
                     document.querySelectorAll('.message-item').forEach(el => el.classList.remove('selected'));
@@ -1794,7 +2049,6 @@
                 });
             });
 
-            // Если ни одно не выбрано, выбираем первое
             if (selectedMessageIndex === -1 && chatScripts.length > 0) {
                 selectedMessageIndex = 0;
                 document.querySelector('.message-item')?.classList.add('selected');
@@ -1814,12 +2068,10 @@
             if (selectedMessageIndex === -1 || !chatScripts[selectedMessageIndex]) return;
             const script = chatScripts[selectedMessageIndex];
             const projectName = document.getElementById('project').value;
-            // Получаем projectId по названию проекта из appData.projects
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
 
-            // Очищаем HTML-теги и добавляем ссылку
             let plainText = script.content.replace(/<[^>]*>/g, '');
             if (link) {
                 plainText += '\n\nСсылка для заполнения анкеты: ' + link;
@@ -1840,22 +2092,16 @@
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
 
-            // Формируем текст сообщения
             let text = script.content.replace(/<[^>]*>/g, '');
             if (link) {
                 text += '\n\nСсылка для заполнения анкеты: ' + link;
             }
 
-            // Очищаем номер от всего, кроме цифр
             const cleanPhone = phone.replace(/\D/g, '');
 
             if (currentMessageType === 'telegram') {
-                // Для Telegram: сначала копируем текст, затем открываем чат через Google Contacts
                 try {
-                    // Копируем текст в буфер обмена
                     await navigator.clipboard.writeText(text);
-                    
-                    // Получаем ссылку на чат через add-google-contact
                     showLoading();
                     const response = await fetch('/.netlify/functions/add-google-contact', {
                         method: 'POST',
@@ -1870,7 +2116,6 @@
                     
                     if (response.ok) {
                         const data = await response.json();
-                        // Открываем чат Telegram
                         window.open(data.chatUrl, '_blank');
                         showNotification('Текст скопирован! Вставьте его в открывшемся чате Telegram.', 'success');
                     } else if (response.status === 401) {
@@ -1885,12 +2130,10 @@
                     showNotification('Ошибка при копировании или открытии чата', 'error');
                 }
             } else {
-                // WhatsApp: открываем wa.me с текстом
                 const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
                 window.open(url, '_blank');
             }
 
-            // Закрываем модальное окно
             closeMessageModal();
         }
 
@@ -1944,16 +2187,22 @@
             }
         }
 
-        // Обновление всех анкет для черновиков
         async function refreshAllCandidates() {
             try {
                 const response = await fetch('/.netlify/functions/getAllCandidates');
                 if (response.ok) {
                     const newAll = await response.json();
                     allCandidates = newAll;
-                    // Если сейчас открыта вкладка черновиков, перерендерить
-                    if (currentView === 'candidates' && candidatesTab === 'draft') {
-                        renderDraftCandidates();
+                    if (currentView === 'candidates') {
+                        if (candidatesTab === 'draft') {
+                            renderDraftCandidates();
+                        } else if (candidatesTab === 'orgMeeting') {
+                            renderOrgMeetingCandidates();
+                        } else if (candidatesTab === 'training') {
+                            renderTrainingCandidates();
+                        } else if (candidatesTab === 'rejects') {
+                            renderRejectsCandidates();
+                        }
                     }
                 }
             } catch (error) {
