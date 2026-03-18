@@ -580,7 +580,7 @@
 .fixed-header-cell:first-child {
     width: 100%;
     min-width: 300px;
-    max-width: none;
+    max-width: 300px;               /* жёсткое ограничение */
     text-align: left;
     padding-left: 20px;
     font-weight: 600;
@@ -599,7 +599,7 @@
 .fixed-cell:first-child {
     width: 100%;
     min-width: 300px;
-    max-width: none;
+    max-width: 300px;               /* жёсткое ограничение */
     padding-left: 20px;
     font-weight: 600;
     color: #ffd700;
@@ -608,9 +608,8 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
-    /* Убираем display: flex, чтобы текст вёл себя как обычный блок */
     display: block;
-    line-height: 1.4; /* для вертикального выравнивания */
+    line-height: 1.4;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -629,7 +628,7 @@
     min-width: 100px;
 }
 
-/* Если внутри первой ячейки есть вложенный span (например, для текста), тоже добавим перенос */
+/* Если внутри первой ячейки есть вложенный span, тоже разрешаем перенос */
 .fixed-cell:first-child span {
     white-space: normal;
     word-wrap: break-word;
