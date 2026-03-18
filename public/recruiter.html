@@ -3,311 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Рекрутер – вход и панель</title>
+    <title>Рекрутер – панель управления</title>
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ===== ОБЩИЕ СТИЛИ ===== */
+        /* ===== СБРОС ===== */
         * {
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background: #000000;
-            color: #ffffff;
+            background: #0A0A0A;
+            color: #FFFFFF;
             min-height: 100vh;
             display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 20px 20px 20px 60px;
         }
 
+        /* ===== БОКОВОЕ МЕНЮ (ФИКСИРОВАННОЕ) ===== */
         .side-menu-trigger {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 40px;
-            height: 100vh;
-            background: transparent;
-            z-index: 1001;
+            display: none; /* убираем триггер */
         }
 
         .side-menu {
-            position: fixed;
+            width: 280px;
+            background: #141414;
+            border-right: 1px solid #2A2A2A;
+            padding: 30px 20px;
+            position: sticky;
             top: 0;
-            left: -250px;
-            width: 250px;
             height: 100vh;
-            background: #111111;
-            border-right: 2px solid #ffd700;
-            box-shadow: 4px 0 20px rgba(0,0,0,0.7);
-            transition: left 0.3s ease;
-            z-index: 1002;
-            padding: 30px 0;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
 
-        .side-menu-trigger:hover + .side-menu,
-        .side-menu:hover {
-            left: 0;
+        .side-menu::before {
+            content: "CRM Contact";
+            display: block;
+            font-size: 24px;
+            font-weight: 700;
+            color: #FFD700;
+            margin-bottom: 40px;
+            padding-left: 16px;
         }
 
-        .side-menu .menu-btn {
+        .menu-btn {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 15px 20px;
+            padding: 14px 16px;
             background: transparent;
             border: none;
-            border-left: 4px solid transparent;
-            color: #ffd700;
+            border-radius: 12px;
+            color: #A0A0A0;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
+            width: 100%;
             text-align: left;
-            width: 100%;
         }
 
-        .side-menu .menu-btn:hover {
-            background: #1a1a1a;
-            border-left-color: #ffd700;
+        .menu-btn i {
+            width: 24px;
+            font-size: 20px;
+            color: #5A5A5A;
         }
 
-        .side-menu .menu-btn.logout {
+        .menu-btn:hover {
+            background: #2A2A2A;
+            color: #FFD700;
+        }
+
+        .menu-btn:hover i {
+            color: #FFD700;
+        }
+
+        .menu-btn.logout {
+            margin-top: auto;
             color: #ff6b6b;
         }
 
-        .side-menu .menu-btn.logout:hover {
+        .menu-btn.logout i {
+            color: #ff6b6b;
+        }
+
+        .menu-btn.logout:hover {
             background: #ff6b6b;
-            color: #000000;
-            border-left-color: #ff6b6b;
-        }
-
-        .login-container {
-            max-width: 400px;
-            width: 100%;
-            margin: auto;
-            background: #111111;
-            border-radius: 24px;
-            padding: 40px;
-            border: 2px solid #ffd700;
-            box-shadow: 0 20px 60px rgba(255,215,0,0.2);
-        }
-
-        .login-container h2 {
-            color: #ffd700;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            color: #ffd700;
-            margin-bottom: 8px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 14px;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 16px;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #ffd700;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 16px;
-            background: #ffd700;
             color: #000;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
         }
 
-        .login-btn:hover {
-            background: #ffe44d;
-            transform: translateY(-2px);
+        .menu-btn.logout:hover i {
+            color: #000;
         }
 
-        .error-message {
-            color: #ff6b6b;
-            text-align: center;
-            margin-top: 15px;
-            display: none;
-        }
-
+        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
         .recruiter-interface {
-            max-width: 1400px;
-            width: 100%;
+            flex: 1;
+            padding: 30px 40px;
+            overflow-y: auto;
+            max-width: 1600px;
             margin: 0 auto;
-            display: none;
         }
 
-        .header {
-            background: #111111;
-            border-radius: 16px;
-            padding: 15px 25px;
+        /* Хлебные крошки */
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-            border: 1px solid #333333;
+            color: #A0A0A0;
+            font-size: 14px;
+        }
+
+        .breadcrumbs a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+
+        .breadcrumbs span {
+            color: #FFFFFF;
+        }
+
+        /* Шапка */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            margin-bottom: 30px;
         }
 
         .header h1 {
-            color: #ffd700;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
+            color: #FFFFFF;
+        }
+
+        .header h1 span {
+            color: #FFD700;
         }
 
         .header-actions {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .schedule-btn {
+        /* ===== НОВЫЙ СТИЛЬ КНОПОК ===== */
+        .action-btn {
             padding: 10px 20px;
-            background: #6b8cff;
-            color: white;
-            border: none;
             border-radius: 12px;
             font-weight: 500;
+            border: 2px solid #FFD700;
+            background: transparent;
+            color: #FFFFFF;
             cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
+            gap: 8px;
+            font-size: 15px;
         }
 
-        .schedule-btn:hover {
-            background: #8aa5ff;
+        .action-btn i {
+            font-size: 16px;
+        }
+
+        .action-btn:hover {
+            background: #FFD700;
+            color: #000000;
             transform: translateY(-2px);
         }
 
+        /* Кнопки в шапке */
+        .schedule-btn,
         .logout-btn {
+            composes: action-btn; /* не работает в чистом CSS, поэтому дублируем */
             padding: 10px 20px;
-            background: #ff6b6b;
-            color: white;
-            border: none;
             border-radius: 12px;
             font-weight: 500;
+            border: 2px solid #FFD700;
+            background: transparent;
+            color: #FFFFFF;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
         }
 
+        .schedule-btn:hover,
         .logout-btn:hover {
-            background: #ff8a8a;
+            background: #FFD700;
+            color: #000000;
             transform: translateY(-2px);
         }
 
+        /* Карточки статистики */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: #141414;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: #FFD700;
+            transform: translateY(-4px);
+        }
+
+        .stat-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #A0A0A0;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .stat-trend {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #4caf50;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Основная рабочая область */
         .content-wrapper {
             display: flex;
-            gap: 20px;
+            gap: 24px;
+            margin-bottom: 30px;
         }
 
+        /* Левая панель (скрипты) */
         .left-panel {
             flex: 2;
-            background: #111111;
+            background: #141414;
+            border: 1px solid #2A2A2A;
             border-radius: 24px;
-            padding: 20px;
-            border: 2px solid #ffd700;
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
-            max-height: none;
-            overflow-y: visible;
+            padding: 24px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
-        .script-selector {
+        /* ===== КАСТОМНЫЙ SELECT ===== */
+        .script-selector,
+        select,
+        .form-group select {
             width: 100%;
-            padding: 10px;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 8px;
-            color: #fff;
+            padding: 14px 16px;
+            background: #1A1A1A;
+            border: 2px solid #2A2A2A;
+            border-radius: 12px;
+            color: #FFFFFF;
             font-size: 14px;
-            margin-bottom: 20px;
             cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            padding-right: 40px;
+            transition: border-color 0.2s;
         }
 
-        .script-selector:focus {
+        .script-selector:focus,
+        select:focus,
+        .form-group select:focus {
             outline: none;
-            border-color: #ffd700;
+            border-color: #FFD700;
         }
 
         .script-item {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 12px;
-            border-left: 4px solid #ffd700;
+            background: #1A1A1A;
+            border-radius: 16px;
+            padding: 20px;
+            border-left: 4px solid #FFD700;
+            margin-top: 20px;
         }
 
         .script-item .title {
             font-weight: 600;
-            color: #ffd700;
-            margin-bottom: 8px;
+            color: #FFD700;
+            margin-bottom: 12px;
+            font-size: 18px;
         }
 
         .script-item .content {
-            color: #e0e0e0;
+            color: #E0E0E0;
             font-size: 14px;
             line-height: 1.6;
             max-height: 400px;
             overflow-y: auto;
             background: #111;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            word-wrap: break-word;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #2A2A2A;
         }
 
+        #noScriptMessage {
+            color: #A0A0A0;
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* Правая панель (форма) */
         .right-panel {
             flex: 1;
-            background: #111111;
+            background: #141414;
+            border: 1px solid #2A2A2A;
             border-radius: 24px;
-            padding: 30px;
-            border: 2px solid #ffd700;
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
+            padding: 24px;
             max-height: 70vh;
             overflow-y: auto;
             position: relative;
         }
 
         .right-panel h3 {
-            color: #ffd700;
-            margin-bottom: 20px;
+            color: #FFD700;
+            margin-bottom: 16px;
             font-size: 18px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 8px;
+            border-bottom: 2px solid #2A2A2A;
+            padding-bottom: 12px;
+        }
+
+        .candidate-counter {
+            color: #A0A0A0;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: right;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 16px;
         }
 
         .form-group {
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .form-group.full-width {
@@ -316,31 +371,29 @@
 
         .form-group label {
             display: block;
-            color: #ffd700;
-            font-size: 14px;
+            color: #FFD700;
+            font-size: 13px;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .form-group input,
-        .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px 15px;
-            background: #1a1a1a;
-            border: 2px solid #333333;
+            padding: 12px 14px;
+            background: #1A1A1A;
+            border: 2px solid #2A2A2A;
             border-radius: 12px;
             font-size: 14px;
-            color: #ffffff;
-            transition: all 0.3s;
+            color: #FFFFFF;
+            transition: all 0.2s;
         }
 
         .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #ffd700;
-            background: #222222;
+            border-color: #FFD700;
+            background: #222;
         }
 
         .datetime-row {
@@ -348,82 +401,65 @@
             gap: 10px;
         }
 
-        .datetime-row select,
-        .datetime-row input {
-            flex: 1;
-        }
-
         .save-btn {
             width: 100%;
             padding: 16px;
-            background: #ffd700;
-            color: #000000;
-            border: 2px solid #ffd700;
+            background: #FFD700;
+            color: #000;
+            border: none;
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 25px;
+            transition: all 0.2s;
+            margin-top: 20px;
         }
 
         .save-btn:hover {
             background: #ffe44d;
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
         }
 
-        /* ===== СТИЛИ ДЛЯ КНОПОК ИНТЕГРАЦИИ ===== */
         .action-buttons {
             display: flex;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
-        .telegram-btn {
+        .telegram-btn, .whatsapp-btn {
             flex: 1;
-            padding: 16px;
-            background: #0088cc;
-            color: white;
-            border: 2px solid #0088cc;
+            padding: 14px;
+            border: none;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+        }
+
+        .telegram-btn {
+            background: #0088cc;
+            color: white;
         }
 
         .telegram-btn:hover {
             background: #0077b5;
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,136,204,0.4);
         }
 
         .whatsapp-btn {
-            flex: 1;
-            padding: 16px;
             background: #25D366;
             color: white;
-            border: 2px solid #25D366;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
         .whatsapp-btn:hover {
             background: #20b859;
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
         }
 
         .google-connect-btn {
@@ -431,12 +467,12 @@
             padding: 12px;
             background: #4285f4;
             color: white;
-            border: 2px solid #4285f4;
+            border: none;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             margin-top: 10px;
         }
 
@@ -444,7 +480,6 @@
             opacity: 0.5;
             cursor: not-allowed;
             background: #2a5ca0;
-            border-color: #2a5ca0;
         }
 
         .google-connect-btn:hover:not(:disabled) {
@@ -452,92 +487,51 @@
             transform: translateY(-2px);
         }
 
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            background: #111111;
-            border: 2px solid #ffd700;
-            border-radius: 12px;
-            color: #ffffff;
-            font-size: 14px;
-            z-index: 20000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-            max-width: 300px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .notification.success {
-            border-color: #4caf50;
-        }
-
-        .notification.error {
-            border-color: #ff6b6b;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .candidate-counter {
-            color: #8f9bb3;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-align: right;
-        }
-
-        /* ===== СТИЛИ ДЛЯ ПАНЕЛЕЙ КАНДИДАТОВ ===== */
+        /* Панель кандидатов */
         .candidates-panel {
-            background: #111111;
+            background: #141414;
+            border: 1px solid #2A2A2A;
             border-radius: 24px;
-            padding: 30px;
-            border: 2px solid #ffd700;
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.1);
+            padding: 24px;
             margin-top: 20px;
         }
 
         .candidates-panel h3 {
-            color: #ffd700;
+            color: #FFD700;
             margin-bottom: 20px;
             font-size: 20px;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid #2A2A2A;
             padding-bottom: 10px;
         }
 
         .candidates-tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             flex-wrap: wrap;
         }
 
         .candidates-tab {
             padding: 10px 20px;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 12px;
-            color: #cccccc;
-            font-size: 16px;
+            background: #1A1A1A;
+            border: 2px solid #2A2A2A;
+            border-radius: 30px;
+            color: #A0A0A0;
+            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .candidates-tab:hover {
-            border-color: #ffd700;
-            color: #ffd700;
+            border-color: #FFD700;
+            color: #FFD700;
         }
 
         .candidates-tab.active {
-            background: #ffd700;
-            color: #000000;
-            border-color: #ffd700;
+            background: #FFD700;
+            color: #000;
+            border-color: #FFD700;
         }
 
         .candidates-list {
@@ -549,78 +543,114 @@
         }
 
         .candidate-card {
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
             border-radius: 16px;
-            padding: 15px 20px;
+            padding: 18px 20px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
         }
 
         .candidate-card:hover {
-            border-color: #ffd700;
+            border-color: #FFD700;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255,215,0,0.2);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
         }
 
         .candidate-field {
-            flex: 1 1 200px;
-            min-width: 150px;
+            flex: 1 1 180px;
+            min-width: 140px;
         }
 
         .candidate-field .label {
-            color: #8f9bb3;
+            color: #A0A0A0;
             font-size: 12px;
             margin-bottom: 4px;
         }
 
         .candidate-field .value {
-            color: #ffffff;
+            color: #FFFFFF;
             font-size: 14px;
             font-weight: 500;
             word-break: break-word;
         }
 
         .candidate-field .value.highlight {
-            color: #ffd700;
+            color: #FFD700;
         }
 
         .candidate-status-badge {
             display: inline-block;
-            background: #2d2d2d;
             padding: 4px 12px;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
-            color: #ffd700;
-            border: 1px solid #444;
+            background: #2A2A2A;
+            color: #FFD700;
         }
 
         .candidate-status-badge.waiting {
-            color: #8f9bb3;
+            color: #A0A0A0;
         }
 
         .no-candidates {
             text-align: center;
-            color: #8f9bb3;
+            color: #A0A0A0;
             padding: 40px;
-            font-size: 16px;
         }
 
-        /* ===== СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА ВЫБОРА СООБЩЕНИЯ ===== */
+        /* Прогресс-бар (демо) */
+        .progress-section {
+            background: #141414;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 30px 0 20px;
+        }
+
+        .progress-title {
+            color: #FFD700;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-steps {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .step {
+            flex: 1;
+            height: 8px;
+            background: #2A2A2A;
+            border-radius: 4px;
+        }
+
+        .step.active {
+            background: #FFD700;
+        }
+
+        .step.completed {
+            background: #4caf50;
+        }
+
+        /* Модальное окно для сообщений */
         .message-modal {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #111111;
+            background: #141414;
             border-radius: 24px;
             padding: 30px;
-            border: 2px solid #ffd700;
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+            border: 2px solid #FFD700;
             z-index: 10000;
             width: 500px;
             max-width: 90vw;
@@ -645,30 +675,29 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #ffd700;
+            border-bottom: 2px solid #FFD700;
         }
 
         .message-modal .modal-header h3 {
-            color: #ffd700;
+            color: #FFD700;
             font-size: 20px;
-            margin: 0;
         }
 
-        .message-modal .modal-close {
-            cursor: pointer;
-            font-size: 24px;
-            color: #ffd700;
+        .modal-close {
             background: none;
             border: none;
+            color: #FFD700;
+            font-size: 24px;
+            cursor: pointer;
         }
 
-        .message-modal .message-list {
+        .message-list {
             margin-bottom: 20px;
         }
 
         .message-item {
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 10px;
@@ -676,48 +705,40 @@
             transition: all 0.2s;
         }
 
-        .message-item:hover {
-            border-color: #ffd700;
-            transform: translateY(-2px);
-        }
-
+        .message-item:hover,
         .message-item.selected {
-            border-color: #ffd700;
-            background: #2a2a2a;
-            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+            border-color: #FFD700;
+            background: #222;
         }
 
         .message-item .title {
-            color: #ffd700;
+            color: #FFD700;
             font-weight: 600;
             margin-bottom: 5px;
         }
 
         .message-item .content {
-            color: #cccccc;
+            color: #A0A0A0;
             font-size: 14px;
-            max-height: 100px;
-            overflow-y: auto;
         }
 
         .message-preview {
-            background: #1a1a1a;
-            border: 2px solid #333;
+            background: #1A1A1A;
+            border: 2px solid #2A2A2A;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 20px;
         }
 
         .message-preview .label {
-            color: #ffd700;
+            color: #FFD700;
             font-weight: 500;
             margin-bottom: 8px;
         }
 
         .message-preview .text {
-            color: #ffffff;
+            color: #FFFFFF;
             white-space: pre-wrap;
-            word-wrap: break-word;
         }
 
         .modal-actions {
@@ -728,65 +749,179 @@
         .modal-actions button {
             flex: 1;
             padding: 12px;
-            border: 2px solid #ffd700;
+            border: none;
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .modal-actions .send-btn {
-            background: #ffd700;
+        .send-btn {
+            background: #FFD700;
             color: #000;
         }
 
-        .modal-actions .send-btn:hover {
+        .send-btn:hover {
             background: #ffe44d;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
         }
 
-        .modal-actions .cancel-btn {
-            background: #1a1a1a;
-            color: #ffd700;
+        .cancel-btn {
+            background: #2A2A2A;
+            color: #FFD700;
         }
 
-        .modal-actions .cancel-btn:hover {
+        .cancel-btn:hover {
             background: #333;
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: #141414;
+            border: 2px solid #FFD700;
+            border-radius: 12px;
+            color: #FFFFFF;
+            font-size: 14px;
+            z-index: 20000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            border-color: #4caf50;
+        }
+
+        .notification.error {
+            border-color: #ff6b6b;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Лоадер */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .side-menu {
+                width: 100%;
+                height: auto;
+                position: static;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 15px;
+            }
+            .side-menu::before {
+                display: none;
+            }
+            .recruiter-interface {
+                padding: 20px;
+            }
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="side-menu-trigger"></div>
+    <!-- Боковое меню (фиксированное) -->
     <div class="side-menu">
-        <button class="menu-btn" onclick="showForm()">Главная</button>
-        <button class="menu-btn" onclick="showCandidatesPanel()">Кандидаты</button>
-        <button class="menu-btn logout" onclick="logout()">Выйти</button>
+        <button class="menu-btn" onclick="showForm()"><i class="fas fa-home"></i> Главная</button>
+        <button class="menu-btn" onclick="showCandidatesPanel()"><i class="fas fa-users"></i> Кандидаты</button>
+        <button class="menu-btn logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
-    <!-- Форма входа -->
-    <div class="login-container" id="loginContainer">
-        <h2>Вход для рекрутера</h2>
-        <div class="form-group">
-            <label>Логин (ФИО)</label>
-            <input type="text" id="loginUsername" placeholder="Иванов Иван">
-        </div>
-        <div class="form-group">
-            <label>Пароль</label>
-            <input type="password" id="loginPassword" placeholder="••••••••">
-        </div>
-        <button class="login-btn" onclick="login()">Войти</button>
-        <div class="error-message" id="loginError">Неверный логин или пароль</div>
-    </div>
-
-    <!-- Основная панель рекрутера -->
+    <!-- Основной интерфейс -->
     <div class="recruiter-interface" id="recruiterInterface">
+        <!-- Хлебные крошки (новые) -->
+        <div class="breadcrumbs">
+            <a href="#">Главная</a> <i class="fas fa-chevron-right" style="font-size: 12px;"></i>
+            <span>Панель рекрутера</span>
+        </div>
+
+        <!-- Шапка -->
         <div class="header">
             <h1>Панель рекрутера <span id="recruiterNameDisplay"></span></h1>
             <div class="header-actions">
-                <button class="schedule-btn" onclick="window.location.href='hr control panel.html?tab=schedule-only'">График</button>
-                <button class="logout-btn" onclick="logout()">Выйти</button>
+                <button class="schedule-btn" onclick="window.location.href='hr control panel.html?tab=schedule-only'"><i class="fas fa-calendar-alt"></i> График</button>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            </div>
+        </div>
+
+        <!-- Карточки статистики (новые) -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div>
+                <div class="stat-number">1 284</div>
+                <div class="stat-trend"><i class="fas fa-arrow-up"></i> +12% за неделю</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title"><i class="fas fa-spinner"></i> В работе</div>
+                <div class="stat-number">342</div>
+                <div class="stat-trend"><i class="fas fa-arrow-down"></i> -5% за неделю</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title"><i class="fas fa-calendar-check"></i> Назначено встреч</div>
+                <div class="stat-number">56</div>
+                <div class="stat-trend"><i class="fas fa-arrow-up"></i> +8% за день</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title"><i class="fas fa-times-circle"></i> Отказы</div>
+                <div class="stat-number">127</div>
+                <div class="stat-trend"><i class="fas fa-minus"></i> без изменений</div>
             </div>
         </div>
 
@@ -871,18 +1006,33 @@
                         </div>
                     </div>
 
-                    <!-- Кнопки: сохранить, Telegram, WhatsApp, подключить Google -->
+                    <!-- Кнопки -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
                     <div class="action-buttons">
-                        <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')">✈️ Telegram</button>
-                        <button type="button" class="whatsapp-btn" onclick="openMessageModal('whatsapp')">📱 WhatsApp</button>
+                        <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')"><i class="fab fa-telegram-plane"></i> Telegram</button>
+                        <button type="button" class="whatsapp-btn" onclick="openMessageModal('whatsapp')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                     </div>
-                    <button type="button" class="google-connect-btn" id="googleConnectBtn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
+                    <button type="button" class="google-connect-btn" id="googleConnectBtn" onclick="connectGoogle()"><i class="fab fa-google"></i> Подключить Google Контакты</button>
                 </form>
             </div>
         </div>
 
-        <!-- Панель кандидатов (вкладки Контакты, Проверка, Черновик, Орг. встреча, Обучение, Отказы) -->
+        <!-- Прогресс-бар (демо) -->
+        <div class="progress-section">
+            <div class="progress-title"><i class="fas fa-tasks"></i> Прогресс проверки (Иванов Иван)</div>
+            <div class="progress-steps">
+                <div class="step completed"></div>
+                <div class="step completed"></div>
+                <div class="step active"></div>
+                <div class="step"></div>
+                <div class="step"></div>
+            </div>
+            <div style="color: #A0A0A0; font-size: 14px;">
+                <span style="color: #FFD700;">Задание 3 из 7</span> — тест на знание компьютера
+            </div>
+        </div>
+
+        <!-- Панель кандидатов -->
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
             <div class="candidates-tabs">
@@ -897,15 +1047,13 @@
         </div>
     </div>
 
-    <!-- Модальное окно выбора сообщения для отправки -->
+    <!-- Модальное окно выбора сообщения -->
     <div id="messageModal" class="message-modal">
         <div class="modal-header">
             <h3 id="messageModalTitle">Выберите сообщение для отправки</h3>
             <button class="modal-close" onclick="closeMessageModal()">✕</button>
         </div>
-        <div class="message-list" id="messageList">
-            <!-- будут подгружены скрипты чата -->
-        </div>
+        <div class="message-list" id="messageList"></div>
         <div class="message-preview">
             <div class="label">Предварительный просмотр:</div>
             <div class="text" id="messagePreviewText"></div>
@@ -916,6 +1064,61 @@
         </div>
     </div>
 
+    <!-- Форма входа (скрыта по умолчанию, показывается если не залогинен) -->
+    <div class="login-container" id="loginContainer" style="display: none;">
+        <h2>Вход для рекрутера</h2>
+        <div class="form-group">
+            <label>Логин (ФИО)</label>
+            <input type="text" id="loginUsername" placeholder="Иванов Иван">
+        </div>
+        <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="login-btn" onclick="login()">Войти</button>
+        <div class="error-message" id="loginError">Неверный логин или пароль</div>
+    </div>
+
+    <!-- Стили для лоадера (уже есть) и для контейнера входа -->
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: auto;
+            background: #141414;
+            border-radius: 24px;
+            padding: 40px;
+            border: 2px solid #FFD700;
+            box-shadow: 0 20px 60px rgba(255,215,0,0.2);
+        }
+        .login-container h2 {
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: #FFD700;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .login-btn:hover {
+            background: #ffe44d;
+        }
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+
+    <!-- Весь JavaScript из оригинального файла (без изменений) -->
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentRecruiter = null;
@@ -2260,43 +2463,7 @@
             if (overlay) overlay.classList.add('hidden');
         }
 
-        const style = document.createElement('style');
-        style.textContent = `
-            .loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.9);
-                z-index: 2000;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                flex-direction: column;
-                gap: 20px;
-            }
-            .loading-overlay.hidden {
-                display: none;
-            }
-            .loading-spinner {
-                width: 50px;
-                height: 50px;
-                border: 5px solid #333;
-                border-top-color: #ffd700;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-            .loading-text {
-                color: #ffd700;
-                font-size: 24px;
-                font-weight: 600;
-            }
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
+        // Стили для лоадера уже добавлены в CSS
     </script>
 </body>
 </html>
