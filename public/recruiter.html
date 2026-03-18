@@ -510,6 +510,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .candidates-tab {
@@ -552,7 +553,7 @@
             transition: all 0.2s;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
         }
 
         .candidate-card:hover {
@@ -561,56 +562,40 @@
             box-shadow: 0 4px 15px rgba(255,215,0,0.2);
         }
 
-        .candidate-info {
-            flex: 2;
-            min-width: 200px;
+        .candidate-field {
+            flex: 1 1 200px;
+            min-width: 150px;
         }
 
-        .candidate-info .name {
-            font-weight: 600;
-            color: #ffd700;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .candidate-info .phone {
-            color: #cccccc;
-            font-size: 14px;
-        }
-
-        .candidate-details {
-            flex: 3;
-            min-width: 250px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            color: #cccccc;
-            font-size: 13px;
-        }
-
-        .candidate-details .project {
-            color: #ffd700;
-            font-weight: 500;
-        }
-
-        .candidate-details .training {
+        .candidate-field .label {
             color: #8f9bb3;
+            font-size: 12px;
+            margin-bottom: 4px;
         }
 
-        .candidate-status {
+        .candidate-field .value {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .candidate-field .value.highlight {
+            color: #ffd700;
+        }
+
+        .candidate-status-badge {
+            display: inline-block;
             background: #2d2d2d;
-            padding: 6px 15px;
+            padding: 4px 12px;
             border-radius: 30px;
             font-size: 13px;
             font-weight: 500;
             color: #ffd700;
             border: 1px solid #444;
-            white-space: nowrap;
-            align-self: center;
-            margin-left: auto;
         }
 
-        .candidate-status.waiting {
+        .candidate-status-badge.waiting {
             color: #8f9bb3;
         }
 
@@ -745,11 +730,12 @@
             </div>
         </div>
 
-        <!-- Панель кандидатов (вкладки Проверка и Черновик) -->
+        <!-- Панель кандидатов (вкладки Контакты, Проверка, Черновик) -->
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
             <div class="candidates-tabs">
-                <button class="candidates-tab active" id="tabVerification" onclick="switchCandidatesTab('verification')">Проверка</button>
+                <button class="candidates-tab active" id="tabContacts" onclick="switchCandidatesTab('contacts')">Контакты</button>
+                <button class="candidates-tab" id="tabVerification" onclick="switchCandidatesTab('verification')">Проверка</button>
                 <button class="candidates-tab" id="tabDraft" onclick="switchCandidatesTab('draft')">Черновик</button>
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
@@ -771,7 +757,7 @@
             projectTrainings: {}  // для дат обучения
         };
         let currentView = 'main'; // 'main', 'candidates'
-        let candidatesTab = 'verification'; // 'verification' или 'draft'
+        let candidatesTab = 'contacts'; // 'contacts', 'verification', 'draft'
 
         // ДОБАВЛЕНО: список проектов, которые есть в скриптах
         let scriptProjects = [];
@@ -1291,54 +1277,56 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'block';
             currentView = 'candidates';
-            // По умолчанию активна вкладка "Проверка"
-            switchCandidatesTab('verification');
+            // По умолчанию активна вкладка "Контакты"
+            switchCandidatesTab('contacts');
         }
 
         // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ВНУТРИ КАНДИДАТОВ ==========
         function switchCandidatesTab(tab) {
             candidatesTab = tab;
+            document.getElementById('tabContacts').classList.toggle('active', tab === 'contacts');
             document.getElementById('tabVerification').classList.toggle('active', tab === 'verification');
             document.getElementById('tabDraft').classList.toggle('active', tab === 'draft');
 
-            if (tab === 'verification') {
+            if (tab === 'contacts') {
+                renderContactsCandidates();
+            } else if (tab === 'verification') {
                 renderVerificationCandidates();
             } else {
                 renderDraftCandidates();
             }
         }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ПРОВЕРКИ ==========
-        function renderVerificationCandidates() {
+        // ========== РЕНДЕР КОНТАКТОВ (все кандидаты рекрутера) ==========
+        function renderContactsCandidates() {
             const container = document.getElementById('candidatesListContainer');
-            const verificationCandidates = myCandidates.filter(c => c.callResult === "Проверка");
-
-            // Убираем тех, кто уже есть в черновиках (по ФИО+телефон)
-            const draftKeys = getDraftCandidates().map(c => `${c.fullName}_${c.phone}`);
-            const filtered = verificationCandidates.filter(c => !draftKeys.includes(`${c.fullName}_${c.phone}`));
-
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
+            if (myCandidates.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет контактов</div>';
                 return;
             }
 
             let html = '';
-            filtered.forEach(candidate => {
-                const trainingInfo = candidate.trainingDate
-                    ? `${candidate.trainingDate} ${candidate.trainingTime || ''}`
-                    : '—';
-
+            myCandidates.forEach((candidate, index) => {
+                const status = candidate.callResult || 'ожидает связи';
+                const statusClass = candidate.callResult ? '' : 'waiting';
                 html += `
-                    <div class="candidate-card" data-id="${candidate.id}">
-                        <div class="candidate-info">
-                            <div class="name">${candidate.fullName}</div>
-                            <div class="phone">${candidate.phone}</div>
+                    <div class="candidate-card" data-index="${index}" data-id="${candidate.id}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName || '—'}</div>
                         </div>
-                        <div class="candidate-details">
-                            <div class="project">${candidate.project || '—'}</div>
-                            <div class="training">📅 ${trainingInfo}</div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone || '—'}</div>
                         </div>
-                        <div class="candidate-status">${candidate.callResult}</div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge ${statusClass}">${status}</span></div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
                     </div>
                 `;
             });
@@ -1346,11 +1334,64 @@
 
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    const index = myCandidates.findIndex(c => c.id === id);
-                    if (index !== -1) {
-                        currentCandidateIndex = index;
-                        loadCandidateIntoForm(index);
+                    const index = card.dataset.index;
+                    if (index !== undefined) {
+                        currentCandidateIndex = parseInt(index);
+                        loadCandidateIntoForm(currentCandidateIndex);
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        // ========== РЕНДЕР КАНДИДАТОВ ПРОВЕРКИ ==========
+        function renderVerificationCandidates() {
+            const container = document.getElementById('candidatesListContainer');
+            const verificationCandidates = myCandidates.filter(c => c.callResult === "Проверка");
+
+            if (verificationCandidates.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
+                return;
+            }
+
+            let html = '';
+            verificationCandidates.forEach(candidate => {
+                const trainingInfo = candidate.trainingDate
+                    ? `${candidate.trainingDate} ${candidate.trainingTime || ''}`
+                    : '—';
+                html += `
+                    <div class="candidate-card" data-index="${myCandidates.findIndex(c => c.id === candidate.id)}" data-id="${candidate.id}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Обучение</div>
+                            <div class="value">${trainingInfo}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.callResult}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const index = card.dataset.index;
+                    if (index !== undefined) {
+                        currentCandidateIndex = parseInt(index);
+                        loadCandidateIntoForm(currentCandidateIndex);
                         showForm();
                     }
                 });
@@ -1397,20 +1438,39 @@
             draftCandidates.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
                 html += `
-                    <div class="candidate-card">
-                        <div class="candidate-info">
-                            <div class="name">${candidate.fullName}</div>
-                            <div class="phone">${candidate.phone}</div>
+                    <div class="candidate-card" data-id="${candidate.id}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
                         </div>
-                        <div class="candidate-details">
-                            <div class="project">${candidate.project || '—'}</div>
-                            <div>Telegram: ${telegram}</div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
                         </div>
-                        <div class="candidate-status">${candidate.recruitmentStatus || 'draft'}</div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus || 'draft'}</span></div>
+                        </div>
                     </div>
                 `;
             });
             container.innerHTML = html;
+
+            // Для черновиков клик пока неактивен (можно доработать позже)
+            // document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+            //     card.addEventListener('click', (e) => {
+            //         // TODO: взять черновик в работу
+            //         showNotification('Черновики пока нельзя открыть', 'info');
+            //     });
+            // });
         }
 
         // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
@@ -1611,6 +1671,13 @@
 
                     if (currentView === 'main') {
                         loadCandidateIntoForm(currentCandidateIndex);
+                    } else if (currentView === 'candidates') {
+                        // перерендерим текущую вкладку
+                        if (candidatesTab === 'contacts') {
+                            renderContactsCandidates();
+                        } else if (candidatesTab === 'verification') {
+                            renderVerificationCandidates();
+                        }
                     }
                 }
             } catch (error) {
