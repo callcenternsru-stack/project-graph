@@ -1154,27 +1154,32 @@
             </div>
         </div>
 
-        <!-- Карточки статистики (демо) -->
+        <!-- Карточки статистики (динамические) -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" id="statNewCard">
                 <div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div>
-                <div class="stat-number">1 284</div>
-                <div class="stat-trend"><i class="fas fa-arrow-up"></i> +12% за неделю</div>
+                <div class="stat-number" id="statNew">0</div>
+                <div class="stat-trend" id="statNewTrend"></div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="statInProgressCard">
                 <div class="stat-title"><i class="fas fa-spinner"></i> В работе</div>
-                <div class="stat-number">342</div>
-                <div class="stat-trend"><i class="fas fa-arrow-down"></i> -5% за неделю</div>
+                <div class="stat-number" id="statInProgress">0</div>
+                <div class="stat-trend" id="statInProgressTrend"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-title"><i class="fas fa-calendar-check"></i> Назначено встреч</div>
-                <div class="stat-number">56</div>
-                <div class="stat-trend"><i class="fas fa-arrow-up"></i> +8% за день</div>
+            <div class="stat-card" id="statAnalyticsCard">
+                <div class="stat-title"><i class="fas fa-chart-simple"></i> Аналитика (средняя)</div>
+                <div class="stat-number" id="statAnalytics">0%</div>
+                <div class="stat-trend" id="statAnalyticsTrend"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-title"><i class="fas fa-times-circle"></i> Отказы</div>
-                <div class="stat-number">127</div>
-                <div class="stat-trend"><i class="fas fa-minus"></i> без изменений</div>
+            <div class="stat-card" id="statEfficiencyCard">
+                <div class="stat-title"><i class="fas fa-gauge-high"></i> Эффективность</div>
+                <div class="stat-number" id="statEfficiency">0%</div>
+                <div class="stat-trend" id="statEfficiencyTrend"></div>
+            </div>
+            <div class="stat-card" id="statResultCard">
+                <div class="stat-title"><i class="fas fa-users"></i> Операторов на линии</div>
+                <div class="stat-number" id="statResult">0</div>
+                <div class="stat-trend" id="statResultTrend"></div>
             </div>
         </div>
 
@@ -1525,6 +1530,9 @@
                 loadCandidateIntoForm(-1);
             }
 
+            // Обновляем статистику на главной
+            updateStats();
+
             // По умолчанию показываем главную вкладку
             showForm();
             // Запускаем автообновление
@@ -1857,6 +1865,53 @@
             document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
         }
 
+        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ ==========
+        function updateStats() {
+            if (!currentRecruiter) return;
+
+            // 1. Новые кандидаты: в myCandidates с пустым callResult
+            const newCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
+            document.getElementById('statNew').textContent = newCount.toLocaleString();
+
+            // 2. В работе: проверка + черновики? Пока только проверка
+            const inProgressCount = myCandidates.filter(c => c.callResult === "Проверка").length;
+            document.getElementById('statInProgress').textContent = inProgressCount.toLocaleString();
+
+            // 3. Аналитика: средний процент качества для текущего рекрутера
+            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
+            let avgQuality = 0;
+            if (myAnalytics.length > 0) {
+                const sum = myAnalytics.reduce((acc, a) => acc + (a.quality || 0), 0);
+                avgQuality = Math.round(sum / myAnalytics.length);
+            }
+            document.getElementById('statAnalytics').textContent = avgQuality + '%';
+
+            // 4. Эффективность (формула из 4 частей)
+            // Используем allCandidates (все анкеты) для подсчёта статусов
+            // Статусы: passed, отказы (список), org_meeting, draft, training
+            const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed').length;
+            const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля', 'Проверка'];
+            const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus)).length;
+            const part1 = rejects > 0 ? passed / rejects : 0;
+
+            const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча').length;
+            const draft = allCandidates.filter(c => c.recruitmentStatus === 'draft').length;
+            const part2 = draft > 0 ? orgMeeting / draft : 0;
+
+            const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение').length;
+            const part3 = orgMeeting > 0 ? training / orgMeeting : 0;
+
+            const avgQualityFactor = avgQuality / 100;
+            const part4 = avgQualityFactor;
+
+            const efficiency = part1 * part2 * part3 * part4 * 100; // в процентах
+            document.getElementById('statEfficiency').textContent = Math.round(efficiency) + '%';
+
+            // 5. Результат: количество кандидатов со статусом 'employee' (вышли в линию)
+            const employeeCount = allCandidates.filter(c => c.recruitmentStatus === 'employee').length;
+            document.getElementById('statResult').textContent = employeeCount.toLocaleString();
+        }
+
         // ========== СОХРАНЕНИЕ КАНДИДАТА ==========
         document.getElementById('candidateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1884,6 +1939,8 @@
                         showNotification('Статус кандидата обновлён', 'success');
                         // Обновляем allCandidates
                         await refreshAllCandidates();
+                        // Обновляем статистику
+                        updateStats();
                         // Сбрасываем редактирование
                         editingExternalCandidate = null;
                         // Возвращаемся к панели кандидатов
@@ -1937,6 +1994,8 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат сохранён', 'success');
+                    // Обновляем статистику (новые кандидаты могли измениться)
+                    updateStats();
                     goToNextCandidate();
                 } else {
                     const err = await response.json();
@@ -2298,6 +2357,8 @@
                     const saved = await response.json();
                     // Добавляем нового кандидата в начало списка
                     myCandidates.unshift(saved.candidate);
+                    // Обновляем статистику
+                    updateStats();
                     // Обновляем отображение вкладки контактов
                     if (currentView === 'candidates' && candidatesTab === 'contacts') {
                         renderContactsCandidates();
@@ -2589,6 +2650,8 @@
                     showNotification('Кандидат передан', 'success');
                     // Обновляем allCandidates
                     await refreshAllCandidates();
+                    // Обновляем статистику
+                    updateStats();
                     // Перезагружаем текущую вкладку
                     switchCandidatesTab(candidatesTab);
                     closeTransferModal();
@@ -2824,6 +2887,8 @@
 
                     if (currentView === 'main') {
                         loadCandidateIntoForm(currentCandidateIndex);
+                        // Обновляем статистику при изменении myCandidates
+                        updateStats();
                     } else if (currentView === 'candidates') {
                         if (candidatesTab === 'contacts') {
                             renderContactsCandidates();
@@ -2856,6 +2921,8 @@
                             renderRejectsCandidates();
                         }
                     }
+                    // Статистика тоже обновляется (эффективность, аналитика, результат)
+                    updateStats();
                 }
             } catch (error) {
                 console.error('Ошибка при обновлении всех анкет:', error);
