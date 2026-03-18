@@ -576,23 +576,65 @@
             overflow-wrap: break-word;
             min-width: 100px;
         }
- .fixed-header-cell:first-child,
-.fixed-cell:first-child {
+/* Заголовок первой колонки */
+.fixed-header-cell:first-child {
     width: 100%;
     min-width: 300px;
     max-width: none;
     text-align: left;
     padding-left: 20px;
-    justify-content: flex-start;
     font-weight: 600;
     color: #ffd700;
     box-sizing: border-box;
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    word-break: break-word;    /* принудительный перенос длинных слов */
-    flex-shrink: 1;            /* разрешить сжатие */
-    flex-basis: auto;          /* базовая ширина по содержимому */
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Ячейки первой колонки */
+.fixed-cell:first-child {
+    width: 100%;
+    min-width: 300px;
+    max-width: none;
+    padding-left: 20px;
+    font-weight: 600;
+    color: #ffd700;
+    box-sizing: border-box;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    /* Убираем display: flex, чтобы текст вёл себя как обычный блок */
+    display: block;
+    line-height: 1.4; /* для вертикального выравнивания */
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Остальные ячейки (со сменой, временем, телефоном, типом) остаются flex */
+.fixed-cell {
+    padding: 10px;
+    border-right: 1px solid #333333;
+    display: flex;
+    align-items: center;
+    background: #111111;
+    color: #cccccc;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 100px;
+}
+
+/* Если внутри первой ячейки есть вложенный span (например, для текста), тоже добавим перенос */
+.fixed-cell:first-child span {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
         .scrollable-cells {
             display: flex;
