@@ -915,6 +915,27 @@
         </div>
     </div>
 
+    <!-- Модальное окно для управления статусами -->
+    <div id="statusModal" class="modal">
+        <div class="modal-header">
+            <span>Управление статусами</span>
+            <button class="modal-close" onclick="closeStatusModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <div class="form-group">
+                <label>Название статуса</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="statusNameInput" placeholder="Например: Новый статус" style="flex: 1;">
+                    <button class="save-btn" onclick="saveStatus()" style="width: auto; margin-top: 0;">Добавить</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Существующие статусы</label>
+                <div class="items-list" id="statusList"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Модальное окно для деталей анкеты кандидата -->
     <div id="candidateDetailsModal" class="modal">
         <div class="modal-header">
@@ -1083,11 +1104,31 @@
 
                 await loadCharacteristics();
 
+                // Автоматически проставляем статус "Проверка пройдена" для завершённых анкет
+                await processCompletedCandidates();
+
                 updateMenuCounts();
                 candidatesPage = 1;
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
                 showNotification('Не удалось загрузить данные', 'error');
+            }
+        }
+
+        // ========== АВТОМАТИЧЕСКОЕ ПРОСТАВЛЕНИЕ СТАТУСА "ПРОВЕРКА ПРОЙДЕНА" ==========
+        async function processCompletedCandidates() {
+            if (!state.allCandidates) return;
+            const updates = [];
+            for (const candidate of state.allCandidates) {
+                if (candidate.status === 'completed' && (!candidate.recruitmentStatus || candidate.recruitmentStatus === 'draft')) {
+                    updates.push(updateCandidateStatus(candidate.id, candidate.type, 'passed', false));
+                }
+            }
+            if (updates.length > 0) {
+                await Promise.allSettled(updates);
+                // Перезагрузим данные, чтобы отобразить новые статусы
+                const allCandidatesRes = await fetch('/.netlify/functions/getAllCandidates');
+                state.allCandidates = await allCandidatesRes.json();
             }
         }
 
@@ -2364,11 +2405,12 @@
 
         // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДКИ "Анкеты" ==========
         const statusOptions = [
-            'draft', 'org_meeting', 'training', 'line', 'employee',
+            'draft', 'passed', 'org_meeting', 'training', 'line', 'employee',
             'reject_tx', 'reject_internet', 'reject_connection', 'reject_headset', 'reject_accent'
         ];
         const statusLabels = {
-            draft: 'Отправлен черновик (Ожидает проверки)',
+            draft: 'Черновик',
+            passed: 'Проверка пройдена',
             org_meeting: 'Организационная встреча',
             training: 'Обучение',
             line: 'Линия',
@@ -2385,6 +2427,7 @@
             let html = `
                 <div class="section-header">
                     <h2>Все анкеты</h2>
+                    <button class="add-btn" onclick="openStatusModal()">⚙️ Управление статусами</button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -2529,7 +2572,7 @@
             document.body.classList.remove('menu-open');
         }
 
-        async function updateCandidateStatus(id, type, newStatus) {
+        async function updateCandidateStatus(id, type, newStatus, showNotif = true) {
             try {
                 const response = await fetch('/.netlify/functions/updateCandidateStatus', {
                     method: 'POST',
@@ -2539,9 +2582,122 @@
                 if (response.ok) {
                     const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
                     if (candidate) candidate.recruitmentStatus = newStatus;
-                    showNotification('Статус обновлён', 'success');
+                    if (showNotif) showNotification('Статус обновлён', 'success');
                 } else {
-                    showNotification('Ошибка обновления статуса', 'error');
+                    if (showNotif) showNotification('Ошибка обновления статуса', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                if (showNotif) showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        // ========== УПРАВЛЕНИЕ СТАТУСАМИ ==========
+        let editingStatusIndex = -1;
+
+        function openStatusModal() {
+            editingStatusIndex = -1;
+            document.getElementById('statusNameInput').value = '';
+            renderStatusList();
+            document.getElementById('statusModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+            editingStatusIndex = -1;
+        }
+
+        function renderStatusList() {
+            const list = document.getElementById('statusList');
+            if (!list) return;
+            if (!state.callResults || state.callResults.length === 0) {
+                list.innerHTML = '<div class="list-item">Нет статусов</div>';
+                return;
+            }
+            list.innerHTML = state.callResults.map((status, index) => `
+                <div class="list-item">
+                    <span>${status.name}</span>
+                    <div>
+                        <button class="edit-btn" onclick="editStatus(${index})">✏️</button>
+                        <button class="delete-btn" onclick="deleteStatus(${index})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editStatus(index) {
+            const status = state.callResults[index];
+            if (!status) return;
+            editingStatusIndex = index;
+            document.getElementById('statusNameInput').value = status.name;
+            const saveBtn = document.querySelector('#statusModal .save-btn');
+            saveBtn.textContent = 'Сохранить';
+        }
+
+        async function saveStatus() {
+            const nameInput = document.getElementById('statusNameInput');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showNotification('Введите название статуса', 'error');
+                return;
+            }
+
+            let response;
+            if (editingStatusIndex !== -1) {
+                // редактирование
+                const oldName = state.callResults[editingStatusIndex].name;
+                response = await fetch('/.netlify/functions/saveCallResult', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, id: oldName })
+                });
+            } else {
+                // добавление
+                response = await fetch('/.netlify/functions/saveCallResult', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                if (editingStatusIndex !== -1) {
+                    state.callResults[editingStatusIndex] = data.item;
+                } else {
+                    state.callResults.push(data.item);
+                }
+                renderStatusList();
+                nameInput.value = '';
+                editingStatusIndex = -1;
+                document.querySelector('#statusModal .save-btn').textContent = 'Добавить';
+                showNotification('Статус сохранён', 'success');
+                if (currentTab === 'candidatesAll') {
+                    renderContent();
+                }
+            } else {
+                const err = await response.json();
+                showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
+            }
+        }
+
+        async function deleteStatus(index) {
+            if (!confirm('Удалить статус? Все кандидаты с этим статусом останутся, но вы больше не сможете его выбрать.')) return;
+            const status = state.callResults[index];
+            try {
+                const response = await fetch(`/.netlify/functions/deleteCallResult?name=${encodeURIComponent(status.name)}`, { method: 'DELETE' });
+                if (response.ok) {
+                    state.callResults.splice(index, 1);
+                    renderStatusList();
+                    showNotification('Статус удалён', 'success');
+                    if (currentTab === 'candidatesAll') {
+                        renderContent();
+                    }
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка удаления: ' + (err.error || ''), 'error');
                 }
             } catch (error) {
                 console.error(error);
