@@ -919,6 +919,74 @@
             transform: scale(1.05);
         }
 
+        /* Панель аналитики */
+        .analytics-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+
+        .analytics-panel h3 {
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .analytics-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .analytics-table th {
+            background: #000000;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .analytics-table td {
+            padding: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .analytics-table tr:hover td {
+            background: var(--bg-tertiary);
+        }
+
+        .quality-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .file-link {
+            background: var(--accent);
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .file-link:hover {
+            background: var(--accent-hover);
+        }
+
         /* Уведомления */
         .notification {
             position: fixed;
@@ -1017,6 +1085,9 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+            .analytics-table {
+                min-width: 600px;
+            }
         }
 
         /* Стили для контейнера входа (если понадобится) */
@@ -1062,6 +1133,7 @@
     <div class="side-menu">
         <button class="menu-btn" onclick="showForm()"><i class="fas fa-home"></i> Главная</button>
         <button class="menu-btn" onclick="showCandidatesPanel()"><i class="fas fa-users"></i> Кандидаты</button>
+        <button class="menu-btn" onclick="showAnalyticsPanel()"><i class="fas fa-chart-line"></i> Аналитика</button>
         <button class="menu-btn logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
@@ -1082,7 +1154,7 @@
             </div>
         </div>
 
-        <!-- Карточки статистики -->
+        <!-- Карточки статистики (демо) -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div>
@@ -1236,6 +1308,12 @@
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
         </div>
+
+        <!-- Панель аналитики -->
+        <div id="analyticsPanel" class="analytics-panel" style="display: none;">
+            <h3>Аналитика звонков</h3>
+            <div id="analyticsContainer"></div>
+        </div>
     </div>
 
     <!-- Модальное окно выбора сообщения -->
@@ -1289,6 +1367,7 @@
         let myCandidates = [];               // кандидаты рекрутера (из getMyCandidates)
         let allCandidates = [];               // все анкеты (из getAllCandidates)
         let allRecruiters = [];                // все рекрутеры (из getRecruiters)
+        let analytics = [];                    // записи аналитики (из getAnalytics)
         let currentCandidateIndex = -1;
         let currentScriptTitle = null;
         let appData = {
@@ -1298,7 +1377,7 @@
             scripts: [],
             projectTrainings: {}  // для дат обучения
         };
-        let currentView = 'main'; // 'main', 'candidates'
+        let currentView = 'main'; // 'main', 'candidates', 'analytics'
         let candidatesTab = 'contacts'; // 'contacts', 'verification', 'draft', 'orgMeeting', 'training', 'rejects'
 
         // ДОБАВЛЕНО: список проектов, которые есть в скриптах
@@ -1404,6 +1483,20 @@
             }
         }
 
+        // ========== ЗАГРУЗКА АНАЛИТИКИ ==========
+        async function loadAnalytics() {
+            try {
+                const res = await fetch('/.netlify/functions/getAnalytics');
+                if (res.ok) {
+                    analytics = await res.json();
+                } else {
+                    console.error('Ошибка загрузки аналитики');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
         // ========== ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ВХОДА ==========
         async function initInterface() {
             document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
@@ -1413,7 +1506,8 @@
             await loadReferenceData();
             await loadScripts();
             await loadMyCandidates();
-            await loadAllCandidates();   // загружаем все анкеты для черновиков и других вкладок
+            await loadAllCandidates();
+            await loadAnalytics();   // загружаем аналитику
             await checkGoogleStatus();
 
             // Ищем первого кандидата без результата для отображения в форме
@@ -1903,10 +1997,11 @@
             location.reload();
         }
 
-        // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ГЛАВНОЙ И КАНДИДАТАМИ ==========
+        // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ГЛАВНОЙ, КАНДИДАТАМИ И АНАЛИТИКОЙ ==========
         function showForm() {
             document.querySelector('.content-wrapper').style.display = 'flex';
             document.getElementById('candidatesPanel').style.display = 'none';
+            document.getElementById('analyticsPanel').style.display = 'none';
             currentView = 'main';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1914,9 +2009,58 @@
         function showCandidatesPanel() {
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'block';
+            document.getElementById('analyticsPanel').style.display = 'none';
             currentView = 'candidates';
             // По умолчанию активна вкладка "Контакты"
             switchCandidatesTab('contacts');
+        }
+
+        function showAnalyticsPanel() {
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('candidatesPanel').style.display = 'none';
+            document.getElementById('analyticsPanel').style.display = 'block';
+            currentView = 'analytics';
+            renderAnalytics();
+        }
+
+        // ========== РЕНДЕР АНАЛИТИКИ ==========
+        function renderAnalytics() {
+            const container = document.getElementById('analyticsContainer');
+            // Фильтруем записи только для текущего рекрутера
+            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
+            if (myAnalytics.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет записей аналитики</div>';
+                return;
+            }
+
+            let html = `
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Описание</th>
+                            <th>Качество</th>
+                            <th>Файл</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            myAnalytics.forEach(entry => {
+                const date = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '—';
+                const description = entry.description || '—';
+                const quality = entry.quality !== undefined ? entry.quality : '—';
+                const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
+                html += `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${description}</td>
+                        <td><span class="quality-badge">${quality}</span></td>
+                        <td>${fileLink}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
         }
 
         // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ВНУТРИ КАНДИДАТОВ ==========
