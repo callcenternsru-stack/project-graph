@@ -27,6 +27,7 @@
             --text-muted: #6B7280;
             --danger: #ff6b6b;
             --success: #4caf50;
+            --warning: #FFA500;
             --font-family: 'Inter', sans-serif;
         }
 
@@ -149,7 +150,7 @@
             margin: 0 auto;
         }
 
-        /* Хлебные крошки */
+        /* Хлебные крошки (динамические) */
         .breadcrumbs {
             display: flex;
             align-items: center;
@@ -166,6 +167,7 @@
 
         .breadcrumbs span {
             color: var(--text-primary);
+            font-weight: 500;
         }
 
         /* Шапка */
@@ -215,12 +217,12 @@
             transform: translateY(-2px);
         }
 
-        /* Карточки статистики (улучшенный дизайн) */
+        /* Карточки статистики */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 24px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
@@ -271,7 +273,7 @@
         .stat-number {
             font-size: 32px;
             font-weight: 700;
-            color: var(--accent); /* жёлтые цифры для яркости */
+            color: var(--accent);
             line-height: 1.2;
         }
 
@@ -282,6 +284,71 @@
             display: flex;
             align-items: center;
             gap: 4px;
+        }
+
+        /* Прогресс-бар (воронка) */
+        .progress-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px 25px;
+            margin-bottom: 30px;
+        }
+
+        .progress-title {
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+
+        .progress-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .progress-stat {
+            flex: 1 1 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 15px 10px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .progress-stat:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .stat-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
         /* Основная рабочая область */
@@ -330,7 +397,6 @@
             border-color: var(--accent);
         }
 
-        /* Для улучшения вида выбранных опций (в выпадающем списке) */
         select option {
             background: var(--bg-tertiary);
             color: var(--text-primary);
@@ -443,7 +509,6 @@
             gap: 10px;
         }
 
-        /* Кнопка сохранения */
         .save-btn {
             width: 100%;
             padding: 16px;
@@ -644,45 +709,6 @@
             text-align: center;
             color: var(--text-secondary);
             padding: 40px;
-        }
-
-        /* Прогресс-бар (демо) */
-        .progress-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 20px;
-            margin: 30px 0 20px;
-        }
-
-        .progress-title {
-            color: var(--accent);
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .progress-steps {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .step {
-            flex: 1;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-
-        .step.active {
-            background: var(--accent);
-        }
-
-        .step.completed {
-            background: var(--success);
         }
 
         /* Модальное окно для сообщений */
@@ -1109,12 +1135,15 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+            .progress-stats {
+                flex-direction: column;
+            }
             .analytics-table {
                 min-width: 600px;
             }
         }
 
-        /* Стили для контейнера входа (если понадобится) */
+        /* Стили для контейнера входа */
         .login-container {
             max-width: 400px;
             margin: auto;
@@ -1163,10 +1192,10 @@
 
     <!-- Основной интерфейс -->
     <div class="recruiter-interface" id="recruiterInterface">
-        <!-- Хлебные крошки -->
-        <div class="breadcrumbs">
+        <!-- Хлебные крошки (динамические) -->
+        <div class="breadcrumbs" id="breadcrumbs">
             <a href="#">Главная</a> <i class="fas fa-chevron-right" style="font-size: 12px;"></i>
-            <span>Панель рекрутера</span>
+            <span id="currentPageTitle">Панель рекрутера</span>
         </div>
 
         <!-- Шапка -->
@@ -1178,7 +1207,7 @@
             </div>
         </div>
 
-        <!-- Карточки статистики (динамические) -->
+        <!-- Карточки статистики -->
         <div class="stats-grid">
             <div class="stat-card" id="statNewCard">
                 <div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div>
@@ -1204,6 +1233,14 @@
                 <div class="stat-title"><i class="fas fa-users"></i> Операторов на линии</div>
                 <div class="stat-number" id="statResult">0</div>
                 <div class="stat-trend" id="statResultTrend"></div>
+            </div>
+        </div>
+
+        <!-- Прогресс-воронка (под статистикой) -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-title"><i class="fas fa-chart-bar"></i> Воронка кандидатов</div>
+            <div class="progress-stats" id="progressStats">
+                <!-- будут заполнены динамически -->
             </div>
         </div>
 
@@ -1309,22 +1346,7 @@
             </div>
         </div>
 
-        <!-- Прогресс-бар (демо) -->
-        <div class="progress-section">
-            <div class="progress-title"><i class="fas fa-tasks"></i> Прогресс проверки (Иванов Иван)</div>
-            <div class="progress-steps">
-                <div class="step completed"></div>
-                <div class="step completed"></div>
-                <div class="step active"></div>
-                <div class="step"></div>
-                <div class="step"></div>
-            </div>
-            <div style="color: var(--text-secondary); font-size: 14px;">
-                <span style="color: var(--accent);">Задание 3 из 7</span> — тест на знание компьютера
-            </div>
-        </div>
-
-        <!-- Панель кандидатов -->
+        <!-- Панель кандидатов (скрыта) -->
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
             <div class="candidates-tabs">
@@ -1338,7 +1360,7 @@
             <div id="candidatesListContainer" class="candidates-list"></div>
         </div>
 
-        <!-- Панель аналитики -->
+        <!-- Панель аналитики (скрыта) -->
         <div id="analyticsPanel" class="analytics-panel" style="display: none;">
             <h3>Аналитика звонков</h3>
             <div id="analyticsContainer"></div>
@@ -1375,7 +1397,7 @@
         </div>
     </div>
 
-    <!-- Форма входа (скрыта по умолчанию, показывается если не залогинен) -->
+    <!-- Форма входа (скрыта по умолчанию) -->
     <div class="login-container" id="loginContainer" style="display: none;">
         <h2>Вход для рекрутера</h2>
         <div class="form-group">
@@ -1556,6 +1578,7 @@
 
             // Обновляем статистику на главной
             updateStats();
+            updateBreadcrumbs();
 
             // По умолчанию показываем главную вкладку
             showForm();
@@ -1889,7 +1912,7 @@
             document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
         }
 
-        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ (с исправленной формулой) ==========
+        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ И ПРОГРЕСС-БАРА ==========
         function updateStats() {
             if (!currentRecruiter) return;
 
@@ -1911,34 +1934,95 @@
             document.getElementById('statAnalytics').textContent = avgQuality + '%';
 
             // 4. Эффективность (формула из 4 частей)
-            // Используем allCandidates (все анкеты) для подсчёта статусов
-            const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed').length;
-            const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля', 'Проверка'];
-            const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus)).length;
-            const part1 = rejects > 0 ? passed / rejects : 0; // passed / rejects
+            // Используем allCandidates для подсчёта статусов
+            const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
+            const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
+            const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
+            const part1 = rejects > 0 ? passed / rejects : 0;
 
-            const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча').length;
-            const part2 = passed > 0 ? orgMeeting / passed : 0; // orgMeeting / passed
+            const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча' && c.recruiter === currentRecruiter.name).length;
+            const part2 = passed > 0 ? orgMeeting / passed : 0;
 
-            const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение').length;
-            const part3 = orgMeeting > 0 ? training / orgMeeting : 0; // training / orgMeeting
+            const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name).length;
+            const part3 = orgMeeting > 0 ? training / orgMeeting : 0;
 
             const avgQualityFactor = avgQuality / 100;
             const part4 = avgQualityFactor;
 
-            const efficiency = part1 * part2 * part3 * part4 * 100; // в процентах
+            const efficiency = part1 * part2 * part3 * part4 * 100;
             document.getElementById('statEfficiency').textContent = Math.round(efficiency) + '%';
 
-            // 5. Результат: количество кандидатов со статусом 'employee' (вышли в линию)
-            const employeeCount = allCandidates.filter(c => c.recruitmentStatus === 'employee').length;
+            // 5. Результат: количество кандидатов со статусом 'employee'
+            const employeeCount = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name).length;
             document.getElementById('statResult').textContent = employeeCount.toLocaleString();
+
+            // Обновляем прогресс-воронку
+            renderProgressBar();
+        }
+
+        function renderProgressBar() {
+            if (!currentRecruiter) return;
+
+            // Категории для воронки (все анкеты рекрутера)
+            const draft = allCandidates.filter(c => c.recruitmentStatus === 'draft' && c.recruiter === currentRecruiter.name).length;
+            const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
+            const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name).length;
+            const employee = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name).length;
+            const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
+            const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
+
+            const progressStats = document.getElementById('progressStats');
+            progressStats.innerHTML = `
+                <div class="progress-stat">
+                    <div class="stat-color" style="background: #FFD700;"></div>
+                    <span class="stat-label">Ожидает связи</span>
+                    <span class="stat-value">${draft}</span>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-color" style="background: #FFA500;"></div>
+                    <span class="stat-label">Проверка</span>
+                    <span class="stat-value">${passed}</span>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-color" style="background: #4CAF50;"></div>
+                    <span class="stat-label">Обучение</span>
+                    <span class="stat-value">${training}</span>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-color" style="background: #4CAF50;"></div>
+                    <span class="stat-label">Линия</span>
+                    <span class="stat-value">${employee}</span>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-color" style="background: #F44336;"></div>
+                    <span class="stat-label">Отказ</span>
+                    <span class="stat-value">${rejects}</span>
+                </div>
+            `;
+        }
+
+        // ========== ОБНОВЛЕНИЕ ХЛЕБНЫХ КРОШЕК ==========
+        function updateBreadcrumbs() {
+            const titleSpan = document.getElementById('currentPageTitle');
+            switch (currentView) {
+                case 'main':
+                    titleSpan.textContent = 'Главная';
+                    break;
+                case 'candidates':
+                    titleSpan.textContent = 'Кандидаты';
+                    break;
+                case 'analytics':
+                    titleSpan.textContent = 'Аналитика';
+                    break;
+                default:
+                    titleSpan.textContent = 'Панель рекрутера';
+            }
         }
 
         // ========== СОХРАНЕНИЕ КАНДИДАТА ==========
         document.getElementById('candidateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Если редактируется внешний кандидат (из вкладок Орг. встреча, Обучение, Отказы)
             if (editingExternalCandidate) {
                 const newStatus = document.getElementById('callResult').value;
                 if (!newStatus) {
@@ -1959,13 +2043,9 @@
                     });
                     if (response.ok) {
                         showNotification('Статус кандидата обновлён', 'success');
-                        // Обновляем allCandidates
                         await refreshAllCandidates();
-                        // Обновляем статистику
                         updateStats();
-                        // Сбрасываем редактирование
                         editingExternalCandidate = null;
-                        // Возвращаемся к панели кандидатов
                         showCandidatesPanel();
                     } else {
                         const err = await response.json();
@@ -1980,7 +2060,6 @@
                 return;
             }
 
-            // Обычное сохранение кандидата рекрутера
             const fullName = document.getElementById('fullName').value.trim();
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const project = document.getElementById('project').value;
@@ -2016,7 +2095,6 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат сохранён', 'success');
-                    // Обновляем статистику (новые кандидаты могли измениться)
                     updateStats();
                     goToNextCandidate();
                 } else {
@@ -2083,7 +2161,9 @@
             document.querySelector('.content-wrapper').style.display = 'flex';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('progressSection').style.display = 'block'; // показываем прогресс только на главной
             currentView = 'main';
+            updateBreadcrumbs();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -2091,8 +2171,9 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'block';
             document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс на других вкладках
             currentView = 'candidates';
-            // По умолчанию активна вкладка "Контакты"
+            updateBreadcrumbs();
             switchCandidatesTab('contacts');
         }
 
@@ -2100,14 +2181,15 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'block';
+            document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс
             currentView = 'analytics';
+            updateBreadcrumbs();
             renderAnalytics();
         }
 
         // ========== РЕНДЕР АНАЛИТИКИ ==========
         function renderAnalytics() {
             const container = document.getElementById('analyticsContainer');
-            // Фильтруем записи только для текущего рекрутера
             const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
             if (myAnalytics.length === 0) {
                 container.innerHTML = '<div class="no-candidates">Нет записей аналитики</div>';
@@ -2169,7 +2251,7 @@
             }
         }
 
-        // ========== РЕНДЕР КОНТАКТОВ (все кандидаты рекрутера) ==========
+        // ========== РЕНДЕР КОНТАКТОВ ==========
         function renderContactsCandidates() {
             const container = document.getElementById('candidatesListContainer');
             if (myCandidates.length === 0) {
@@ -2216,21 +2298,17 @@
             });
         }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ПРОВЕРКИ ==========
+        // ========== РЕНДЕР ПРОВЕРКИ ==========
         function renderVerificationCandidates() {
             const container = document.getElementById('candidatesListContainer');
             const verificationCandidates = myCandidates.filter(c => c.callResult === "Проверка");
-
             if (verificationCandidates.length === 0) {
                 container.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
                 return;
             }
-
             let html = '';
             verificationCandidates.forEach(candidate => {
-                const trainingInfo = candidate.trainingDate
-                    ? `${candidate.trainingDate} ${candidate.trainingTime || ''}`
-                    : '—';
+                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
                 html += `
                     <div class="candidate-card" data-index="${myCandidates.findIndex(c => c.id === candidate.id)}" data-id="${candidate.id}">
                         <div class="candidate-field">
@@ -2257,7 +2335,6 @@
                 `;
             });
             container.innerHTML = html;
-
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     const index = card.dataset.index;
@@ -2272,23 +2349,19 @@
 
         // ========== ПОЛУЧИТЬ КАНДИДАТОВ ДЛЯ ЧЕРНОВИКА ==========
         function getDraftCandidates() {
-            const oneHourAgo = Date.now() - 60 * 60 * 1000; // 1 час назад
+            const oneHourAgo = Date.now() - 60 * 60 * 1000;
             return allCandidates.filter(c =>
                 c.recruitmentStatus === 'draft' &&
-                new Date(c.createdAt).getTime() < oneHourAgo
+                new Date(c.createdAt).getTime() < oneHourAgo &&
+                c.recruiter === currentRecruiter.name
             );
         }
 
-        // ========== РЕНДЕР ЧЕРНОВИКОВ ==========
         function renderDraftCandidates() {
             const container = document.getElementById('candidatesListContainer');
             const draftCandidates = getDraftCandidates();
-
-            // Формируем ключи для новых черновиков
             const newKeys = draftCandidates.map(c => `${c.fullName}_${c.phone}`);
             const newKeysSet = new Set(newKeys);
-
-            // Проверяем, появились ли новые
             let newAdded = false;
             for (let key of newKeysSet) {
                 if (!previousDraftKeys.has(key)) {
@@ -2300,12 +2373,10 @@
                 showNotification('Добавлен новый черновик', 'info');
             }
             previousDraftKeys = newKeysSet;
-
             if (draftCandidates.length === 0) {
                 container.innerHTML = '<div class="no-candidates">Нет черновиков</div>';
                 return;
             }
-
             let html = '';
             draftCandidates.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
@@ -2335,8 +2406,6 @@
                 `;
             });
             container.innerHTML = html;
-
-            // Добавляем обработчик клика для черновиков (взятие в работу)
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     const id = card.dataset.id;
@@ -2347,12 +2416,9 @@
             });
         }
 
-        // ========== ВЗЯТЬ ЧЕРНОВИК В РАБОТУ ==========
         async function takeDraft(draftId) {
             const draft = allCandidates.find(c => c.id === draftId);
             if (!draft) return;
-
-            // Создаём нового кандидата для рекрутера
             const newCandidate = {
                 fullName: draft.fullName,
                 phone: draft.phone,
@@ -2367,7 +2433,6 @@
                 comment: '',
                 createdAt: new Date().toISOString()
             };
-
             showLoading();
             try {
                 const response = await fetch('/.netlify/functions/submitCandidate', {
@@ -2377,15 +2442,11 @@
                 });
                 if (response.ok) {
                     const saved = await response.json();
-                    // Добавляем нового кандидата в начало списка
                     myCandidates.unshift(saved.candidate);
-                    // Обновляем статистику
                     updateStats();
-                    // Обновляем отображение вкладки контактов
                     if (currentView === 'candidates' && candidatesTab === 'contacts') {
                         renderContactsCandidates();
                     }
-                    // Загружаем его в форму
                     currentCandidateIndex = 0;
                     loadCandidateIntoForm(0);
                     showForm();
@@ -2402,20 +2463,16 @@
             }
         }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОРГ. ВСТРЕЧИ ==========
+        // ========== РЕНДЕР ОРГ. ВСТРЕЧИ ==========
         function renderOrgMeetingCandidates() {
             const container = document.getElementById('candidatesListContainer');
-            // Показываем только кандидатов, закреплённых за текущим рекрутером
             const orgMeetingCandidates = allCandidates.filter(c =>
-                c.recruitmentStatus === 'Орг.встреча' &&
-                c.recruiter === currentRecruiter.name
+                c.recruitmentStatus === 'Орг.встреча' && c.recruiter === currentRecruiter.name
             );
-
             if (orgMeetingCandidates.length === 0) {
                 container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
                 return;
             }
-
             let html = '';
             orgMeetingCandidates.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
@@ -2448,10 +2505,8 @@
                 `;
             });
             container.innerHTML = html;
-
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    // Игнорируем клик по кнопке передачи
                     if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
                     const id = card.dataset.id;
                     const type = card.dataset.type;
@@ -2472,20 +2527,16 @@
             });
         }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОБУЧЕНИЯ ==========
+        // ========== РЕНДЕР ОБУЧЕНИЯ ==========
         function renderTrainingCandidates() {
             const container = document.getElementById('candidatesListContainer');
-            // Показываем только кандидатов, закреплённых за текущим рекрутером
             const trainingCandidates = allCandidates.filter(c =>
-                c.recruitmentStatus === 'Обучение' &&
-                c.recruiter === currentRecruiter.name
+                c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name
             );
-
             if (trainingCandidates.length === 0) {
                 container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
                 return;
             }
-
             let html = '';
             trainingCandidates.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
@@ -2518,7 +2569,6 @@
                 `;
             });
             container.innerHTML = html;
-
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
@@ -2541,21 +2591,17 @@
             });
         }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОТКАЗОВ ==========
+        // ========== РЕНДЕР ОТКАЗОВ ==========
         function renderRejectsCandidates() {
             const container = document.getElementById('candidatesListContainer');
             const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
-            // Показываем только кандидатов, закреплённых за текущим рекрутером
             const rejectsCandidates = allCandidates.filter(c =>
-                rejectStatuses.includes(c.recruitmentStatus) &&
-                c.recruiter === currentRecruiter.name
+                rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name
             );
-
             if (rejectsCandidates.length === 0) {
                 container.innerHTML = '<div class="no-candidates">Нет отказов</div>';
                 return;
             }
-
             let html = '';
             rejectsCandidates.forEach(candidate => {
                 const telegram = candidate.telegram || '—';
@@ -2588,7 +2634,6 @@
                 `;
             });
             container.innerHTML = html;
-
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
@@ -2616,8 +2661,6 @@
             transferCandidateId = candidateId;
             transferCandidateType = candidateType;
             selectedTransferRecruiter = null;
-
-            // Формируем список рекрутеров, исключая текущего
             const otherRecruiters = allRecruiters.filter(r => r.name !== currentRecruiter.name);
             const listContainer = document.getElementById('transferRecruiterList');
             let html = '';
@@ -2628,8 +2671,6 @@
                 html = '<div class="no-candidates">Нет других рекрутеров</div>';
             }
             listContainer.innerHTML = html;
-
-            // Добавляем обработчики выбора
             document.querySelectorAll('.transfer-recruiter-item').forEach(item => {
                 item.addEventListener('click', () => {
                     document.querySelectorAll('.transfer-recruiter-item').forEach(el => el.classList.remove('selected'));
@@ -2637,7 +2678,6 @@
                     selectedTransferRecruiter = item.dataset.recruiter;
                 });
             });
-
             document.getElementById('transferModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
@@ -2656,7 +2696,6 @@
                 return;
             }
             if (!transferCandidateId || !transferCandidateType) return;
-
             showLoading();
             try {
                 const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
@@ -2670,11 +2709,8 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат передан', 'success');
-                    // Обновляем allCandidates
                     await refreshAllCandidates();
-                    // Обновляем статистику
                     updateStats();
-                    // Перезагружаем текущую вкладку
                     switchCandidatesTab(candidatesTab);
                     closeTransferModal();
                 } else {
@@ -2699,7 +2735,6 @@
                 updateCallResults();
                 return;
             }
-            // Находим скрипт по индексу в отфильтрованном массиве
             const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
             const idx = parseInt(index, 10);
             if (!isNaN(idx) && idx >= 0 && idx < callScripts.length) {
@@ -2725,21 +2760,16 @@
                     sessionStorage.removeItem('recruiter');
                 }
             } else {
-                // Демо-режим: показываем форму с примером данных
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('recruiterInterface').style.display = 'block';
-                // Имитируем данные для демонстрации
                 currentRecruiter = { name: 'Демо-рекрутер' };
                 document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
                 document.getElementById('recruiterField').value = currentRecruiter.name;
-                // Заполняем демо-данные в форме
                 loadCandidateIntoForm(-1);
-                // Показываем основное содержимое
                 showForm();
             }
         });
 
-        // ========== ФУНКЦИИ ДЛЯ ИНТЕГРАЦИИ С GOOGLE ==========
         function connectGoogle() {
             const state = encodeURIComponent(currentRecruiter.name);
             window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
@@ -2757,10 +2787,8 @@
                 showNotification('Нет доступных скриптов для чата', 'error');
                 return;
             }
-
             currentMessageType = type;
             document.getElementById('messageModalTitle').textContent = type === 'telegram' ? 'Выберите сообщение для Telegram' : 'Выберите сообщение для WhatsApp';
-            
             const listContainer = document.getElementById('messageList');
             let html = '';
             chatScripts.forEach((script, index) => {
@@ -2773,7 +2801,6 @@
                 `;
             });
             listContainer.innerHTML = html;
-
             document.querySelectorAll('.message-item').forEach(item => {
                 item.addEventListener('click', () => {
                     document.querySelectorAll('.message-item').forEach(el => el.classList.remove('selected'));
@@ -2785,13 +2812,11 @@
                     }
                 });
             });
-
             if (selectedMessageIndex === -1 && chatScripts.length > 0) {
                 selectedMessageIndex = 0;
                 document.querySelector('.message-item')?.classList.add('selected');
                 updateMessagePreview();
             }
-
             document.getElementById('messageModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
@@ -2808,7 +2833,6 @@
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
-
             let plainText = script.content.replace(/<[^>]*>/g, '');
             if (link) {
                 plainText += '\n\nСсылка для заполнения анкеты: ' + link;
@@ -2828,14 +2852,11 @@
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
-
             let text = script.content.replace(/<[^>]*>/g, '');
             if (link) {
                 text += '\n\nСсылка для заполнения анкеты: ' + link;
             }
-
             const cleanPhone = phone.replace(/\D/g, '');
-
             if (currentMessageType === 'telegram') {
                 try {
                     await navigator.clipboard.writeText(text);
@@ -2850,7 +2871,6 @@
                         })
                     });
                     hideLoading();
-                    
                     if (response.ok) {
                         const data = await response.json();
                         window.open(data.chatUrl, '_blank');
@@ -2870,7 +2890,6 @@
                 const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
                 window.open(url, '_blank');
             }
-
             closeMessageModal();
         }
 
@@ -2881,19 +2900,15 @@
         async function refreshMyCandidates() {
             if (isRefreshing || !currentRecruiter) return;
             isRefreshing = true;
-
             try {
                 const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
                 if (response.ok) {
                     const newCandidates = await response.json();
                     newCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
                     const currentId = (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length)
                         ? myCandidates[currentCandidateIndex].id
                         : null;
-
                     myCandidates = newCandidates;
-
                     let newIndex = -1;
                     if (currentId) {
                         newIndex = myCandidates.findIndex(c => c.id === currentId);
@@ -2904,12 +2919,9 @@
                     if (newIndex === -1 && myCandidates.length > 0) {
                         newIndex = 0;
                     }
-
                     currentCandidateIndex = newIndex;
-
                     if (currentView === 'main') {
                         loadCandidateIntoForm(currentCandidateIndex);
-                        // Обновляем статистику при изменении myCandidates
                         updateStats();
                     } else if (currentView === 'candidates') {
                         if (candidatesTab === 'contacts') {
@@ -2943,7 +2955,6 @@
                             renderRejectsCandidates();
                         }
                     }
-                    // Статистика тоже обновляется (эффективность, аналитика, результат)
                     updateStats();
                 }
             } catch (error) {
@@ -2970,7 +2981,6 @@
             stopAutoRefresh();
         });
 
-        // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ ==========
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
