@@ -6,7 +6,7 @@
     <title>Админ-панель рекрутинга</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js"></script>
     <style>
-        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ С ДОБАВЛЕНИЕМ ПЕРЕНОСОВ ===== */
+        /* ===== СТИЛИ ПОЛНОСТЬЮ СОХРАНЕНЫ ===== */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -512,7 +512,6 @@
             left: 0;
             z-index: 101;
         }
-        /* ИСПРАВЛЕНИЕ: ширина колонки проектов как в старой версии (300px) + перенос */
         .fixed-header-cell {
             padding: 15px 10px;
             font-weight: 600;
@@ -530,7 +529,6 @@
             min-width: 100px;
             max-width: 200px;
         }
-        /* Фиксируем первую колонку (названия проектов) */
         .fixed-header-cell:first-child {
             width: 100%;
             min-width: 300px;
@@ -605,7 +603,6 @@
             overflow-wrap: break-word;
             min-width: 100px;
         }
-        /* Первая ячейка (название проекта) — блочная для переноса */
         .fixed-cell:first-child {
             width: 100%;
             min-width: 300px;
@@ -836,6 +833,21 @@
             outline: none;
             border-color: #ffd700;
         }
+
+        /* Стиль для поля качества в аналитике */
+        .quality-input {
+            width: 80px;
+            padding: 6px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #ffd700;
+            text-align: center;
+        }
+        .quality-input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
     </style>
 </head>
 <body>
@@ -880,7 +892,7 @@
         <div class="modal-content" id="modalContent"></div>
     </div>
 
-    <!-- Модальное окно для комментариев (исправлено: добавлена кнопка удаления времени) -->
+    <!-- Модальное окно для комментариев -->
     <div id="commentModal" class="modal">
         <div class="modal-header">
             <span id="commentModalTitle">Ссылка на группу</span>
@@ -1033,6 +1045,10 @@
                     <textarea id="analyticsDescription" rows="4" required placeholder="Введите описание звонка..."></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Качество звонка (%) <span style="color:#ff6b6b;">*</span></label>
+                    <input type="number" id="analyticsQuality" min="0" max="100" step="1" required placeholder="0-100">
+                </div>
+                <div class="form-group">
                     <label>Прикрепить файл (необязательно)</label>
                     <input type="file" id="analyticsFile" accept=".mp3,.wav,.ogg,.m4a">
                 </div>
@@ -1169,6 +1185,38 @@
             }
         }
 
+        // ========== АВТОМАТИЧЕСКОЕ НАЗНАЧЕНИЕ РЕКРУТЕРА ==========
+        async function autoAssignRecruiters() {
+            if (!state.allCandidates || !state.candidates) return;
+            const updates = [];
+            for (const candidate of state.allCandidates) {
+                // Если поле recruiter уже заполнено (не undefined и не пустая строка), пропускаем
+                if (candidate.recruiter && candidate.recruiter.trim() !== '') continue;
+                
+                // Пытаемся найти подходящего рекрутера
+                const matched = findMatchingRecruiter(candidate);
+                const newRecruiter = matched || 'Внешний';
+                
+                // Сохраняем
+                updates.push(
+                    fetch('/.netlify/functions/updateCandidateRecruiter', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: candidate.id,
+                            type: candidate.type,
+                            recruiter: newRecruiter
+                        })
+                    }).catch(err => console.error('Ошибка сохранения рекрутера:', err))
+                );
+                candidate.recruiter = newRecruiter;
+            }
+            if (updates.length > 0) {
+                await Promise.allSettled(updates);
+                console.log(`Автоназначение рекрутеров завершено, обновлено ${updates.length} кандидатов`);
+            }
+        }
+
         async function loadAllData() {
             try {
                 const refRes = await fetch('/.netlify/functions/getAllReferences');
@@ -1233,6 +1281,9 @@
 
                 // Автоматически проставляем статус "Проверка пройдена" для завершённых анкет
                 await processCompletedCandidates();
+
+                // Автоматически назначаем рекрутеров для незаполненных кандидатов
+                await autoAssignRecruiters();
 
                 updateMenuCounts();
                 candidatesPage = 1;
@@ -2886,6 +2937,7 @@
                                 <th>Дата</th>
                                 <th>Рекрутер</th>
                                 <th>Описание</th>
+                                <th>Качество (%)</th>
                                 <th>Файл</th>
                                 <th>Действия</th>
                             </tr>
@@ -2893,18 +2945,20 @@
                         <tbody>
             `;
             if (state.analytics.length === 0) {
-                html += '<tr><td colspan="5" style="text-align:center;">Нет записей</td></tr>';
+                html += '<tr><td colspan="6" style="text-align:center;">Нет записей</td></tr>';
             } else {
                 state.analytics.forEach(entry => {
                     const date = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '—';
                     const recruiterName = entry.recruiterName || '—';
                     const description = entry.description || '—';
+                    const quality = entry.quality !== undefined ? entry.quality : '—';
                     const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="download-btn">📁 Скачать</a>` : '—';
                     html += `
                         <tr>
                             <td>${date}</td>
                             <td>${recruiterName}</td>
                             <td>${description}</td>
+                            <td style="text-align:center;"><span class="quality-badge">${quality}</span></td>
                             <td>${fileLink}</td>
                             <td class="actions">
                                 <button class="edit-btn" onclick="editAnalytics('${entry.id}')">✏️</button>
@@ -2923,6 +2977,7 @@
             const title = document.getElementById('analyticsModalTitle');
             const recruiterSelect = document.getElementById('analyticsRecruiter');
             const description = document.getElementById('analyticsDescription');
+            const quality = document.getElementById('analyticsQuality');
             const fileInput = document.getElementById('analyticsFile');
             const idField = document.getElementById('analyticsId');
             const saveBtn = document.getElementById('analyticsSaveBtn');
@@ -2936,8 +2991,8 @@
                 title.textContent = 'Редактировать запись аналитики';
                 recruiterSelect.value = entry.recruiterName || '';
                 description.value = entry.description || '';
+                quality.value = entry.quality !== undefined ? entry.quality : '';
                 idField.value = entry.id;
-                // Файл не предзаполняем, его можно заменить только новым
                 fileInput.value = '';
                 saveBtn.textContent = '💾 Обновить';
             } else {
@@ -2945,6 +3000,7 @@
                 title.textContent = 'Добавить запись аналитики';
                 recruiterSelect.value = '';
                 description.value = '';
+                quality.value = '';
                 idField.value = '';
                 fileInput.value = '';
                 saveBtn.textContent = '💾 Сохранить';
@@ -2993,17 +3049,25 @@
 
             const recruiterName = document.getElementById('analyticsRecruiter').value;
             const description = document.getElementById('analyticsDescription').value.trim();
+            const quality = document.getElementById('analyticsQuality').value;
             const fileInput = document.getElementById('analyticsFile');
             const id = document.getElementById('analyticsId').value;
 
-            if (!recruiterName || !description) {
+            if (!recruiterName || !description || quality === '') {
                 showNotification('Заполните все обязательные поля', 'error');
+                return;
+            }
+
+            const qualityNum = parseInt(quality, 10);
+            if (isNaN(qualityNum) || qualityNum < 0 || qualityNum > 100) {
+                showNotification('Качество должно быть числом от 0 до 100', 'error');
                 return;
             }
 
             const formData = new FormData();
             formData.append('recruiterName', recruiterName);
             formData.append('description', description);
+            formData.append('quality', qualityNum);
             if (fileInput.files.length > 0) {
                 formData.append('file', fileInput.files[0]);
             }
@@ -3089,6 +3153,15 @@
             }
             @keyframes spin {
                 to { transform: rotate(360deg); }
+            }
+            .quality-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 12px;
+                background: #1a1a1a;
+                border: 1px solid #ffd700;
+                color: #ffd700;
+                font-weight: 600;
             }
         `;
         document.head.appendChild(style);
