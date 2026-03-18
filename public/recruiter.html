@@ -28,6 +28,11 @@
             --danger: #ff6b6b;
             --success: #4caf50;
             --warning: #FFA500;
+            --stage1: #FFC107; /* яркий желтый */
+            --stage2: #FF9800; /* оранжевый */
+            --stage3: #4CAF50; /* зеленый */
+            --stage4: #4CAF50; /* зеленый для линии */
+            --stage5: #F44336; /* красный */
             --font-family: 'Inter', sans-serif;
         }
 
@@ -286,7 +291,7 @@
             gap: 4px;
         }
 
-        /* Прогресс-бар (воронка) – красивый, без лишних линий */
+        /* Прогресс-бар (линейный) */
         .progress-section {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -307,69 +312,54 @@
 
         .progress-steps {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 4px;
+            margin-bottom: 15px;
         }
 
-        .step-item {
+        .progress-step {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        .step-indicator {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
+            height: 12px;
+            border-radius: 6px;
+            background: var(--border-color);
             transition: all 0.2s;
+            cursor: pointer;
         }
 
-        .step-indicator.active {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #000;
+        .progress-step.stage1 { background: var(--stage1); }
+        .progress-step.stage2 { background: var(--stage2); }
+        .progress-step.stage3 { background: var(--stage3); }
+        .progress-step.stage4 { background: var(--stage4); }
+        .progress-step.stage5 { background: var(--stage5); }
+        .progress-step.active {
+            box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px rgba(255,215,0,0.3);
+            transform: scaleY(1.2);
+        }
+        .progress-step:hover {
+            filter: brightness(1.2);
+            transform: scaleY(1.1);
         }
 
-        .step-indicator.completed {
-            background: var(--success);
-            border-color: var(--success);
-            color: #000;
-        }
-
-        .step-label {
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
             font-size: 12px;
             color: var(--text-secondary);
-            text-align: center;
+            margin-top: 5px;
         }
 
-        .step-label.active {
+        .progress-label {
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .progress-label:hover {
+            color: var(--accent);
+        }
+        .progress-label.active {
             color: var(--accent);
             font-weight: 600;
-        }
-
-        .step-connector {
-            position: absolute;
-            top: 20px;
-            left: calc(50% + 20px);
-            width: calc(100% - 40px);
-            height: 2px;
-            background: var(--border-color);
-            z-index: 1;
-        }
-
-        .step-item:last-child .step-connector {
-            display: none;
         }
 
         /* Основная рабочая область */
@@ -633,6 +623,62 @@
             padding-bottom: 10px;
         }
 
+        /* Поиск */
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            padding: 5px 15px;
+        }
+        .search-container i {
+            color: var(--accent);
+            font-size: 18px;
+        }
+        .search-container input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            padding: 8px 0;
+        }
+        .search-container input::placeholder {
+            color: var(--text-secondary);
+        }
+        .search-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-chip {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-chip.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+        .filter-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .filter-chip.active:hover {
+            background: var(--accent-hover);
+        }
+
         .candidates-tabs {
             display: flex;
             gap: 10px;
@@ -730,6 +776,82 @@
             text-align: center;
             color: var(--text-secondary);
             padding: 40px;
+        }
+
+        /* Модальное окно для списка кандидатов по этапу */
+        .stage-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px solid var(--accent);
+            z-index: 10000;
+            width: 600px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .stage-modal.show {
+            display: block;
+            animation: modalAppear 0.3s ease;
+        }
+
+        .stage-modal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .stage-modal .modal-header h3 {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        .stage-modal .modal-close {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .stage-candidates-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stage-candidate-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stage-candidate-item:hover {
+            border-color: var(--accent);
+            background: #222;
+        }
+
+        .stage-candidate-item .name {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stage-candidate-item .details {
+            font-size: 13px;
+            color: var(--text-secondary);
         }
 
         /* Модальное окно для сообщений */
@@ -1257,12 +1379,11 @@
             </div>
         </div>
 
-        <!-- Прогресс проверки кандидата (красивый, без лишних линий) -->
+        <!-- Прогресс проверки кандидата (линейный) -->
         <div class="progress-section" id="progressSection" style="display: none;">
             <div class="progress-title"><i class="fas fa-chart-bar"></i> Прогресс кандидата</div>
-            <div class="progress-steps" id="progressSteps">
-                <!-- будут заполнены динамически -->
-            </div>
+            <div class="progress-steps" id="progressSteps"></div>
+            <div class="progress-labels" id="progressLabels"></div>
         </div>
 
         <!-- Основная рабочая область (скрипты + форма) -->
@@ -1370,6 +1491,18 @@
         <!-- Панель кандидатов (скрыта) -->
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
+            <!-- Поиск -->
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Поиск по ФИО, телефону, проекту, статусу...">
+            </div>
+            <div class="search-filters">
+                <span class="filter-chip active" data-filter="all">Все</span>
+                <span class="filter-chip" data-filter="name">ФИО</span>
+                <span class="filter-chip" data-filter="phone">Телефон</span>
+                <span class="filter-chip" data-filter="project">Проект</span>
+                <span class="filter-chip" data-filter="status">Статус</span>
+            </div>
             <div class="candidates-tabs">
                 <button class="candidates-tab active" id="tabContacts" onclick="switchCandidatesTab('contacts')">Контакты</button>
                 <button class="candidates-tab" id="tabVerification" onclick="switchCandidatesTab('verification')">Проверка</button>
@@ -1416,6 +1549,15 @@
             <button class="transfer-confirm-btn" onclick="confirmTransfer()">Передать</button>
             <button class="transfer-cancel-btn" onclick="closeTransferModal()">Отмена</button>
         </div>
+    </div>
+
+    <!-- Модальное окно для списка кандидатов по этапу -->
+    <div id="stageModal" class="stage-modal">
+        <div class="modal-header">
+            <h3 id="stageModalTitle">Кандидаты</h3>
+            <button class="modal-close" onclick="closeStageModal()">✕</button>
+        </div>
+        <div class="stage-candidates-list" id="stageCandidatesList"></div>
     </div>
 
     <!-- Форма входа (скрыта по умолчанию) -->
@@ -1474,6 +1616,10 @@
         let transferCandidateId = null;
         let transferCandidateType = null;
         let selectedTransferRecruiter = null;
+
+        // Для поиска
+        let searchQuery = '';
+        let searchFilter = 'all';
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1605,6 +1751,9 @@
             showForm();
             // Запускаем автообновление
             startAutoRefresh();
+
+            // Инициализируем поиск
+            initSearch();
         }
 
         // ========== ЗАГРУЗКА ВСЕХ АНКЕТ ==========
@@ -1977,23 +2126,23 @@
             // Определяем этап по статусу
             // Этап 1: ожидает связи (пустой статус или отсутствует)
             if (!status || status.trim() === '') {
-                return { stage: 1, color: '#FFD700', label: 'Ожидает связи' };
+                return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи' };
             }
 
             // Этап 2: draft, passed, напоминание, проверка
             const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка'];
             if (stage2statuses.includes(status)) {
-                return { stage: 2, color: '#FFA500', label: 'Проверка' };
+                return { stage: 2, color: 'var(--stage2)', label: 'Проверка' };
             }
 
             // Этап 3: Обучение
             if (status === 'Обучение') {
-                return { stage: 3, color: '#4CAF50', label: 'Обучение' };
+                return { stage: 3, color: 'var(--stage3)', label: 'Обучение' };
             }
 
             // Этап 4: Вышел на линию (employee)
             if (status === 'employee') {
-                return { stage: 4, color: '#4CAF50', label: 'Линия' };
+                return { stage: 4, color: 'var(--stage4)', label: 'Линия' };
             }
 
             // Этап 5: Отказы (список)
@@ -2004,48 +2153,568 @@
                 'фрикативная речь', 'Нет гарнитуры', 'Нет Lan кабеля'
             ];
             if (rejectStatuses.includes(status)) {
-                return { stage: 5, color: '#F44336', label: 'Отказ' };
+                return { stage: 5, color: 'var(--stage5)', label: 'Отказ' };
             }
 
             // Если статус не распознан, считаем этап 1 (по умолчанию)
-            return { stage: 1, color: '#FFD700', label: 'Ожидает связи' };
+            return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи' };
         }
 
-        // ========== ОБНОВЛЕНИЕ ПРОГРЕСС-БАРА КАНДИДАТА ==========
+        // ========== ОБНОВЛЕНИЕ ПРОГРЕСС-БАРА КАНДИДАТА (линейный) ==========
         function updateCandidateProgress(phone, project) {
             const stageInfo = getCandidateStage(phone, project);
             const currentStage = stageInfo.stage;
 
             const steps = [
-                { label: 'Ожидает связи', color: '#FFD700' },
-                { label: 'Проверка', color: '#FFA500' },
-                { label: 'Обучение', color: '#4CAF50' },
-                { label: 'Линия', color: '#4CAF50' },
-                { label: 'Отказ', color: '#F44336' }
+                { stage: 1, label: 'Ожидает связи', color: 'var(--stage1)' },
+                { stage: 2, label: 'Проверка', color: 'var(--stage2)' },
+                { stage: 3, label: 'Обучение', color: 'var(--stage3)' },
+                { stage: 4, label: 'Линия', color: 'var(--stage4)' },
+                { stage: 5, label: 'Отказ', color: 'var(--stage5)' }
             ];
 
-            let html = '';
+            let stepsHtml = '';
+            let labelsHtml = '';
             for (let i = 0; i < steps.length; i++) {
                 const step = steps[i];
-                let stepClass = '';
-                if (i + 1 === currentStage) {
-                    stepClass = 'active';
-                } else if (i + 1 < currentStage) {
-                    stepClass = 'completed';
-                }
-                html += `
-                    <div class="step-item">
-                        <div class="step-indicator ${stepClass}" style="border-color: ${step.color}; ${stepClass === 'active' ? 'background: ' + step.color : ''}">
-                            ${i + 1}
-                        </div>
-                        <div class="step-label ${stepClass}">${step.label}</div>
-                        ${i < steps.length - 1 ? '<div class="step-connector" style="background: ' + (i + 1 < currentStage ? step.color : 'var(--border-color)') + '"></div>' : ''}
-                    </div>
-                `;
+                const isActive = step.stage === currentStage;
+                const isPast = step.stage < currentStage;
+                const stepClass = `progress-step stage${step.stage} ${isActive ? 'active' : ''}`;
+                stepsHtml += `<div class="${stepClass}" onclick="showStageModal(${step.stage}, '${step.label}')"></div>`;
+
+                const labelClass = `progress-label ${isActive ? 'active' : ''}`;
+                labelsHtml += `<div class="${labelClass}" onclick="showStageModal(${step.stage}, '${step.label}')">${step.label}</div>`;
             }
 
-            document.getElementById('progressSteps').innerHTML = html;
+            document.getElementById('progressSteps').innerHTML = stepsHtml;
+            document.getElementById('progressLabels').innerHTML = labelsHtml;
             document.getElementById('progressSection').style.display = 'block';
+        }
+
+        // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА ==========
+        function showStageModal(stage, label) {
+            // Получаем список кандидатов текущего рекрутера с этим статусом
+            let candidates = [];
+            if (stage === 1) {
+                candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
+            } else if (stage === 2) {
+                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка'];
+                candidates = myCandidates.filter(c => stage2statuses.includes(c.callResult));
+            } else if (stage === 3) {
+                candidates = myCandidates.filter(c => c.callResult === 'Обучение');
+            } else if (stage === 4) {
+                // В базе контактов нет employee, поэтому ищем в allCandidates
+                candidates = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name);
+            } else if (stage === 5) {
+                const rejectStatuses = [
+                    'Отказ акцент', 'Отказ фрикативная речь', 'Отказ интернет',
+                    'Отказ наушники', 'Отказ не вышел на орг.встречу', 'Отказ не вышел на обучение',
+                    'Не интересует', 'Нет ПК ноутбука', 'Номер не существует',
+                    'фрикативная речь', 'Нет гарнитуры', 'Нет Lan кабеля'
+                ];
+                candidates = myCandidates.filter(c => rejectStatuses.includes(c.callResult));
+            }
+
+            document.getElementById('stageModalTitle').textContent = `${label} (${candidates.length})`;
+            const listContainer = document.getElementById('stageCandidatesList');
+            if (candidates.length === 0) {
+                listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов</div>';
+            } else {
+                let html = '';
+                candidates.forEach(c => {
+                    html += `
+                        <div class="stage-candidate-item" onclick="selectCandidateFromStage('${c.phone}', '${c.project}')">
+                            <div class="name">${c.fullName || '—'}</div>
+                            <div class="details">${c.phone || '—'} | ${c.project || '—'}</div>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+            }
+            document.getElementById('stageModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeStageModal() {
+            document.getElementById('stageModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        function selectCandidateFromStage(phone, project) {
+            // Найти кандидата в myCandidates по телефону и проекту
+            const cleanPhone = phone.replace(/\D/g, '');
+            const index = myCandidates.findIndex(c => {
+                const cPhone = (c.phone || '').replace(/\D/g, '');
+                return cPhone === cleanPhone && c.project === project;
+            });
+            if (index !== -1) {
+                currentCandidateIndex = index;
+                loadCandidateIntoForm(index);
+                showForm(); // переходим на главную
+                closeStageModal();
+            } else {
+                showNotification('Кандидат не найден в вашем списке', 'error');
+            }
+        }
+
+        // ========== ПОИСК ==========
+        function initSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const filterChips = document.querySelectorAll('.filter-chip');
+
+            searchInput.addEventListener('input', function() {
+                searchQuery = this.value.toLowerCase();
+                applySearchAndFilter();
+            });
+
+            filterChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    filterChips.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    searchFilter = this.dataset.filter;
+                    applySearchAndFilter();
+                });
+            });
+        }
+
+        function applySearchAndFilter() {
+            // Получаем текущий список кандидатов в зависимости от вкладки
+            let currentList = [];
+            if (candidatesTab === 'contacts') {
+                currentList = myCandidates;
+            } else if (candidatesTab === 'verification') {
+                currentList = myCandidates.filter(c => c.callResult === "Проверка");
+            } else if (candidatesTab === 'draft') {
+                currentList = getDraftCandidates();
+            } else if (candidatesTab === 'orgMeeting') {
+                currentList = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча' && c.recruiter === currentRecruiter.name);
+            } else if (candidatesTab === 'training') {
+                currentList = allCandidates.filter(c => c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name);
+            } else if (candidatesTab === 'rejects') {
+                const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
+                currentList = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name);
+            }
+
+            // Фильтруем по поисковому запросу
+            if (searchQuery) {
+                currentList = currentList.filter(c => {
+                    const fullName = (c.fullName || '').toLowerCase();
+                    const phone = (c.phone || '').toLowerCase();
+                    const project = (c.project || '').toLowerCase();
+                    const status = (c.callResult || c.recruitmentStatus || '').toLowerCase();
+                    switch (searchFilter) {
+                        case 'name': return fullName.includes(searchQuery);
+                        case 'phone': return phone.includes(searchQuery);
+                        case 'project': return project.includes(searchQuery);
+                        case 'status': return status.includes(searchQuery);
+                        default: return fullName.includes(searchQuery) || phone.includes(searchQuery) || project.includes(searchQuery) || status.includes(searchQuery);
+                    }
+                });
+            }
+
+            // Обновляем отображение в зависимости от вкладки
+            if (candidatesTab === 'contacts') {
+                renderContactsCandidates(currentList);
+            } else if (candidatesTab === 'verification') {
+                renderVerificationCandidates(currentList);
+            } else if (candidatesTab === 'draft') {
+                renderDraftCandidates(currentList);
+            } else if (candidatesTab === 'orgMeeting') {
+                renderOrgMeetingCandidates(currentList);
+            } else if (candidatesTab === 'training') {
+                renderTrainingCandidates(currentList);
+            } else if (candidatesTab === 'rejects') {
+                renderRejectsCandidates(currentList);
+            }
+        }
+
+        // Модифицируем функции рендера, чтобы они принимали отфильтрованный список
+        function renderContactsCandidates(filteredList) {
+            const container = document.getElementById('candidatesListContainer');
+            if (filteredList.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет контактов</div>';
+                return;
+            }
+
+            let html = '';
+            filteredList.forEach((candidate, index) => {
+                const status = candidate.callResult || 'ожидает связи';
+                const statusClass = candidate.callResult ? '' : 'waiting';
+                html += `
+                    <div class="candidate-card" data-index="${index}" data-id="${candidate.id}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge ${statusClass}">${status}</span></div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const index = card.dataset.index;
+                    if (index !== undefined) {
+                        currentCandidateIndex = parseInt(index);
+                        loadCandidateIntoForm(currentCandidateIndex);
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        function renderVerificationCandidates(filteredList) {
+            const container = document.getElementById('candidatesListContainer');
+            if (filteredList.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
+                return;
+            }
+            let html = '';
+            filteredList.forEach(candidate => {
+                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
+                html += `
+                    <div class="candidate-card" data-index="${myCandidates.findIndex(c => c.id === candidate.id)}" data-id="${candidate.id}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Обучение</div>
+                            <div class="value">${trainingInfo}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.callResult}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const index = card.dataset.index;
+                    if (index !== undefined) {
+                        currentCandidateIndex = parseInt(index);
+                        loadCandidateIntoForm(currentCandidateIndex);
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        function getDraftCandidates() {
+            const oneHourAgo = Date.now() - 60 * 60 * 1000;
+            return allCandidates.filter(c =>
+                c.recruitmentStatus === 'draft' &&
+                new Date(c.createdAt).getTime() < oneHourAgo &&
+                c.recruiter === currentRecruiter.name
+            );
+        }
+
+        function renderDraftCandidates(filteredList) {
+            const container = document.getElementById('candidatesListContainer');
+            const draftCandidates = filteredList; // уже отфильтровано
+            const newKeys = draftCandidates.map(c => `${c.fullName}_${c.phone}`);
+            const newKeysSet = new Set(newKeys);
+            let newAdded = false;
+            for (let key of newKeysSet) {
+                if (!previousDraftKeys.has(key)) {
+                    newAdded = true;
+                    break;
+                }
+            }
+            if (newAdded) {
+                showNotification('Добавлен новый черновик', 'info');
+            }
+            previousDraftKeys = newKeysSet;
+            if (draftCandidates.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет черновиков</div>';
+                return;
+            }
+            let html = '';
+            draftCandidates.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus || 'draft'}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    if (id) {
+                        takeDraft(id);
+                    }
+                });
+            });
+        }
+
+        async function takeDraft(draftId) {
+            const draft = allCandidates.find(c => c.id === draftId);
+            if (!draft) return;
+            const newCandidate = {
+                fullName: draft.fullName,
+                phone: draft.phone,
+                project: draft.project || '',
+                country: '',
+                trainingDate: '',
+                trainingTime: '',
+                meetingTime: '',
+                callResult: '',
+                contactType: '',
+                recruiter: currentRecruiter.name,
+                comment: '',
+                createdAt: new Date().toISOString()
+            };
+            showLoading();
+            try {
+                const response = await fetch('/.netlify/functions/submitCandidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newCandidate)
+                });
+                if (response.ok) {
+                    const saved = await response.json();
+                    myCandidates.unshift(saved.candidate);
+                    updateStats();
+                    if (currentView === 'candidates' && candidatesTab === 'contacts') {
+                        applySearchAndFilter(); // обновить с учетом поиска
+                    }
+                    currentCandidateIndex = 0;
+                    loadCandidateIntoForm(0);
+                    showForm();
+                    showNotification('Черновик взят в работу', 'success');
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderOrgMeetingCandidates(filteredList) {
+            const container = document.getElementById('candidatesListContainer');
+            if (filteredList.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
+                return;
+            }
+            let html = '';
+            filteredList.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                        </div>
+                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
+                            <i class="fas fa-exchange-alt"></i> Передать
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
+                    const id = card.dataset.id;
+                    const type = card.dataset.type;
+                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) {
+                        editingExternalCandidate = {
+                            id: candidate.id,
+                            type: candidate.type,
+                            fullName: candidate.fullName,
+                            phone: candidate.phone,
+                            project: candidate.project,
+                            recruitmentStatus: candidate.recruitmentStatus
+                        };
+                        loadCandidateIntoForm(-1);
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        function renderTrainingCandidates(filteredList) {
+            const container = document.getElementById('candidatesListContainer');
+            if (filteredList.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
+                return;
+            }
+            let html = '';
+            filteredList.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                        </div>
+                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
+                            <i class="fas fa-exchange-alt"></i> Передать
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
+                    const id = card.dataset.id;
+                    const type = card.dataset.type;
+                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) {
+                        editingExternalCandidate = {
+                            id: candidate.id,
+                            type: candidate.type,
+                            fullName: candidate.fullName,
+                            phone: candidate.phone,
+                            project: candidate.project,
+                            recruitmentStatus: candidate.recruitmentStatus
+                        };
+                        loadCandidateIntoForm(-1);
+                        showForm();
+                    }
+                });
+            });
+        }
+
+        function renderRejectsCandidates(filteredList) {
+            const container = document.getElementById('candidatesListContainer');
+            if (filteredList.length === 0) {
+                container.innerHTML = '<div class="no-candidates">Нет отказов</div>';
+                return;
+            }
+            let html = '';
+            filteredList.forEach(candidate => {
+                const telegram = candidate.telegram || '—';
+                html += `
+                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                        <div class="candidate-field">
+                            <div class="label">ФИО</div>
+                            <div class="value highlight">${candidate.fullName}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Телефон</div>
+                            <div class="value">${candidate.phone}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Telegram</div>
+                            <div class="value">${telegram}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Проект</div>
+                            <div class="value">${candidate.project || '—'}</div>
+                        </div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                        </div>
+                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
+                            <i class="fas fa-exchange-alt"></i> Передать
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
+                    const id = card.dataset.id;
+                    const type = card.dataset.type;
+                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
+                    if (candidate) {
+                        editingExternalCandidate = {
+                            id: candidate.id,
+                            type: candidate.type,
+                            fullName: candidate.fullName,
+                            phone: candidate.phone,
+                            project: candidate.project,
+                            recruitmentStatus: candidate.recruitmentStatus
+                        };
+                        loadCandidateIntoForm(-1);
+                        showForm();
+                    }
+                });
+            });
         }
 
         // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ ==========
@@ -2338,424 +3007,7 @@
             document.getElementById('tabTraining').classList.toggle('active', tab === 'training');
             document.getElementById('tabRejects').classList.toggle('active', tab === 'rejects');
 
-            if (tab === 'contacts') {
-                renderContactsCandidates();
-            } else if (tab === 'verification') {
-                renderVerificationCandidates();
-            } else if (tab === 'draft') {
-                renderDraftCandidates();
-            } else if (tab === 'orgMeeting') {
-                renderOrgMeetingCandidates();
-            } else if (tab === 'training') {
-                renderTrainingCandidates();
-            } else if (tab === 'rejects') {
-                renderRejectsCandidates();
-            }
-        }
-
-        // ========== РЕНДЕР КОНТАКТОВ ==========
-        function renderContactsCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            if (myCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет контактов</div>';
-                return;
-            }
-
-            let html = '';
-            myCandidates.forEach((candidate, index) => {
-                const status = candidate.callResult || 'ожидает связи';
-                const statusClass = candidate.callResult ? '' : 'waiting';
-                html += `
-                    <div class="candidate-card" data-index="${index}" data-id="${candidate.id}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge ${statusClass}">${status}</span></div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const index = card.dataset.index;
-                    if (index !== undefined) {
-                        currentCandidateIndex = parseInt(index);
-                        loadCandidateIntoForm(currentCandidateIndex);
-                        showForm();
-                    }
-                });
-            });
-        }
-
-        // ========== РЕНДЕР ПРОВЕРКИ ==========
-        function renderVerificationCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const verificationCandidates = myCandidates.filter(c => c.callResult === "Проверка");
-            if (verificationCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
-                return;
-            }
-            let html = '';
-            verificationCandidates.forEach(candidate => {
-                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
-                html += `
-                    <div class="candidate-card" data-index="${myCandidates.findIndex(c => c.id === candidate.id)}" data-id="${candidate.id}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Обучение</div>
-                            <div class="value">${trainingInfo}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.callResult}</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const index = card.dataset.index;
-                    if (index !== undefined) {
-                        currentCandidateIndex = parseInt(index);
-                        loadCandidateIntoForm(currentCandidateIndex);
-                        showForm();
-                    }
-                });
-            });
-        }
-
-        // ========== ПОЛУЧИТЬ КАНДИДАТОВ ДЛЯ ЧЕРНОВИКА ==========
-        function getDraftCandidates() {
-            const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            return allCandidates.filter(c =>
-                c.recruitmentStatus === 'draft' &&
-                new Date(c.createdAt).getTime() < oneHourAgo &&
-                c.recruiter === currentRecruiter.name
-            );
-        }
-
-        function renderDraftCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const draftCandidates = getDraftCandidates();
-            const newKeys = draftCandidates.map(c => `${c.fullName}_${c.phone}`);
-            const newKeysSet = new Set(newKeys);
-            let newAdded = false;
-            for (let key of newKeysSet) {
-                if (!previousDraftKeys.has(key)) {
-                    newAdded = true;
-                    break;
-                }
-            }
-            if (newAdded) {
-                showNotification('Добавлен новый черновик', 'info');
-            }
-            previousDraftKeys = newKeysSet;
-            if (draftCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет черновиков</div>';
-                return;
-            }
-            let html = '';
-            draftCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus || 'draft'}</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    if (id) {
-                        takeDraft(id);
-                    }
-                });
-            });
-        }
-
-        async function takeDraft(draftId) {
-            const draft = allCandidates.find(c => c.id === draftId);
-            if (!draft) return;
-            const newCandidate = {
-                fullName: draft.fullName,
-                phone: draft.phone,
-                project: draft.project || '',
-                country: '',
-                trainingDate: '',
-                trainingTime: '',
-                meetingTime: '',
-                callResult: '',
-                contactType: '',
-                recruiter: currentRecruiter.name,
-                comment: '',
-                createdAt: new Date().toISOString()
-            };
-            showLoading();
-            try {
-                const response = await fetch('/.netlify/functions/submitCandidate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newCandidate)
-                });
-                if (response.ok) {
-                    const saved = await response.json();
-                    myCandidates.unshift(saved.candidate);
-                    updateStats();
-                    if (currentView === 'candidates' && candidatesTab === 'contacts') {
-                        renderContactsCandidates();
-                    }
-                    currentCandidateIndex = 0;
-                    loadCandidateIntoForm(0);
-                    showForm();
-                    showNotification('Черновик взят в работу', 'success');
-                } else {
-                    const err = await response.json();
-                    showNotification('Ошибка: ' + (err.error || ''), 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                showNotification('Ошибка сети', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // ========== РЕНДЕР ОРГ. ВСТРЕЧИ ==========
-        function renderOrgMeetingCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const orgMeetingCandidates = allCandidates.filter(c =>
-                c.recruitmentStatus === 'Орг.встреча' && c.recruiter === currentRecruiter.name
-            );
-            if (orgMeetingCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
-                return;
-            }
-            let html = '';
-            orgMeetingCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
-                            <i class="fas fa-exchange-alt"></i> Передать
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
-                    const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
-                        };
-                        loadCandidateIntoForm(-1);
-                        showForm();
-                    }
-                });
-            });
-        }
-
-        // ========== РЕНДЕР ОБУЧЕНИЯ ==========
-        function renderTrainingCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const trainingCandidates = allCandidates.filter(c =>
-                c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name
-            );
-            if (trainingCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
-                return;
-            }
-            let html = '';
-            trainingCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
-                            <i class="fas fa-exchange-alt"></i> Передать
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
-                    const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
-                        };
-                        loadCandidateIntoForm(-1);
-                        showForm();
-                    }
-                });
-            });
-        }
-
-        // ========== РЕНДЕР ОТКАЗОВ ==========
-        function renderRejectsCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
-            const rejectsCandidates = allCandidates.filter(c =>
-                rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name
-            );
-            if (rejectsCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет отказов</div>';
-                return;
-            }
-            let html = '';
-            rejectsCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
-                            <i class="fas fa-exchange-alt"></i> Передать
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
-                    const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
-                        };
-                        loadCandidateIntoForm(-1);
-                        showForm();
-                    }
-                });
-            });
+            applySearchAndFilter(); // применить поиск при смене вкладки
         }
 
         // ========== ФУНКЦИИ ДЛЯ ПЕРЕДАЧИ КАНДИДАТА ==========
@@ -3026,11 +3278,7 @@
                         loadCandidateIntoForm(currentCandidateIndex);
                         updateStats();
                     } else if (currentView === 'candidates') {
-                        if (candidatesTab === 'contacts') {
-                            renderContactsCandidates();
-                        } else if (candidatesTab === 'verification') {
-                            renderVerificationCandidates();
-                        }
+                        applySearchAndFilter(); // обновить список с учетом поиска
                     }
                 }
             } catch (error) {
@@ -3047,15 +3295,7 @@
                     const newAll = await response.json();
                     allCandidates = newAll;
                     if (currentView === 'candidates') {
-                        if (candidatesTab === 'draft') {
-                            renderDraftCandidates();
-                        } else if (candidatesTab === 'orgMeeting') {
-                            renderOrgMeetingCandidates();
-                        } else if (candidatesTab === 'training') {
-                            renderTrainingCandidates();
-                        } else if (candidatesTab === 'rejects') {
-                            renderRejectsCandidates();
-                        }
+                        applySearchAndFilter();
                     }
                     updateStats();
                 }
