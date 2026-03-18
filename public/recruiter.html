@@ -2017,129 +2017,127 @@
             }
         }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОРГ. ВСТРЕЧИ ==========
-        function renderOrgMeetingCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const orgMeetingCandidates = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча');
+      // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОРГ. ВСТРЕЧИ ==========
+function renderOrgMeetingCandidates() {
+    const container = document.getElementById('candidatesListContainer');
+    const orgMeetingCandidates = allCandidates.filter(c => c.recruitmentStatus === 'Приглашение орг.встречу');
 
-            if (orgMeetingCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
-                return;
+    if (orgMeetingCandidates.length === 0) {
+        container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
+        return;
+    }
+
+    let html = '';
+    orgMeetingCandidates.forEach(candidate => {
+        const telegram = candidate.telegram || '—';
+        html += `
+            <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                <div class="candidate-field">
+                    <div class="label">ФИО</div>
+                    <div class="value highlight">${candidate.fullName}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Телефон</div>
+                    <div class="value">${candidate.phone}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Telegram</div>
+                    <div class="value">${telegram}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Проект</div>
+                    <div class="value">${candidate.project || '—'}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Статус</div>
+                    <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+
+    document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const id = card.dataset.id;
+            const type = card.dataset.type;
+            const candidate = allCandidates.find(c => c.id === id && c.type === type);
+            if (candidate) {
+                editingExternalCandidate = {
+                    id: candidate.id,
+                    type: candidate.type,
+                    fullName: candidate.fullName,
+                    phone: candidate.phone,
+                    project: candidate.project,
+                    recruitmentStatus: candidate.recruitmentStatus
+                };
+                loadCandidateIntoForm(-1);
+                showForm();
             }
+        });
+    });
+}
 
-            let html = '';
-            orgMeetingCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+// ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОБУЧЕНИЯ ==========
+function renderTrainingCandidates() {
+    const container = document.getElementById('candidatesListContainer');
+    const trainingCandidates = allCandidates.filter(c => c.recruitmentStatus === 'Приглашение обучение');
 
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        // Устанавливаем внешнего кандидата для редактирования
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
-                        };
-                        // Загружаем в форму
-                        loadCandidateIntoForm(-1); // -1 означает, что используем editingExternalCandidate
-                        showForm();
-                    }
-                });
-            });
-        }
+    if (trainingCandidates.length === 0) {
+        container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
+        return;
+    }
 
-        // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОБУЧЕНИЯ ==========
-        function renderTrainingCandidates() {
-            const container = document.getElementById('candidatesListContainer');
-            const trainingCandidates = allCandidates.filter(c => c.recruitmentStatus === 'Обучение');
+    let html = '';
+    trainingCandidates.forEach(candidate => {
+        const telegram = candidate.telegram || '—';
+        html += `
+            <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
+                <div class="candidate-field">
+                    <div class="label">ФИО</div>
+                    <div class="value highlight">${candidate.fullName}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Телефон</div>
+                    <div class="value">${candidate.phone}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Telegram</div>
+                    <div class="value">${telegram}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Проект</div>
+                    <div class="value">${candidate.project || '—'}</div>
+                </div>
+                <div class="candidate-field">
+                    <div class="label">Статус</div>
+                    <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
 
-            if (trainingCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
-                return;
+    document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const id = card.dataset.id;
+            const type = card.dataset.type;
+            const candidate = allCandidates.find(c => c.id === id && c.type === type);
+            if (candidate) {
+                editingExternalCandidate = {
+                    id: candidate.id,
+                    type: candidate.type,
+                    fullName: candidate.fullName,
+                    phone: candidate.phone,
+                    project: candidate.project,
+                    recruitmentStatus: candidate.recruitmentStatus
+                };
+                loadCandidateIntoForm(-1);
+                showForm();
             }
-
-            let html = '';
-            trainingCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus
-                        };
-                        loadCandidateIntoForm(-1);
-                        showForm();
-                    }
-                });
-            });
-        }
+        });
+    });
+}
 
         // ========== РЕНДЕР КАНДИДАТОВ ДЛЯ ОТКАЗОВ ==========
         function renderRejectsCandidates() {
