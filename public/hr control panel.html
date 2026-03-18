@@ -133,6 +133,9 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         .add-btn:hover {
             background: #ffe44d;
@@ -144,6 +147,9 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        .add-btn i {
+            font-size: 16px;
         }
         .table-container {
             overflow-x: auto;
@@ -992,10 +998,10 @@
         </div>
     </div>
 
-    <!-- Модальное окно для добавления аналитики -->
+    <!-- Модальное окно для добавления/редактирования аналитики -->
     <div id="analyticsModal" class="modal">
         <div class="modal-header">
-            <span>Добавить запись аналитики</span>
+            <span id="analyticsModalTitle">Добавить запись аналитики</span>
             <button class="modal-close" onclick="closeAnalyticsModal()">✕</button>
         </div>
         <div class="modal-content">
@@ -1014,8 +1020,9 @@
                     <label>Прикрепить файл (необязательно)</label>
                     <input type="file" id="analyticsFile" accept=".mp3,.wav,.ogg,.m4a">
                 </div>
+                <input type="hidden" id="analyticsId">
                 <div class="modal-actions">
-                    <button type="submit" class="save-btn">💾 Сохранить</button>
+                    <button type="submit" class="save-btn" id="analyticsSaveBtn">💾 Сохранить</button>
                     <button type="button" class="delete-time-btn" onclick="closeAnalyticsModal()">Отмена</button>
                 </div>
             </form>
@@ -1065,6 +1072,9 @@
         let currentCommentContext = null;
         let candidatesSortColumn = 0;
         let candidatesSortDirection = 'desc';
+
+        // Для редактирования аналитики
+        let editingAnalyticsId = null;
 
         // ========== ПАГИНАЦИЯ ДЛЯ КАНДИДАТОВ ==========
         let candidatesPage = 1;
@@ -2803,7 +2813,7 @@
             let html = `
                 <div class="section-header">
                     <h2>Аналитика звонков</h2>
-                    <button class="add-btn" onclick="openAnalyticsModal()">+ Добавить запись</button>
+                    <button class="add-btn" onclick="openAnalyticsModal()">➕ Добавить запись</button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -2813,12 +2823,13 @@
                                 <th>Рекрутер</th>
                                 <th>Описание</th>
                                 <th>Файл</th>
+                                <th>Действия</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
             if (state.analytics.length === 0) {
-                html += '<tr><td colspan="4" style="text-align:center;">Нет записей</td></tr>';
+                html += '<tr><td colspan="5" style="text-align:center;">Нет записей</td></tr>';
             } else {
                 state.analytics.forEach(entry => {
                     const date = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '—';
@@ -2831,6 +2842,10 @@
                             <td>${recruiterName}</td>
                             <td>${description}</td>
                             <td>${fileLink}</td>
+                            <td class="actions">
+                                <button class="edit-btn" onclick="editAnalytics('${entry.id}')">✏️</button>
+                                <button class="delete-btn" onclick="deleteAnalytics('${entry.id}')">✕</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -2839,15 +2854,69 @@
             container.innerHTML = html;
         }
 
-        function openAnalyticsModal() {
+        function openAnalyticsModal(entry = null) {
+            const modal = document.getElementById('analyticsModal');
+            const title = document.getElementById('analyticsModalTitle');
+            const recruiterSelect = document.getElementById('analyticsRecruiter');
+            const description = document.getElementById('analyticsDescription');
+            const fileInput = document.getElementById('analyticsFile');
+            const idField = document.getElementById('analyticsId');
+            const saveBtn = document.getElementById('analyticsSaveBtn');
+
             // Заполняем список рекрутеров
-            const select = document.getElementById('analyticsRecruiter');
-            select.innerHTML = '<option value="">— выберите рекрутера —</option>' +
+            recruiterSelect.innerHTML = '<option value="">— выберите рекрутера —</option>' +
                 state.recruiters.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
-            document.getElementById('analyticsDescription').value = '';
-            document.getElementById('analyticsFile').value = '';
-            document.getElementById('analyticsModal').classList.add('show');
+
+            if (entry) {
+                // Режим редактирования
+                title.textContent = 'Редактировать запись аналитики';
+                recruiterSelect.value = entry.recruiterName || '';
+                description.value = entry.description || '';
+                idField.value = entry.id;
+                // Файл не предзаполняем, его можно заменить только новым
+                fileInput.value = '';
+                saveBtn.textContent = '💾 Обновить';
+            } else {
+                // Режим добавления
+                title.textContent = 'Добавить запись аналитики';
+                recruiterSelect.value = '';
+                description.value = '';
+                idField.value = '';
+                fileInput.value = '';
+                saveBtn.textContent = '💾 Сохранить';
+            }
+
+            modal.classList.add('show');
             document.body.classList.add('menu-open');
+        }
+
+        function editAnalytics(id) {
+            const entry = state.analytics.find(a => a.id === id);
+            if (entry) {
+                openAnalyticsModal(entry);
+            } else {
+                showNotification('Запись не найдена', 'error');
+            }
+        }
+
+        async function deleteAnalytics(id) {
+            if (!confirm('Удалить запись аналитики?')) return;
+            try {
+                const response = await fetch(`/.netlify/functions/deleteAnalytics?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showNotification('Запись удалена', 'success');
+                    await loadAnalytics();
+                    if (currentTab === 'analytics') {
+                        renderContent();
+                    }
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка удаления: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            }
         }
 
         function closeAnalyticsModal() {
@@ -2861,6 +2930,7 @@
             const recruiterName = document.getElementById('analyticsRecruiter').value;
             const description = document.getElementById('analyticsDescription').value.trim();
             const fileInput = document.getElementById('analyticsFile');
+            const id = document.getElementById('analyticsId').value;
 
             if (!recruiterName || !description) {
                 showNotification('Заполните все обязательные поля', 'error');
@@ -2873,17 +2943,20 @@
             if (fileInput.files.length > 0) {
                 formData.append('file', fileInput.files[0]);
             }
+            if (id) {
+                formData.append('id', id);
+            }
 
             showLoading();
             try {
-                const response = await fetch('/.netlify/functions/saveAnalytics', {
+                const url = id ? '/.netlify/functions/updateAnalytics' : '/.netlify/functions/saveAnalytics';
+                const response = await fetch(url, {
                     method: 'POST',
                     body: formData
                 });
                 if (response.ok) {
-                    showNotification('Запись сохранена', 'success');
+                    showNotification(id ? 'Запись обновлена' : 'Запись сохранена', 'success');
                     closeAnalyticsModal();
-                    // Обновляем данные
                     await loadAnalytics();
                     if (currentTab === 'analytics') {
                         renderContent();
