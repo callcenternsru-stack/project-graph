@@ -576,7 +576,7 @@
             overflow-wrap: break-word;
             min-width: 100px;
         }
-    .fixed-header-cell:first-child,
+ .fixed-header-cell:first-child,
 .fixed-cell:first-child {
     width: 100%;
     min-width: 300px;
@@ -587,6 +587,12 @@
     font-weight: 600;
     color: #ffd700;
     box-sizing: border-box;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;    /* принудительный перенос длинных слов */
+    flex-shrink: 1;            /* разрешить сжатие */
+    flex-basis: auto;          /* базовая ширина по содержимому */
 }
         .scrollable-cells {
             display: flex;
