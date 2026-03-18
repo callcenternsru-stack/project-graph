@@ -2088,83 +2088,111 @@
             updateCandidateProgress(candidate.phone, candidate.project);
         }
 
-        // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЭТАПА КАНДИДАТА (MODIFIED) ==========
-        function getCandidateStage(phone, project) {
-            // Нормализуем телефон (убираем всё кроме цифр)
-            const cleanPhone = phone.replace(/\D/g, '');
+        // ========== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ СРАВНЕНИЯ ПО ДВУМ ПАРАМЕТРАМ ==========
+        function matchesTwoFields(candidate, phone, fullName, project) {
+            // Нормализуем телефон кандидата
+            const cPhone = (candidate.phone || '').replace(/\D/g, '');
+            // Приводим к нижнему регистру для сравнения без учёта регистра
+            const cFullName = (candidate.fullName || '').toLowerCase().trim();
+            const cProject = (candidate.project || '').toLowerCase().trim();
 
-            // Сначала ищем в анкетах (allCandidates)
+            const normPhone = (phone || '').replace(/\D/g, '');
+            const normFullName = (fullName || '').toLowerCase().trim();
+            const normProject = (project || '').toLowerCase().trim();
+
+            let matches = 0;
+            if (cPhone && cPhone === normPhone) matches++;
+            if (cFullName && cFullName === normFullName) matches++;
+            if (cProject && cProject === normProject) matches++;
+            return matches >= 2;
+        }
+
+        // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЭТАПА КАНДИДАТА (МОДИФИЦИРОВАНА) ==========
+        function getCandidateStage(phone, fullName, project) {
+            // Нормализуем переданные параметры
+            const normPhone = (phone || '').replace(/\D/g, '');
+            const normFullName = (fullName || '').toLowerCase().trim();
+            const normProject = (project || '').toLowerCase().trim();
+
+            // Поиск в анкетах (allCandidates)
             let foundInAnketa = null;
             for (let c of allCandidates) {
-                const cPhone = (c.phone || '').replace(/\D/g, '');
-                if (cPhone === cleanPhone && c.project === project) {
+                if (matchesTwoFields(c, normPhone, normFullName, normProject)) {
                     foundInAnketa = c;
                     break;
                 }
             }
 
+            // Поиск в контактах (myCandidates) – кандидаты текущего рекрутера
+            let foundInContacts = null;
+            for (let c of myCandidates) {
+                if (matchesTwoFields(c, normPhone, normFullName, normProject)) {
+                    foundInContacts = c;
+                    break;
+                }
+            }
+
+            // Приоритет: если найден в анкетах, берём статус оттуда, иначе из контактов
             let status = null;
-            let source = 'anketa'; // по умолчанию приоритет анкет
+            let source = 'anketa';
             if (foundInAnketa) {
-                status = foundInAnketa.recruitmentStatus;
-            } else {
-                // Ищем в базе контактов (myCandidates) – кандидаты текущего рекрутера
-                let foundInContacts = null;
-                for (let c of myCandidates) {
-                    const cPhone = (c.phone || '').replace(/\D/g, '');
-                    if (cPhone === cleanPhone && c.project === project) {
-                        foundInContacts = c;
-                        break;
-                    }
-                }
-                if (foundInContacts) {
-                    status = foundInContacts.callResult; // в базе контактов статус в callResult
-                    source = 'contacts';
-                }
+                status = foundInAnketa.recruitmentStatus; // в анкетах статус в recruitmentStatus
+            } else if (foundInContacts) {
+                status = foundInContacts.callResult;       // в контактах статус в callResult
+                source = 'contacts';
             }
 
-            // Определяем этап по статусу
-            // Этап 1: ожидает связи (пустой статус или отсутствует)
+            // Если статуса нет (пустой или undefined), считаем этап 1 (Ожидает связи)
             if (!status || status.trim() === '') {
-                return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи' };
+                return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: 'Ожидает связи' };
             }
 
-            // Этап 2: draft, passed, напоминание, Проверка, Приглашение орг.встреча
-            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча']; // MODIFIED
+            // Определяем этап по статусу (согласно заданию)
+            // Этап 1: пустой статус уже обработан выше, но могут быть дополнительные статусы из контактов
+            const stage1statuses = ['Автоответчик', 'Не берет трубку', 'Сброс', 'Выключен', 'Перезвонить'];
+            if (stage1statuses.includes(status)) {
+                return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status };
+            }
+
+            // Этап 2: Проверка (статусы из контактов и анкет)
+            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча'];
             if (stage2statuses.includes(status)) {
-                return { stage: 2, color: 'var(--stage2)', label: 'Проверка' };
+                return { stage: 2, color: 'var(--stage2)', label: 'Проверка', status: status };
             }
 
-            // Этап 3: Обучение, Приглашение на обучение
-            const stage3statuses = ['Обучение', 'Приглашение на обучение']; // MODIFIED
+            // Этап 3: Обучение
+            const stage3statuses = ['Обучение', 'Приглашение на обучение'];
             if (stage3statuses.includes(status)) {
-                return { stage: 3, color: 'var(--stage3)', label: 'Обучение' };
+                return { stage: 3, color: 'var(--stage3)', label: 'Обучение', status: status };
             }
 
-            // Этап 4: Вышел на линию (employee)
-            if (status === 'employee') {
-                return { stage: 4, color: 'var(--stage4)', label: 'Линия' };
+            // Этап 4: Линия (employee)
+            if (status === 'employee' || status === 'Сотрудник') {
+                return { stage: 4, color: 'var(--stage4)', label: 'Линия', status: status };
             }
 
-            // Этап 5: Отказы (список)
-            const rejectStatuses = [
+            // Этап 5: Отказы
+            const stage5statuses = [
                 'Отказ акцент', 'Отказ фрикативная речь', 'Отказ интернет',
                 'Отказ наушники', 'Отказ не вышел на орг.встречу', 'Отказ не вышел на обучение',
                 'Не интересует', 'Нет ПК ноутбука', 'Номер не существует',
                 'фрикативная речь', 'Нет гарнитуры', 'Нет Lan кабеля'
             ];
-            if (rejectStatuses.includes(status)) {
-                return { stage: 5, color: 'var(--stage5)', label: 'Отказ' };
+            if (stage5statuses.includes(status)) {
+                return { stage: 5, color: 'var(--stage5)', label: 'Отказ', status: status };
             }
 
             // Если статус не распознан, считаем этап 1 (по умолчанию)
-            return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи' };
+            return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status || 'Ожидает связи' };
         }
 
         // ========== ОБНОВЛЕНИЕ ПРОГРЕСС-БАРА КАНДИДАТА (линейный) ==========
         function updateCandidateProgress(phone, project) {
-            const stageInfo = getCandidateStage(phone, project);
+            // Получаем fullName из формы, чтобы использовать в поиске
+            const fullName = document.getElementById('fullName').value.trim();
+            const stageInfo = getCandidateStage(phone, fullName, project);
             const currentStage = stageInfo.stage;
+            const currentStatus = stageInfo.status; // конкретный статус кандидата
 
             const steps = [
                 { stage: 1, label: 'Ожидает связи', color: 'var(--stage1)' },
@@ -2179,12 +2207,13 @@
             for (let i = 0; i < steps.length; i++) {
                 const step = steps[i];
                 const isActive = step.stage === currentStage;
-                const isPast = step.stage < currentStage;
                 const stepClass = `progress-step stage${step.stage} ${isActive ? 'active' : ''}`;
                 stepsHtml += `<div class="${stepClass}" onclick="showStageModal(${step.stage}, '${step.label}')"></div>`;
 
+                // Для активного этапа подставляем конкретный статус, иначе общее название
+                const label = isActive ? currentStatus : step.label;
                 const labelClass = `progress-label ${isActive ? 'active' : ''}`;
-                labelsHtml += `<div class="${labelClass}" onclick="showStageModal(${step.stage}, '${step.label}')">${step.label}</div>`;
+                labelsHtml += `<div class="${labelClass}" onclick="showStageModal(${step.stage}, '${step.label}')">${label}</div>`;
             }
 
             document.getElementById('progressSteps').innerHTML = stepsHtml;
@@ -2192,17 +2221,17 @@
             document.getElementById('progressSection').style.display = 'block';
         }
 
-        // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА (MODIFIED) ==========
+        // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА ==========
         function showStageModal(stage, label) {
             // Получаем список кандидатов текущего рекрутера с этим статусом
             let candidates = [];
             if (stage === 1) {
                 candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
             } else if (stage === 2) {
-                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча']; // MODIFIED
+                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча'];
                 candidates = myCandidates.filter(c => stage2statuses.includes(c.callResult));
             } else if (stage === 3) {
-                const stage3statuses = ['Обучение', 'Приглашение на обучение']; // MODIFIED
+                const stage3statuses = ['Обучение', 'Приглашение на обучение'];
                 candidates = myCandidates.filter(c => stage3statuses.includes(c.callResult));
             } else if (stage === 4) {
                 // В базе контактов нет employee, поэтому ищем в allCandidates
@@ -2289,13 +2318,11 @@
             } else if (candidatesTab === 'draft') {
                 currentList = getDraftCandidates();
             } else if (candidatesTab === 'orgMeeting') {
-                // MODIFIED: добавили 'Приглашение орг.встреча'
                 currentList = allCandidates.filter(c => 
                     (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча') && 
                     c.recruiter === currentRecruiter.name
                 );
             } else if (candidatesTab === 'training') {
-                // MODIFIED: добавили 'Приглашение на обучение'
                 currentList = allCandidates.filter(c => 
                     (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение') && 
                     c.recruiter === currentRecruiter.name
