@@ -605,6 +605,152 @@
             padding: 40px;
             font-size: 16px;
         }
+
+        /* ===== СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА ВЫБОРА СООБЩЕНИЯ ===== */
+        .message-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #111111;
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+            z-index: 10000;
+            width: 500px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .message-modal.show {
+            display: block;
+            animation: modalAppear 0.3s ease;
+        }
+
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translate(-50%, -45%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .message-modal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        .message-modal .modal-header h3 {
+            color: #ffd700;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .message-modal .modal-close {
+            cursor: pointer;
+            font-size: 24px;
+            color: #ffd700;
+            background: none;
+            border: none;
+        }
+
+        .message-modal .message-list {
+            margin-bottom: 20px;
+        }
+
+        .message-item {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .message-item:hover {
+            border-color: #ffd700;
+            transform: translateY(-2px);
+        }
+
+        .message-item.selected {
+            border-color: #ffd700;
+            background: #2a2a2a;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        .message-item .title {
+            color: #ffd700;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .message-item .content {
+            color: #cccccc;
+            font-size: 14px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .message-preview {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .message-preview .label {
+            color: #ffd700;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .message-preview .text {
+            color: #ffffff;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-actions .send-btn {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .modal-actions .send-btn:hover {
+            background: #ffe44d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+        }
+
+        .modal-actions .cancel-btn {
+            background: #1a1a1a;
+            color: #ffd700;
+        }
+
+        .modal-actions .cancel-btn:hover {
+            background: #333;
+        }
     </style>
 </head>
 <body>
@@ -723,8 +869,8 @@
 
                     <!-- Кнопки: сохранить, Telegram, WhatsApp, подключить Google -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
-                    <button type="button" class="telegram-btn" onclick="sendTelegramInvite()">✈️ Отправить в Telegram</button>
-                    <button type="button" class="whatsapp-btn" onclick="sendWhatsApp()">📱 Отправить в WhatsApp</button>
+                    <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')">✈️ Отправить в Telegram</button>
+                    <button type="button" class="whatsapp-btn" onclick="openMessageModal('whatsapp')">📱 Отправить в WhatsApp</button>
                     <button type="button" class="google-connect-btn" id="googleConnectBtn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
                 </form>
             </div>
@@ -739,6 +885,25 @@
                 <button class="candidates-tab" id="tabDraft" onclick="switchCandidatesTab('draft')">Черновик</button>
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно выбора сообщения для отправки -->
+    <div id="messageModal" class="message-modal">
+        <div class="modal-header">
+            <h3 id="messageModalTitle">Выберите сообщение для отправки</h3>
+            <button class="modal-close" onclick="closeMessageModal()">✕</button>
+        </div>
+        <div class="message-list" id="messageList">
+            <!-- будут подгружены скрипты чата -->
+        </div>
+        <div class="message-preview">
+            <div class="label">Предварительный просмотр:</div>
+            <div class="text" id="messagePreviewText"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="send-btn" id="sendMessageBtn" onclick="sendSelectedMessage()">Отправить</button>
+            <button class="cancel-btn" onclick="closeMessageModal()">Отмена</button>
         </div>
     </div>
 
@@ -764,6 +929,15 @@
 
         // Для отслеживания новых черновиков
         let previousDraftKeys = new Set();
+
+        // Флаг, что текущий кандидат - черновик (чтобы обновлять статус через updateCandidateStatus)
+        let currentIsDraft = false;
+        let currentDraftId = null;
+
+        // Для модального окна отправки сообщения
+        let currentMessageType = null; // 'telegram' или 'whatsapp'
+        let selectedMessageIndex = -1;
+        let chatScripts = []; // скрипты типа 'test'
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -908,6 +1082,8 @@
                 updateScriptProjects();
                 fillProjects(); // перезаполнить список проектов
                 updateScriptsUI();
+                // Сохраняем скрипты чата отдельно
+                chatScripts = appData.scripts.filter(s => s.type === 'test');
             } catch (error) {
                 console.error('Ошибка загрузки скриптов:', error);
             }
@@ -1463,14 +1639,6 @@
                 `;
             });
             container.innerHTML = html;
-
-            // Для черновиков клик пока неактивен (можно доработать позже)
-            // document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-            //     card.addEventListener('click', (e) => {
-            //         // TODO: взять черновик в работу
-            //         showNotification('Черновики пока нельзя открыть', 'info');
-            //     });
-            // });
         }
 
         // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
@@ -1515,72 +1683,212 @@
             window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
         }
 
-        async function sendTelegramInvite() {
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ОТПРАВКИ СООБЩЕНИЙ ==========
+        function openMessageModal(type) {
+            // Проверяем, что выбран кандидат
             const phone = document.getElementById('phoneNumber').value.trim();
             const fullName = document.getElementById('fullName').value.trim();
-
             if (!phone || !fullName) {
                 showNotification('Заполните ФИО и номер телефона', 'error');
                 return;
             }
-
-            const recruiterId = currentRecruiter ? currentRecruiter.name : 'test-recruiter';
-
-            showLoading();
-
-            try {
-                const response = await fetch('/.netlify/functions/add-google-contact', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recruiterId, phoneNumber: phone, fullName })
-                });
-                const data = await response.json();
-                hideLoading();
-
-                if (response.ok) {
-                    window.open(data.chatUrl, '_blank');
-                } else if (response.status === 401) {
-                    showNotification('Необходимо подключить Google Контакты', 'error');
-                } else {
-                    showNotification(data.error || 'Ошибка при добавлении контакта', 'error');
-                }
-            } catch (error) {
-                hideLoading();
-                showNotification('Ошибка сети: ' + error.message, 'error');
-            }
-        }
-
-        async function sendWhatsApp() {
-            const phone = document.getElementById('phoneNumber').value.trim();
-            const fullName = document.getElementById('fullName').value.trim();
-
-            if (!phone || !fullName) {
-                showNotification('Заполните ФИО и номер телефона', 'error');
+            // Проверяем наличие скриптов чата
+            if (chatScripts.length === 0) {
+                showNotification('Нет доступных скриптов для чата', 'error');
                 return;
             }
 
-            showLoading();
+            currentMessageType = type;
+            document.getElementById('messageModalTitle').textContent = type === 'telegram' ? 'Выберите сообщение для Telegram' : 'Выберите сообщение для WhatsApp';
+            
+            // Рендерим список сообщений
+            const listContainer = document.getElementById('messageList');
+            let html = '';
+            chatScripts.forEach((script, index) => {
+                // Очищаем HTML-теги из контента для предпросмотра
+                const plainText = script.content.replace(/<[^>]*>/g, '');
+                html += `
+                    <div class="message-item ${selectedMessageIndex === index ? 'selected' : ''}" data-index="${index}">
+                        <div class="title">${script.title}</div>
+                        <div class="content">${plainText.substring(0, 150)}${plainText.length > 150 ? '…' : ''}</div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+
+            // Добавляем обработчики клика
+            document.querySelectorAll('.message-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.message-item').forEach(el => el.classList.remove('selected'));
+                    item.classList.add('selected');
+                    const index = item.dataset.index;
+                    if (index !== undefined) {
+                        selectedMessageIndex = parseInt(index);
+                        updateMessagePreview();
+                    }
+                });
+            });
+
+            // Если ни одно не выбрано, выбираем первое
+            if (selectedMessageIndex === -1 && chatScripts.length > 0) {
+                selectedMessageIndex = 0;
+                document.querySelector('.message-item')?.classList.add('selected');
+                updateMessagePreview();
+            }
+
+            document.getElementById('messageModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        function updateMessagePreview() {
+            if (selectedMessageIndex === -1 || !chatScripts[selectedMessageIndex]) return;
+            const script = chatScripts[selectedMessageIndex];
+            const projectName = document.getElementById('project').value;
+            // Получаем projectId по названию проекта из appData.projects
+            const projectObj = appData.projects.find(p => p.name === projectName);
+            const projectId = projectObj ? projectObj.id : '';
+            const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
+
+            // Заменяем ссылку в тексте (можно вставить в любом месте)
+            let plainText = script.content.replace(/<[^>]*>/g, '');
+            // Добавляем ссылку в конец, если её нет
+            if (link) {
+                plainText += '\n\nСсылка для заполнения анкеты: ' + link;
+            }
+            document.getElementById('messagePreviewText').textContent = plainText;
+        }
+
+        function sendSelectedMessage() {
+            if (selectedMessageIndex === -1) {
+                showNotification('Выберите сообщение', 'error');
+                return;
+            }
+            const script = chatScripts[selectedMessageIndex];
+            const phone = document.getElementById('phoneNumber').value.trim();
+            const fullName = document.getElementById('fullName').value.trim();
+            const projectName = document.getElementById('project').value;
+            const projectObj = appData.projects.find(p => p.name === projectName);
+            const projectId = projectObj ? projectObj.id : '';
+            const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
+
+            // Формируем текст сообщения
+            let text = script.content.replace(/<[^>]*>/g, '');
+            if (link) {
+                text += '\n\nСсылка для заполнения анкеты: ' + link;
+            }
+
+            // Очищаем номер от всего, кроме цифр
+            const cleanPhone = phone.replace(/\D/g, '');
+
+            let url;
+            if (currentMessageType === 'telegram') {
+                // Для Telegram используем схему tg://msg?text=... или share link
+                // Универсальный вариант: https://t.me/share/url?url=...&text=...
+                url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+            } else {
+                // Для WhatsApp
+                url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+            }
+
+            // Открываем в новой вкладке
+            window.open(url, '_blank');
+
+            // Закрываем модальное окно
+            closeMessageModal();
+        }
+
+        // ========== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ==========
+        let refreshInterval = null;
+        let isRefreshing = false;
+
+        async function refreshMyCandidates() {
+            if (isRefreshing || !currentRecruiter) return;
+            isRefreshing = true;
 
             try {
-                const response = await fetch('/.netlify/functions/send-whatsapp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phoneNumber: phone })
-                });
-                const data = await response.json();
-                hideLoading();
-
+                const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
                 if (response.ok) {
-                    window.open(data.whatsappUrl, '_blank');
-                } else {
-                    showNotification(data.error || 'Ошибка при открытии WhatsApp', 'error');
+                    const newCandidates = await response.json();
+                    newCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                    const currentId = (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length)
+                        ? myCandidates[currentCandidateIndex].id
+                        : null;
+
+                    myCandidates = newCandidates;
+
+                    let newIndex = -1;
+                    if (currentId) {
+                        newIndex = myCandidates.findIndex(c => c.id === currentId);
+                    }
+                    if (newIndex === -1) {
+                        newIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
+                    }
+                    if (newIndex === -1 && myCandidates.length > 0) {
+                        newIndex = 0;
+                    }
+
+                    currentCandidateIndex = newIndex;
+
+                    if (currentView === 'main') {
+                        loadCandidateIntoForm(currentCandidateIndex);
+                    } else if (currentView === 'candidates') {
+                        if (candidatesTab === 'contacts') {
+                            renderContactsCandidates();
+                        } else if (candidatesTab === 'verification') {
+                            renderVerificationCandidates();
+                        }
+                    }
                 }
             } catch (error) {
-                hideLoading();
-                showNotification('Ошибка сети: ' + error.message, 'error');
+                console.error('Ошибка при обновлении кандидатов:', error);
+            } finally {
+                isRefreshing = false;
             }
         }
 
+        // Обновление всех анкет для черновиков
+        async function refreshAllCandidates() {
+            try {
+                const response = await fetch('/.netlify/functions/getAllCandidates');
+                if (response.ok) {
+                    const newAll = await response.json();
+                    allCandidates = newAll;
+                    // Если сейчас открыта вкладка черновиков, перерендерить
+                    if (currentView === 'candidates' && candidatesTab === 'draft') {
+                        renderDraftCandidates();
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении всех анкет:', error);
+            }
+        }
+
+        function startAutoRefresh(intervalMs = 20000) {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                refreshMyCandidates();
+                refreshAllCandidates();
+            }, intervalMs);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+
+        // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ (оставлены как есть) ==========
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
@@ -1635,93 +1943,6 @@
             }
         `;
         document.head.appendChild(style);
-
-        // ========== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ==========
-        let refreshInterval = null;
-        let isRefreshing = false;
-
-        async function refreshMyCandidates() {
-            if (isRefreshing || !currentRecruiter) return;
-            isRefreshing = true;
-
-            try {
-                const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
-                if (response.ok) {
-                    const newCandidates = await response.json();
-                    newCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-                    const currentId = (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length)
-                        ? myCandidates[currentCandidateIndex].id
-                        : null;
-
-                    myCandidates = newCandidates;
-
-                    let newIndex = -1;
-                    if (currentId) {
-                        newIndex = myCandidates.findIndex(c => c.id === currentId);
-                    }
-                    if (newIndex === -1) {
-                        newIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
-                    }
-                    if (newIndex === -1 && myCandidates.length > 0) {
-                        newIndex = 0;
-                    }
-
-                    currentCandidateIndex = newIndex;
-
-                    if (currentView === 'main') {
-                        loadCandidateIntoForm(currentCandidateIndex);
-                    } else if (currentView === 'candidates') {
-                        // перерендерим текущую вкладку
-                        if (candidatesTab === 'contacts') {
-                            renderContactsCandidates();
-                        } else if (candidatesTab === 'verification') {
-                            renderVerificationCandidates();
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка при обновлении кандидатов:', error);
-            } finally {
-                isRefreshing = false;
-            }
-        }
-
-        // Обновление всех анкет для черновиков
-        async function refreshAllCandidates() {
-            try {
-                const response = await fetch('/.netlify/functions/getAllCandidates');
-                if (response.ok) {
-                    const newAll = await response.json();
-                    allCandidates = newAll;
-                    // Если сейчас открыта вкладка черновиков, перерендерить
-                    if (currentView === 'candidates' && candidatesTab === 'draft') {
-                        renderDraftCandidates();
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка при обновлении всех анкет:', error);
-            }
-        }
-
-        function startAutoRefresh(intervalMs = 20000) {
-            if (refreshInterval) clearInterval(refreshInterval);
-            refreshInterval = setInterval(() => {
-                refreshMyCandidates();
-                refreshAllCandidates();
-            }, intervalMs);
-        }
-
-        function stopAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
-            }
-        }
-
-        window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
-        });
     </script>
 </body>
 </html>
