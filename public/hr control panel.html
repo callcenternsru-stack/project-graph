@@ -2451,16 +2451,14 @@
         }
 
         // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДКИ "Анкеты" ==========
-        // Удаляем фиксированный массив статусов, теперь берём из state.callResults
-
         function renderCandidatesAll(container) {
             const candidates = state.allCandidates || [];
-            // Получаем список статусов из справочника callResults
-            let statusOptions = state.callResults.map(r => r.name);
-            // Если справочник пуст, добавим заглушку, чтобы выпадающий список не был пустым
-            if (statusOptions.length === 0) {
-                statusOptions.push('draft');
-            }
+            // Системные статусы, которые должны быть всегда
+            const systemStatuses = ['draft', 'passed'];
+            // Статусы из справочника
+            const customStatuses = state.callResults.map(r => r.name);
+            // Объединяем, убираем дубликаты
+            const allStatuses = [...new Set([...systemStatuses, ...customStatuses])];
 
             let html = `
                 <div class="section-header">
@@ -2496,7 +2494,7 @@
                             <td>${typeLabel}</td>
                             <td>
                                 <select class="status-select" data-id="${c.id}" data-type="${c.type}" onclick="event.stopPropagation();" onchange="updateCandidateStatus('${c.id}', '${c.type}', this.value)">
-                                    ${statusOptions.map(opt => `<option value="${opt}" ${opt === currentStatus ? 'selected' : ''}>${opt}</option>`).join('')}
+                                    ${allStatuses.map(opt => `<option value="${opt}" ${opt === currentStatus ? 'selected' : ''}>${opt}</option>`).join('')}
                                 </select>
                             </td>
                             <td>
