@@ -2088,7 +2088,7 @@
             updateCandidateProgress(candidate.phone, candidate.project);
         }
 
-        // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЭТАПА КАНДИДАТА ==========
+        // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЭТАПА КАНДИДАТА (MODIFIED) ==========
         function getCandidateStage(phone, project) {
             // Нормализуем телефон (убираем всё кроме цифр)
             const cleanPhone = phone.replace(/\D/g, '');
@@ -2129,14 +2129,15 @@
                 return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи' };
             }
 
-            // Этап 2: draft, passed, напоминание, проверка
-            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка'];
+            // Этап 2: draft, passed, напоминание, Проверка, Приглашение орг.встреча
+            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча']; // MODIFIED
             if (stage2statuses.includes(status)) {
                 return { stage: 2, color: 'var(--stage2)', label: 'Проверка' };
             }
 
-            // Этап 3: Обучение
-            if (status === 'Обучение') {
+            // Этап 3: Обучение, Приглашение на обучение
+            const stage3statuses = ['Обучение', 'Приглашение на обучение']; // MODIFIED
+            if (stage3statuses.includes(status)) {
                 return { stage: 3, color: 'var(--stage3)', label: 'Обучение' };
             }
 
@@ -2191,17 +2192,18 @@
             document.getElementById('progressSection').style.display = 'block';
         }
 
-        // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА ==========
+        // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА (MODIFIED) ==========
         function showStageModal(stage, label) {
             // Получаем список кандидатов текущего рекрутера с этим статусом
             let candidates = [];
             if (stage === 1) {
                 candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
             } else if (stage === 2) {
-                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка'];
+                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча']; // MODIFIED
                 candidates = myCandidates.filter(c => stage2statuses.includes(c.callResult));
             } else if (stage === 3) {
-                candidates = myCandidates.filter(c => c.callResult === 'Обучение');
+                const stage3statuses = ['Обучение', 'Приглашение на обучение']; // MODIFIED
+                candidates = myCandidates.filter(c => stage3statuses.includes(c.callResult));
             } else if (stage === 4) {
                 // В базе контактов нет employee, поэтому ищем в allCandidates
                 candidates = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name);
@@ -2287,9 +2289,17 @@
             } else if (candidatesTab === 'draft') {
                 currentList = getDraftCandidates();
             } else if (candidatesTab === 'orgMeeting') {
-                currentList = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча' && c.recruiter === currentRecruiter.name);
+                // MODIFIED: добавили 'Приглашение орг.встреча'
+                currentList = allCandidates.filter(c => 
+                    (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча') && 
+                    c.recruiter === currentRecruiter.name
+                );
             } else if (candidatesTab === 'training') {
-                currentList = allCandidates.filter(c => c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name);
+                // MODIFIED: добавили 'Приглашение на обучение'
+                currentList = allCandidates.filter(c => 
+                    (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение') && 
+                    c.recruiter === currentRecruiter.name
+                );
             } else if (candidatesTab === 'rejects') {
                 const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
                 currentList = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name);
