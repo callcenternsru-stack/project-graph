@@ -1756,16 +1756,15 @@
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
 
-            // Заменяем ссылку в тексте (можно вставить в любом месте)
+            // Очищаем HTML-теги и добавляем ссылку
             let plainText = script.content.replace(/<[^>]*>/g, '');
-            // Добавляем ссылку в конец, если её нет
             if (link) {
                 plainText += '\n\nСсылка для заполнения анкеты: ' + link;
             }
             document.getElementById('messagePreviewText').textContent = plainText;
         }
 
-        function sendSelectedMessage() {
+        async function sendSelectedMessage() {
             if (selectedMessageIndex === -1) {
                 showNotification('Выберите сообщение', 'error');
                 return;
@@ -1787,18 +1786,46 @@
             // Очищаем номер от всего, кроме цифр
             const cleanPhone = phone.replace(/\D/g, '');
 
-            let url;
             if (currentMessageType === 'telegram') {
-                // Для Telegram используем схему tg://msg?text=... или share link
-                // Универсальный вариант: https://t.me/share/url?url=...&text=...
-                url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+                // Для Telegram: сначала копируем текст, затем открываем чат через Google Contacts
+                try {
+                    // Копируем текст в буфер обмена
+                    await navigator.clipboard.writeText(text);
+                    
+                    // Получаем ссылку на чат через add-google-contact
+                    showLoading();
+                    const response = await fetch('/.netlify/functions/add-google-contact', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            recruiterId: currentRecruiter.name,
+                            phoneNumber: phone,
+                            fullName: fullName
+                        })
+                    });
+                    hideLoading();
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Открываем чат Telegram
+                        window.open(data.chatUrl, '_blank');
+                        showNotification('Текст скопирован! Вставьте его в открывшемся чате Telegram.', 'success');
+                    } else if (response.status === 401) {
+                        showNotification('Необходимо подключить Google Контакты', 'error');
+                    } else {
+                        const err = await response.json();
+                        showNotification('Ошибка при открытии чата: ' + (err.error || ''), 'error');
+                    }
+                } catch (err) {
+                    hideLoading();
+                    console.error(err);
+                    showNotification('Ошибка при копировании или открытии чата', 'error');
+                }
             } else {
-                // Для WhatsApp
-                url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+                // WhatsApp: открываем wa.me с текстом
+                const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+                window.open(url, '_blank');
             }
-
-            // Открываем в новой вкладке
-            window.open(url, '_blank');
 
             // Закрываем модальное окно
             closeMessageModal();
@@ -1890,7 +1917,7 @@
             stopAutoRefresh();
         });
 
-        // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ (оставлены как есть) ==========
+        // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ ==========
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
