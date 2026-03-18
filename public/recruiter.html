@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -2180,14 +2181,14 @@
                 return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status };
             }
 
-            // Этап 2: Проверка (статусы из контактов и анкет)
-            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча'];
+            // Этап 2: Проверка (статусы из контактов и анкет) – добавлен "Вышел на орг. встречу"
+            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча', 'Вышел на орг. встречу'];
             if (stage2statuses.includes(status)) {
                 return { stage: 2, color: 'var(--stage2)', label: 'Проверка', status: status };
             }
 
-            // Этап 3: Обучение
-            const stage3statuses = ['Обучение', 'Приглашение на обучение'];
+            // Этап 3: Обучение – добавлен "Вышел на обучение"
+            const stage3statuses = ['Обучение', 'Приглашение на обучение', 'Вышел на обучение'];
             if (stage3statuses.includes(status)) {
                 return { stage: 3, color: 'var(--stage3)', label: 'Обучение', status: status };
             }
@@ -2254,10 +2255,10 @@
             if (stage === 1) {
                 candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
             } else if (stage === 2) {
-                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча'];
+                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча', 'Вышел на орг. встречу'];
                 candidates = myCandidates.filter(c => stage2statuses.includes(c.callResult));
             } else if (stage === 3) {
-                const stage3statuses = ['Обучение', 'Приглашение на обучение'];
+                const stage3statuses = ['Обучение', 'Приглашение на обучение', 'Вышел на обучение'];
                 candidates = myCandidates.filter(c => stage3statuses.includes(c.callResult));
             } else if (stage === 4) {
                 // В базе контактов нет employee, поэтому ищем в allCandidates
@@ -2346,12 +2347,12 @@
                 currentList = getDraftCandidates();
             } else if (candidatesTab === 'orgMeeting') {
                 currentList = allCandidates.filter(c => 
-                    (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча') && 
+                    (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') && 
                     c.recruiter === currentRecruiter.name
                 );
             } else if (candidatesTab === 'training') {
                 currentList = allCandidates.filter(c => 
-                    (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение') && 
+                    (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') && 
                     c.recruiter === currentRecruiter.name
                 );
             } else if (candidatesTab === 'rejects') {
@@ -2834,12 +2835,16 @@
             const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
             const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
             const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
-            const part1 = rejects > 0 ? passed / rejects : 0;
+            const verificationCount = allCandidates.filter(c => c.recruitmentStatus === 'Проверка' && c.recruiter === currentRecruiter.name).length;
+            
+            const part1 = (rejects + verificationCount) > 0 ? passed / (rejects + verificationCount) : 0;
 
-            const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча' && c.recruiter === currentRecruiter.name).length;
+            // orgMeeting – кандидаты со статусом "Вышел на орг. встречу"
+            const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на орг. встречу' && c.recruiter === currentRecruiter.name).length;
             const part2 = passed > 0 ? orgMeeting / passed : 0;
 
-            const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name).length;
+            // training – кандидаты со статусом "Вышел на обучение"
+            const training = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на обучение' && c.recruiter === currentRecruiter.name).length;
             const part3 = orgMeeting > 0 ? training / orgMeeting : 0;
 
             const avgQualityFactor = avgQuality / 100;
@@ -3194,33 +3199,30 @@
             }
         });
 
-        // ========== ВОССТАНОВЛЕНИЕ СЕССИИ ==========
-        window.addEventListener('load', () => {
-            const saved = sessionStorage.getItem('recruiter');
-            if (saved) {
-                try {
-                    currentRecruiter = JSON.parse(saved);
-                    document.getElementById('loginContainer').style.display = 'none';
-                    document.getElementById('recruiterInterface').style.display = 'block';
-                    initInterface();
-                } catch (e) {
-                    sessionStorage.removeItem('recruiter');
-                }
-            } else {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('recruiterInterface').style.display = 'block';
-                currentRecruiter = { name: 'Демо-рекрутер' };
-                document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
-                document.getElementById('recruiterField').value = currentRecruiter.name;
-                loadCandidateIntoForm(-1);
-                showForm();
-            }
-        });
-
-        function connectGoogle() {
-            const state = encodeURIComponent(currentRecruiter.name);
-            window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
+// ========== ВОССТАНОВЛЕНИЕ СЕССИИ ==========
+window.addEventListener('load', () => {
+    const saved = sessionStorage.getItem('recruiter');
+    if (saved) {
+        try {
+            currentRecruiter = JSON.parse(saved);
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('recruiterInterface').style.display = 'block';
+            initInterface();
+        } catch (e) {
+            sessionStorage.removeItem('recruiter');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('recruiterInterface').style.display = 'none';
         }
+    } else {
+        document.getElementById('loginContainer').style.display = 'block';
+        document.getElementById('recruiterInterface').style.display = 'none';
+    }
+});
+
+function connectGoogle() {
+    const state = encodeURIComponent(currentRecruiter.name);
+   window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
+}
 
         // ========== ФУНКЦИИ ДЛЯ ОТПРАВКИ СООБЩЕНИЙ ==========
         function openMessageModal(type) {
@@ -3435,3 +3437,4 @@
     </script>
 </body>
 </html>
+```
