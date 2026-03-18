@@ -516,12 +516,7 @@
             min-width: 100px;
             max-width: 200px;
         }
-        .fixed-header-cell:first-child {
-            width: 300px;                /* оптимальная ширина для длинных названий */
-            text-align: left;
-            padding-left: 20px;
-            justify-content: flex-start;
-        }
+      
         .scrollable-headers {
             display: flex;
             flex: 1;
@@ -581,12 +576,18 @@
             overflow-wrap: break-word;
             min-width: 100px;
         }
-        .fixed-cell:first-child {
-            width: 300px;                /* синхронизировано с заголовком */
-            font-weight: 600;
-            color: #ffd700;
-            padding-left: 20px;
-        }
+    .fixed-header-cell:first-child,
+.fixed-cell:first-child {
+    width: 100%;
+    min-width: 300px;
+    max-width: none;
+    text-align: left;
+    padding-left: 20px;
+    justify-content: flex-start;
+    font-weight: 600;
+    color: #ffd700;
+    box-sizing: border-box;
+}
         .scrollable-cells {
             display: flex;
             flex: 1;
