@@ -2656,25 +2656,30 @@
                     if (!matchedRecruiter) {
                         matchedRecruiter = findMatchingRecruiter(c) || 'Внешний';
                     }
-                    let recruiterSelect = `<select class="recruiter-select" data-id="${c.id}" data-type="${c.type}" onchange="updateCandidateRecruiter('${c.id}', '${c.type}', this.value)">`;
+                    // Селект для рекрутера с остановкой всплытия
+                    let recruiterSelect = `<select class="recruiter-select" data-id="${c.id}" data-type="${c.type}" onclick="event.stopPropagation()" onchange="updateCandidateRecruiter('${c.id}', '${c.type}', this.value)">`;
                     recruiterOptions.forEach(opt => {
                         const selected = (opt === matchedRecruiter) ? 'selected' : '';
                         recruiterSelect += `<option value="${opt}" ${selected}>${opt}</option>`;
                     });
                     recruiterSelect += '</select>';
 
+                    // Селект для статуса с остановкой всплытия
+                    let statusSelect = `<select class="status-select" data-id="${c.id}" data-type="${c.type}" onclick="event.stopPropagation()" onchange="updateCandidateStatus('${c.id}', '${c.type}', this.value)">`;
+                    allStatuses.forEach(opt => {
+                        const selected = (opt === currentStatus) ? 'selected' : '';
+                        statusSelect += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    statusSelect += '</select>';
+
                     html += `
-                        <tr data-id="${c.id}" data-type="${c.type}">
+                        <tr data-id="${c.id}" data-type="${c.type}" onclick="showCandidateDetails('${c.id}', '${c.type}')" style="cursor:pointer;">
                             <td>${date}</td>
                             <td>${c.fullName}</td>
                             <td>${c.project}</td>
                             <td>${recruiterSelect}</td>
                             <td>${typeLabel}</td>
-                            <td>
-                                <select class="status-select" data-id="${c.id}" data-type="${c.type}" onchange="updateCandidateStatus('${c.id}', '${c.type}', this.value)">
-                                    ${allStatuses.map(opt => `<option value="${opt}" ${opt === currentStatus ? 'selected' : ''}>${opt}</option>`).join('')}
-                                </select>
-                            </td>
+                            <td>${statusSelect}</td>
                             <td>
                                 <button class="delete-btn" onclick="event.stopPropagation(); deleteCandidate('${c.id}', '${c.type}')">✕</button>
                             </td>
