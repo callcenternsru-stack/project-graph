@@ -516,7 +516,22 @@
             min-width: 100px;
             max-width: 200px;
         }
-      
+        /* Фиксируем первую колонку (названия проектов) */
+        .fixed-header-cell:first-child {
+            width: 100%;
+            min-width: 300px;
+            max-width: 300px;
+            text-align: left;
+            padding-left: 20px;
+            justify-content: flex-start;
+            font-weight: 600;
+            color: #ffd700;
+            box-sizing: border-box;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
         .scrollable-headers {
             display: flex;
             flex: 1;
@@ -576,65 +591,24 @@
             overflow-wrap: break-word;
             min-width: 100px;
         }
-/* Заголовок первой колонки */
-.fixed-header-cell:first-child {
-    width: 100%;
-    min-width: 300px;
-    max-width: 300px;               /* жёсткое ограничение */
-    text-align: left;
-    padding-left: 20px;
-    font-weight: 600;
-    color: #ffd700;
-    box-sizing: border-box;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-/* Ячейки первой колонки */
-.fixed-cell:first-child {
-    width: 100%;
-    min-width: 300px;
-    max-width: 300px;               /* жёсткое ограничение */
-    padding-left: 20px;
-    font-weight: 600;
-    color: #ffd700;
-    box-sizing: border-box;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    display: block;
-    line-height: 1.4;
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-/* Остальные ячейки (со сменой, временем, телефоном, типом) остаются flex */
-.fixed-cell {
-    padding: 10px;
-    border-right: 1px solid #333333;
-    display: flex;
-    align-items: center;
-    background: #111111;
-    color: #cccccc;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    min-width: 100px;
-}
-
-/* Если внутри первой ячейки есть вложенный span, тоже разрешаем перенос */
-.fixed-cell:first-child span {
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-}
+        /* Первая ячейка (название проекта) — блочная для переноса */
+        .fixed-cell:first-child {
+            width: 100%;
+            min-width: 300px;
+            max-width: 300px;
+            font-weight: 600;
+            color: #ffd700;
+            padding-left: 20px;
+            box-sizing: border-box;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            display: block;
+            line-height: 1.4;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
         .scrollable-cells {
             display: flex;
             flex: 1;
@@ -1722,11 +1696,9 @@
             const { type, project, month, day, inputElement } = currentCommentContext;
             const key = `${project}_${month}_${day}`;
 
-            // Очищаем поле ввода
             inputElement.value = '';
             inputElement.classList.remove('filled');
 
-            // Удаляем данные из состояния
             if (type === 'meeting') {
                 delete state.projectMeetings[key];
                 delete state.projectMeetingComments[key];
@@ -1932,7 +1904,6 @@
                         </div>
                     `;
                 } else {
-                    // testScript – чекбоксы
                     const checkboxes = state.projects.map(p => `
                         <div class="checkbox-item">
                             <input type="checkbox" id="project_${p.id}" value="${p.id}">
@@ -2062,7 +2033,6 @@
                         </div>
                     `;
                 } else {
-                    // testScript – чекбоксы
                     const checkboxes = state.projects.map(p => `
                         <div class="checkbox-item">
                             <input type="checkbox" id="project_${p.id}" value="${p.id}" ${item.projectIds && item.projectIds.includes(p.id) ? 'checked' : ''}>
