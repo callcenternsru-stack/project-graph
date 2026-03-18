@@ -286,7 +286,7 @@
             gap: 4px;
         }
 
-        /* Прогресс-бар (воронка) */
+        /* Прогресс-бар (воронка) – красивый, без лишних линий */
         .progress-section {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -305,50 +305,71 @@
             font-size: 18px;
         }
 
-        .progress-stats {
+        .progress-steps {
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
             justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
 
-        .progress-stat {
-            flex: 1 1 150px;
+        .step-item {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: var(--bg-tertiary);
-            border-radius: 16px;
-            padding: 15px 10px;
-            border: 1px solid var(--border-color);
-            transition: transform 0.2s;
+            position: relative;
         }
 
-        .progress-stat:hover {
-            transform: translateY(-2px);
-            border-color: var(--accent);
-        }
-
-        .stat-color {
+        .step-indicator {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            transition: all 0.2s;
         }
 
-        .stat-label {
+        .step-indicator.active {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #000;
+        }
+
+        .step-indicator.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: #000;
+        }
+
+        .step-label {
+            font-size: 12px;
             color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 5px;
             text-align: center;
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
+        .step-label.active {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .step-connector {
+            position: absolute;
+            top: 20px;
+            left: calc(50% + 20px);
+            width: calc(100% - 40px);
+            height: 2px;
+            background: var(--border-color);
+            z-index: 1;
+        }
+
+        .step-item:last-child .step-connector {
+            display: none;
         }
 
         /* Основная рабочая область */
@@ -1135,8 +1156,8 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            .progress-stats {
-                flex-direction: column;
+            .progress-steps {
+                flex-wrap: wrap;
             }
             .analytics-table {
                 min-width: 600px;
@@ -1236,10 +1257,10 @@
             </div>
         </div>
 
-        <!-- Прогресс-воронка (под статистикой) -->
-        <div class="progress-section" id="progressSection">
-            <div class="progress-title"><i class="fas fa-chart-bar"></i> Воронка кандидатов</div>
-            <div class="progress-stats" id="progressStats">
+        <!-- Прогресс проверки кандидата (красивый, без лишних линий) -->
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <div class="progress-title"><i class="fas fa-chart-bar"></i> Прогресс кандидата</div>
+            <div class="progress-steps" id="progressSteps">
                 <!-- будут заполнены динамически -->
             </div>
         </div>
@@ -1836,8 +1857,9 @@
                     document.getElementById('project').value = '';
                 }
                 document.getElementById('callResult').value = candidate.recruitmentStatus || '';
-                // Другие поля оставляем пустыми или можно заполнить, если есть
                 document.getElementById('candidateCounter').textContent = `Редактирование кандидата из списка`;
+                // Обновляем прогресс для этого кандидата
+                updateCandidateProgress(candidate.phone, candidate.project);
                 return;
             }
 
@@ -1854,6 +1876,8 @@
                 document.getElementById('comment').value = '';
                 document.getElementById('candidateIndexField').value = '-1';
                 document.getElementById('candidateCounter').textContent = 'Кандидат 13 из 24';
+                // Скрываем прогресс, если нет кандидата
+                document.getElementById('progressSection').style.display = 'none';
                 return;
             }
 
@@ -1910,9 +1934,121 @@
 
             const total = myCandidates.length;
             document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
+
+            // Обновляем прогресс для выбранного кандидата
+            updateCandidateProgress(candidate.phone, candidate.project);
         }
 
-        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ И ПРОГРЕСС-БАРА ==========
+        // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЭТАПА КАНДИДАТА ==========
+        function getCandidateStage(phone, project) {
+            // Нормализуем телефон (убираем всё кроме цифр)
+            const cleanPhone = phone.replace(/\D/g, '');
+
+            // Сначала ищем в анкетах (allCandidates)
+            let foundInAnketa = null;
+            for (let c of allCandidates) {
+                const cPhone = (c.phone || '').replace(/\D/g, '');
+                if (cPhone === cleanPhone && c.project === project) {
+                    foundInAnketa = c;
+                    break;
+                }
+            }
+
+            let status = null;
+            let source = 'anketa'; // по умолчанию приоритет анкет
+            if (foundInAnketa) {
+                status = foundInAnketa.recruitmentStatus;
+            } else {
+                // Ищем в базе контактов (myCandidates) – кандидаты текущего рекрутера
+                let foundInContacts = null;
+                for (let c of myCandidates) {
+                    const cPhone = (c.phone || '').replace(/\D/g, '');
+                    if (cPhone === cleanPhone && c.project === project) {
+                        foundInContacts = c;
+                        break;
+                    }
+                }
+                if (foundInContacts) {
+                    status = foundInContacts.callResult; // в базе контактов статус в callResult
+                    source = 'contacts';
+                }
+            }
+
+            // Определяем этап по статусу
+            // Этап 1: ожидает связи (пустой статус или отсутствует)
+            if (!status || status.trim() === '') {
+                return { stage: 1, color: '#FFD700', label: 'Ожидает связи' };
+            }
+
+            // Этап 2: draft, passed, напоминание, проверка
+            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка'];
+            if (stage2statuses.includes(status)) {
+                return { stage: 2, color: '#FFA500', label: 'Проверка' };
+            }
+
+            // Этап 3: Обучение
+            if (status === 'Обучение') {
+                return { stage: 3, color: '#4CAF50', label: 'Обучение' };
+            }
+
+            // Этап 4: Вышел на линию (employee)
+            if (status === 'employee') {
+                return { stage: 4, color: '#4CAF50', label: 'Линия' };
+            }
+
+            // Этап 5: Отказы (список)
+            const rejectStatuses = [
+                'Отказ акцент', 'Отказ фрикативная речь', 'Отказ интернет',
+                'Отказ наушники', 'Отказ не вышел на орг.встречу', 'Отказ не вышел на обучение',
+                'Не интересует', 'Нет ПК ноутбука', 'Номер не существует',
+                'фрикативная речь', 'Нет гарнитуры', 'Нет Lan кабеля'
+            ];
+            if (rejectStatuses.includes(status)) {
+                return { stage: 5, color: '#F44336', label: 'Отказ' };
+            }
+
+            // Если статус не распознан, считаем этап 1 (по умолчанию)
+            return { stage: 1, color: '#FFD700', label: 'Ожидает связи' };
+        }
+
+        // ========== ОБНОВЛЕНИЕ ПРОГРЕСС-БАРА КАНДИДАТА ==========
+        function updateCandidateProgress(phone, project) {
+            const stageInfo = getCandidateStage(phone, project);
+            const currentStage = stageInfo.stage;
+
+            const steps = [
+                { label: 'Ожидает связи', color: '#FFD700' },
+                { label: 'Проверка', color: '#FFA500' },
+                { label: 'Обучение', color: '#4CAF50' },
+                { label: 'Линия', color: '#4CAF50' },
+                { label: 'Отказ', color: '#F44336' }
+            ];
+
+            let html = '';
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                let stepClass = '';
+                if (i + 1 === currentStage) {
+                    stepClass = 'active';
+                } else if (i + 1 < currentStage) {
+                    stepClass = 'completed';
+                }
+                html += `
+                    <div class="step-item">
+                        <div class="step-indicator ${stepClass}" style="border-color: ${step.color}; ${stepClass === 'active' ? 'background: ' + step.color : ''}">
+                            ${i + 1}
+                        </div>
+                        <div class="step-label ${stepClass}">${step.label}</div>
+                        ${i < steps.length - 1 ? '<div class="step-connector" style="background: ' + (i + 1 < currentStage ? step.color : 'var(--border-color)') + '"></div>' : ''}
+                    </div>
+                `;
+            }
+
+            document.getElementById('progressSteps').innerHTML = html;
+            document.getElementById('progressSection').style.display = 'block';
+        }
+
+        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ ==========
         function updateStats() {
             if (!currentRecruiter) return;
 
@@ -1934,7 +2070,6 @@
             document.getElementById('statAnalytics').textContent = avgQuality + '%';
 
             // 4. Эффективность (формула из 4 частей)
-            // Используем allCandidates для подсчёта статусов
             const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
             const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
             const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
@@ -1955,50 +2090,6 @@
             // 5. Результат: количество кандидатов со статусом 'employee'
             const employeeCount = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name).length;
             document.getElementById('statResult').textContent = employeeCount.toLocaleString();
-
-            // Обновляем прогресс-воронку
-            renderProgressBar();
-        }
-
-        function renderProgressBar() {
-            if (!currentRecruiter) return;
-
-            // Категории для воронки (все анкеты рекрутера)
-            const draft = allCandidates.filter(c => c.recruitmentStatus === 'draft' && c.recruiter === currentRecruiter.name).length;
-            const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
-            const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение' && c.recruiter === currentRecruiter.name).length;
-            const employee = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name).length;
-            const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
-            const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
-
-            const progressStats = document.getElementById('progressStats');
-            progressStats.innerHTML = `
-                <div class="progress-stat">
-                    <div class="stat-color" style="background: #FFD700;"></div>
-                    <span class="stat-label">Ожидает связи</span>
-                    <span class="stat-value">${draft}</span>
-                </div>
-                <div class="progress-stat">
-                    <div class="stat-color" style="background: #FFA500;"></div>
-                    <span class="stat-label">Проверка</span>
-                    <span class="stat-value">${passed}</span>
-                </div>
-                <div class="progress-stat">
-                    <div class="stat-color" style="background: #4CAF50;"></div>
-                    <span class="stat-label">Обучение</span>
-                    <span class="stat-value">${training}</span>
-                </div>
-                <div class="progress-stat">
-                    <div class="stat-color" style="background: #4CAF50;"></div>
-                    <span class="stat-label">Линия</span>
-                    <span class="stat-value">${employee}</span>
-                </div>
-                <div class="progress-stat">
-                    <div class="stat-color" style="background: #F44336;"></div>
-                    <span class="stat-label">Отказ</span>
-                    <span class="stat-value">${rejects}</span>
-                </div>
-            `;
         }
 
         // ========== ОБНОВЛЕНИЕ ХЛЕБНЫХ КРОШЕК ==========
@@ -2045,6 +2136,10 @@
                         showNotification('Статус кандидата обновлён', 'success');
                         await refreshAllCandidates();
                         updateStats();
+                        // Обновляем прогресс для текущего кандидата
+                        if (editingExternalCandidate) {
+                            updateCandidateProgress(editingExternalCandidate.phone, editingExternalCandidate.project);
+                        }
                         editingExternalCandidate = null;
                         showCandidatesPanel();
                     } else {
@@ -2095,7 +2190,9 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат сохранён', 'success');
+                    // Обновляем статистику и прогресс
                     updateStats();
+                    updateCandidateProgress(candidate.phone, candidate.project);
                     goToNextCandidate();
                 } else {
                     const err = await response.json();
@@ -2161,7 +2258,12 @@
             document.querySelector('.content-wrapper').style.display = 'flex';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'block'; // показываем прогресс только на главной
+            // Показываем прогресс, если есть выбранный кандидат
+            if (currentCandidateIndex >= 0 || editingExternalCandidate) {
+                document.getElementById('progressSection').style.display = 'block';
+            } else {
+                document.getElementById('progressSection').style.display = 'none';
+            }
             currentView = 'main';
             updateBreadcrumbs();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2171,7 +2273,7 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'block';
             document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс на других вкладках
+            document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс на вкладке кандидатов
             currentView = 'candidates';
             updateBreadcrumbs();
             switchCandidatesTab('contacts');
