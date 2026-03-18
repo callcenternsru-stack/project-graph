@@ -215,7 +215,7 @@
             transform: translateY(-2px);
         }
 
-        /* Карточки статистики */
+        /* Карточки статистики (улучшенный дизайн) */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -229,11 +229,29 @@
             border-radius: 20px;
             padding: 24px;
             transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent);
+            opacity: 0.5;
         }
 
         .stat-card:hover {
             border-color: var(--accent);
             transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-title {
@@ -245,10 +263,16 @@
             margin-bottom: 12px;
         }
 
+        .stat-title i {
+            color: var(--accent);
+            font-size: 18px;
+        }
+
         .stat-number {
             font-size: 32px;
             font-weight: 700;
-            color: white;
+            color: var(--accent); /* жёлтые цифры для яркости */
+            line-height: 1.2;
         }
 
         .stat-trend {
@@ -1865,7 +1889,7 @@
             document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
         }
 
-        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ ==========
+        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ (с исправленной формулой) ==========
         function updateStats() {
             if (!currentRecruiter) return;
 
@@ -1873,7 +1897,7 @@
             const newCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
             document.getElementById('statNew').textContent = newCount.toLocaleString();
 
-            // 2. В работе: проверка + черновики? Пока только проверка
+            // 2. В работе: проверка
             const inProgressCount = myCandidates.filter(c => c.callResult === "Проверка").length;
             document.getElementById('statInProgress').textContent = inProgressCount.toLocaleString();
 
@@ -1888,18 +1912,16 @@
 
             // 4. Эффективность (формула из 4 частей)
             // Используем allCandidates (все анкеты) для подсчёта статусов
-            // Статусы: passed, отказы (список), org_meeting, draft, training
             const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed').length;
             const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля', 'Проверка'];
             const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus)).length;
-            const part1 = rejects > 0 ? passed / rejects : 0;
+            const part1 = rejects > 0 ? passed / rejects : 0; // passed / rejects
 
             const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Орг.встреча').length;
-            const draft = allCandidates.filter(c => c.recruitmentStatus === 'draft').length;
-            const part2 = draft > 0 ? orgMeeting / draft : 0;
+            const part2 = passed > 0 ? orgMeeting / passed : 0; // orgMeeting / passed
 
             const training = allCandidates.filter(c => c.recruitmentStatus === 'Обучение').length;
-            const part3 = orgMeeting > 0 ? training / orgMeeting : 0;
+            const part3 = orgMeeting > 0 ? training / orgMeeting : 0; // training / orgMeeting
 
             const avgQualityFactor = avgQuality / 100;
             const part4 = avgQualityFactor;
@@ -2385,7 +2407,7 @@
             const container = document.getElementById('candidatesListContainer');
             // Показываем только кандидатов, закреплённых за текущим рекрутером
             const orgMeetingCandidates = allCandidates.filter(c =>
-                c.recruitmentStatus === 'Приглашение орг.встречу' &&
+                c.recruitmentStatus === 'Орг.встреча' &&
                 c.recruiter === currentRecruiter.name
             );
 
@@ -2455,7 +2477,7 @@
             const container = document.getElementById('candidatesListContainer');
             // Показываем только кандидатов, закреплённых за текущим рекрутером
             const trainingCandidates = allCandidates.filter(c =>
-                c.recruitmentStatus === 'Приглашение обучение' &&
+                c.recruitmentStatus === 'Обучение' &&
                 c.recruiter === currentRecruiter.name
             );
 
