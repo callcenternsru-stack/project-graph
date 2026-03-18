@@ -1641,6 +1641,69 @@
                 `;
             });
             container.innerHTML = html;
+
+            // Добавляем обработчик клика для черновиков
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const id = card.dataset.id;
+                    if (id) {
+                        takeDraft(id);
+                    }
+                });
+            });
+        }
+
+        // ========== ВЗЯТЬ ЧЕРНОВИК В РАБОТУ ==========
+        async function takeDraft(draftId) {
+            const draft = allCandidates.find(c => c.id === draftId);
+            if (!draft) return;
+
+            // Создаём нового кандидата для рекрутера
+            const newCandidate = {
+                fullName: draft.fullName,
+                phone: draft.phone,
+                project: draft.project || '',
+                country: '',
+                trainingDate: '',
+                trainingTime: '',
+                meetingTime: '',
+                callResult: '',
+                contactType: '',
+                recruiter: currentRecruiter.name,
+                comment: '',
+                createdAt: new Date().toISOString()
+            };
+
+            showLoading();
+            try {
+                const response = await fetch('/.netlify/functions/submitCandidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newCandidate)
+                });
+                if (response.ok) {
+                    const saved = await response.json();
+                    // Добавляем нового кандидата в начало списка
+                    myCandidates.unshift(saved.candidate);
+                    // Обновляем отображение вкладки контактов
+                    if (currentView === 'candidates' && candidatesTab === 'contacts') {
+                        renderContactsCandidates();
+                    }
+                    // Загружаем его в форму
+                    currentCandidateIndex = 0;
+                    loadCandidateIntoForm(0);
+                    showForm();
+                    showNotification('Черновик взят в работу', 'success');
+                } else {
+                    const err = await response.json();
+                    showNotification('Ошибка: ' + (err.error || ''), 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Ошибка сети', 'error');
+            } finally {
+                hideLoading();
+            }
         }
 
         // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
