@@ -374,8 +374,14 @@
         }
 
         /* ===== СТИЛИ ДЛЯ КНОПОК ИНТЕГРАЦИИ ===== */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         .telegram-btn {
-            width: 100%;
+            flex: 1;
             padding: 16px;
             background: #0088cc;
             color: white;
@@ -385,7 +391,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            margin-top: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -399,7 +404,7 @@
         }
 
         .whatsapp-btn {
-            width: 100%;
+            flex: 1;
             padding: 16px;
             background: #25D366;
             color: white;
@@ -409,7 +414,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            margin-top: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -790,7 +794,7 @@
         <div class="content-wrapper" id="mainContentWrapper">
             <div class="left-panel">
                 <select id="scriptSelector" class="script-selector">
-                    <option value="">— выберите скрипт —</option>
+                    <option value="">— выберите скрипт звонка —</option>
                 </select>
                 <div id="selectedScriptContainer" style="display: none;">
                     <div class="script-item">
@@ -798,7 +802,7 @@
                         <div class="content" id="selectedScriptContent"></div>
                     </div>
                 </div>
-                <div id="noScriptMessage" style="color: #8f9bb3; text-align: center;">Нет доступных скриптов</div>
+                <div id="noScriptMessage" style="color: #8f9bb3; text-align: center;">Нет доступных скриптов звонков</div>
             </div>
             <div class="right-panel">
                 <h3>Обработка кандидата</h3>
@@ -869,8 +873,10 @@
 
                     <!-- Кнопки: сохранить, Telegram, WhatsApp, подключить Google -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
-                    <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')">✈️ Отправить в Telegram</button>
-                    <button type="button" class="whatsapp-btn" onclick="openMessageModal('whatsapp')">📱 Отправить в WhatsApp</button>
+                    <div class="action-buttons">
+                        <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')">✈️ Telegram</button>
+                        <button type="button" class="whatsapp-btn" onclick="openMessageModal('whatsapp')">📱 WhatsApp</button>
+                    </div>
                     <button type="button" class="google-connect-btn" id="googleConnectBtn" onclick="connectGoogle()">🔗 Подключить Google Контакты</button>
                 </form>
             </div>
@@ -1097,14 +1103,17 @@
             }
         }
 
-        // Функция для сбора уникальных проектов из скриптов
+        // Функция для сбора уникальных проектов из скриптов (только звонковые скрипты)
         function updateScriptProjects() {
             const projectSet = new Set();
             appData.scripts.forEach(script => {
-                if (script.projectNames && Array.isArray(script.projectNames)) {
-                    script.projectNames.forEach(name => projectSet.add(name));
-                } else if (script.projectName) {
-                    projectSet.add(script.projectName);
+                // Берем только скрипты звонков (type='call' или отсутствует)
+                if (script.type === 'call' || !script.type) {
+                    if (script.projectNames && Array.isArray(script.projectNames)) {
+                        script.projectNames.forEach(name => projectSet.add(name));
+                    } else if (script.projectName) {
+                        projectSet.add(script.projectName);
+                    }
                 }
             });
             scriptProjects = Array.from(projectSet);
@@ -1169,35 +1178,38 @@
             const noMsg = document.getElementById('noScriptMessage');
             const previousTitle = currentScriptTitle;
 
-            selector.innerHTML = '<option value="">— выберите скрипт —</option>';
+            selector.innerHTML = '<option value="">— выберите скрипт звонка —</option>';
 
-            if (!appData.scripts || appData.scripts.length === 0) {
+            // Фильтруем только скрипты звонков (type='call' или отсутствует)
+            const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
+
+            if (callScripts.length === 0) {
                 container.style.display = 'none';
                 noMsg.style.display = 'block';
                 updateCallResults();
                 return;
             }
 
-            appData.scripts.forEach((script, index) => {
+            callScripts.forEach((script, index) => {
                 const option = document.createElement('option');
-                option.value = index;
+                option.value = index; // но тут index в отфильтрованном массиве
                 option.textContent = script.title;
                 selector.appendChild(option);
             });
 
             let selectedIndex = -1;
             if (previousTitle) {
-                const foundIndex = appData.scripts.findIndex(s => s.title === previousTitle);
+                const foundIndex = callScripts.findIndex(s => s.title === previousTitle);
                 if (foundIndex !== -1) selectedIndex = foundIndex;
             }
-            if (selectedIndex === -1 && appData.scripts.length > 0) {
+            if (selectedIndex === -1 && callScripts.length > 0) {
                 selectedIndex = 0;
             }
 
             if (selectedIndex !== -1) {
                 selector.value = selectedIndex;
-                currentScriptTitle = appData.scripts[selectedIndex].title;
-                displayScript(selectedIndex);
+                currentScriptTitle = callScripts[selectedIndex].title;
+                displayScript(callScripts[selectedIndex]);
                 container.style.display = 'block';
                 noMsg.style.display = 'none';
                 setProjectFromScript(currentScriptTitle);
@@ -1210,8 +1222,7 @@
             }
         }
 
-        function displayScript(index) {
-            const script = appData.scripts[index];
+        function displayScript(script) {
             if (!script) return;
             document.getElementById('selectedScriptTitle').textContent = script.title;
             document.getElementById('selectedScriptContent').innerHTML = script.content;
@@ -1976,10 +1987,12 @@
                 updateCallResults();
                 return;
             }
+            // Находим скрипт по индексу в отфильтрованном массиве
+            const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
             const idx = parseInt(index, 10);
-            if (!isNaN(idx) && idx >= 0 && idx < appData.scripts.length) {
-                currentScriptTitle = appData.scripts[idx].title;
-                displayScript(idx);
+            if (!isNaN(idx) && idx >= 0 && idx < callScripts.length) {
+                currentScriptTitle = callScripts[idx].title;
+                displayScript(callScripts[idx]);
                 document.getElementById('selectedScriptContainer').style.display = 'block';
                 document.getElementById('noScriptMessage').style.display = 'none';
                 setProjectFromScript(currentScriptTitle);
