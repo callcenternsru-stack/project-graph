@@ -160,7 +160,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1200px;
+            min-width: 1300px;
         }
         th {
             background: #000000;
@@ -844,6 +844,53 @@
             color: #ffd700;
             font-weight: 600;
         }
+
+        /* ===== НОВЫЕ СТИЛИ ДЛЯ МАССОВОГО ВЫДЕЛЕНИЯ ===== */
+        .checkbox-col {
+            width: 40px;
+            text-align: center;
+        }
+        .select-all-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #ffd700;
+        }
+        .row-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #ffd700;
+        }
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .bulk-delete-btn {
+            padding: 8px 16px;
+            background: #ff6b6b;
+            color: white;
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bulk-delete-btn:hover {
+            background: #ff8a8a;
+            transform: translateY(-2px);
+        }
+        .bulk-delete-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -865,7 +912,7 @@
         <div class="content-card" id="contentArea"></div>
     </div>
 
-    <!-- Модальные окна -->
+    <!-- Модальные окна (без изменений) -->
     <div id="addMonthModal" class="modal">
         <div class="modal-header">
             <span>Добавить месяц в график</span>
@@ -1100,6 +1147,9 @@
         let currentCommentContext = null;
         let candidatesSortColumn = 0;
         let candidatesSortDirection = 'desc';
+
+        // Для массового выделения в базе контактов
+        let selectedCandidateIds = new Set();
 
         // Для редактирования аналитики
         let editingAnalyticsId = null;
@@ -1451,7 +1501,7 @@
             container.innerHTML = html;
         }
 
-        // ========== ИСПРАВЛЕНИЕ: добавлена кнопка удаления для базы контактов ==========
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ РЕНДЕРА КАНДИДАТОВ С МАССОВЫМ УДАЛЕНИЕМ ==========
         function renderCandidates(container) {
             const headers = [
                 { label: 'Дата', field: 'createdAt' },
@@ -1465,10 +1515,11 @@
                 { label: 'Тип', field: 'contactType' },
                 { label: 'Рекрутер', field: 'recruiter' },
                 { label: 'Комментарий', field: 'comment' },
-                { label: 'Действия', field: null } // новая колонка
+                { label: 'Действия', field: null }
             ];
 
             let headerHtml = '<tr>';
+            headerHtml += '<th class="checkbox-col"><input type="checkbox" class="select-all-checkbox" onclick="toggleSelectAll(this)"></th>';
             headers.forEach((h, index) => {
                 let sortClass = '';
                 if (h.field && candidatesSortColumn === index) {
@@ -1478,28 +1529,19 @@
             });
             headerHtml += '</tr>';
 
-            let html = `
-                <div class="section-header">
-                    <h2>База контактов</h2>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            ${headerHtml}
-                        </thead>
-                        <tbody>
-            `;
-
             const sorted = sortCandidatesData([...state.candidates]);
 
+            let rowsHtml = '';
             if (sorted.length === 0) {
-                html += '<tr><td colspan="12" style="text-align:center;">Нет контактов</td></tr>';
+                rowsHtml = '<tr><td colspan="13" style="text-align:center;">Нет контактов</td></tr>';
             } else {
                 sorted.forEach(c => {
                     const training = c.trainingDate && c.trainingTime ? `${c.trainingDate} ${c.trainingTime}` : '—';
                     const meeting = c.meetingTime ? c.meetingTime : '—';
-                    html += `
+                    const checked = selectedCandidateIds.has(c.id) ? 'checked' : '';
+                    rowsHtml += `
                         <tr>
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
                             <td>${new Date(c.createdAt).toLocaleDateString()}</td>
                             <td>${c.fullName}</td>
                             <td>${c.phone}</td>
@@ -1516,8 +1558,100 @@
                     `;
                 });
             }
-            html += '</tbody></table></div>';
+
+            const bulkDeleteDisabled = selectedCandidateIds.size === 0 ? 'disabled' : '';
+
+            let html = `
+                <div class="section-header">
+                    <h2>База контактов</h2>
+                    <div class="bulk-actions">
+                        <button class="bulk-delete-btn" ${bulkDeleteDisabled} onclick="bulkDeleteCandidates()">
+                            <i class="fas fa-trash-alt"></i> Удалить выбранные (${selectedCandidateIds.size})
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            ${headerHtml}
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
             container.innerHTML = html;
+        }
+
+        // Функции для работы с выделением
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+                if (checkbox.checked) {
+                    selectedCandidateIds.add(cb.value);
+                } else {
+                    selectedCandidateIds.delete(cb.value);
+                }
+            });
+            // Обновим кнопку удаления
+            const bulkBtn = document.querySelector('.bulk-delete-btn');
+            if (bulkBtn) {
+                bulkBtn.disabled = selectedCandidateIds.size === 0;
+                bulkBtn.innerHTML = `<i class="fas fa-trash-alt"></i> Удалить выбранные (${selectedCandidateIds.size})`;
+            }
+        }
+
+        function toggleCandidateSelect(id, checked) {
+            if (checked) {
+                selectedCandidateIds.add(id);
+            } else {
+                selectedCandidateIds.delete(id);
+            }
+            // Обновим состояние "выделить всё"
+            const selectAll = document.querySelector('.select-all-checkbox');
+            if (selectAll) {
+                const total = document.querySelectorAll('.row-checkbox').length;
+                const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+                selectAll.checked = total === checkedCount && total > 0;
+            }
+            // Обновим кнопку
+            const bulkBtn = document.querySelector('.bulk-delete-btn');
+            if (bulkBtn) {
+                bulkBtn.disabled = selectedCandidateIds.size === 0;
+                bulkBtn.innerHTML = `<i class="fas fa-trash-alt"></i> Удалить выбранные (${selectedCandidateIds.size})`;
+            }
+        }
+
+        async function bulkDeleteCandidates() {
+            if (selectedCandidateIds.size === 0) return;
+            if (!confirm(`Удалить ${selectedCandidateIds.size} контактов?`)) return;
+
+            const ids = Array.from(selectedCandidateIds);
+            let successCount = 0;
+            showLoading();
+            for (const id of ids) {
+                try {
+                    const response = await fetch(`/.netlify/functions/deleteCandidate?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        successCount++;
+                        state.candidates = state.candidates.filter(c => c.id !== id);
+                    } else {
+                        console.error(`Ошибка удаления ${id}`);
+                    }
+                } catch (error) {
+                    console.error(`Ошибка сети при удалении ${id}`, error);
+                }
+            }
+            hideLoading();
+            if (successCount > 0) {
+                showNotification(`Удалено контактов: ${successCount}`, 'success');
+                selectedCandidateIds.clear();
+                renderContent(); // перерисуем таблицу
+            } else {
+                showNotification('Не удалось удалить ни одного контакта', 'error');
+            }
         }
 
         function sortCandidates(columnIndex) {
@@ -1565,13 +1699,14 @@
             });
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ: удаление кандидата из базы контактов ==========
+        // ========== ФУНКЦИЯ УДАЛЕНИЯ ОДНОГО КАНДИДАТА ИЗ БАЗЫ КОНТАКТОВ ==========
         async function deleteCandidateFromBase(id) {
             if (!confirm('Удалить этот контакт?')) return;
             try {
                 const response = await fetch(`/.netlify/functions/deleteCandidate?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
                 if (response.ok) {
                     state.candidates = state.candidates.filter(c => c.id !== id);
+                    selectedCandidateIds.delete(id);
                     renderContent();
                     showNotification('Контакт удалён', 'success');
                 } else {
@@ -1654,7 +1789,6 @@
             `;
             container.innerHTML = html;
 
-            // ИСПРАВЛЕНИЕ: выравнивание ширины фиксированных колонок после рендера
             setTimeout(() => {
                 document.querySelectorAll('.schedule-wrapper').forEach(wrapper => {
                     const fixedHeaders = wrapper.querySelector('.fixed-headers');
@@ -1907,7 +2041,6 @@
             document.body.classList.add('menu-open');
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ: удаление времени из модального окна ==========
         function deleteTimeFromModal() {
             if (!currentCommentContext) return;
 
