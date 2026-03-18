@@ -937,7 +937,7 @@
         // Для модального окна отправки сообщения
         let currentMessageType = null; // 'telegram' или 'whatsapp'
         let selectedMessageIndex = -1;
-        let chatScripts = []; // скрипты типа 'test'
+        let chatScripts = []; // скрипты типа 'test', 'Чат', 'chat'
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1082,8 +1082,10 @@
                 updateScriptProjects();
                 fillProjects(); // перезаполнить список проектов
                 updateScriptsUI();
-                // Сохраняем скрипты чата отдельно
-                chatScripts = appData.scripts.filter(s => s.type === 'test');
+                // Сохраняем скрипты чата отдельно (поддерживаем несколько вариантов типа)
+                chatScripts = appData.scripts.filter(s => s.type === 'test' || s.type === 'Чат' || s.type === 'chat');
+                console.log('Загруженные скрипты:', appData.scripts);
+                console.log('Скрипты чата:', chatScripts);
             } catch (error) {
                 console.error('Ошибка загрузки скриптов:', error);
             }
@@ -1693,7 +1695,7 @@
                 return;
             }
             // Проверяем наличие скриптов чата
-            if (chatScripts.length === 0) {
+            if (!chatScripts || chatScripts.length === 0) {
                 showNotification('Нет доступных скриптов для чата', 'error');
                 return;
             }
