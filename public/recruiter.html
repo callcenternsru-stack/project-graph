@@ -398,7 +398,6 @@
             box-shadow: 0 4px 20px rgba(0,136,204,0.4);
         }
 
-        /* Новая кнопка WhatsApp */
         .whatsapp-btn {
             width: 100%;
             padding: 16px;
@@ -844,6 +843,8 @@
             }
             // По умолчанию показываем главную вкладку
             showForm();
+            // Запускаем автообновление
+            startAutoRefresh();
         }
 
         // ========== ЗАГРУЗКА СПРАВОЧНИКОВ ==========
@@ -1239,6 +1240,7 @@
 
         // ========== ВЫХОД ==========
         function logout() {
+            stopAutoRefresh();
             sessionStorage.removeItem('recruiter');
             location.reload();
         }
@@ -1516,6 +1518,78 @@
             }
         `;
         document.head.appendChild(style);
+
+        // ========== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ==========
+        let refreshInterval = null;
+        let isRefreshing = false;
+
+        async function refreshMyCandidates() {
+            if (isRefreshing || !currentRecruiter) return; // не запускаем, если уже выполняется или рекрутер не залогинен
+            isRefreshing = true;
+
+            try {
+                const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
+                if (response.ok) {
+                    const newCandidates = await response.json();
+                    newCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                    // Сохраняем ID текущего кандидата
+                    const currentId = (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length)
+                        ? myCandidates[currentCandidateIndex].id
+                        : null;
+
+                    myCandidates = newCandidates;
+
+                    // Пытаемся восстановить текущего кандидата по ID
+                    let newIndex = -1;
+                    if (currentId) {
+                        newIndex = myCandidates.findIndex(c => c.id === currentId);
+                    }
+                    // Если не нашли, ищем первого без результата
+                    if (newIndex === -1) {
+                        newIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
+                    }
+                    // Если всё ещё -1, ставим 0 (если есть кандидаты)
+                    if (newIndex === -1 && myCandidates.length > 0) {
+                        newIndex = 0;
+                    }
+
+                    currentCandidateIndex = newIndex;
+
+                    // Обновляем UI в зависимости от текущей вкладки
+                    if (currentView === 'main') {
+                        loadCandidateIntoForm(currentCandidateIndex);
+                    } else if (currentView === 'processing') {
+                        renderProcessingList();
+                    } else if (currentView === 'verification') {
+                        renderVerificationList();
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении кандидатов:', error);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        // Запуск периодического обновления (интервал 20 секунд)
+        function startAutoRefresh(intervalMs = 20000) {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(refreshMyCandidates, intervalMs);
+        }
+
+        // Остановка обновления
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // При уходе со страницы останавливаем (опционально)
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
     </script>
 </body>
 </html>
