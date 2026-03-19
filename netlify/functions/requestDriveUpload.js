@@ -20,11 +20,13 @@ exports.handler = async (event) => {
     });
 
     const drive = google.drive({ version: 'v3', auth });
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // вынесите в переменные окружения
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // лучше вынести в env
 
     const uploadUrls = [];
 
     for (const fileInfo of filesInfo) {
+      console.log(`Processing file: ${fileInfo.name}, index: ${fileInfo.index}`);
+
       // Создаём файл и получаем ссылку для возобновляемой загрузки
       const res = await drive.files.create(
         {
@@ -44,14 +46,24 @@ exports.handler = async (event) => {
         }
       );
 
+      // Подробное логирование ответа от Google
+      console.log('Google response status:', res.status);
+      console.log('Google response headers:', JSON.stringify(res.headers, null, 2));
+      console.log('Google response data:', JSON.stringify(res.data, null, 2));
+      console.log('Google response config:', JSON.stringify(res.config, null, 2));
+
       // Правильный uploadUrl находится в заголовке location ответа
-      const uploadUrl = res.headers.location || res.headers.Location;
-      const fileId = res.data.id;
+      const uploadUrl = res.headers?.location || res.headers?.Location;
+      const fileId = res.data?.id;
 
       if (!uploadUrl) {
-        throw new Error('No upload URL returned from Google Drive');
+        throw new Error(`No upload URL returned for file ${fileInfo.name}. Headers: ${JSON.stringify(res.headers)}`);
+      }
+      if (!fileId) {
+        throw new Error(`No file ID returned for file ${fileInfo.name}. Data: ${JSON.stringify(res.data)}`);
       }
 
+      console.log(`Upload URL for ${fileInfo.name}: ${uploadUrl}`);
       uploadUrls.push({ uploadUrl, index: fileInfo.index, fileId });
     }
 
@@ -80,7 +92,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' }, // добавьте CORS
+      headers: { 'Access-Control-Allow-Origin': '*' }, // CORS
       body: JSON.stringify({
         success: true,
         uploadUrls: uploadUrls.map(u => u.uploadUrl),
