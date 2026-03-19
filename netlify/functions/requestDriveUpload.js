@@ -1,3 +1,4 @@
+// netlify/functions/requestDriveUpload.js
 const { google } = require('googleapis');
 const { getStore } = require('@netlify/blobs');
 
@@ -8,7 +9,6 @@ exports.handler = async (event) => {
 
   try {
     const { formData, filesInfo, candidateId } = JSON.parse(event.body);
-
     if (!formData || !filesInfo || !candidateId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
     }
@@ -20,40 +20,42 @@ exports.handler = async (event) => {
     });
 
     const drive = google.drive({ version: 'v3', auth });
-
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // вынесите в переменные окружения
 
     const uploadUrls = [];
 
     for (const fileInfo of filesInfo) {
       // Создаём файл и получаем ссылку для возобновляемой загрузки
-      const res = await drive.files.create({
-        requestBody: {
-          name: fileInfo.name,
-          parents: [FOLDER_ID],
-          description: `Candidate: ${formData.fullName}, Project: ${formData.project}`,
+      const res = await drive.files.create(
+        {
+          requestBody: {
+            name: fileInfo.name,
+            parents: [FOLDER_ID],
+            description: `Candidate: ${formData.fullName}, Project: ${formData.project}`,
+          },
+          media: {
+            body: '', // пустое тело – только инициализация сессии
+            mimeType: fileInfo.type,
+          },
+          fields: 'id',
         },
-        media: {
-          body: '', // пустое тело для инициализации сессии
-          mimeType: fileInfo.type,
-        },
-        fields: 'id',
-      }, {
-        uploadType: 'resumable', // ключевая опция
-      });
+        {
+          uploadType: 'resumable', // ключевая опция
+        }
+      );
 
-      // В ответе есть uploadUrl в res.config.url
-      const uploadUrl = res.config.url;
+      // Правильный uploadUrl находится в заголовке location ответа
+      const uploadUrl = res.headers.location || res.headers.Location;
       const fileId = res.data.id;
 
-      uploadUrls.push({
-        uploadUrl,
-        index: fileInfo.index,
-        fileId,
-      });
+      if (!uploadUrl) {
+        throw new Error('No upload URL returned from Google Drive');
+      }
+
+      uploadUrls.push({ uploadUrl, index: fileInfo.index, fileId });
     }
 
-    // Сохраняем черновик со статусом 'uploading'
+    // Сохраняем черновик в хранилище (как и раньше)
     const manualStore = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -70,7 +72,6 @@ exports.handler = async (event) => {
     };
 
     await manualStore.setJSON(candidateId, record);
-
     let index = await manualStore.get('_index', { type: 'json' }) || [];
     index = index.filter(item => item.id !== candidateId);
     index.push({ id: candidateId, submittedAt: record.submittedAt, status: record.status });
@@ -79,6 +80,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' }, // добавьте CORS
       body: JSON.stringify({
         success: true,
         uploadUrls: uploadUrls.map(u => u.uploadUrl),
@@ -91,6 +93,7 @@ exports.handler = async (event) => {
     console.error('Error in requestDriveUpload:', error);
     return {
       statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: error.message }),
     };
   }
