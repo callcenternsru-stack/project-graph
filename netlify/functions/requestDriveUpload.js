@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     });
 
     const drive = google.drive({ version: 'v3', auth });
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // лучше вынести в переменные окружения
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
 
     const uploadUrls = [];
 
@@ -41,7 +41,17 @@ exports.handler = async (event) => {
       const fileId = createRes.data.id;
       console.log(`File created with ID: ${fileId}`);
 
-      // Шаг 2: Получаем access token для прямого HTTP-запроса
+      // Шаг 2: Устанавливаем разрешение на запись для всех
+      await drive.permissions.create({
+        fileId: fileId,
+        requestBody: {
+          type: 'anyone',
+          role: 'writer',
+        },
+      });
+      console.log(`Permission set for file ${fileId}`);
+
+      // Шаг 3: Получаем access token для прямого HTTP-запроса
       const accessToken = await auth.getAccessToken();
       const token = accessToken.token;
 
@@ -49,7 +59,7 @@ exports.handler = async (event) => {
       const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`;
       const response = await axios.patch(
         url,
-        null, // пустое тело
+        null,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -59,7 +69,6 @@ exports.handler = async (event) => {
         }
       );
 
-      // Логируем ответ для отладки
       console.log('Patch response status:', response.status);
       console.log('Patch response headers:', JSON.stringify(response.headers, null, 2));
 
@@ -72,7 +81,7 @@ exports.handler = async (event) => {
       uploadUrls.push({ uploadUrl, index: fileInfo.index, fileId });
     }
 
-    // Сохраняем черновик в хранилище (без изменений)
+    // Сохраняем черновик в хранилище
     const manualStore = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
