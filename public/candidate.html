@@ -1260,18 +1260,17 @@
         let currentManualId = null;
 
         // ========== ФУНКЦИИ СЖАТИЯ ==========
-        // Улучшенная функция сжатия изображений – теперь выбрасывает ошибку при неудаче
         async function compressImage(file) {
             const options = {
-                maxSizeMB: 0.5,                // уменьшено для более агрессивного сжатия
-                maxWidthOrHeight: 800,          // уменьшено
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 800,
                 useWebWorker: true,
                 fileType: 'image/jpeg'
             };
             try {
                 const compressedBlob = await imageCompression(file, options);
                 // Если сжатие не помогло, пробуем ещё более агрессивно
-                if (compressedBlob.size >= file.size * 0.9) { // если уменьшилось менее чем на 10%
+                if (compressedBlob.size >= file.size * 0.9) {
                     const aggressiveOptions = { ...options, maxSizeMB: 0.3, maxWidthOrHeight: 600 };
                     const secondTry = await imageCompression(file, aggressiveOptions);
                     return new File([secondTry], file.name, { type: secondTry.type });
@@ -1283,7 +1282,6 @@
             }
         }
 
-        // Улучшенная функция конвертации WAV -> MP3
         async function convertWavToMp3(wavFile) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1303,15 +1301,29 @@
 
                         const samples = new Int16Array(wavData, wavHeader.dataOffset, wavHeader.dataLen / 2);
 
-                        // Динамический выбор битрейта в зависимости от исходного размера
-                        let bitrate = 64; // kbps
-                        if (wavFile.size > 10 * 1024 * 1024) bitrate = 48;
-                        if (wavFile.size > 15 * 1024 * 1024) bitrate = 32;
-                        if (wavFile.size > 20 * 1024 * 1024) bitrate = 24; // добавлено для очень больших
+                        // Динамический выбор битрейта и sample rate
+                        let bitrate = 48;
+                        let sampleRate = wavHeader.sampleRate;
+                        if (wavFile.size > 10 * 1024 * 1024) {
+                            bitrate = 32;
+                            sampleRate = Math.min(sampleRate, 22050);
+                        }
+                        if (wavFile.size > 15 * 1024 * 1024) {
+                            bitrate = 24;
+                            sampleRate = Math.min(sampleRate, 16000);
+                        }
+                        if (wavFile.size > 20 * 1024 * 1024) {
+                            bitrate = 16;
+                            sampleRate = Math.min(sampleRate, 12000);
+                        }
+                        if (wavFile.size > 25 * 1024 * 1024) {
+                            bitrate = 12;
+                            sampleRate = Math.min(sampleRate, 8000);
+                        }
 
                         const mp3Encoder = new lamejs.Mp3Encoder(
                             wavHeader.channels,
-                            wavHeader.sampleRate,
+                            sampleRate,
                             bitrate
                         );
 
@@ -1425,6 +1437,10 @@
             if (input.files.length > 0) {
                 taskFiles[index] = input.files[0];
                 document.getElementById(`fileName_${index}`).textContent = input.files[0].name;
+                // Предупреждение для очень больших голосовых файлов
+                if (index === 1 && taskFiles[1] && taskFiles[1].size > 25 * 1024 * 1024) {
+                    alert('Голосовой файл очень большой. Рекомендуется записать более короткое сообщение (до 2 минут), иначе после сжатия он может всё равно превысить лимит.');
+                }
             } else {
                 delete taskFiles[index];
                 document.getElementById(`fileName_${index}`).textContent = '';
@@ -1572,19 +1588,18 @@
                 return;
             }
 
-            // Проверка общего размера файлов перед отправкой
+            // Предварительная проверка общего размера (только предупреждение)
             let totalSize = 0;
             for (let i = 0; i < tasks.length; i++) {
                 if (taskFiles[i]) totalSize += taskFiles[i].size;
             }
 
             const NETLIFY_LIMIT = 6 * 1024 * 1024; // 6 МБ
+            const PRE_LIMIT = 50 * 1024 * 1024;    // 50 МБ – предварительный порог
 
-            if (totalSize > NETLIFY_LIMIT) {
-                alert(`Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} МБ) превышает лимит сервера (6 МБ).\n` +
-                      `Пожалуйста, используйте более короткие записи или уменьшите качество изображений.`);
-                hideLoading();
-                return;
+            if (totalSize > PRE_LIMIT) {
+                alert(`Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} МБ) очень велик. Даже после сжатия он может превысить лимит сервера (6 МБ). Попробуйте уменьшить файлы вручную.`);
+                // Не прерываем, даём шанс
             }
 
             showLoading();
@@ -1622,14 +1637,13 @@
                     else if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
                         try {
                             fileToSend = await convertWavToMp3(taskFiles[i]);
-                            // Дополнительная проверка после сжатия (на случай, если всё равно большой)
                             if (fileToSend.size > NETLIFY_LIMIT) {
                                 throw new Error('Даже после сжатия файл слишком большой. Пожалуйста, запишите более короткое сообщение.');
                             }
                         } catch (e) {
                             showNotification('Ошибка сжатия голоса: ' + e.message, 'error');
                             hideLoading();
-                            return; // прерываем отправку
+                            return;
                         }
                     }
                     
@@ -1657,6 +1671,17 @@
                         data.append(`task_${i}_score`, JSON.stringify(score));
                     }
                 }
+            }
+
+            // Финальная проверка общего размера после сжатия
+            let finalTotalSize = 0;
+            for (let [_, file] of data.entries()) {
+                if (file instanceof File) finalTotalSize += file.size;
+            }
+            if (finalTotalSize > NETLIFY_LIMIT) {
+                alert(`После сжатия общий размер файлов (${(finalTotalSize / 1024 / 1024).toFixed(1)} МБ) всё ещё превышает лимит сервера (6 МБ). Пожалуйста, уменьшите файлы вручную.`);
+                hideLoading();
+                return;
             }
 
             try {
