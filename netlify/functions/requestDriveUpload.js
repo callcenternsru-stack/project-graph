@@ -1,6 +1,7 @@
 // netlify/functions/requestDriveUpload.js
 const { google } = require('googleapis');
 const { getStore } = require('@netlify/blobs');
+const axios = require('axios');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -20,7 +21,7 @@ exports.handler = async (event) => {
     });
 
     const drive = google.drive({ version: 'v3', auth });
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // вынесите в переменные окружения
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
 
     const uploadUrls = [];
 
@@ -40,26 +41,28 @@ exports.handler = async (event) => {
       const fileId = createRes.data.id;
       console.log(`File created with ID: ${fileId}`);
 
-      // Шаг 2: Инициируем сессию возобновляемой загрузки (обновление файла с пустым телом)
-      const updateRes = await drive.files.update({
-        fileId: fileId,
-        media: {
-          body: '', // пустое тело – только инициализация сессии
-          mimeType: fileInfo.type,
-        },
-        fields: 'id',
-      }, {
-        uploadType: 'resumable', // ключевая опция
-      });
+      // Шаг 2: Получаем access token для прямого HTTP-запроса
+      const accessToken = await auth.getAccessToken();
+      const token = accessToken.token;
 
-      // Логируем ответ для отладки
-      console.log('Update response status:', updateRes.status);
-      console.log('Update response headers:', JSON.stringify(updateRes.headers, null, 2));
-      console.log('Update response data:', JSON.stringify(updateRes.data, null, 2));
+      // Формируем запрос на инициализацию возобновляемой загрузки
+      const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`;
+      const response = await axios.post(
+        url,
+        null, // пустое тело
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Upload-Content-Type': fileInfo.type,
+            'Content-Length': 0,
+          },
+        }
+      );
 
-      const uploadUrl = updateRes.headers?.location || updateRes.headers?.Location;
+      // Сессионный URL находится в заголовке location
+      const uploadUrl = response.headers.location || response.headers.Location;
       if (!uploadUrl) {
-        throw new Error(`No upload URL returned for file ${fileInfo.name}. Headers: ${JSON.stringify(updateRes.headers)}`);
+        throw new Error(`No upload URL returned for file ${fileInfo.name}. Headers: ${JSON.stringify(response.headers)}`);
       }
 
       console.log(`Upload URL for ${fileInfo.name}: ${uploadUrl}`);

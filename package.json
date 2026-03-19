@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@netlify/blobs": "^7.4.0",
+    "axios": "^1.13.6",
     "busboy": "^1.6.0",
     "googleapis": "^171.4.0",
     "node-fetch": "^2.7.0"
