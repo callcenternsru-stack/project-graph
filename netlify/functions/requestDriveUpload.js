@@ -22,36 +22,33 @@ exports.handler = async (event) => {
 
     const drive = google.drive({ version: 'v3', auth });
 
-    // ID вашей папки на Google Drive
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // ваша папка
 
     const uploadUrls = [];
 
     for (const fileInfo of filesInfo) {
-      const requestBody = {
-        name: fileInfo.name,
-        parents: [FOLDER_ID],
-        description: `Candidate: ${formData.fullName}, Project: ${formData.project}`,
-      };
-
-      // Создаём файл и получаем ссылку для возобновляемой загрузки
-      const res = await drive.files.create({
-        requestBody,
-        media: { mimeType: fileInfo.type, body: '' },
+      // 1. Создаём файл (только метаданные)
+      const response = await drive.files.create({
+        requestBody: {
+          name: fileInfo.name,
+          parents: [FOLDER_ID],
+          description: `Candidate: ${formData.fullName}, Project: ${formData.project}`,
+        },
         fields: 'id',
-      }, {
-        onUploadProgress: () => {}, // заглушка
       });
 
-      // В ответе есть uploadUrl в конфиге
-      const uploadUrl = res.config.url;
+      const fileId = response.data.id;
+      // 2. Формируем URL для возобновляемой загрузки
+      const uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`;
+
       uploadUrls.push({
         uploadUrl,
         index: fileInfo.index,
+        fileId,
       });
     }
 
-    // Сохраняем черновик (или обновляем существующий) со статусом 'uploading'
+    // Сохраняем черновик со статусом 'uploading'
     const manualStore = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -82,6 +79,7 @@ exports.handler = async (event) => {
         success: true,
         uploadUrls: uploadUrls.map(u => u.uploadUrl),
         fileIndices: uploadUrls.map(u => u.index),
+        fileIds: uploadUrls.map(u => u.fileId), // добавим для подтверждения
         candidateId,
       }),
     };

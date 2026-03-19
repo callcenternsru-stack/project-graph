@@ -1748,7 +1748,7 @@
                     const end = Math.min(start + chunkSize, fileSize);
                     const chunk = file.slice(start, end);
                     const headers = {
-                        'Content-Length': chunk.size,
+                     	
                         'Content-Range': `bytes ${start}-${end - 1}/${fileSize}`,
                     };
 
