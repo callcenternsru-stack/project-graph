@@ -1582,24 +1582,30 @@
 
         // ========== НОВАЯ ФУНКЦИЯ ОТПРАВКИ (ЗАМЕНЯЕТ submitManualResults) ==========
         async function submitManualResults() {
+            console.log('=== submitManualResults started ===');
             const formData = getFormData();
+            console.log('Form data:', formData);
             if (!formData.projectId) {
+                console.error('No projectId');
                 alert('Ошибка: не удалось определить проект.');
                 return;
             }
 
             // Проверка, что есть хотя бы один файл
             let hasAnyFile = false;
+            const filesIndicesWithData = [];
             for (let i = 0; i < tasks.length; i++) {
                 if (taskFiles[i]) {
                     hasAnyFile = true;
-                    break;
+                    filesIndicesWithData.push(i);
+                    console.log(`File for task ${i}:`, taskFiles[i].name, taskFiles[i].size, taskFiles[i].type);
                 }
             }
             if (!hasAnyFile) {
                 alert('Не загружено ни одного файла.');
                 return;
             }
+            console.log('Files to upload indices:', filesIndicesWithData);
 
             showLoading();
 
@@ -1612,7 +1618,9 @@
                     if (taskFiles[i].type.startsWith('image/')) {
                         try {
                             fileToSend = await compressImage(taskFiles[i]);
+                            console.log(`Image compressed: ${taskFiles[i].size} -> ${fileToSend.size}`);
                         } catch (e) {
+                            console.error('Image compression error:', e);
                             showNotification('Ошибка сжатия изображения: ' + e.message, 'error');
                             hideLoading();
                             return;
@@ -1622,7 +1630,9 @@
                     else if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
                         try {
                             fileToSend = await convertWavToMp3(taskFiles[i]);
+                            console.log(`Audio converted: ${taskFiles[i].size} -> ${fileToSend.size}`);
                         } catch (e) {
+                            console.error('Audio conversion error:', e);
                             showNotification('Ошибка сжатия голоса: ' + e.message, 'error');
                             hideLoading();
                             return;
@@ -1641,6 +1651,7 @@
 
             try {
                 // 2. Запрос на сервер для получения ссылок на загрузку
+                console.log('Sending request to requestDriveUpload with candidateId:', currentManualId);
                 const response = await fetch('/.netlify/functions/requestDriveUpload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1651,11 +1662,23 @@
                     }),
                 });
 
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error);
+                console.log('requestDriveUpload response status:', response.status);
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
 
-                // В ответе теперь должен быть токен
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse response as JSON:', responseText);
+                    throw new Error('Invalid server response');
+                }
+
+                if (!response.ok) throw new Error(result.error || 'Server error');
+
+                // В ответе должен быть токен
                 const { uploadUrls, fileIndices, token, candidateId } = result;
+                console.log('Received from server:', { uploadUrls, fileIndices, token, candidateId });
 
                 if (!token) {
                     throw new Error('Токен не получен от сервера');
@@ -1666,17 +1689,27 @@
                 for (let i = 0; i < uploadUrls.length; i++) {
                     const url = uploadUrls[i];
                     const fileInfo = filesInfo.find(f => f.index === fileIndices[i]);
-                    if (!fileInfo) continue;
-
-                   const fileId = await uploadFileToDrive(url, fileInfo.file);// передаём токен
-                    if (fileId) {
-                        uploadedFileIds.push(fileId);
-                    } else {
-                        throw new Error(`Ошибка загрузки файла ${fileInfo.name}`);
+                    if (!fileInfo) {
+                        console.warn(`No file info for index ${fileIndices[i]}`);
+                        continue;
+                    }
+                    console.log(`Uploading file ${fileInfo.name} to URL:`, url);
+                    try {
+                        const fileId = await uploadFileToDrive(url, fileInfo.file, token); // передаём токен
+                        console.log(`File uploaded, fileId: ${fileId}`);
+                        if (fileId) {
+                            uploadedFileIds.push(fileId);
+                        } else {
+                            throw new Error(`Ошибка загрузки файла ${fileInfo.name}`);
+                        }
+                    } catch (uploadError) {
+                        console.error(`Upload failed for ${fileInfo.name}:`, uploadError);
+                        throw uploadError;
                     }
                 }
 
                 // 4. Подтверждаем завершение
+                console.log('Confirming upload with fileIds:', uploadedFileIds);
                 const confirmRes = await fetch('/.netlify/functions/confirmUpload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1687,6 +1720,8 @@
                     }),
                 });
 
+                const confirmText = await confirmRes.text();
+                console.log('confirmUpload response status:', confirmRes.status, 'body:', confirmText);
                 if (!confirmRes.ok) {
                     throw new Error('Ошибка подтверждения загрузки');
                 }
@@ -1697,7 +1732,7 @@
                 document.body.classList.add('menu-open');
 
             } catch (error) {
-                console.error(error);
+                console.error('Error in submitManualResults:', error);
                 showNotification('Ошибка отправки. Попробуйте позже.', 'error');
             } finally {
                 hideLoading();
@@ -1705,61 +1740,85 @@
         }
 
         // ========== ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛА В GOOGLE DRIVE ЧАНКАМИ ==========
-   async function uploadFileToDrive(uploadUrl, file) {
-    return new Promise((resolve, reject) => {
-        const chunkSize = 10 * 1024 * 1024; // 10 МБ
-        const fileSize = file.size;
-        let start = 0;
-        let fileId = null;
+        async function uploadFileToDrive(uploadUrl, file, token) {
+            console.log(`uploadFileToDrive: starting upload of ${file.name}, size ${file.size}, token present: ${!!token}`);
+            return new Promise((resolve, reject) => {
+                const chunkSize = 10 * 1024 * 1024; // 10 МБ
+                const fileSize = file.size;
+                let start = 0;
+                let fileId = null;
 
-        const xhr = new XMLHttpRequest();
+                const xhr = new XMLHttpRequest();
 
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percent = (e.loaded / e.total) * 100;
-                console.log(`Upload progress: ${percent.toFixed(2)}%`);
-            }
-        });
-
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200 || xhr.status === 201) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        fileId = response.id;
-                        resolve(fileId);
-                    } catch (e) {
-                        reject(new Error('Не удалось получить ID файла'));
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        console.log(`Upload progress for ${file.name}: ${percent.toFixed(2)}%`);
                     }
-                } else if (xhr.status === 308) {
-                    const range = xhr.getResponseHeader('Range');
-                    if (range) {
-                        const bytesReceived = parseInt(range.split('-')[1], 10) + 1;
-                        start = bytesReceived;
+                });
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        console.log(`Upload done for ${file.name}, status: ${xhr.status}`);
+                        console.log('Response headers:', xhr.getAllResponseHeaders());
+                        if (xhr.status === 200 || xhr.status === 201) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                fileId = response.id;
+                                console.log('Upload success, fileId:', fileId);
+                                resolve(fileId);
+                            } catch (e) {
+                                console.error('Failed to parse success response:', xhr.responseText);
+                                reject(new Error('Не удалось получить ID файла'));
+                            }
+                        } else if (xhr.status === 308) {
+                            const range = xhr.getResponseHeader('Range');
+                            console.log('Received 308, Range header:', range);
+                            if (range) {
+                                const bytesReceived = parseInt(range.split('-')[1], 10) + 1;
+                                start = bytesReceived;
+                                console.log(`Continuing from byte ${start}`);
+                            } else {
+                                console.log('No Range header, continuing from previous start?');
+                            }
+                            sendNextChunk();
+                        } else {
+                            // При ошибке пытаемся получить тело ответа
+                            let errorBody = '';
+                            try {
+                                errorBody = JSON.parse(xhr.responseText);
+                            } catch {
+                                errorBody = xhr.responseText;
+                            }
+                            console.error(`Upload failed with status ${xhr.status}, body:`, errorBody);
+                            reject(new Error(`Upload failed with status ${xhr.status}: ${JSON.stringify(errorBody)}`));
+                        }
                     }
-                    sendNextChunk();
-                } else {
-                    reject(new Error(`Upload failed with status ${xhr.status}`));
+                };
+
+                xhr.onerror = function() {
+                    console.error('XHR network error');
+                    reject(new Error('Network error during upload'));
+                };
+
+                function sendNextChunk() {
+                    if (start >= fileSize) {
+                        console.log('All chunks sent, waiting for final response...');
+                        return;
+                    }
+                    const end = Math.min(start + chunkSize, fileSize);
+                    const chunk = file.slice(start, end);
+                    console.log(`Sending chunk bytes ${start}-${end-1}/${fileSize}`);
+
+                    xhr.open('PUT', uploadUrl);
+                    xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${fileSize}`);
+                    xhr.setRequestHeader('Authorization', `Bearer ${token}`); // добавляем токен
+                    xhr.send(chunk);
                 }
-            }
-        };
 
-        function sendNextChunk() {
-            if (start >= fileSize) {
-                return;
-            }
-            const end = Math.min(start + chunkSize, fileSize);
-            const chunk = file.slice(start, end);
-
-            xhr.open('PUT', uploadUrl);
-            xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${fileSize}`);
-            // НЕ добавляем Authorization – сессионный URL уже содержит аутентификацию
-            xhr.send(chunk);
+                sendNextChunk();
+            });
         }
-
-        sendNextChunk();
-    });
-}
 
         function closeThanksModal() {
             document.getElementById('thanksModal').classList.remove('show');
