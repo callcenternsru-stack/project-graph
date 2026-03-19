@@ -1263,6 +1263,23 @@
             }
         }
 
+        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОИСКА РЕКРУТЕРА ==========
+        function findMatchingRecruiter(candidate) {
+            if (!state.candidates || state.candidates.length === 0) return null;
+            const normPhone = (candidate.phone || '').replace(/\D/g, '');
+            for (const rc of state.candidates) {
+                const rcNormPhone = (rc.phone || '').replace(/\D/g, '');
+                let matches = 0;
+                if (rc.fullName && rc.fullName === candidate.fullName) matches++;
+                if (rcNormPhone && rcNormPhone === normPhone) matches++;
+                if (rc.project && rc.project === candidate.project) matches++;
+                if (matches >= 2) {
+                    return rc.recruiter;
+                }
+            }
+            return null;
+        }
+
         async function loadAllData() {
             try {
                 const refRes = await fetch('/.netlify/functions/getAllReferences');
@@ -2714,20 +2731,7 @@
         }
 
         // ========== НОВЫЕ ФУНКЦИИ ДЛЯ РЕКРУТЕРА ==========
-        function findMatchingRecruiter(candidate) {
-            if (!state.candidates || state.candidates.length === 0) return null;
-            const { fullName, phone, project } = candidate;
-            for (const rc of state.candidates) {
-                let matches = 0;
-                if (rc.fullName && rc.fullName === fullName) matches++;
-                if (rc.phone && rc.phone === phone) matches++;
-                if (rc.project && rc.project === project) matches++;
-                if (matches >= 2) {
-                    return rc.recruiter;
-                }
-            }
-            return null;
-        }
+        // функция findMatchingRecruiter уже исправлена выше
 
         // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateCandidateRecruiter ==========
         async function updateCandidateRecruiter(id, type, newRecruiter) {
