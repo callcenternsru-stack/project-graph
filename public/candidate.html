@@ -1259,11 +1259,11 @@
         let taskAnswers = {};
         let currentManualId = null;
 
-        // ========== ФУНКЦИИ СЖАТИЯ ==========
+        // ========== ФУНКЦИИ СЖАТИЯ (уменьшены параметры) ==========
         async function compressImage(file) {
             const options = {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1280,
+                maxSizeMB: 0.8,               // уменьшено с 1 до 0.8
+                maxWidthOrHeight: 1024,        // уменьшено с 1280 до 1024
                 useWebWorker: true,
                 fileType: 'image/jpeg'
             };
@@ -1540,7 +1540,7 @@
             hideLoading();
         }
 
-        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ ==========
+        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ (исправлен порядок полей) ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1551,7 +1551,10 @@
             showLoading();
 
             const data = new FormData();
+            // Сначала добавляем статус и идентификатор
+            data.append('status', 'completed');
             data.append('id', currentManualId);
+            // Затем остальные поля
             data.append('fullName', formData.fullName);
             data.append('nickname', formData.nickname);
             data.append('telegram', formData.telegram);
@@ -1559,7 +1562,6 @@
             data.append('email', formData.email);
             data.append('project', formData.project);
             data.append('projectId', formData.projectId);
-            data.append('status', 'completed');
 
             // Обрабатываем каждый файл
             for (let i = 0; i < tasks.length; i++) {

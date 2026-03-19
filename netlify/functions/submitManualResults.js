@@ -64,6 +64,9 @@ exports.handler = async (event) => {
     bb.on('finish', async () => {
       try {
         console.log('All fields keys:', Object.keys(fields));
+        // Дополнительное логирование поля status
+        console.log('status field value:', fields.status);
+
         const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
         const missing = requiredFields.filter(f => !fields[f]);
         if (missing.length > 0) {
