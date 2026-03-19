@@ -3152,7 +3152,10 @@
             const listContainer = document.getElementById('messageList');
             let html = '';
             chatScripts.forEach((script, index) => {
-                const plainText = script.content.replace(/<[^>]*>/g, '');
+                // Получаем текст с сохранением переносов
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = script.content;
+                const plainText = tempDiv.innerText || tempDiv.textContent;
                 html += `
                     <div class="message-item ${selectedMessageIndex === index ? 'selected' : ''}" data-index="${index}">
                         <div class="title">${script.title}</div>
@@ -3186,6 +3189,7 @@
             document.body.classList.remove('menu-open');
         }
 
+        // ========== ОБНОВЛЕНИЕ ПРЕДПРОСМОТРА (изменено) ==========
         function updateMessagePreview() {
             if (selectedMessageIndex === -1 || !chatScripts[selectedMessageIndex]) return;
             const script = chatScripts[selectedMessageIndex];
@@ -3193,13 +3197,21 @@
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
-            let plainText = script.content.replace(/<[^>]*>/g, '');
-            if (link) {
+
+            // Преобразуем HTML в обычный текст с сохранением переносов
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = script.content;
+            let plainText = tempDiv.innerText || tempDiv.textContent;
+
+            // Добавляем ссылку только если название скрипта точно совпадает с "Проверка"
+            if (link && script.title.trim().toLowerCase() === 'проверка') {
                 plainText += '\n\nСсылка для заполнения анкеты: ' + link;
             }
+
             document.getElementById('messagePreviewText').textContent = plainText;
         }
 
+        // ========== ОТПРАВКА СООБЩЕНИЯ (изменено) ==========
         async function sendSelectedMessage() {
             if (selectedMessageIndex === -1) {
                 showNotification('Выберите сообщение', 'error');
@@ -3212,10 +3224,17 @@
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
-            let text = script.content.replace(/<[^>]*>/g, '');
-            if (link) {
+
+            // Преобразуем HTML в обычный текст с сохранением переносов
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = script.content;
+            let text = tempDiv.innerText || tempDiv.textContent;
+
+            // Добавляем ссылку только если название скрипта точно совпадает с "Проверка"
+            if (link && script.title.trim().toLowerCase() === 'проверка') {
                 text += '\n\nСсылка для заполнения анкеты: ' + link;
             }
+
             const cleanPhone = phone.replace(/\D/g, '');
             if (currentMessageType === 'telegram') {
                 try {
