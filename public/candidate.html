@@ -1580,7 +1580,7 @@
             hideLoading();
         }
 
-        // ========== ОТПРАВКА СЖАТЫХ ФАЙЛОВ ==========
+        // ========== НОВАЯ ФУНКЦИЯ ОТПРАВКИ (ЗАМЕНЯЕТ submitManualResults) ==========
         async function submitManualResults() {
             const formData = getFormData();
             if (!formData.projectId) {
@@ -1588,41 +1588,27 @@
                 return;
             }
 
-            // Предварительная проверка общего размера (только предупреждение)
-            let totalSize = 0;
+            // Проверка, что есть хотя бы один файл
+            let hasAnyFile = false;
             for (let i = 0; i < tasks.length; i++) {
-                if (taskFiles[i]) totalSize += taskFiles[i].size;
+                if (taskFiles[i]) {
+                    hasAnyFile = true;
+                    break;
+                }
             }
-
-            const NETLIFY_LIMIT = 6 * 1024 * 1024; // 6 МБ
-            const PRE_LIMIT = 50 * 1024 * 1024;    // 50 МБ – предварительный порог
-
-            if (totalSize > PRE_LIMIT) {
-                alert(`Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} МБ) очень велик. Даже после сжатия он может превысить лимит сервера (6 МБ). Попробуйте уменьшить файлы вручную.`);
-                // Не прерываем, даём шанс
+            if (!hasAnyFile) {
+                alert('Не загружено ни одного файла.');
+                return;
             }
 
             showLoading();
 
-            const data = new FormData();
-            // Сначала добавляем статус и идентификатор
-            data.append('status', 'completed');
-            data.append('id', currentManualId);
-            // Затем остальные поля
-            data.append('fullName', formData.fullName);
-            data.append('nickname', formData.nickname);
-            data.append('telegram', formData.telegram);
-            data.append('phone', formData.phone);
-            data.append('email', formData.email);
-            data.append('project', formData.project);
-            data.append('projectId', formData.projectId);
-
-            // Обрабатываем каждый файл
+            // 1. Подготавливаем информацию о файлах для сервера
+            const filesInfo = [];
             for (let i = 0; i < tasks.length; i++) {
                 if (taskFiles[i]) {
                     let fileToSend = taskFiles[i];
-                    
-                    // Если это изображение (задания 1,4,6,7)
+                    // Сжатие изображений
                     if (taskFiles[i].type.startsWith('image/')) {
                         try {
                             fileToSend = await compressImage(taskFiles[i]);
@@ -1632,76 +1618,149 @@
                             return;
                         }
                     }
-                    
-                    // Если это аудио (задание 2) и имеет расширение .wav
+                    // Конвертация аудио
                     else if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
                         try {
                             fileToSend = await convertWavToMp3(taskFiles[i]);
-                            if (fileToSend.size > NETLIFY_LIMIT) {
-                                throw new Error('Даже после сжатия файл слишком большой. Пожалуйста, запишите более короткое сообщение.');
-                            }
                         } catch (e) {
                             showNotification('Ошибка сжатия голоса: ' + e.message, 'error');
                             hideLoading();
                             return;
                         }
                     }
-                    
-                    // Для других типов файлов (например, PDF) – проверяем размер
-                    else {
-                        if (taskFiles[i].size > 4 * 1024 * 1024) {
-                            showNotification(`Файл "${taskFiles[i].name}" слишком большой (макс. 4 МБ).`, 'error');
-                            hideLoading();
-                            return;
-                        }
-                    }
-                    
-                    data.append(`task_${i}`, fileToSend);
-                }
-                
-                if (taskInputs[i]) {
-                    data.append(`task_${i}_input`, taskInputs[i]);
-                }
-                if (taskAnswers[i]) {
-                    data.append(`task_${i}_answers`, JSON.stringify(taskAnswers[i]));
-                }
-                if (tasks[i].questions) {
-                    const score = calculateQuizScore(i);
-                    if (score) {
-                        data.append(`task_${i}_score`, JSON.stringify(score));
-                    }
-                }
-            }
 
-            // Финальная проверка общего размера после сжатия
-            let finalTotalSize = 0;
-            for (let [_, file] of data.entries()) {
-                if (file instanceof File) finalTotalSize += file.size;
-            }
-            if (finalTotalSize > NETLIFY_LIMIT) {
-                alert(`После сжатия общий размер файлов (${(finalTotalSize / 1024 / 1024).toFixed(1)} МБ) всё ещё превышает лимит сервера (6 МБ). Пожалуйста, уменьшите файлы вручную.`);
-                hideLoading();
-                return;
+                    filesInfo.push({
+                        index: i,
+                        name: fileToSend.name,
+                        type: fileToSend.type,
+                        size: fileToSend.size,
+                        file: fileToSend, // сам файл для последующей загрузки
+                    });
+                }
             }
 
             try {
-                const response = await fetch('/.netlify/functions/submitManualResults', {
+                // 2. Запрос на сервер для получения ссылок на загрузку
+                const response = await fetch('/.netlify/functions/requestDriveUpload', {
                     method: 'POST',
-                    body: data
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        formData,
+                        filesInfo: filesInfo.map(f => ({ index: f.index, name: f.name, type: f.type, size: f.size })),
+                        candidateId: currentManualId,
+                    }),
                 });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error || 'Ошибка отправки');
 
-                // Показываем модальное окно благодарности
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error);
+
+                const { uploadUrls, fileIndices, candidateId } = result;
+
+                // 3. Загружаем файлы в Google Drive
+                const uploadedFileIds = [];
+                for (let i = 0; i < uploadUrls.length; i++) {
+                    const url = uploadUrls[i];
+                    const fileInfo = filesInfo.find(f => f.index === fileIndices[i]);
+                    if (!fileInfo) continue;
+
+                    const fileId = await uploadFileToDrive(url, fileInfo.file);
+                    if (fileId) {
+                        uploadedFileIds.push(fileId);
+                    } else {
+                        throw new Error(`Ошибка загрузки файла ${fileInfo.name}`);
+                    }
+                }
+
+                // 4. Подтверждаем завершение
+                const confirmRes = await fetch('/.netlify/functions/confirmUpload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        candidateId,
+                        fileIds: uploadedFileIds,
+                        status: 'completed',
+                    }),
+                });
+
+                if (!confirmRes.ok) {
+                    throw new Error('Ошибка подтверждения загрузки');
+                }
+
+                // 5. Показываем модальное окно благодарности
                 document.getElementById('manualVerificationBlock').classList.remove('show');
                 document.getElementById('thanksModal').classList.add('show');
                 document.body.classList.add('menu-open');
+
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Попробуйте позже.', 'error');
             } finally {
                 hideLoading();
             }
+        }
+
+        // ========== ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛА В GOOGLE DRIVE ЧАНКАМИ ==========
+        async function uploadFileToDrive(uploadUrl, file) {
+            return new Promise((resolve, reject) => {
+                const chunkSize = 10 * 1024 * 1024; // 10 МБ
+                const fileSize = file.size;
+                let start = 0;
+                let fileId = null;
+
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        console.log(`Upload progress: ${percent.toFixed(2)}%`);
+                        // Здесь можно обновлять индикатор прогресса
+                    }
+                });
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200 || xhr.status === 201) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                fileId = response.id;
+                                resolve(fileId);
+                            } catch (e) {
+                                reject(new Error('Не удалось получить ID файла'));
+                            }
+                        } else if (xhr.status === 308) {
+                            // Частичная загрузка, продолжаем
+                            const range = xhr.getResponseHeader('Range');
+                            if (range) {
+                                const bytesReceived = parseInt(range.split('-')[1], 10) + 1;
+                                start = bytesReceived;
+                            }
+                            sendNextChunk();
+                        } else {
+                            reject(new Error(`Upload failed with status ${xhr.status}`));
+                        }
+                    }
+                };
+
+                function sendNextChunk() {
+                    if (start >= fileSize) {
+                        return; // загрузка завершена, но мы не получили финальный ответ? (обычно 200)
+                    }
+                    const end = Math.min(start + chunkSize, fileSize);
+                    const chunk = file.slice(start, end);
+                    const headers = {
+                        'Content-Length': chunk.size,
+                        'Content-Range': `bytes ${start}-${end - 1}/${fileSize}`,
+                    };
+
+                    xhr.open('PUT', uploadUrl);
+                    for (const [key, value] of Object.entries(headers)) {
+                        xhr.setRequestHeader(key, value);
+                    }
+                    xhr.send(chunk);
+                }
+
+                sendNextChunk();
+            });
         }
 
         function closeThanksModal() {
