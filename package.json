@@ -2,6 +2,8 @@
   "name": "project-graph",
   "version": "1.0.0",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1013.0",
+    "@aws-sdk/s3-request-presigner": "^3.1013.0",
     "@netlify/blobs": "^7.4.0",
     "axios": "^1.13.6",
     "busboy": "^1.6.0",

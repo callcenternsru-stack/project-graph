@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -170,7 +169,7 @@
 </head>
 <body>
     <h1>Проектная документация: Система учёта рабочего времени и рекрутинга</h1>
-    <p><strong>Дата актуализации:</strong> 16 марта 2026 г. (версия 6.2 – финальные доработки программы автоматической проверки)</p>
+    <p><strong>Дата актуализации:</strong> 18 марта 2026 г. (версия 6.4 – полная интеграция Google OAuth, WhatsApp, динамические проекты, улучшение скриптов)</p>
 
     <div class="toc">
         <h2>📋 Оглавление</h2>
@@ -190,6 +189,9 @@
                     <li><a href="#graph">6.6 Данные графиков (встречи, обучения, комментарии)</a></li>
                     <li><a href="#autoforms">6.7 Автоматические анкеты и результаты</a></li>
                     <li><a href="#manualforms">6.8 Ручные анкеты</a></li>
+                    <li><a href="#google">6.9 Интеграция с Google (OAuth, контакты)</a></li>
+                    <li><a href="#whatsapp">6.10 WhatsApp функция</a></li>
+                    <li><a href="#projectinfo">6.11 Детальная информация о проектах</a></li>
                 </ul>
             </li>
             <li><a href="#pages">7. Клиентские страницы</a>
@@ -199,7 +201,8 @@
                     <li><a href="#view">7.3 view.html – публичный просмотр</a></li>
                     <li><a href="#recruiter">7.4 recruiter.html – панель рекрутера (с входом)</a></li>
                     <li><a href="#admin-recruiting">7.5 hr control panel.html – админ-панель рекрутинга</a></li>
-                    <li><a href="#candidate">7.6 candidate.html – анкета кандидата (проект РОССЕТТИ)</a></li>
+                    <li><a href="#candidate">7.6 candidate.html – анкета кандидата (динамическая)</a></li>
+                    <li><a href="#admin-projects">7.7 admin_projects.html – управление проектами (расширенное)</a></li>
                 </ul>
             </li>
             <li><a href="#auth">8. Аутентификация и сессии</a></li>
@@ -225,16 +228,16 @@
     <p>Проект представляет собой комплексную экосистему для управления колл-центром. Он включает два основных модуля:</p>
     <ul>
         <li><strong>Модуль учёта рабочего времени</strong> – синхронизация через Netlify Blobs, функции <code>getData</code>/<code>saveData</code>.</li>
-        <li><strong>Модуль рекрутинга</strong> – полностью переведён на серверную архитектуру: данные хранятся в Netlify Blobs, доступ осуществляется через 38 Netlify Functions. <code>localStorage</code> не используется.</li>
+        <li><strong>Модуль рекрутинга</strong> – полностью переведён на серверную архитектуру: данные хранятся в Netlify Blobs, доступ осуществляется через 45+ Netlify Functions. <code>localStorage</code> не используется (кроме временных сессий).</li>
     </ul>
 
     <!-- 2. Архитектура -->
     <h2 id="arch">2. Архитектура системы</h2>
-    <p>Система построена на статических HTML-страницах, JavaScript (клиентская логика) и Netlify Functions для работы с хранилищами. Все данные (кроме временных сессий) хранятся в Netlify Blobs в нескольких отдельных хранилищах. Аутентификация рекрутеров происходит через функцию <code>loginRecruiter</code> с проверкой пароля, сессия сохраняется в <code>sessionStorage</code>. Партнёры (модуль учёта времени) также используют <code>sessionStorage</code>.</p>
+    <p>Система построена на статических HTML-страницах, JavaScript (клиентская логика) и Netlify Functions для работы с хранилищами. Все данные (кроме временных сессий) хранятся в Netlify Blobs в нескольких отдельных хранилищах. Аутентификация рекрутеров происходит через функцию <code>loginRecruiter</code> с проверкой пароля, сессия сохраняется в <code>sessionStorage</code>. Партнёры (модуль учёта времени) также используют <code>sessionStorage</code>. Добавлена интеграция с Google OAuth для доступа к Google Контактам.</p>
 
     <!-- 3. Настройка окружения -->
     <h2 id="setup">3. Настройка окружения</h2>
-    <p>Для разработки необходим любой современный браузер. Для работы с Netlify Blobs требуется аккаунт Netlify и настроенные переменные окружения <code>NETLIFY_SITE_ID</code> и <code>NETLIFY_ACCESS_TOKEN</code>. Подробнее – в разделе 9.</p>
+    <p>Для разработки необходим любой современный браузер. Для работы с Netlify Blobs требуется аккаунт Netlify и настроенные переменные окружения <code>NETLIFY_SITE_ID</code> и <code>NETLIFY_ACCESS_TOKEN</code>. Для Google OAuth необходимы переменные <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, <code>GOOGLE_REDIRECT_URI</code>. Подробнее – в разделе 9.</p>
 
     <!-- 4. Структура репозитория -->
     <h2 id="repo">4. Структура репозитория</h2>
@@ -243,7 +246,7 @@ project-root/
 ├── netlify.toml
 ├── package.json
 ├── netlify/
-│   └── functions/                          (все 38 функций)
+│   └── functions/                          (все 45+ функций)
 │       ├── getData.js
 │       ├── saveData.js
 │       ├── checkCode.js
@@ -261,7 +264,7 @@ project-root/
 │       ├── getMyCandidates.js
 │       ├── submitCandidate.js
 │       ├── getProjects.js
-│       ├── saveProject.js
+│       ├── saveProject.js                   (расширенная)
 │       ├── deleteProject.js
 │       ├── getCallResults.js
 │       ├── saveCallResult.js
@@ -270,7 +273,7 @@ project-root/
 │       ├── saveContactType.js
 │       ├── deleteContactType.js
 │       ├── getScripts.js
-│       ├── saveScript.js
+│       ├── saveScript.js                    (поддержка массивов проектов)
 │       ├── deleteScript.js
 │       ├── getProjectMeetings.js
 │       ├── saveProjectMeetings.js
@@ -281,14 +284,24 @@ project-root/
 │       ├── getProjectTrainingComments.js
 │       ├── saveProjectTrainingComments.js
 │       ├── getScheduleMonths.js
-│       └── saveScheduleMonths.js
+│       ├── saveScheduleMonths.js
+│       ├── auth-google-redirect.js          (OAuth)
+│       ├── auth-google-callback.js          (обмен кода на токен)
+│       ├── get-google-status.js              (проверка статуса)
+│       ├── add-google-contact.js             (создание контакта)
+│       ├── send-whatsapp.js                  (открытие WhatsApp)
+│       ├── getProjectInfo.js                  (детальная информация о проекте)
+│       ├── updateCandidateStatus.js           (обновление статуса кандидата)
+│       ├── migrateIndex.js                    (миграции)
+│       └── ... (прочие миграции)
 ├── public/                              (статические файлы)
 │   ├── index.html
 │   ├── partner.html
 │   ├── view.html
-│   ├── candidate.html
-│   ├── recruiter.html
-│   ├── hr control panel.html
+│   ├── candidate.html                    (динамическая страница)
+│   ├── recruiter.html                     (с кнопками Telegram/WhatsApp)
+│   ├── hr control panel.html               (админ-панель рекрутинга)
+│   ├── admin_projects.html                 (управление проектами)
 │   ├── SystemCheckPRO_Setup.exe         (установщик)
 │   └── (прочие ресурсы)
 └── ...
@@ -302,10 +315,12 @@ project-root/
         <li><code>candidates-data</code> – для автоматических анкет (ключ – уникальный код кандидата, значение – объект с <code>formData</code>, статусом, ссылками на файлы).</li>
         <li><code>candidates</code> – для кандидатов, добавленных рекрутерами.</li>
         <li><code>recruiters</code> – учётные записи рекрутеров (ключ – имя рекрутера).</li>
-        <li><code>projects</code>, <code>callResults</code>, <code>contactTypes</code> – справочники.</li>
-        <li><code>scripts</code> – скрипты для рекрутеров.</li>
+        <li><code>projects</code> – теперь хранит расширенные данные: <code>id</code>, <code>name</code>, <code>area</code>, <code>lineType</code>, <code>about</code>, <code>duties</code>, <code>schedule</code>, <code>conditions</code>, <code>requirements</code>, <code>workplaceRequirements</code>.</li>
+        <li><code>callResults</code>, <code>contactTypes</code> – справочники.</li>
+        <li><code>scripts</code> – скрипты для рекрутеров, теперь с полями <code>projectIds</code> (массив), <code>projectNames</code>, <code>type</code> (call/test).</li>
         <li><code>projectMeetings</code>, <code>projectTrainings</code>, <code>projectMeetingComments</code>, <code>projectTrainingComments</code>, <code>scheduleMonths</code> – данные для графиков.</li>
         <li><code>manualForms</code> – ручные анкеты.</li>
+        <li><code>google-tokens</code> – хранение refresh_token для рекрутеров (ключ – имя рекрутера).</li>
     </ul>
 
     <!-- 6. Серверные функции -->
@@ -335,14 +350,16 @@ project-root/
 
     <h3 id="references">6.4 Справочники</h3>
     <ul>
-        <li><code>getProjects</code>, <code>saveProject</code>, <code>deleteProject</code> – проекты.</li>
+        <li><code>getProjects</code>, <code>saveProject</code>, <code>deleteProject</code> – проекты (теперь с полным описанием).</li>
         <li><code>getCallResults</code>, <code>saveCallResult</code>, <code>deleteCallResult</code> – результаты звонков.</li>
         <li><code>getContactTypes</code>, <code>saveContactType</code>, <code>deleteContactType</code> – типы обращений.</li>
     </ul>
 
     <h3 id="scripts">6.5 Скрипты</h3>
     <ul>
-        <li><code>getScripts</code>, <code>saveScript</code>, <code>deleteScript</code> – скрипты для рекрутеров.</li>
+        <li><code>getScripts</code> – возвращает массив скриптов.</li>
+        <li><code>saveScript</code> – сохраняет скрипт; поддерживает как одиночный проект (через <code>projectId</code>), так и массив <code>projectIds</code>. Добавлено поле <code>type</code> для разделения звонковых и чат-скриптов.</li>
+        <li><code>deleteScript</code> – удаление скрипта по названию.</li>
     </ul>
 
     <h3 id="graph">6.6 Данные графиков</h3>
@@ -365,8 +382,27 @@ project-root/
 
     <h3 id="manualforms">6.8 Ручные анкеты</h3>
     <ul>
-        <li><code>submitManualForm</code> – сохраняет ручную анкету.</li>
+        <li><code>submitManualForm</code> – сохраняет ручную анкету (черновик).</li>
         <li><code>getManualForms</code> – возвращает все ручные анкеты.</li>
+        <li><code>submitManualResults</code> – обновляет существующую ручную анкету (добавляет файлы, ответы, меняет статус).</li>
+    </ul>
+
+    <h3 id="google">6.9 Интеграция с Google (OAuth, контакты)</h3>
+    <ul>
+        <li><code>auth-google-redirect</code> – формирует URL для авторизации Google и выполняет 302-редирект.</li>
+        <li><code>auth-google-callback</code> – обрабатывает колбэк от Google, обменивает код на токены, сохраняет refresh_token в хранилище <code>google-tokens</code>.</li>
+        <li><code>get-google-status</code> – проверяет, есть ли у рекрутера сохранённый refresh_token (возвращает <code>{ connected: true }</code>).</li>
+        <li><code>add-google-contact</code> – создаёт контакт в Google Contacts рекрутера с именем и телефоном кандидата, а также возвращает ссылку для открытия чата Telegram (<code>https://t.me/+...</code>).</li>
+    </ul>
+
+    <h3 id="whatsapp">6.10 WhatsApp функция</h3>
+    <ul>
+        <li><code>send-whatsapp</code> – принимает номер телефона и возвращает ссылку <code>https://wa.me/...</code> (или <code>https://web.whatsapp.com/send?phone=...</code>) для открытия чата.</li>
+    </ul>
+
+    <h3 id="projectinfo">6.11 Детальная информация о проектах</h3>
+    <ul>
+        <li><code>getProjectInfo</code> – возвращает полный объект проекта по его ID (используется в <code>candidate.html</code>).</li>
     </ul>
 
     <!-- 7. Клиентские страницы -->
@@ -388,38 +424,66 @@ project-root/
         <li>скрипты;</li>
         <li>список кандидатов текущего рекрутера.</li>
     </ul>
-    <p>Позволяет просматривать скрипты, редактировать и добавлять кандидатов (сохраняются через <code>submitCandidate</code>). Данные хранятся только на сервере, <code>localStorage</code> не используется.</p>
+    <p>Позволяет просматривать скрипты, редактировать и добавлять кандидатов (сохраняются через <code>submitCandidate</code>). Добавлены кнопки:</p>
+    <ul>
+        <li><strong>«Отправить в Telegram»</strong> – вызывает <code>add-google-contact</code> (если Google подключён) и открывает чат Telegram.</li>
+        <li><strong>«Отправить в WhatsApp»</strong> – вызывает <code>send-whatsapp</code> и открывает чат WhatsApp.</li>
+        <li><strong>«Подключить Google Контакты»</strong> – инициирует OAuth-поток.</li>
+    </ul>
+    <p>Статус подключения Google отображается на кнопке (становится неактивной с текстом «Google подключён»).</p>
 
     <h3 id="admin-recruiting">7.5 hr control panel.html – админ-панель рекрутинга</h3>
     <p>Основная панель для управления рекрутингом. Загружает все данные через соответствующие <code>get*</code> функции. Вкладки:</p>
     <ul>
         <li><strong>Рекрутеры</strong> – CRUD для учётных записей рекрутеров.</li>
         <li><strong>База контактов</strong> – список кандидатов, добавленных рекрутерами.</li>
-        <li><strong>Скрипты</strong> – редактирование скриптов.</li>
+        <li><strong>Скрипты</strong> – редактирование скриптов. Теперь две кнопки: «Добавить скрипт звонка» (один проект, выпадающий список) и «Добавить скрипт чат» (множественный выбор чекбоксами). В таблице отображается тип (Звонок/Чат) и список проектов.</li>
         <li><strong>График</strong> – планирование встреч и обучений (добавление месяцев, событий, комментариев).</li>
-        <li><strong>Все анкеты</strong> – заглушка.</li>
-        <li><strong>Анкеты авто</strong> – отображает завершённые автоматические анкеты из <code>getResults</code> со ссылками на отчёты (через <code>getFile</code>).</li>
-        <li><strong>Анкеты ручные</strong> – отображает анкеты из <code>getManualForms</code>.</li>
+        <li><strong>Анкеты</strong> – объединённый список всех анкет (авто и ручные) с возможностью просмотра деталей и изменения статуса (рекрутинговый статус: draft, org_meeting, training, line, employee, reject_*).</li>
+        <li><strong>Характеристики</strong> – технические требования к кандидатам по проектам (ОС, подключение, RAM и т.д.).</li>
     </ul>
     <p>Все изменения сохраняются через соответствующие <code>save*</code> и <code>delete*</code> функции.</p>
 
-    <h3 id="candidate">7.6 candidate.html – анкета кандидата (проект РОССЕТТИ)</h3>
-    <p>Страница для сбора первичных данных кандидата. Содержит информацию о проекте, FAQ, форму с обязательными полями. Две кнопки:</p>
+    <h3 id="candidate">7.6 candidate.html – анкета кандидата (динамическая)</h3>
+    <p>Страница для сбора первичных данных кандидата. Информация о проекте загружается динамически через <code>getProjectInfo</code> по параметру <code>projectId</code> из URL. Содержит:</p>
     <ul>
-        <li><strong>Пройти проверку автоматически</strong> – генерирует уникальный код, отправляет данные формы и код через <code>submitForm</code> на сервер, затем показывает блок с кодом и ссылкой на скачивание <code>SystemCheckPRO_Setup.exe</code> (установщик программы).</li>
-        <li><strong>Пройти проверку вручную</strong> – отправляет данные формы через <code>submitManualForm</code> и показывает инструкцию по отправке скриншотов.</li>
+        <li>динамические заголовок, область, тип линии, описание;</li>
+        <li>карточки с требованиями, условиями, графиком и т.д. (заполняются из данных проекта);</li>
+        <li>FAQ (статический);</li>
+        <li>форму с обязательными полями (ФИО, псевдоним, Telegram, телефон, email).</li>
     </ul>
+    <p>Две кнопки:</p>
+    <ul>
+        <li><strong>«Пройти проверку автоматически»</strong> – генерирует уникальный код (без префикса <code>ROSSETI-</code>), отправляет данные через <code>submitForm</code>, затем показывает блок с кодом и ссылкой на скачивание <code>SystemCheckPRO_Setup.exe</code>.</li>
+        <li><strong>«Пройти проверку вручную»</strong> – создаёт черновик анкеты через <code>submitManualResults</code> (сразу сохраняется в <code>manualForms</code> со статусом <code>draft</code>), затем показывает пошаговый интерфейс из 7 заданий с загрузкой файлов. Изображения сжимаются (до 1 МБ, 1280px) с помощью <code>browser-image-compression</code>, аудио конвертируется в MP3 (96 kbps) с помощью <code>lamejs</code>. После отправки всех заданий анкета обновляется (добавляются файлы, ответы, статус <code>completed</code>) и показывается модальное окно благодарности с контактами поддержки.</li>
+    </ul>
+
+    <h3 id="admin-projects">7.7 admin_projects.html – управление проектами (расширенное)</h3>
+    <p>Отдельная страница для создания и редактирования проектов. Позволяет задать:</p>
+    <ul>
+        <li>название проекта;</li>
+        <li>область (текст);</li>
+        <li>тип линии (выпадающий список: Входящая, Исходящая, Чат, Мультискилл);</li>
+        <li>описание (текст);</li>
+        <li>обязанности (многострочный текст, каждая строка – пункт списка);</li>
+        <li>график работы;</li>
+        <li>условия сотрудничества;</li>
+        <li>требования к кандидату;</li>
+        <li>требования к рабочему месту.</li>
+    </ul>
+    <p>Генерирует ссылку для кандидата вида <code>/candidate.html?projectId=...</code>. Все данные сохраняются в хранилище <code>projects</code> через <code>saveProject</code>.</p>
 
     <!-- 8. Аутентификация и сессии -->
     <h2 id="auth">8. Аутентификация и сессии</h2>
     <p><strong>Партнёры (учёт времени):</strong> проверка логина/пароля из массива <code>partners</code>, хранящегося в Blobs. Сессия сохраняется в <code>sessionStorage</code>.</p>
     <p><strong>Рекрутеры:</strong> вход по логину/паролю через функцию <code>loginRecruiter</code>. При успехе данные рекрутера сохраняются в <code>sessionStorage</code>. Выход очищает сессию.</p>
+    <p><strong>Google OAuth:</strong> при успешной авторизации refresh_token сохраняется в <code>google-tokens</code> по имени рекрутера. Статус проверяется через <code>get-google-status</code>.</p>
 
     <!-- 9. Инструкция по развёртыванию на Netlify -->
     <h2 id="deploy">9. Инструкция по развёртыванию на Netlify</h2>
     <ol>
         <li>Собрать все файлы в структуру, описанную в разделе 4.</li>
-        <li>Убедиться, что в <code>package.json</code> есть зависимости <code>@netlify/blobs</code> и <code>busboy</code>.</li>
+        <li>Убедиться, что в <code>package.json</code> есть зависимости <code>@netlify/blobs</code>, <code>busboy</code>, <code>node-fetch@2</code>, <code>googleapis</code>.</li>
         <li>Скомпилировать <code>SystemCheckPRO.ps1</code> в EXE и поместить в папку <code>public</code> вместе с установщиком.</li>
         <li>Загрузить репозиторий на GitHub и подключить к Netlify.</li>
         <li>В настройках Netlify указать:
@@ -428,14 +492,19 @@ project-root/
                 <li>папку функций <code>netlify/functions</code>.</li>
             </ul>
         </li>
-        <li>Добавить переменные окружения <code>NETLIFY_SITE_ID</code> и <code>NETLIFY_ACCESS_TOKEN</code> (токен из UI Netlify).</li>
+        <li>Добавить переменные окружения:
+            <ul>
+                <li><code>NETLIFY_SITE_ID</code> и <code>NETLIFY_ACCESS_TOKEN</code> (токен из UI Netlify).</li>
+                <li><code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, <code>GOOGLE_REDIRECT_URI</code> (например, <code>https://grafic1.netlify.app/.netlify/functions/auth-google-callback</code>).</li>
+            </ul>
+        </li>
         <li>Выполнить деплой.</li>
     </ol>
     <p>После деплоя все функции будут доступны, страницы рекрутинга работают с сервером.</p>
 
     <!-- 10. Локальное тестирование -->
     <h2 id="local">10. Локальное тестирование (без сервера)</h2>
-    <p>Для локального тестирования можно открыть HTML-файлы в браузере, но для работы с функциями потребуется эмуляция (Netlify CLI) или реальный деплой. Модуль учёта времени при локальном открытии будет сохранять данные в <code>localStorage</code> (без синхронизации).</p>
+    <p>Для локального тестирования можно открыть HTML-файлы в браузере, но для работы с функциями потребуется эмуляция (Netlify CLI) или реальный деплой. Модуль учёта времени при локальном открытии будет сохранять данные в <code>localStorage</code> (без синхронизации). Для OAuth потребуется настроить локальный redirect URI (например, через ngrok).</p>
 
     <!-- 11. Возможные проблемы -->
     <h2 id="troubles">11. Возможные проблемы</h2>
@@ -444,6 +513,9 @@ project-root/
         <li><strong>Ошибки 500 в функциях</strong> – смотрите логи функций в панели Netlify; убедитесь, что переменные окружения заданы.</li>
         <li><strong>Файлы не открываются</strong> – проверьте, что все HTML лежат в папке <code>public</code> и <code>publish = "public"</code>.</li>
         <li><strong>Программа SystemCheckPRO не отправляет результаты</strong> – проверьте лог <code>debug_submit.log</code> в папке установки; убедитесь, что код действителен и не использован ранее.</li>
+        <li><strong>Ошибка 400 при сохранении скрипта</strong> – обновите серверную функцию <code>saveScript.js</code> до версии, поддерживающей массивы <code>projectIds</code>.</li>
+        <li><strong>Google OAuth возвращает 500</strong> – убедитесь, что приложение опубликовано (In production) и redirect URI совпадает с настроенным в Google Cloud Console.</li>
+        <li><strong>WhatsApp ссылка не открывается</strong> – возможно, используется <code>wa.me</code>, который блокируется; в функции <code>send-whatsapp</code> можно заменить на <code>web.whatsapp.com</code>.</li>
         <li><strong>При скачивании из HR-панели ошибка File not found</strong> – исправлено в версии 6.1 (см. раздел 13.6).</li>
         <li><strong>Speedtest завершается с ошибкой</strong> – проверьте, что используется актуальная версия speedtest.exe и включены флаги --accept-license --accept-gdpr (исправлено в версии 6.2).</li>
     </ul>
@@ -483,6 +555,27 @@ project-root/
                 <li><strong>Промежуточное окно благодарности:</strong> после записи голоса появляется сообщение «Спасибо за ваши ответы, ожидайте, идет проверка...» без кнопок, программа автоматически закрывается после завершения всех тестов.</li>
                 <li><strong>Исправление ошибок speedtest:</strong> добавлены флаги <code>--accept-gdpr</code> и <code>--servers</code> для совместимости с последними версиями утилиты, реализован фиксированный список ID серверов (Ижевск, Видное, Кемерово, Москва) для точного измерения скорости до нужных городов.</li>
                 <li><strong>Корректное отображение города в отчёте:</strong> исправлена ошибка подстановки переменной.</li>
+            </ul>
+        </li>
+        <li><strong>Версия 6.3 (17 марта 2026)</strong> – <strong>динамические проекты и Google OAuth</strong>:
+            <ul>
+                <li>Добавлена функция <code>getProjectInfo</code> для загрузки детальной информации о проекте.</li>
+                <li>Страница <code>candidate.html</code> полностью переработана: теперь отображает данные из проекта динамически.</li>
+                <li>Внедрён черновик ручной проверки: анкета сохраняется сразу при старте, затем обновляется.</li>
+                <li>Добавлено клиентское сжатие изображений и конвертация WAV → MP3 для соблюдения лимитов Netlify (10 МБ).</li>
+                <li>Добавлено модальное окно благодарности после отправки ручной проверки.</li>
+                <li>Убран префикс "ROSSETI-" из генерируемого кода авто-проверки.</li>
+                <li>Добавлены функции Google OAuth: <code>auth-google-redirect</code>, <code>auth-google-callback</code>, <code>get-google-status</code>, <code>add-google-contact</code>.</li>
+                <li>В <code>recruiter.html</code> добавлены кнопки Telegram, WhatsApp и Google.</li>
+                <li>Создана функция <code>send-whatsapp</code> для открытия чата WhatsApp.</li>
+            </ul>
+        </li>
+        <li><strong>Версия 6.4 (18 марта 2026)</strong> – <strong>улучшение скриптов и исправления</strong>:
+            <ul>
+                <li>В <code>hr control panel.html</code> добавлены две кнопки для скриптов: «Добавить скрипт звонка» (один проект) и «Добавить скрипт чат» (множественный выбор чекбоксами).</li>
+                <li>Исправлена серверная функция <code>saveScript.js</code> для корректной обработки массивов проектов.</li>
+                <li>В <code>admin_projects.html</code> добавлена возможность редактирования всех деталей проекта (область, тип линии, описание и т.д.).</li>
+                <li>Обновлены стили модального окна благодарности в <code>candidate.html</code> (исправлено наложение).</li>
             </ul>
         </li>
     </ul>
@@ -543,7 +636,6 @@ project-root/
     <p>Все доработки протестированы и работают штатно. Программа полностью готова к эксплуатации.</p>
 
     <hr>
-    <p><em>Конец документации. Версия 6.2 от 16.03.2026 – полная серверная архитектура рекрутинга и финальные улучшения программы автоматической проверки.</em></p>
+    <p><em>Конец документации. Версия 6.4 от 18.03.2026 – полная серверная архитектура рекрутинга, интеграция с Google и WhatsApp, динамические проекты, улучшенные скрипты.</em></p>
 </body>
 </html>
-```
