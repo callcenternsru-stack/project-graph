@@ -1668,7 +1668,7 @@
                     const fileInfo = filesInfo.find(f => f.index === fileIndices[i]);
                     if (!fileInfo) continue;
 
-                    const fileId = await uploadFileToDrive(url, fileInfo.file, token); // передаём токен
+                   const fileId = await uploadFileToDrive(url, fileInfo.file);// передаём токен
                     if (fileId) {
                         uploadedFileIds.push(fileId);
                     } else {
@@ -1705,63 +1705,61 @@
         }
 
         // ========== ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛА В GOOGLE DRIVE ЧАНКАМИ ==========
-        async function uploadFileToDrive(uploadUrl, file, token) {
-            return new Promise((resolve, reject) => {
-                const chunkSize = 10 * 1024 * 1024; // 10 МБ
-                const fileSize = file.size;
-                let start = 0;
-                let fileId = null;
+   async function uploadFileToDrive(uploadUrl, file) {
+    return new Promise((resolve, reject) => {
+        const chunkSize = 10 * 1024 * 1024; // 10 МБ
+        const fileSize = file.size;
+        let start = 0;
+        let fileId = null;
 
-                const xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
 
-                xhr.upload.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) {
-                        const percent = (e.loaded / e.total) * 100;
-                        console.log(`Upload progress: ${percent.toFixed(2)}%`);
-                        // Здесь можно обновлять индикатор прогресса
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = (e.loaded / e.total) * 100;
+                console.log(`Upload progress: ${percent.toFixed(2)}%`);
+            }
+        });
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200 || xhr.status === 201) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        fileId = response.id;
+                        resolve(fileId);
+                    } catch (e) {
+                        reject(new Error('Не удалось получить ID файла'));
                     }
-                });
-
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === XMLHttpRequest.DONE) {
-                        if (xhr.status === 200 || xhr.status === 201) {
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                fileId = response.id;
-                                resolve(fileId);
-                            } catch (e) {
-                                reject(new Error('Не удалось получить ID файла'));
-                            }
-                        } else if (xhr.status === 308) {
-                            // Частичная загрузка, продолжаем
-                            const range = xhr.getResponseHeader('Range');
-                            if (range) {
-                                const bytesReceived = parseInt(range.split('-')[1], 10) + 1;
-                                start = bytesReceived;
-                            }
-                            sendNextChunk();
-                        } else {
-                            reject(new Error(`Upload failed with status ${xhr.status}`));
-                        }
+                } else if (xhr.status === 308) {
+                    const range = xhr.getResponseHeader('Range');
+                    if (range) {
+                        const bytesReceived = parseInt(range.split('-')[1], 10) + 1;
+                        start = bytesReceived;
                     }
-                };
-
-                function sendNextChunk() {
-                    if (start >= fileSize) {
-                        return; // загрузка завершена, но мы не получили финальный ответ? (обычно 200)
-                    }
-                    const end = Math.min(start + chunkSize, fileSize);
-                    const chunk = file.slice(start, end);
-
-                    xhr.open('PUT', uploadUrl);
-                    xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${fileSize}`);
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`); // добавляем токен
-                    xhr.send(chunk);
+                    sendNextChunk();
+                } else {
+                    reject(new Error(`Upload failed with status ${xhr.status}`));
                 }
+            }
+        };
 
-                sendNextChunk();
-            });
+        function sendNextChunk() {
+            if (start >= fileSize) {
+                return;
+            }
+            const end = Math.min(start + chunkSize, fileSize);
+            const chunk = file.slice(start, end);
+
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${fileSize}`);
+            // НЕ добавляем Authorization – сессионный URL уже содержит аутентификацию
+            xhr.send(chunk);
         }
+
+        sendNextChunk();
+    });
+}
 
         function closeThanksModal() {
             document.getElementById('thanksModal').classList.remove('show');
