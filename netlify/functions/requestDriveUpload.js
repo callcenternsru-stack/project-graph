@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     });
 
     const drive = google.drive({ version: 'v3', auth });
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // лучше вынести в переменные окружения
 
     const uploadUrls = [];
 
@@ -45,9 +45,9 @@ exports.handler = async (event) => {
       const accessToken = await auth.getAccessToken();
       const token = accessToken.token;
 
-      // Формируем запрос на инициализацию возобновляемой загрузки
+      // Инициируем сессию возобновляемой загрузки (PATCH с пустым телом)
       const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`;
-      const response = await axios.post(
+      const response = await axios.patch(
         url,
         null, // пустое тело
         {
@@ -59,7 +59,10 @@ exports.handler = async (event) => {
         }
       );
 
-      // Сессионный URL находится в заголовке location
+      // Логируем ответ для отладки
+      console.log('Patch response status:', response.status);
+      console.log('Patch response headers:', JSON.stringify(response.headers, null, 2));
+
       const uploadUrl = response.headers.location || response.headers.Location;
       if (!uploadUrl) {
         throw new Error(`No upload URL returned for file ${fileInfo.name}. Headers: ${JSON.stringify(response.headers)}`);
