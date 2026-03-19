@@ -1260,22 +1260,30 @@
         let currentManualId = null;
 
         // ========== ФУНКЦИИ СЖАТИЯ ==========
+        // Улучшенная функция сжатия изображений – теперь выбрасывает ошибку при неудаче
         async function compressImage(file) {
             const options = {
-                maxSizeMB: 0.8,
-                maxWidthOrHeight: 1024,
+                maxSizeMB: 0.5,                // уменьшено для более агрессивного сжатия
+                maxWidthOrHeight: 800,          // уменьшено
                 useWebWorker: true,
                 fileType: 'image/jpeg'
             };
             try {
-                return await imageCompression(file, options);
+                const compressedBlob = await imageCompression(file, options);
+                // Если сжатие не помогло, пробуем ещё более агрессивно
+                if (compressedBlob.size >= file.size * 0.9) { // если уменьшилось менее чем на 10%
+                    const aggressiveOptions = { ...options, maxSizeMB: 0.3, maxWidthOrHeight: 600 };
+                    const secondTry = await imageCompression(file, aggressiveOptions);
+                    return new File([secondTry], file.name, { type: secondTry.type });
+                }
+                return new File([compressedBlob], file.name, { type: compressedBlob.type });
             } catch (error) {
                 console.error('Ошибка сжатия изображения:', error);
-                return file;
+                throw new Error('Не удалось сжать изображение. Попробуйте уменьшить его вручную.');
             }
         }
 
-        // ========== УЛУЧШЕННАЯ ФУНКЦИЯ КОНВЕРТАЦИИ WAV -> MP3 ==========
+        // Улучшенная функция конвертации WAV -> MP3
         async function convertWavToMp3(wavFile) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1299,6 +1307,7 @@
                         let bitrate = 64; // kbps
                         if (wavFile.size > 10 * 1024 * 1024) bitrate = 48;
                         if (wavFile.size > 15 * 1024 * 1024) bitrate = 32;
+                        if (wavFile.size > 20 * 1024 * 1024) bitrate = 24; // добавлено для очень больших
 
                         const mp3Encoder = new lamejs.Mp3Encoder(
                             wavHeader.channels,
@@ -1600,12 +1609,17 @@
                     
                     // Если это изображение (задания 1,4,6,7)
                     if (taskFiles[i].type.startsWith('image/')) {
-                        const compressedBlob = await compressImage(taskFiles[i]);
-                        fileToSend = new File([compressedBlob], taskFiles[i].name, { type: compressedBlob.type });
+                        try {
+                            fileToSend = await compressImage(taskFiles[i]);
+                        } catch (e) {
+                            showNotification('Ошибка сжатия изображения: ' + e.message, 'error');
+                            hideLoading();
+                            return;
+                        }
                     }
                     
                     // Если это аудио (задание 2) и имеет расширение .wav
-                    if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
+                    else if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
                         try {
                             fileToSend = await convertWavToMp3(taskFiles[i]);
                             // Дополнительная проверка после сжатия (на случай, если всё равно большой)
@@ -1616,6 +1630,15 @@
                             showNotification('Ошибка сжатия голоса: ' + e.message, 'error');
                             hideLoading();
                             return; // прерываем отправку
+                        }
+                    }
+                    
+                    // Для других типов файлов (например, PDF) – проверяем размер
+                    else {
+                        if (taskFiles[i].size > 4 * 1024 * 1024) {
+                            showNotification(`Файл "${taskFiles[i].name}" слишком большой (макс. 4 МБ).`, 'error');
+                            hideLoading();
+                            return;
                         }
                     }
                     
