@@ -3,6 +3,9 @@ const { google } = require('googleapis');
 const { getStore } = require('@netlify/blobs');
 const axios = require('axios');
 
+// Задержка для retry
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -20,7 +23,13 @@ exports.handler = async (event) => {
       scopes: ['https://www.googleapis.com/auth/drive.file'],
     });
 
-    const drive = google.drive({ version: 'v3', auth });
+    // Увеличиваем таймауты для всех HTTP-запросов
+    const drive = google.drive({
+      version: 'v3',
+      auth,
+      timeout: 30000, // 30 секунд
+    });
+
     const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
 
     // Получаем токен заранее
@@ -45,15 +54,32 @@ exports.handler = async (event) => {
       const fileId = createRes.data.id;
       console.log(`File created with ID: ${fileId}`);
 
-      // Шаг 2: Устанавливаем разрешение на запись для всех
-      await drive.permissions.create({
-        fileId: fileId,
-        requestBody: {
-          type: 'anyone',
-          role: 'writer',
-        },
-      });
-      console.log(`Permission set for file ${fileId}`);
+      // Шаг 2: Устанавливаем разрешение на запись для всех с повторными попытками
+      let permissionSet = false;
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (!permissionSet && attempts < maxAttempts) {
+        try {
+          await drive.permissions.create({
+            fileId: fileId,
+            requestBody: {
+              type: 'anyone',
+              role: 'writer',
+            },
+          });
+          console.log(`Permission set for file ${fileId} (attempt ${attempts + 1})`);
+          permissionSet = true;
+        } catch (permError) {
+          attempts++;
+          console.error(`Permission error for file ${fileId} (attempt ${attempts}):`, permError.message);
+          if (attempts >= maxAttempts) {
+            console.error(`Failed to set permission after ${maxAttempts} attempts, continuing without public write`);
+            // Не прерываем выполнение, просто логируем
+          } else {
+            await sleep(1000 * attempts); // ждём 1, 2, 3 секунды перед повтором
+          }
+        }
+      }
 
       // Шаг 3: Инициируем сессию возобновляемой загрузки (PATCH с пустым телом)
       const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`;
@@ -66,6 +92,7 @@ exports.handler = async (event) => {
             'X-Upload-Content-Type': fileInfo.type,
             'Content-Length': 0,
           },
+          timeout: 30000, // 30 секунд
         }
       );
 
@@ -109,7 +136,7 @@ exports.handler = async (event) => {
         uploadUrls: uploadUrls.map(u => u.uploadUrl),
         fileIndices: uploadUrls.map(u => u.index),
         fileIds: uploadUrls.map(u => u.fileId),
-        token, // <-- добавляем токен
+        token, // всё равно передаём токен на случай, если permissions не сработают
         candidateId,
       }),
     };
