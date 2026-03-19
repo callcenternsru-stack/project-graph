@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     const bb = Busboy({
       headers: { 'content-type': contentType },
       limits: {
-        fileSize: 15 * 1024 * 1024, // увеличено до 15 MB
+        fileSize: 15 * 1024 * 1024, // 15 MB
         fieldSize: 15 * 1024 * 1024,
         fields: 50,
         files: 15
@@ -37,7 +37,7 @@ exports.handler = async (event) => {
     });
 
     bb.on('file', (name, file, info) => {
-      const { filename, encoding, mimeType } = info;
+      const { filename } = info;
       console.log(`File received: ${name}, filename=${filename}`);
       const chunks = [];
       let fileSize = 0;
@@ -52,7 +52,6 @@ exports.handler = async (event) => {
         console.log(`File ${name} ended, total size: ${fileSize}`);
         files[name] = {
           filename,
-          mimeType,
           data: Buffer.concat(chunks)
         };
       });
@@ -83,9 +82,11 @@ exports.handler = async (event) => {
           token: process.env.NETLIFY_ACCESS_TOKEN,
         });
 
+        // Нормализация телефона для поиска дубликатов
         const normPhone = (fields.phone || '').replace(/\D/g, '');
         const contactKey = `${fields.fullName}_${normPhone}_${fields.projectId}`;
 
+        // Удаление дубликатов из авто-анкет
         const autoList = await autoStore.list();
         for (const blob of autoList.blobs) {
           if (blob.key.includes('/')) continue;
@@ -105,6 +106,7 @@ exports.handler = async (event) => {
           }
         }
 
+        // Удаление дубликатов из ручных анкет (кроме текущей)
         const manualList = await manualStore.list();
         for (const blob of manualList.blobs) {
           if (blob.key.includes('/')) continue;
@@ -127,13 +129,41 @@ exports.handler = async (event) => {
         const recordId = fields.id || `manual_${Date.now()}`;
         console.log('Record ID:', recordId);
 
+        // Загружаем существующую запись, если есть id
+        let existingRecord = null;
+        if (fields.id) {
+          try {
+            existingRecord = await manualStore.get(fields.id, { type: 'json' });
+          } catch (e) {
+            // Игнорируем ошибку, если записи нет
+          }
+        }
+
+        // Определяем recruitmentStatus:
+        // 1) Если передан явно — используем его (может быть от HR)
+        // 2) При обновлении без явного статуса — оставляем старое значение
+        // 3) Для новой записи — 'draft'
+        let recruitmentStatus;
+        if (fields.recruitmentStatus) {
+          recruitmentStatus = fields.recruitmentStatus;
+        } else if (existingRecord && existingRecord.recruitmentStatus) {
+          recruitmentStatus = existingRecord.recruitmentStatus;
+        } else {
+          recruitmentStatus = 'draft';
+        }
+
+        // Технический статус анкеты (draft/completed) берётся из поля status
+        const technicalStatus = fields.status || 'draft';
+
         const record = {
           id: recordId,
-          ...fields,
+          ...fields,                     // все поля, включая status
           submittedAt: new Date().toISOString(),
-          recruitmentStatus: fields.status || 'draft'
+          recruitmentStatus,              // сохраняем корректный рекрутинговый статус
+          status: technicalStatus         // технический статус (draft/completed)
         };
 
+        // Сохраняем файлы и формируем ссылки
         const fileUrls = {};
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
@@ -144,9 +174,11 @@ exports.handler = async (event) => {
           record.files = fileUrls;
         }
 
+        // Сохраняем запись
         await manualStore.setJSON(recordId, record);
         console.log('Record saved:', recordId);
 
+        // Обновляем индекс
         const indexKey = '_index';
         let index = await manualStore.get(indexKey, { type: 'json' }) || [];
         index = index.filter(item => item.id !== recordId);
@@ -161,7 +193,6 @@ exports.handler = async (event) => {
         });
       } catch (error) {
         console.error('Error in submitManualResults:', error);
-        // Улучшенная обработка ошибок
         if (error.message.startsWith('Missing required fields')) {
           resolve({
             statusCode: 400,
