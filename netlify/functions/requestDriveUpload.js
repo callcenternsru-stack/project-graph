@@ -23,6 +23,10 @@ exports.handler = async (event) => {
     const drive = google.drive({ version: 'v3', auth });
     const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU';
 
+    // Получаем токен заранее
+    const accessToken = await auth.getAccessToken();
+    const token = accessToken.token;
+
     const uploadUrls = [];
 
     for (const fileInfo of filesInfo) {
@@ -51,11 +55,7 @@ exports.handler = async (event) => {
       });
       console.log(`Permission set for file ${fileId}`);
 
-      // Шаг 3: Получаем access token для прямого HTTP-запроса
-      const accessToken = await auth.getAccessToken();
-      const token = accessToken.token;
-
-      // Инициируем сессию возобновляемой загрузки (PATCH с пустым телом)
+      // Шаг 3: Инициируем сессию возобновляемой загрузки (PATCH с пустым телом)
       const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`;
       const response = await axios.patch(
         url,
@@ -68,9 +68,6 @@ exports.handler = async (event) => {
           },
         }
       );
-
-      console.log('Patch response status:', response.status);
-      console.log('Patch response headers:', JSON.stringify(response.headers, null, 2));
 
       const uploadUrl = response.headers.location || response.headers.Location;
       if (!uploadUrl) {
@@ -112,6 +109,7 @@ exports.handler = async (event) => {
         uploadUrls: uploadUrls.map(u => u.uploadUrl),
         fileIndices: uploadUrls.map(u => u.index),
         fileIds: uploadUrls.map(u => u.fileId),
+        token, // <-- добавляем токен
         candidateId,
       }),
     };
