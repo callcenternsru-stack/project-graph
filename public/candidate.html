@@ -1580,7 +1580,7 @@
             hideLoading();
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ ОТПРАВКИ (ЗАМЕНЯЕТ submitManualResults) ==========
+        // ========== НОВАЯ ФУНКЦИЯ ОТПРАВКИ ДЛЯ R2 ==========
         async function submitManualResults() {
             console.log('=== submitManualResults started ===');
             const formData = getFormData();
@@ -1650,9 +1650,9 @@
             }
 
             try {
-                // 2. Запрос на сервер для получения ссылок на загрузку
-                console.log('Sending request to requestDriveUpload with candidateId:', currentManualId);
-                const response = await fetch('/.netlify/functions/requestDriveUpload', {
+                // 2. Запрос на сервер для получения подписанных URL
+                console.log('Sending request to requestUploadUrls with candidateId:', currentManualId);
+                const response = await fetch('/.netlify/functions/requestUploadUrls', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1662,7 +1662,7 @@
                     }),
                 });
 
-                console.log('requestDriveUpload response status:', response.status);
+                console.log('requestUploadUrls response status:', response.status);
                 const responseText = await response.text();
                 console.log('Response text:', responseText);
 
@@ -1676,16 +1676,11 @@
 
                 if (!response.ok) throw new Error(result.error || 'Server error');
 
-                // В ответе должен быть токен
-                const { uploadUrls, fileIndices, token, candidateId } = result;
-                console.log('Received from server:', { uploadUrls, fileIndices, token, candidateId });
+                const { uploadUrls, fileIndices, fileKeys, candidateId } = result;
+                console.log('Received from server:', { uploadUrls, fileIndices, fileKeys, candidateId });
 
-                if (!token) {
-                    throw new Error('Токен не получен от сервера');
-                }
-
-                // 3. Загружаем файлы в Google Drive, передавая токен
-                const uploadedFileIds = [];
+                // 3. Загружаем файлы напрямую в R2
+                const uploadedFileKeys = [];
                 for (let i = 0; i < uploadUrls.length; i++) {
                     const url = uploadUrls[i];
                     const fileInfo = filesInfo.find(f => f.index === fileIndices[i]);
@@ -1695,10 +1690,10 @@
                     }
                     console.log(`Uploading file ${fileInfo.name} to URL:`, url);
                     try {
-                        const fileId = await uploadFileToDrive(url, fileInfo.file, token); // передаём токен
-                        console.log(`File uploaded, fileId: ${fileId}`);
-                        if (fileId) {
-                            uploadedFileIds.push(fileId);
+                        const success = await uploadFileToR2(url, fileInfo.file);
+                        console.log(`File uploaded successfully, key: ${fileKeys[i]}`);
+                        if (success) {
+                            uploadedFileKeys.push({ index: fileIndices[i], key: fileKeys[i] });
                         } else {
                             throw new Error(`Ошибка загрузки файла ${fileInfo.name}`);
                         }
@@ -1709,13 +1704,13 @@
                 }
 
                 // 4. Подтверждаем завершение
-                console.log('Confirming upload with fileIds:', uploadedFileIds);
+                console.log('Confirming upload with fileKeys:', uploadedFileKeys);
                 const confirmRes = await fetch('/.netlify/functions/confirmUpload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         candidateId,
-                        fileIds: uploadedFileIds,
+                        fileKeys: uploadedFileKeys,
                         status: 'completed',
                     }),
                 });
@@ -1739,15 +1734,10 @@
             }
         }
 
-        // ========== ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛА В GOOGLE DRIVE ЧАНКАМИ ==========
-        async function uploadFileToDrive(uploadUrl, file, token) {
-            console.log(`uploadFileToDrive: starting upload of ${file.name}, size ${file.size}, token present: ${!!token}`);
+        // ========== ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛА В R2 ==========
+        async function uploadFileToR2(presignedUrl, file) {
+            console.log(`uploadFileToR2: starting upload of ${file.name}, size ${file.size}`);
             return new Promise((resolve, reject) => {
-                const chunkSize = 10 * 1024 * 1024; // 10 МБ
-                const fileSize = file.size;
-                let start = 0;
-                let fileId = null;
-
                 const xhr = new XMLHttpRequest();
 
                 xhr.upload.addEventListener('progress', (e) => {
@@ -1760,38 +1750,12 @@
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         console.log(`Upload done for ${file.name}, status: ${xhr.status}`);
-                        console.log('Response headers:', xhr.getAllResponseHeaders());
                         if (xhr.status === 200 || xhr.status === 201) {
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                fileId = response.id;
-                                console.log('Upload success, fileId:', fileId);
-                                resolve(fileId);
-                            } catch (e) {
-                                console.error('Failed to parse success response:', xhr.responseText);
-                                reject(new Error('Не удалось получить ID файла'));
-                            }
-                        } else if (xhr.status === 308) {
-                            const range = xhr.getResponseHeader('Range');
-                            console.log('Received 308, Range header:', range);
-                            if (range) {
-                                const bytesReceived = parseInt(range.split('-')[1], 10) + 1;
-                                start = bytesReceived;
-                                console.log(`Continuing from byte ${start}`);
-                            } else {
-                                console.log('No Range header, continuing from previous start?');
-                            }
-                            sendNextChunk();
+                            console.log('Upload success');
+                            resolve(true);
                         } else {
-                            // При ошибке пытаемся получить тело ответа
-                            let errorBody = '';
-                            try {
-                                errorBody = JSON.parse(xhr.responseText);
-                            } catch {
-                                errorBody = xhr.responseText;
-                            }
-                            console.error(`Upload failed with status ${xhr.status}, body:`, errorBody);
-                            reject(new Error(`Upload failed with status ${xhr.status}: ${JSON.stringify(errorBody)}`));
+                            console.error('Upload failed:', xhr.status, xhr.responseText);
+                            reject(new Error(`Upload failed with status ${xhr.status}`));
                         }
                     }
                 };
@@ -1801,22 +1765,9 @@
                     reject(new Error('Network error during upload'));
                 };
 
-                function sendNextChunk() {
-                    if (start >= fileSize) {
-                        console.log('All chunks sent, waiting for final response...');
-                        return;
-                    }
-                    const end = Math.min(start + chunkSize, fileSize);
-                    const chunk = file.slice(start, end);
-                    console.log(`Sending chunk bytes ${start}-${end-1}/${fileSize}`);
-
-                    xhr.open('PUT', uploadUrl);
-                    xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${fileSize}`);
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`); // добавляем токен
-                    xhr.send(chunk);
-                }
-
-                sendNextChunk();
+                xhr.open('PUT', presignedUrl);
+                xhr.setRequestHeader('Content-Type', file.type);
+                xhr.send(file);
             });
         }
 
