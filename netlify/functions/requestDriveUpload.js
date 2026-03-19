@@ -20,54 +20,53 @@ exports.handler = async (event) => {
     });
 
     const drive = google.drive({ version: 'v3', auth });
-    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // лучше вынести в env
+    const FOLDER_ID = '1CsXaDQjK1v2AbX_Y2-Kn0a9hhD8DwTRU'; // вынесите в переменные окружения
 
     const uploadUrls = [];
 
     for (const fileInfo of filesInfo) {
       console.log(`Processing file: ${fileInfo.name}, index: ${fileInfo.index}`);
 
-      // Создаём файл и получаем ссылку для возобновляемой загрузки
-      const res = await drive.files.create(
-        {
-          requestBody: {
-            name: fileInfo.name,
-            parents: [FOLDER_ID],
-            description: `Candidate: ${formData.fullName}, Project: ${formData.project}`,
-          },
-          media: {
-            body: '', // пустое тело – только инициализация сессии
-            mimeType: fileInfo.type,
-          },
-          fields: 'id',
+      // Шаг 1: Создаём файл (только метаданные)
+      const createRes = await drive.files.create({
+        requestBody: {
+          name: fileInfo.name,
+          parents: [FOLDER_ID],
+          description: `Candidate: ${formData.fullName}, Project: ${formData.project}`,
         },
-        {
-          uploadType: 'resumable', // ключевая опция
-        }
-      );
+        fields: 'id',
+      });
 
-      // Подробное логирование ответа от Google
-      console.log('Google response status:', res.status);
-      console.log('Google response headers:', JSON.stringify(res.headers, null, 2));
-      console.log('Google response data:', JSON.stringify(res.data, null, 2));
-      console.log('Google response config:', JSON.stringify(res.config, null, 2));
+      const fileId = createRes.data.id;
+      console.log(`File created with ID: ${fileId}`);
 
-      // Правильный uploadUrl находится в заголовке location ответа
-      const uploadUrl = res.headers?.location || res.headers?.Location;
-      const fileId = res.data?.id;
+      // Шаг 2: Инициируем сессию возобновляемой загрузки (обновление файла с пустым телом)
+      const updateRes = await drive.files.update({
+        fileId: fileId,
+        media: {
+          body: '', // пустое тело – только инициализация сессии
+          mimeType: fileInfo.type,
+        },
+        fields: 'id',
+      }, {
+        uploadType: 'resumable', // ключевая опция
+      });
 
+      // Логируем ответ для отладки
+      console.log('Update response status:', updateRes.status);
+      console.log('Update response headers:', JSON.stringify(updateRes.headers, null, 2));
+      console.log('Update response data:', JSON.stringify(updateRes.data, null, 2));
+
+      const uploadUrl = updateRes.headers?.location || updateRes.headers?.Location;
       if (!uploadUrl) {
-        throw new Error(`No upload URL returned for file ${fileInfo.name}. Headers: ${JSON.stringify(res.headers)}`);
-      }
-      if (!fileId) {
-        throw new Error(`No file ID returned for file ${fileInfo.name}. Data: ${JSON.stringify(res.data)}`);
+        throw new Error(`No upload URL returned for file ${fileInfo.name}. Headers: ${JSON.stringify(updateRes.headers)}`);
       }
 
       console.log(`Upload URL for ${fileInfo.name}: ${uploadUrl}`);
       uploadUrls.push({ uploadUrl, index: fileInfo.index, fileId });
     }
 
-    // Сохраняем черновик в хранилище (как и раньше)
+    // Сохраняем черновик в хранилище (без изменений)
     const manualStore = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -92,7 +91,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' }, // CORS
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({
         success: true,
         uploadUrls: uploadUrls.map(u => u.uploadUrl),
