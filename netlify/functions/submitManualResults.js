@@ -21,10 +21,10 @@ exports.handler = async (event) => {
     const bb = Busboy({
       headers: { 'content-type': contentType },
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10 MB
-        fieldSize: 10 * 1024 * 1024,
+        fileSize: 15 * 1024 * 1024, // увеличено до 15 MB
+        fieldSize: 15 * 1024 * 1024,
         fields: 50,
-        files: 10
+        files: 15
       }
     });
 
@@ -44,7 +44,7 @@ exports.handler = async (event) => {
       file.on('data', (chunk) => {
         chunks.push(chunk);
         fileSize += chunk.length;
-        if (fileSize > 10 * 1024 * 1024) {
+        if (fileSize > 15 * 1024 * 1024) {
           file.destroy(new Error('File too large'));
         }
       });
@@ -64,7 +64,6 @@ exports.handler = async (event) => {
     bb.on('finish', async () => {
       try {
         console.log('All fields keys:', Object.keys(fields));
-        // Дополнительное логирование поля status
         console.log('status field value:', fields.status);
 
         const requiredFields = ['fullName', 'nickname', 'telegram', 'phone', 'email', 'project', 'projectId'];
@@ -84,12 +83,9 @@ exports.handler = async (event) => {
           token: process.env.NETLIFY_ACCESS_TOKEN,
         });
 
-        // Нормализуем телефон для поиска
         const normPhone = (fields.phone || '').replace(/\D/g, '');
-        // Ключ для поиска дубликатов: ФИО + нормализованный телефон + projectId
         const contactKey = `${fields.fullName}_${normPhone}_${fields.projectId}`;
 
-        // Удаляем из auto-хранилища
         const autoList = await autoStore.list();
         for (const blob of autoList.blobs) {
           if (blob.key.includes('/')) continue;
@@ -109,7 +105,6 @@ exports.handler = async (event) => {
           }
         }
 
-        // Удаляем из manual-хранилища (кроме текущего, если обновляем)
         const manualList = await manualStore.list();
         for (const blob of manualList.blobs) {
           if (blob.key.includes('/')) continue;
@@ -132,7 +127,6 @@ exports.handler = async (event) => {
         const recordId = fields.id || `manual_${Date.now()}`;
         console.log('Record ID:', recordId);
 
-        // Сохраняем все поля
         const record = {
           id: recordId,
           ...fields,
@@ -153,7 +147,6 @@ exports.handler = async (event) => {
         await manualStore.setJSON(recordId, record);
         console.log('Record saved:', recordId);
 
-        // Обновляем индекс
         const indexKey = '_index';
         let index = await manualStore.get(indexKey, { type: 'json' }) || [];
         index = index.filter(item => item.id !== recordId);
@@ -168,10 +161,18 @@ exports.handler = async (event) => {
         });
       } catch (error) {
         console.error('Error in submitManualResults:', error);
-        resolve({
-          statusCode: 500,
-          body: JSON.stringify({ error: error.message })
-        });
+        // Улучшенная обработка ошибок
+        if (error.message.startsWith('Missing required fields')) {
+          resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: error.message })
+          });
+        } else {
+          resolve({
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+          });
+        }
       }
     });
 
