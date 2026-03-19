@@ -70,7 +70,6 @@ exports.handler = async (event) => {
           throw new Error(`Missing required fields: ${missing.join(', ')}`);
         }
 
-        // Удаляем все существующие черновики с такими же контактными данными
         const autoStore = getStore({
           name: 'candidates-data',
           siteID: process.env.NETLIFY_SITE_ID,
@@ -82,7 +81,10 @@ exports.handler = async (event) => {
           token: process.env.NETLIFY_ACCESS_TOKEN,
         });
 
-        const contactKey = `${fields.fullName}_${fields.phone}_${fields.email}_${fields.projectId}`;
+        // Нормализуем телефон для поиска
+        const normPhone = (fields.phone || '').replace(/\D/g, '');
+        // Ключ для поиска дубликатов: ФИО + нормализованный телефон + projectId
+        const contactKey = `${fields.fullName}_${normPhone}_${fields.projectId}`;
 
         // Удаляем из auto-хранилища
         const autoList = await autoStore.list();
@@ -90,7 +92,8 @@ exports.handler = async (event) => {
           if (blob.key.includes('/')) continue;
           const data = await autoStore.get(blob.key, { type: 'json' });
           if (data && data.formData) {
-            const key = `${data.formData.fullName}_${data.formData.phone}_${data.formData.email}_${data.formData.projectId}`;
+            const dataNormPhone = (data.formData.phone || '').replace(/\D/g, '');
+            const key = `${data.formData.fullName}_${dataNormPhone}_${data.formData.projectId}`;
             if (key === contactKey) {
               await autoStore.delete(blob.key);
               console.log(`Deleted auto draft with key ${blob.key}`);
@@ -109,7 +112,8 @@ exports.handler = async (event) => {
           if (blob.key.includes('/')) continue;
           const data = await manualStore.get(blob.key, { type: 'json' });
           if (data) {
-            const key = `${data.fullName}_${data.phone}_${data.email}_${data.projectId}`;
+            const dataNormPhone = (data.phone || '').replace(/\D/g, '');
+            const key = `${data.fullName}_${dataNormPhone}_${data.projectId}`;
             if (key === contactKey && blob.key !== fields.id) {
               await manualStore.delete(blob.key);
               console.log(`Deleted manual draft with key ${blob.key}`);
@@ -137,7 +141,6 @@ exports.handler = async (event) => {
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
           await manualStore.set(fileKey, fileInfo.data);
-          // ВАЖНО: добавляем type=manual
           fileUrls[name] = `/.netlify/functions/getFile?code=${recordId}&file=${encodeURIComponent(fileInfo.filename)}&type=manual`;
         }
         if (Object.keys(fileUrls).length > 0) {

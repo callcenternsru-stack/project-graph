@@ -27,17 +27,20 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Удаляем все существующие черновики с такими же контактными данными из обоих хранилищ
-    const contactKey = `${formData.fullName}_${formData.phone}_${formData.email}_${formData.projectId}`;
+    // Нормализуем телефон для поиска
+    const normPhone = (formData.phone || '').replace(/\D/g, '');
+    // Ключ для поиска дубликатов: ФИО + нормализованный телефон + projectId
+    const contactKey = `${formData.fullName}_${normPhone}_${formData.projectId}`;
 
-    // Удаляем из auto-хранилища (кроме текущего, если обновляем)
+    // Удаляем из auto-хранилища все записи с таким же contactKey (кроме текущей)
     const autoList = await autoStore.list();
     for (const blob of autoList.blobs) {
-      if (blob.key.includes('/')) continue;
+      if (blob.key.includes('/')) continue; // пропускаем файлы
       const existing = await autoStore.get(blob.key, { type: 'json' });
       if (existing && existing.formData) {
-        const key = `${existing.formData.fullName}_${existing.formData.phone}_${existing.formData.email}_${existing.formData.projectId}`;
-        if (key === contactKey && blob.key !== code) {
+        const existingNormPhone = (existing.formData.phone || '').replace(/\D/g, '');
+        const existingKey = `${existing.formData.fullName}_${existingNormPhone}_${existing.formData.projectId}`;
+        if (existingKey === contactKey && blob.key !== code) {
           await autoStore.delete(blob.key);
           console.log(`Deleted auto draft with key ${blob.key}`);
           const index = await autoStore.get('_index', { type: 'json' }) || [];
@@ -49,14 +52,15 @@ exports.handler = async (event) => {
       }
     }
 
-    // Удаляем из manual-хранилища
+    // Удаляем из manual-хранилища все записи с таким же contactKey
     const manualList = await manualStore.list();
     for (const blob of manualList.blobs) {
       if (blob.key.includes('/')) continue;
       const existing = await manualStore.get(blob.key, { type: 'json' });
       if (existing) {
-        const key = `${existing.fullName}_${existing.phone}_${existing.email}_${existing.projectId}`;
-        if (key === contactKey) {
+        const existingNormPhone = (existing.phone || '').replace(/\D/g, '');
+        const existingKey = `${existing.fullName}_${existingNormPhone}_${existing.projectId}`;
+        if (existingKey === contactKey) {
           await manualStore.delete(blob.key);
           console.log(`Deleted manual draft with key ${blob.key}`);
           const index = await manualStore.get('_index', { type: 'json' }) || [];
