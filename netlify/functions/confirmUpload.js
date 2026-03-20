@@ -23,14 +23,12 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Candidate not found' }) };
     }
 
-    // Формируем публичные ссылки на файлы
-    const baseUrl = process.env.R2_PUBLIC_URL; // для публичного доступа (нужно настроить)
-    // Или используем endpoint для скачивания (если включено публичное чтение)
-    const files = fileKeys.map(f => ({
-      index: f.index,
-      url: `${baseUrl}/${f.key}`, // предполагаем, что бакет публичный
-      key: f.key,
-    }));
+    // Формируем объект files, где ключи — task_индекс, значения — ссылки для скачивания через getFile
+    const files = {};
+    for (const f of fileKeys) {
+      const fileName = f.key.split('/').pop(); // извлекаем имя файла
+      files[`task_${f.index}`] = `/.netlify/functions/getFile?code=${candidateId}&file=${encodeURIComponent(fileName)}&type=manual`;
+    }
 
     record.status = status;
     record.files = files;
