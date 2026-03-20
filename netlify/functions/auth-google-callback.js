@@ -16,19 +16,32 @@ exports.handler = async (event) => {
     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
     console.log('Using redirectUri:', redirectUri);
+    console.log('NETLIFY_SITE_ID:', process.env.NETLIFY_SITE_ID);
+    console.log('NETLIFY_ACCESS_TOKEN defined:', !!process.env.NETLIFY_ACCESS_TOKEN);
 
     try {
         const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
         const { tokens } = await oauth2Client.getToken(code);
         console.log('Tokens obtained:', tokens ? 'yes' : 'no');
 
+        // Создаём хранилище с явным apiURL
         const store = getStore({
             name: 'google-tokens',
             siteID: process.env.NETLIFY_SITE_ID,
             token: process.env.NETLIFY_ACCESS_TOKEN,
+            apiURL: 'https://api.netlify.com'
         });
+
         const key = state;
-        let tokenData = await store.get(key, { type: 'json' }) || {};
+        let tokenData = {};
+        try {
+            tokenData = await store.get(key, { type: 'json' });
+            if (!tokenData) tokenData = {};
+        } catch (err) {
+            console.error('Error reading token from store (assuming empty):', err.message);
+            tokenData = {};
+        }
+
         tokenData.refresh_token = tokens.refresh_token;
         await store.setJSON(key, tokenData);
         console.log('Token saved for user:', key);

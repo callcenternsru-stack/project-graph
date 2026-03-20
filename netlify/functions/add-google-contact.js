@@ -16,9 +16,19 @@ exports.handler = async (event) => {
             name: 'google-tokens',
             siteID: process.env.NETLIFY_SITE_ID,
             token: process.env.NETLIFY_ACCESS_TOKEN,
+            apiURL: 'https://api.netlify.com'
         });
-        const tokenData = await store.get(recruiterId, { type: 'json' });
-        if (!tokenData || !tokenData.refresh_token) {
+
+        let tokenData = {};
+        try {
+            tokenData = await store.get(recruiterId, { type: 'json' });
+            if (!tokenData) tokenData = {};
+        } catch (err) {
+            console.error('Error reading token from store:', err.message);
+            return { statusCode: 401, body: JSON.stringify({ error: 'Google not connected' }) };
+        }
+
+        if (!tokenData.refresh_token) {
             return { statusCode: 401, body: JSON.stringify({ error: 'Google not connected' }) };
         }
 
@@ -31,7 +41,6 @@ exports.handler = async (event) => {
             refresh_token: tokenData.refresh_token
         });
 
-        // Создание контакта через People API
         const people = google.people({ version: 'v1', auth: oauth2Client });
         const contact = {
             names: [{ givenName: fullName }],
@@ -39,9 +48,8 @@ exports.handler = async (event) => {
         };
         await people.people.createContact({ requestBody: contact });
 
-        // Формируем ссылку для Telegram (можно улучшить)
         const cleanPhone = phoneNumber.replace(/\D/g, '');
-        const telegramUrl = `https://t.me/+${cleanPhone}`; // не всегда работает, но оставим как было
+        const telegramUrl = `https://t.me/+${cleanPhone}`;
 
         return {
             statusCode: 200,

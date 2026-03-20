@@ -11,11 +11,22 @@ exports.handler = async (event) => {
             name: 'google-tokens',
             siteID: process.env.NETLIFY_SITE_ID,
             token: process.env.NETLIFY_ACCESS_TOKEN,
+            apiURL: 'https://api.netlify.com'
         });
-        const tokenData = await store.get(recruiterId, { type: 'json' });
-        const connected = tokenData && tokenData.refresh_token ? true : false;
+
+        let tokenData = {};
+        try {
+            tokenData = await store.get(recruiterId, { type: 'json' });
+            if (!tokenData) tokenData = {};
+        } catch (err) {
+            console.error('Error reading token from store (assuming empty):', err.message);
+            tokenData = {};
+        }
+
+        const connected = !!(tokenData && tokenData.refresh_token);
         return {
             statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ connected })
         };
     } catch (error) {
