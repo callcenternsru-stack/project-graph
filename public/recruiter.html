@@ -2037,6 +2037,25 @@
             updateCandidateProgress(candidate.phone, candidate.project);
         }
 
+        // ========== НОВАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ КАНДИДАТА ПО ID ==========
+        function loadCandidateById(id) {
+            // Ищем кандидата в myCandidates (контакты рекрутера)
+            const idx = myCandidates.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                currentCandidateIndex = idx;
+                loadCandidateIntoForm(idx);
+                return;
+            }
+            // Если не нашли в myCandidates, ищем в allCandidates (например, черновики, орг. встречи и т.д.)
+            const candidate = allCandidates.find(c => c.id === id);
+            if (candidate) {
+                editingExternalCandidate = candidate;
+                loadCandidateIntoForm(-1);
+            } else {
+                showNotification('Кандидат не найден', 'error');
+            }
+        }
+
         // ========== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ СРАВНЕНИЯ ПО ДВУМ ПАРАМЕТРАМ ==========
         function matchesTwoFields(candidate, phone, fullName, project) {
             // Нормализуем телефон кандидата
@@ -2321,11 +2340,11 @@
             }
 
             let html = '';
-            filteredList.forEach((candidate, index) => {
+            filteredList.forEach((candidate) => {
                 const status = candidate.callResult || 'ожидает связи';
                 const statusClass = candidate.callResult ? '' : 'waiting';
                 html += `
-                    <div class="candidate-card" data-index="${index}" data-id="${candidate.id}">
+                    <div class="candidate-card" data-id="${candidate.id}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
                             <div class="value highlight">${candidate.fullName || '—'}</div>
@@ -2349,11 +2368,10 @@
 
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    const index = card.dataset.index;
-                    if (index !== undefined) {
-                        editingExternalCandidate = null; // сбрасываем внешнего кандидата
-                        currentCandidateIndex = parseInt(index);
-                        loadCandidateIntoForm(currentCandidateIndex);
+                    const id = card.dataset.id;
+                    if (id) {
+                        editingExternalCandidate = null;
+                        loadCandidateById(id);
                         showForm();
                     }
                 });
@@ -2370,7 +2388,7 @@
             filteredList.forEach(candidate => {
                 const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
                 html += `
-                    <div class="candidate-card" data-index="${myCandidates.findIndex(c => c.id === candidate.id)}" data-id="${candidate.id}">
+                    <div class="candidate-card" data-id="${candidate.id}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
                             <div class="value highlight">${candidate.fullName}</div>
@@ -2397,11 +2415,10 @@
             container.innerHTML = html;
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    const index = card.dataset.index;
-                    if (index !== undefined) {
+                    const id = card.dataset.id;
+                    if (id) {
                         editingExternalCandidate = null;
-                        currentCandidateIndex = parseInt(index);
-                        loadCandidateIntoForm(currentCandidateIndex);
+                        loadCandidateById(id);
                         showForm();
                     }
                 });
@@ -2477,22 +2494,8 @@
                 card.addEventListener('click', (e) => {
                     const id = card.dataset.id;
                     if (id) {
-                        // Находим черновик в allCandidates
-                        const draft = allCandidates.find(c => c.id === id);
-                        if (draft) {
-                            editingExternalCandidate = {
-                                id: draft.id,
-                                type: draft.type,
-                                fullName: draft.fullName,
-                                phone: draft.phone,
-                                project: draft.project,
-                                recruitmentStatus: draft.recruitmentStatus,
-                                trainingDate: draft.trainingDate,
-                                trainingTime: draft.trainingTime
-                            };
-                            loadCandidateIntoForm(-1); // загружаем внешнего кандидата
-                            showForm();
-                        }
+                        loadCandidateById(id);
+                        showForm();
                     }
                 });
             });
@@ -2549,20 +2552,8 @@
                 card.addEventListener('click', (e) => {
                     if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
                     const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus,
-                            trainingDate: candidate.trainingDate,
-                            trainingTime: candidate.trainingTime
-                        };
-                        loadCandidateIntoForm(-1);
+                    if (id) {
+                        loadCandidateById(id);
                         showForm();
                     }
                 });
@@ -2616,20 +2607,8 @@
                 card.addEventListener('click', (e) => {
                     if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
                     const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus,
-                            trainingDate: candidate.trainingDate,
-                            trainingTime: candidate.trainingTime
-                        };
-                        loadCandidateIntoForm(-1);
+                    if (id) {
+                        loadCandidateById(id);
                         showForm();
                     }
                 });
@@ -2683,20 +2662,8 @@
                 card.addEventListener('click', (e) => {
                     if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
                     const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    const candidate = allCandidates.find(c => c.id === id && c.type === type);
-                    if (candidate) {
-                        editingExternalCandidate = {
-                            id: candidate.id,
-                            type: candidate.type,
-                            fullName: candidate.fullName,
-                            phone: candidate.phone,
-                            project: candidate.project,
-                            recruitmentStatus: candidate.recruitmentStatus,
-                            trainingDate: candidate.trainingDate,
-                            trainingTime: candidate.trainingTime
-                        };
-                        loadCandidateIntoForm(-1);
+                    if (id) {
+                        loadCandidateById(id);
                         showForm();
                     }
                 });
@@ -3290,10 +3257,12 @@
                 if (response.ok) {
                     const newCandidates = await response.json();
                     newCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    const currentId = (currentCandidateIndex >= 0 && currentCandidateIndex < myCandidates.length)
-                        ? myCandidates[currentCandidateIndex].id
-                        : null;
+                    
+                    const oldIndex = currentCandidateIndex;
+                    const currentId = (oldIndex >= 0 && oldIndex < myCandidates.length) ? myCandidates[oldIndex].id : null;
+                    
                     myCandidates = newCandidates;
+                    
                     let newIndex = -1;
                     if (currentId) {
                         newIndex = myCandidates.findIndex(c => c.id === currentId);
@@ -3304,12 +3273,22 @@
                     if (newIndex === -1 && myCandidates.length > 0) {
                         newIndex = 0;
                     }
-                    currentCandidateIndex = newIndex;
-                    if (currentView === 'main') {
-                        loadCandidateIntoForm(currentCandidateIndex);
-                        updateStats();
-                    } else if (currentView === 'candidates') {
-                        applySearchAndFilter(); // обновить список с учетом поиска
+                    
+                    // Если индекс изменился или кандидат пропал – загружаем нового в форму
+                    if (newIndex !== oldIndex) {
+                        currentCandidateIndex = newIndex;
+                        if (currentView === 'main') {
+                            loadCandidateIntoForm(currentCandidateIndex);
+                        }
+                    } else {
+                        // Индекс не изменился – обновляем только статистику и прогресс-бар
+                        if (currentView === 'main') {
+                            updateStats();
+                            if (currentCandidateIndex >= 0 && myCandidates[currentCandidateIndex]) {
+                                const candidate = myCandidates[currentCandidateIndex];
+                                updateCandidateProgress(candidate.phone, candidate.project);
+                            }
+                        }
                     }
                 }
             } catch (error) {
