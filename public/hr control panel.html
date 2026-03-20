@@ -1483,15 +1483,15 @@
                     <button class="add-btn" onclick="openAddModal('recruiter')">+ Добавить рекрутера</button>
                 </div>
                 <div class="table-container">
-                    <table>
+                     <table>
                         <thead>
-                            <tr>
+                             <tr>
                                 <th>ФИО (логин)</th>
                                 <th>Пароль</th>
                                 <th>Телефон</th>
                                 <th>Email</th>
                                 <th>Действия</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
             `;
@@ -1500,17 +1500,17 @@
             } else {
                 state.recruiters.forEach((rec, index) => {
                     html += `
-                        <tr>
-                            <td>${rec.name || ''}</td>
-                            <td><code>${rec.password || '—'}</code></td>
-                            <td>${rec.phone || ''}</td>
-                            <td>${rec.email || ''}</td>
+                         <tr>
+                             <td>${rec.name || ''}</td>
+                             <td><code>${rec.password || '—'}</code></td>
+                             <td>${rec.phone || ''}</td>
+                             <td>${rec.email || ''}</td>
                             <td class="actions">
                                 <button class="import-btn" onclick="importCandidates(${index})" title="Загрузить базу кандидатов">📤</button>
                                 <button class="edit-btn" onclick="openEditModal('recruiter', ${index})">✏️</button>
                                 <button class="delete-btn" onclick="deleteItem('recruiter', ${index})">✕</button>
-                            </td>
-                        </tr>
+                             </td>
+                         </tr>
                     `;
                 });
             }
@@ -1557,7 +1557,7 @@
                     const meeting = c.meetingTime ? c.meetingTime : '—';
                     const checked = selectedCandidateIds.has(c.id) ? 'checked' : '';
                     rowsHtml += `
-                        <tr>
+                         <tr>
                             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
                             <td>${new Date(c.createdAt).toLocaleDateString()}</td>
                             <td>${c.fullName}</td>
@@ -1571,7 +1571,7 @@
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
                             <td><button class="delete-candidate-btn" onclick="deleteCandidateFromBase('${c.id}')">✕</button></td>
-                        </tr>
+                         </tr>
                     `;
                 });
             }
@@ -1747,15 +1747,15 @@
                     </div>
                 </div>
                 <div class="table-container">
-                    <table>
+                     <table>
                         <thead>
-                            <tr>
+                             <tr>
                                 <th>Тип</th>
                                 <th>Проекты</th>
                                 <th>Название</th>
                                 <th>Текст скрипта</th>
                                 <th>Действия</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
             `;
@@ -1767,16 +1767,16 @@
                     const plainText = script.content.replace(/<[^>]*>/g, '');
                     const projectNames = script.projectNames ? script.projectNames.join(', ') : (script.projectName || '—');
                     html += `
-                        <tr>
-                            <td>${typeLabel}</td>
-                            <td>${projectNames}</td>
-                            <td>${script.title || ''}</td>
-                            <td>${plainText.substring(0, 100)}${plainText.length > 100 ? '…' : ''}</td>
+                         <tr>
+                             <td>${typeLabel}</td>
+                             <td>${projectNames}</td>
+                             <td>${script.title || ''}</td>
+                             <td>${plainText.substring(0, 100)}${plainText.length > 100 ? '…' : ''}</td>
                             <td class="actions">
                                 <button class="edit-btn" onclick="openEditModal('${script.type === 'test' ? 'testScript' : 'script'}', ${index})">✏️</button>
                                 <button class="delete-btn" onclick="deleteItem('script', ${index})">✕</button>
-                            </td>
-                        </tr>
+                             </td>
+                         </tr>
                     `;
                 });
             }
@@ -1884,11 +1884,11 @@
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr>
+                             <tr>
                                 <th>Проект</th>
                                 <th>Параметры</th>
                                 <th>Действия</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
             `;
@@ -1898,13 +1898,13 @@
                 state.characteristics.forEach((char, index) => {
                     const paramsStr = `ОС: ${char.os || '—'}, Подкл.: ${char.connectionType || '—'}, Скорость: ${char.internetSpeed || '—'}, RAM: ${char.ram || '—'}, Ядра: ${char.cores || '—'}, Частота: ${char.cpuFreq || '—'} ГГц`;
                     html += `
-                        <tr>
-                            <td>${char.projectName || '—'}</td>
-                            <td>${paramsStr}</td>
+                         <tr>
+                             <td>${char.projectName || '—'}</td>
+                             <td>${paramsStr}</td>
                             <td class="actions">
                                 <button class="delete-btn" onclick="deleteCharacteristic(${index})">✕</button>
-                            </td>
-                        </tr>
+                             </td>
+                         </tr>
                     `;
                 });
             }
@@ -2772,7 +2772,7 @@
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr>
+                             <tr>
                                 <th>Дата</th>
                                 <th>ФИО</th>
                                 <th>Проект</th>
@@ -2780,7 +2780,7 @@
                                 <th>Тип</th>
                                 <th>Статус</th>
                                 <th>Действия</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
             `;
@@ -2813,16 +2813,16 @@
 
                     html += `
                         <tr data-id="${c.id}" data-type="${c.type}" onclick="showCandidateDetails('${c.id}', '${c.type}')" style="cursor:pointer;">
-                            <td>${date}</td>
-                            <td>${c.fullName}</td>
-                            <td>${c.project}</td>
-                            <td>${recruiterSelect}</td>
-                            <td>${typeLabel}</td>
-                            <td>${statusSelect}</td>
-                            <td>
+                             <td>${date}</td>
+                             <td>${c.fullName}</td>
+                             <td>${c.project}</td>
+                             <td>${recruiterSelect}</td>
+                             <td>${typeLabel}</td>
+                             <td>${statusSelect}</td>
+                             <td>
                                 <button class="delete-btn" onclick="event.stopPropagation(); deleteCandidate('${c.id}', '${c.type}')">✕</button>
-                            </td>
-                        </tr>
+                             </td>
+                         </tr>
                     `;
                 });
             }
@@ -2830,6 +2830,7 @@
             container.innerHTML = html;
         }
 
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ showCandidateDetails
         function showCandidateDetails(id, type) {
             const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
             if (!candidate) return;
@@ -2887,18 +2888,14 @@
                     const match = key.match(/^task_(\d+)$/);
                     if (match) {
                         const taskNum = parseInt(match[1]) + 1;
-                        let filename = '';
-                        try {
-                            const urlObj = new URL(url, window.location.origin);
-                            filename = decodeURIComponent(urlObj.searchParams.get('file') || '');
-                        } catch (e) {
-                            const fileParam = url.split('&file=')[1]?.split('&')[0] || '';
-                            filename = decodeURIComponent(fileParam);
-                        }
-                        taskFiles[taskNum] = { url, filename };
+                        taskFiles[taskNum] = { url, filename: url.split('/').pop() };
                     }
                 }
-            filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">Скачать</a></li>`;
+                for (let i = 1; i <= 7; i++) {
+                    if (taskFiles[i]) {
+                        filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">Скачать</a></li>`;
+                    }
+                }
                 filesHtml += '</ul>';
             } else {
                 filesHtml = '<p>Файлы отсутствуют или проверка ещё не завершена.</p>';
@@ -3069,14 +3066,14 @@
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr>
+                             <tr>
                                 <th>Дата</th>
                                 <th>Рекрутер</th>
                                 <th>Описание</th>
                                 <th>Качество (%)</th>
                                 <th>Файл</th>
                                 <th>Действия</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
             `;
@@ -3090,17 +3087,17 @@
                     const quality = entry.quality !== undefined ? entry.quality : '—';
                     const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="download-btn">📁 Скачать</a>` : '—';
                     html += `
-                        <tr>
-                            <td>${date}</td>
-                            <td>${recruiterName}</td>
-                            <td>${description}</td>
+                         <tr>
+                             <td>${date}</td>
+                             <td>${recruiterName}</td>
+                             <td>${description}</td>
                             <td style="text-align:center;"><span class="quality-badge">${quality}</span></td>
-                            <td>${fileLink}</td>
+                             <td>${fileLink}</td>
                             <td class="actions">
                                 <button class="edit-btn" onclick="editAnalytics('${entry.id}')">✏️</button>
                                 <button class="delete-btn" onclick="deleteAnalytics('${entry.id}')">✕</button>
-                            </td>
-                        </tr>
+                             </td>
+                         </tr>
                     `;
                 });
             }
