@@ -1336,8 +1336,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Страна</label>
-                            <select id="country">
+                            <label>Страна <span style="color: #ff6b6b;">*</span></label>
+                            <select id="country" required>
                                 <option value="Кыргызстан" selected>Кыргызстан</option>
                                 <option value="Узбекистан">Узбекистан</option>
                                 <option value="Россия">Россия</option>
@@ -1346,8 +1346,8 @@
                         </div>
 
                         <div class="form-group full-width">
-                            <label>Дата обучения</label>
-                            <select id="trainingDateSelect">
+                            <label>Дата обучения <span style="color: #ff6b6b;">*</span></label>
+                            <select id="trainingDateSelect" required>
                                 <option value="">— выберите дату —</option>
                                 <option value="2026-03-04" selected data-time="10:00-18:00">2026-03-04</option>
                                 <option value="2026-03-05" data-time="09:00-17:00">2026-03-05</option>
@@ -1355,13 +1355,13 @@
                         </div>
 
                         <div class="form-group full-width">
-                            <label>Время обучения</label>
-                            <input type="text" id="trainingTimeInput" placeholder="чч:мм" value="10:00-18:00">
+                            <label>Время обучения <span style="color: #ff6b6b;">*</span></label>
+                            <input type="text" id="trainingTimeInput" placeholder="чч:мм" value="10:00-18:00" required>
                         </div>
 
                         <div class="form-group">
-                            <label>Результат звонка</label>
-                            <select id="callResult">
+                            <label>Результат звонка <span style="color: #ff6b6b;">*</span></label>
+                            <select id="callResult" required>
                                 <option value="">— выберите —</option>
                                 <option value="Дозвонился">Дозвонился</option>
                                 <option value="Не дозвонился">Не дозвонился</option>
@@ -2260,7 +2260,7 @@
             const filterChips = document.querySelectorAll('.filter-chip');
 
             searchInput.addEventListener('input', function() {
-                searchQuery = this.value.toLowerCase();
+                searchQuery = this.value.toLowerCase().trim();
                 applySearchAndFilter();
             });
 
@@ -2300,17 +2300,19 @@
 
             // Фильтруем по поисковому запросу
             if (searchQuery) {
+                const searchLower = searchQuery.toLowerCase().trim();
+                const searchPhone = searchQuery.replace(/\D/g, ''); // только цифры для телефона
                 currentList = currentList.filter(c => {
-                    const fullName = (c.fullName || '').toLowerCase();
-                    const phone = (c.phone || '').toLowerCase();
-                    const project = (c.project || '').toLowerCase();
-                    const status = (c.callResult || c.recruitmentStatus || '').toLowerCase();
+                    const fullName = (c.fullName || '').toLowerCase().trim();
+                    const phoneNorm = (c.phone || '').replace(/\D/g, '');
+                    const project = (c.project || '').toLowerCase().trim();
+                    const status = (c.callResult || c.recruitmentStatus || '').toLowerCase().trim();
                     switch (searchFilter) {
-                        case 'name': return fullName.includes(searchQuery);
-                        case 'phone': return phone.includes(searchQuery);
-                        case 'project': return project.includes(searchQuery);
-                        case 'status': return status.includes(searchQuery);
-                        default: return fullName.includes(searchQuery) || phone.includes(searchQuery) || project.includes(searchQuery) || status.includes(searchQuery);
+                        case 'name': return fullName.includes(searchLower);
+                        case 'phone': return phoneNorm.includes(searchPhone);
+                        case 'project': return project.includes(searchLower);
+                        case 'status': return status.includes(searchLower);
+                        default: return fullName.includes(searchLower) || phoneNorm.includes(searchPhone) || project.includes(searchLower) || status.includes(searchLower);
                     }
                 });
             }
@@ -2743,8 +2745,11 @@
             // Если редактируется внешний кандидат (черновик или из других вкладок)
             if (editingExternalCandidate) {
                 const newStatus = document.getElementById('callResult').value;
-                if (!newStatus) {
-                    showNotification('Выберите статус', 'error');
+                const country = document.getElementById('country').value;
+                const trainingDate = document.getElementById('trainingDateSelect').value;
+                const trainingTime = document.getElementById('trainingTimeInput').value.trim();
+                if (!newStatus || !country || !trainingDate || !trainingTime) {
+                    showNotification('Заполните обязательные поля: Страна, Дата обучения, Время обучения, Результат звонка', 'error');
                     return;
                 }
 
@@ -2755,9 +2760,9 @@
                     fullName: document.getElementById('fullName').value.trim(),
                     phone: document.getElementById('phoneNumber').value.trim(),
                     project: document.getElementById('project').value,
-                    country: document.getElementById('country').value,
-                    trainingDate: document.getElementById('trainingDateSelect').value,
-                    trainingTime: document.getElementById('trainingTimeInput').value.trim(),
+                    country: country,
+                    trainingDate: trainingDate,
+                    trainingTime: trainingTime,
                     recruitmentStatus: newStatus,
                     comment: document.getElementById('comment').value.trim()
                 };
@@ -2802,9 +2807,13 @@
             const fullName = document.getElementById('fullName').value.trim();
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const project = document.getElementById('project').value;
+            const country = document.getElementById('country').value;
+            const trainingDate = document.getElementById('trainingDateSelect').value;
+            const trainingTime = document.getElementById('trainingTimeInput').value.trim();
+            const callResult = document.getElementById('callResult').value;
 
-            if (!fullName || !phoneNumber || !project) {
-                showNotification('Заполните обязательные поля (ФИО, телефон, проект)', 'error');
+            if (!fullName || !phoneNumber || !project || !country || !trainingDate || !trainingTime || !callResult) {
+                showNotification('Заполните обязательные поля: ФИО, телефон, проект, страна, дата обучения, время обучения, результат звонка', 'error');
                 return;
             }
 
@@ -2818,11 +2827,11 @@
             candidate.fullName = fullName;
             candidate.phone = phoneNumber;
             candidate.project = project;
-            candidate.country = document.getElementById('country').value;
-            candidate.trainingDate = document.getElementById('trainingDateSelect').value;
-            candidate.trainingTime = document.getElementById('trainingTimeInput').value.trim();
-            candidate.meetingTime = candidate.trainingTime;
-            candidate.callResult = document.getElementById('callResult').value;
+            candidate.country = country;
+            candidate.trainingDate = trainingDate;
+            candidate.trainingTime = trainingTime;
+            candidate.meetingTime = trainingTime;
+            candidate.callResult = callResult;
             candidate.contactType = document.getElementById('contactType').value;
             candidate.comment = document.getElementById('comment').value.trim();
 
@@ -2959,8 +2968,7 @@
                             <th>Описание</th>
                             <th>Качество</th>
                             <th>Файл</th>
-                        </tr>
-                    </thead>
+                        </thead>
                     <tbody>
             `;
             myAnalytics.forEach(entry => {
@@ -2969,12 +2977,12 @@
                 const quality = entry.quality !== undefined ? entry.quality : '—';
                 const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
                 html += `
-                    <tr>
+                     <tr>
                         <td>${date}</td>
                         <td>${description}</td>
                         <td><span class="quality-badge">${quality}</span></td>
                         <td>${fileLink}</td>
-                    </tr>
+                     </tr>
                 `;
             });
             html += '</tbody></table>';
