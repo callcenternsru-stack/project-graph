@@ -5,6 +5,8 @@ exports.handler = async (event) => {
     const code = event.queryStringParameters?.code;
     const state = event.queryStringParameters?.state;
 
+    console.log('Callback invoked with code:', code ? 'present' : 'missing', 'state:', state);
+
     if (!code || !state) {
         return { statusCode: 400, body: 'Missing code or state' };
     }
@@ -13,10 +15,12 @@ exports.handler = async (event) => {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
+    console.log('Using redirectUri:', redirectUri);
+
     try {
         const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
         const { tokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
+        console.log('Tokens obtained:', tokens ? 'yes' : 'no');
 
         const store = getStore({
             name: 'google-tokens',
@@ -27,6 +31,7 @@ exports.handler = async (event) => {
         let tokenData = await store.get(key, { type: 'json' }) || {};
         tokenData.refresh_token = tokens.refresh_token;
         await store.setJSON(key, tokenData);
+        console.log('Token saved for user:', key);
 
         return {
             statusCode: 302,
@@ -36,6 +41,10 @@ exports.handler = async (event) => {
         };
     } catch (error) {
         console.error('Error in auth-google-callback:', error);
+        if (error.response) {
+            console.error('Response status:', error.response.status);
+            console.error('Response data:', error.response.data);
+        }
         return {
             statusCode: 500,
             body: JSON.stringify({ error: error.message })
