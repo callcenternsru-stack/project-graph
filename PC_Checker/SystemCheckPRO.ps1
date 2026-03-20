@@ -1,15 +1,13 @@
-```powershell
 <#
-    SystemCheckPRO.ps1 – Финальная версия с привязкой к проектам по ключу
-    (Ижевск, Видное, Кемерово, Москва)
-    - Определение активных аудиоустройств через winmm.dll (альтернативный метод)
-    ... (остальные возможности)
+    SystemCheckPRO.ps1 – Исправленная версия
+    - Окно благодарности остаётся открытым во время теста интернета и отправки
+    - Финальное окно появляется после завершения
 #>
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Автоматический запрос прав администратора при необходимости
+# Автоматический запрос прав администратора
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     $exePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
     $psi = New-Object System.Diagnostics.ProcessStartInfo
@@ -31,28 +29,47 @@ $scriptDir = [System.IO.Path]::GetDirectoryName([System.Diagnostics.Process]::Ge
 $soxExe = Join-Path $scriptDir "sox.exe"
 $speedtestExe = Join-Path $scriptDir "speedtest.exe"
 $audioOutputPath = Join-Path $scriptDir "voice_recording.wav"
+$audioMp3Path = Join-Path $scriptDir "voice_recording.mp3"
 $logPath = Join-Path $scriptDir "debug_submit.log"
 
 # --- Тексты для теста печати ---
 $typingTexts = @(
-    "Правое легкое человека вмещает больше воздуха, чем левое. Нервные импульсы в теле движутся со скоростью около 90 метров в секунду. Первый в истории одеколон появился как средство профилактики чумы. У пчелы два желудка – один для меда, другой для пищи. Существует более 100 различных вирусов, вызывающих насморк.",
+    "Правое легкое человека вмещает больше воздуха, чем левое. Нервные импульсы в теле движутся со скоростью около 90 метров в секунду. Первый в истории одеколон появился как средство профилактики чумы. У пчелы два желудка - один для меда, другой для пищи. Существует более 100 различных вирусов, вызывающих насморк.",
     "Сердце белого кита имеет размер автомобиля Фольксваген Жук. В городе Крескилл в Нью-Джерси все коты и кошки должны носить 3 колокольчика, чтобы птицы всегда знали об их расположении. Если желтую канарейку кормить красным перцем, цвет ее перьев станет ярко-оранжевым. Более чем 70 % населения планеты никогда не слышали звонка телефона. В Африке только один из 40 человек имеет телефон. Язык хамелеона вдвое длиннее его тела.",
-    "Бегемоты рождаются под водой. Большинство частиц пыли в доме — отмершие клетки кожи. Человеческий организм производит и убивает 15 миллионов красных кровяных телец в секунду. Одна пчелиная семья заготавливает за лето до 150 кг меда. Гром может быть слышен на расстоянии 25 км. Хоккейная шайба может развить скорость 160 километров в час."
+    "Бегемоты рождаются под водой. Большинство частиц пыли в доме - отмершие клетки кожи. Человеческий организм производит и убивает 15 миллионов красных кровяных телец в секунду. Одна пчелиная семья заготавливает за лето до 150 кг меда. Гром может быть слышен на расстоянии 25 км. Хоккейная шайба может развить скорость 160 километров в час."
 )
 
-# --- Функция проверки кода на сервере (с поддержкой мастер-ключа) ---
+# Флаг для включения мастер-ключа через файл testmode.flag
+$testModeFile = Join-Path $scriptDir "testmode.flag"
+$masterKeyEnabled = Test-Path $testModeFile
+
+# Функция логирования с ротацией
+function Add-Log {
+    param([string]$Message)
+    $maxLines = 1000
+    $lines = @()
+    if (Test-Path $logPath) {
+        $lines = Get-Content $logPath
+        if ($lines.Count -ge $maxLines) {
+            $lines = $lines | Select-Object -Last ($maxLines - 1)
+        }
+    }
+    $lines += "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $Message"
+    $lines | Out-File $logPath -Encoding UTF8
+}
+
+# --- Функция проверки кода на сервере ---
 function Test-Code {
     param([string]$Code)
     
-    if ($Code -eq "ADMIN123") {
-        return $true, $null, $null   # мастер-ключ, проект и id отсутствуют
+    if ($masterKeyEnabled -and $Code -eq "ADMIN123") {
+        return $true, $null, $null
     }
     
     $url = "https://grafic1.netlify.app/.netlify/functions/checkCode?code=$Code"
     try {
         $response = Invoke-RestMethod -Uri $url -Method Get -ErrorAction Stop
         if ($response.valid -eq $true) {
-            # Возвращаем projectId из formData
             return $true, $response.formData.project, $response.formData.projectId
         } else {
             return $false, $null, $null
@@ -62,17 +79,15 @@ function Test-Code {
     }
 }
 
-# ===================== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ИЗВЛЕЧЕНИЯ ВЕРСИИ WINDOWS =====================
+# ===================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====================
 function Get-WindowsVersion {
     param([string]$OsString)
-    # Ищем число после "Windows", например "Windows 10" или "Windows 11"
     if ($OsString -match 'Windows (\d+)') {
         return [int]$matches[1]
     }
     return $null
 }
 
-# ===================== ФУНКЦИЯ АНАЛИЗА ВСЕХ АУДИОУСТРОЙСТВ (через WMI) =====================
 function Get-AudioDevices {
     $audioInfo = @()
     try {
@@ -82,30 +97,19 @@ function Get-AudioDevices {
             $status = $dev.Status
             $deviceType = "Неизвестно"
             
-            if ($name -match "USB") {
-                $deviceType = "USB"
-            } elseif ($name -match "Bluetooth|BT") {
-                $deviceType = "Bluetooth"
-            } elseif ($name -match "HDMI") {
-                $deviceType = "HDMI"
-            } elseif ($name -match "Realtek.*(High Definition|HD Audio)" -or $name -match "Встроенное") {
-                $deviceType = "Встроенное (аналоговое)"
-            } else {
-                if ($name -match "High Definition Audio|Audio Device|Динамики|Микрофон") {
-                    $deviceType = "Аналоговое (встроенное)"
-                } else {
-                    $deviceType = "Аналоговое (предположительно)"
-                }
+            if ($name -match "USB") { $deviceType = "USB" }
+            elseif ($name -match "Bluetooth|BT") { $deviceType = "Bluetooth" }
+            elseif ($name -match "HDMI") { $deviceType = "HDMI" }
+            elseif ($name -match "Realtek.*(High Definition|HD Audio)" -or $name -match "Встроенное") { $deviceType = "Встроенное (аналоговое)" }
+            else {
+                if ($name -match "High Definition Audio|Audio Device|Динамики|Микрофон") { $deviceType = "Аналоговое (встроенное)" }
+                else { $deviceType = "Аналоговое (предположительно)" }
             }
             
             $capabilities = "Неизвестно"
-            if ($name -match "микрофон|mic|Microphone") {
-                $capabilities = "Запись"
-            } elseif ($name -match "динамики|наушники|Speaker|Headphone|Headset") {
-                $capabilities = "Воспроизведение"
-            } else {
-                $capabilities = "Универсальное"
-            }
+            if ($name -match "микрофон|mic|Microphone") { $capabilities = "Запись" }
+            elseif ($name -match "динамики|наушники|Speaker|Headphone|Headset") { $capabilities = "Воспроизведение" }
+            else { $capabilities = "Универсальное" }
             
             $audioInfo += @{
                 Name = $name
@@ -125,7 +129,7 @@ function Get-AudioDevices {
     return $audioInfo
 }
 
-# ===================== НОВЫЙ МЕТОД: ОПРЕДЕЛЕНИЕ АКТИВНЫХ УСТРОЙСТВ ЧЕРЕЗ WINMM.DLL (ИСПРАВЛЕННАЯ КОДИРОВКА) =====================
+# ОПРЕДЕЛЕНИЕ АКТИВНЫХ УСТРОЙСТВ ЧЕРЕЗ WINMM.DLL
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -213,7 +217,6 @@ function Get-DefaultAudioDevices {
 
     $inputInfo = $null
     if ($inputName) {
-        # Определяем тип по тому же алгоритму, что и в Get-AudioDevices
         $deviceType = "Неизвестно"
         if ($inputName -match "USB") { $deviceType = "USB" }
         elseif ($inputName -match "Bluetooth|BT") { $deviceType = "Bluetooth" }
@@ -254,28 +257,40 @@ function Get-DefaultAudioDevices {
     }
 }
 
-# ===================== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ТИПА ИНТЕРНЕТА =====================
 function Get-NetworkType {
     $connectionType = "Неизвестно"
     try {
-        $adapters = Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionId -and $_.NetEnabled -eq $true }
-        foreach ($adapter in $adapters) {
-            $name = $adapter.Name
-            if ($name -match "Ethernet|LAN|PCIe") {
-                $connectionType = "LAN (кабель)"
-                break
-            } elseif ($name -match "Wi-Fi|Wireless|WLAN") {
-                $connectionType = "Wi-Fi"
-                break
+        $profiles = Get-NetConnectionProfile -ErrorAction Stop
+        $activeProfile = $profiles | Where-Object { $_.IPv4Connectivity -eq "Internet" -or $_.IPv6Connectivity -eq "Internet" } | Select-Object -First 1
+        if ($activeProfile) {
+            $interfaceAlias = $activeProfile.InterfaceAlias
+            $adapter = Get-NetAdapter -Name $interfaceAlias -ErrorAction SilentlyContinue
+            if ($adapter) {
+                if ($adapter.Name -match "Ethernet|LAN|PCIe") {
+                    return "LAN (кабель)"
+                } elseif ($adapter.Name -match "Wi-Fi|Wireless|WLAN") {
+                    return "Wi-Fi"
+                }
             }
         }
     } catch {
-        $connectionType = "Ошибка определения"
+        try {
+            $adapters = Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionId -and $_.NetEnabled -eq $true }
+            foreach ($adapter in $adapters) {
+                $name = $adapter.Name
+                if ($name -match "Ethernet|LAN|PCIe") {
+                    $connectionType = "LAN (кабель)"; break
+                } elseif ($name -match "Wi-Fi|Wireless|WLAN") {
+                    $connectionType = "Wi-Fi"; break
+                }
+            }
+        } catch {
+            $connectionType = "Ошибка определения"
+        }
     }
     return $connectionType
 }
 
-# ===================== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ТИПА УСТРОЙСТВА =====================
 function Get-DeviceType {
     $deviceType = "Неизвестно"
     try {
@@ -292,17 +307,11 @@ function Get-DeviceType {
                 $chassisTypes = $enclosure.ChassisTypes
                 $isLaptopChassis = $false
                 foreach ($type in $chassisTypes) {
-                    if ($type -in @(8, 9, 10, 14)) {
-                        $isLaptopChassis = $true
-                        break
-                    }
+                    if ($type -in @(8,9,10,14)) { $isLaptopChassis = $true; break }
                 }
                 $hasBattery = Get-WmiObject -Class Win32_Battery -ErrorAction SilentlyContinue
-                if ($isLaptopChassis -or $hasBattery) {
-                    $deviceType = "Ноутбук"
-                } else {
-                    $deviceType = "Настольный ПК (предположительно)"
-                }
+                if ($isLaptopChassis -or $hasBattery) { $deviceType = "Ноутбук" }
+                else { $deviceType = "Настольный ПК (предположительно)" }
             }
         }
     } catch {
@@ -311,29 +320,23 @@ function Get-DeviceType {
     return $deviceType
 }
 
-# ===================== ФУНКЦИЯ ЗАГРУЗКИ ТРЕБОВАНИЙ ПРОЕКТА ПО ID =====================
 function Get-ProjectRequirements {
     param([string]$ProjectId)
-    
-    if ([string]::IsNullOrEmpty($ProjectId)) {
-        return $null
-    }
-    
+    if ([string]::IsNullOrEmpty($ProjectId)) { return $null }
     $url = "https://grafic1.netlify.app/.netlify/functions/getCharacteristics?projectId=$([System.Uri]::EscapeDataString($ProjectId))"
     try {
         $response = Invoke-RestMethod -Uri $url -Method Get -ErrorAction Stop
         if ($response -is [array] -and $response.Count -gt 0) {
-            return $response[0]  # предполагаем, что на проект одна запись
+            return $response[0]
         } else {
             return $null
         }
     } catch {
-        Add-Content $logPath "[$(Get-Date)] Ошибка загрузки характеристик: $_"
+        Add-Log "Ошибка загрузки характеристик: $_"
         return $null
     }
 }
 
-# ===================== ФУНКЦИЯ СРАВНЕНИЯ С ТРЕБОВАНИЯМИ (С МИНИМАЛЬНОЙ ОС) =====================
 function Compare-WithRequirements {
     param(
         $Hardware,
@@ -345,15 +348,15 @@ function Compare-WithRequirements {
     
     if (-not $Requirements) {
         return @{
-            VerdictString = "Характеристики проекта не заданы. Решение не вынесено."
+            VerdictString = "Характеристики проекта не заданы. Решение будет принято HR-менеджером."
             Issues = @()
         }
     }
     
     $issues = @()
-    $details = @()   # для строки отчёта
+    $details = @()
     
-    # --- ОС (минимальная версия) ---
+    # --- ОС ---
     $os = $Hardware.OS
     $requiredOs = $Requirements.os
     $reqVer = Get-WindowsVersion -OsString $requiredOs
@@ -385,7 +388,7 @@ function Compare-WithRequirements {
         }
     }
     
-    # --- Скорость интернета (минимальная) ---
+    # --- Скорость интернета ---
     if ($InternetResult) {
         $download = $InternetResult.download
         $requiredSpeed = [int]($Requirements.internetSpeed -replace ' .*', '')
@@ -398,7 +401,7 @@ function Compare-WithRequirements {
         $details += "Нет данных о скорости интернета"
     }
     
-    # --- ОЗУ (минимальная) ---
+    # --- ОЗУ ---
     $ram = $Hardware.RAM
     $ramValue = [int]($ram -replace ' .*', '')
     $requiredRam = [int]($Requirements.ram -replace ' .*', '')
@@ -407,7 +410,7 @@ function Compare-WithRequirements {
         $details += "ОЗУ: требуется не менее $requiredRam ГБ, получено $ramValue ГБ"
     }
     
-    # --- Ядра (минимальное количество) ---
+    # --- Ядра ---
     $cpu = $Hardware.CPU
     if ($cpu -match 'Ядер: (\d+)') {
         $cores = [int]$matches[1]
@@ -418,7 +421,7 @@ function Compare-WithRequirements {
         }
     }
     
-    # --- Тип подключения гарнитуры (USB) ---
+    # --- Тип подключения гарнитуры ---
     $audioIssue = $false
     if ($DefaultAudioInput -and $DefaultAudioInput.Type -notmatch "USB") {
         $audioIssue = $true
@@ -431,7 +434,6 @@ function Compare-WithRequirements {
         $issues += "AudioType"
     }
     
-    # Формируем строку для отчёта
     $verdictString = if ($issues.Count -eq 0) {
         "✅ ПОДХОДИТ: все требования выполнены."
     } else {
@@ -444,40 +446,44 @@ function Compare-WithRequirements {
     }
 }
 
-# ===================== ОКНО ЗАГРУЗКИ =====================
-$global:loadingForm = $null
+# ===================== ОКНО ПРОГРЕССА =====================
+$global:progressForm = $null
+$global:progressLabel = $null
 
-function Show-Loading {
-    if ($global:loadingForm -ne $null) { return }
-    $form = New-Object System.Windows.Forms.Form
-    $form.Text = ""
-    $form.Size = New-Object System.Drawing.Size(300, 120)
-    $form.StartPosition = "CenterScreen"
-    $form.FormBorderStyle = "None"
-    $form.ControlBox = $false
-    $form.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 30)
-    $form.TopMost = $true
-
-    $label = New-Object System.Windows.Forms.Label
-    $label.Text = "⏳ Идет загрузка, подождите пожалуйста..."
-    $label.Location = New-Object System.Drawing.Point(20, 30)
-    $label.Size = New-Object System.Drawing.Size(260, 40)
-    $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-    $label.ForeColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
-    $label.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $form.Controls.Add($label)
-
-    $global:loadingForm = $form
-    $form.Show()
-    $form.Refresh()
+function Show-Progress {
+    param([string]$Message)
+    if ($global:progressForm -eq $null) {
+        $form = New-Object System.Windows.Forms.Form
+        $form.Text = "SystemCheck PRO"
+        $form.Size = New-Object System.Drawing.Size(400, 150)
+        $form.StartPosition = "CenterScreen"
+        $form.FormBorderStyle = "FixedDialog"
+        $form.ControlBox = $false
+        $form.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
+        $form.TopMost = $true
+        $label = New-Object System.Windows.Forms.Label
+        $label.Location = New-Object System.Drawing.Point(20, 40)
+        $label.Size = New-Object System.Drawing.Size(360, 60)
+        $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+        $label.ForeColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
+        $label.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+        $form.Controls.Add($label)
+        $global:progressForm = $form
+        $global:progressLabel = $label
+        $form.Show()
+        $form.Refresh()
+        [System.Windows.Forms.Application]::DoEvents()
+    }
+    $global:progressLabel.Text = $Message
+    $global:progressForm.Refresh()
     [System.Windows.Forms.Application]::DoEvents()
 }
 
-function Hide-Loading {
-    if ($global:loadingForm -ne $null) {
-        $global:loadingForm.Close()
-        $global:loadingForm.Dispose()
-        $global:loadingForm = $null
+function Hide-Progress {
+    if ($global:progressForm -ne $null) {
+        $global:progressForm.Close()
+        $global:progressForm.Dispose()
+        $global:progressForm = $null
     }
 }
 
@@ -485,13 +491,14 @@ function Hide-Loading {
 function Show-WelcomeWindow {
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "SystemCheck PRO"
-    $form.Size = New-Object System.Drawing.Size(800, 550)
+    $form.Size = New-Object System.Drawing.Size(800, 500)
     $form.StartPosition = "CenterScreen"
     $form.FormBorderStyle = "FixedDialog"
     $form.MaximizeBox = $false
     $form.MinimizeBox = $false
     $form.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
     $form.ControlBox = $false
+    $form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon([System.Windows.Forms.Application]::ExecutablePath)
 
     $labelCompany = New-Object System.Windows.Forms.Label
     $labelCompany.Text = "КОНТАКТ-СЕРВИС"
@@ -521,15 +528,15 @@ function Show-WelcomeWindow {
 "@
     $labelInstruction = New-Object System.Windows.Forms.Label
     $labelInstruction.Text = $instruction
-    $labelInstruction.Location = New-Object System.Drawing.Point(100, 160)
-    $labelInstruction.Size = New-Object System.Drawing.Size(600, 150)
+    $labelInstruction.Location = New-Object System.Drawing.Point(100, 150)
+    $labelInstruction.Size = New-Object System.Drawing.Size(600, 120)
     $labelInstruction.TextAlign = [System.Drawing.ContentAlignment]::TopLeft
     $labelInstruction.ForeColor = [System.Drawing.Color]::White
     $labelInstruction.Font = New-Object System.Drawing.Font("Segoe UI", 11)
     $form.Controls.Add($labelInstruction)
 
     $textBox = New-Object System.Windows.Forms.TextBox
-    $textBox.Location = New-Object System.Drawing.Point(200, 330)
+    $textBox.Location = New-Object System.Drawing.Point(200, 290)
     $textBox.Size = New-Object System.Drawing.Size(400, 30)
     $textBox.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 30)
     $textBox.ForeColor = [System.Drawing.Color]::White
@@ -540,7 +547,7 @@ function Show-WelcomeWindow {
 
     $buttonStart = New-Object System.Windows.Forms.Button
     $buttonStart.Text = "Начать проверку"
-    $buttonStart.Location = New-Object System.Drawing.Point(290, 400)
+    $buttonStart.Location = New-Object System.Drawing.Point(290, 350)
     $buttonStart.Size = New-Object System.Drawing.Size(220, 50)
     $buttonStart.BackColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
     $buttonStart.ForeColor = [System.Drawing.Color]::Black
@@ -553,7 +560,7 @@ function Show-WelcomeWindow {
 
     $buttonClose = New-Object System.Windows.Forms.Button
     $buttonClose.Text = "Закрыть"
-    $buttonClose.Location = New-Object System.Drawing.Point(20, 470)
+    $buttonClose.Location = New-Object System.Drawing.Point(20, 430)
     $buttonClose.Size = New-Object System.Drawing.Size(100, 30)
     $buttonClose.BackColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
     $buttonClose.ForeColor = [System.Drawing.Color]::Black
@@ -564,7 +571,7 @@ function Show-WelcomeWindow {
 
     $errorLabel = New-Object System.Windows.Forms.Label
     $errorLabel.Text = ""
-    $errorLabel.Location = New-Object System.Drawing.Point(100, 500)
+    $errorLabel.Location = New-Object System.Drawing.Point(100, 430)
     $errorLabel.Size = New-Object System.Drawing.Size(600, 20)
     $errorLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
     $errorLabel.ForeColor = [System.Drawing.Color]::Red
@@ -616,13 +623,14 @@ if ([string]::IsNullOrEmpty($candidateCode)) {
 # === Загрузка требований проекта по projectId ===
 $global:requirements = Get-ProjectRequirements -ProjectId $global:candidateProjectId
 if ($global:requirements) {
-    Add-Content $logPath "[$(Get-Date)] Загружены требования для проекта $global:candidateProjectId"
+    Add-Log "Загружены требования для проекта $global:candidateProjectId"
 } else {
-    Add-Content $logPath "[$(Get-Date)] Требования для проекта $global:candidateProjectId не найдены"
+    Add-Log "Требования для проекта $global:candidateProjectId не найдены"
 }
 
 # === СБОР ХАРАКТЕРИСТИК ПК ===
-Show-Loading
+Show-Progress "Идет загрузка..."
+Start-Sleep -Milliseconds 100
 
 function Get-BaseHardwareInfo {
     $info = @{}
@@ -658,13 +666,12 @@ function Get-BaseHardwareInfo {
 
 $hardware = Get-BaseHardwareInfo
 $audioDevices = Get-AudioDevices
-$defaultAudio = Get-DefaultAudioDevices   # <-- теперь используется winmm.dll
+$defaultAudio = Get-DefaultAudioDevices
 $networkType = Get-NetworkType
 $deviceType = Get-DeviceType
 
-Hide-Loading
-
 # ===================== ТЕСТ СКОРОСТИ ПЕЧАТИ =====================
+Hide-Progress
 function Show-TypingTest {
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "Тест скорости печати"
@@ -675,6 +682,7 @@ function Show-TypingTest {
     $form.MinimizeBox = $false
     $form.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
     $form.ControlBox = $false
+    $form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon([System.Windows.Forms.Application]::ExecutablePath)
 
     $title = New-Object System.Windows.Forms.Label
     $title.Text = "ТЕСТ СКОРОСТИ ПЕЧАТИ"
@@ -732,18 +740,6 @@ function Show-TypingTest {
     $buttonRestart.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $buttonRestart.Cursor = [System.Windows.Forms.Cursors]::Hand
     $form.Controls.Add($buttonRestart)
-
-    # Временная кнопка пропуска теста
-    $buttonSkip = New-Object System.Windows.Forms.Button
-    $buttonSkip.Text = "⏭ Пропустить тест (временно)"
-    $buttonSkip.Location = New-Object System.Drawing.Point(500, 400)
-    $buttonSkip.Size = New-Object System.Drawing.Size(150, 35)
-    $buttonSkip.BackColor = [System.Drawing.Color]::Gray
-    $buttonSkip.ForeColor = [System.Drawing.Color]::White
-    $buttonSkip.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-    $buttonSkip.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-    $buttonSkip.Cursor = [System.Windows.Forms.Cursors]::Hand
-    $form.Controls.Add($buttonSkip)
 
     $labelResult = New-Object System.Windows.Forms.Label
     $labelResult.Location = New-Object System.Drawing.Point(30, 460)
@@ -926,20 +922,6 @@ function Show-TypingTest {
         Update-TypingText -newIndex $newIndex
     })
 
-    $buttonSkip.Add_Click({
-        # Устанавливаем результат по умолчанию (нулевой)
-        $global:typingResult = @{
-            Duration = 0
-            Characters = 0
-            Errors = 0
-            CPM = 0
-            Accuracy = 100
-            TextIndex = -1
-        }
-        $form.Tag.Completed = $true
-        $form.Close()
-    })
-
     $buttonNext.Add_Click({
         $form.Close()
     })
@@ -951,12 +933,15 @@ Show-TypingTest
 
 # ===================== ЗАПИСЬ ГОЛОСА =====================
 if (-not (Test-Path $soxExe)) {
-    [System.Windows.Forms.MessageBox]::Show(
-        "Не найден файл sox.exe. Пожалуйста, скачайте его и положите в папку с программой.",
+    $result = [System.Windows.Forms.MessageBox]::Show(
+        "Не найден файл sox.exe. Программа записи голоса не будет работать.`nХотите скачать sox?",
         "Ошибка",
-        [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
         [System.Windows.Forms.MessageBoxIcon]::Error
     )
+    if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
+        Start-Process "https://sourceforge.net/projects/sox/files/sox/14.4.2/sox-14.4.2-win32.zip/download"
+    }
     [System.Windows.Forms.Application]::Exit()
     exit
 }
@@ -969,6 +954,31 @@ function Test-WavFile {
     return $true
 }
 
+function Convert-WavToMp3 {
+    param([string]$WavPath, [string]$Mp3Path)
+    try {
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = $soxExe
+        $psi.Arguments = "`"$WavPath`" -C 96 `"$Mp3Path`""
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $p = [System.Diagnostics.Process]::Start($psi)
+        $p.WaitForExit(10000)
+        if ($p.ExitCode -eq 0 -and (Test-Path $Mp3Path)) {
+            Add-Log "Конвертация WAV->MP3 успешна, размер: $((Get-Item $Mp3Path).Length) байт"
+            return $true
+        } else {
+            Add-Log "Конвертация WAV->MP3 не удалась, код выхода: $($p.ExitCode)"
+            return $false
+        }
+    } catch {
+        Add-Log "Исключение при конвертации: $_"
+        return $false
+    }
+}
+
 function Show-VoiceRecording {
     $formVoice = New-Object System.Windows.Forms.Form
     $formVoice.Text = "Запись голоса"
@@ -979,6 +989,7 @@ function Show-VoiceRecording {
     $formVoice.MinimizeBox = $false
     $formVoice.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
     $formVoice.ControlBox = $false
+    $formVoice.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon([System.Windows.Forms.Application]::ExecutablePath)
 
     $title = New-Object System.Windows.Forms.Label
     $title.Text = "ЗАПИСЬ ГОЛОСА"
@@ -1182,6 +1193,15 @@ function Show-VoiceRecording {
         if (Test-Path $audioOutputPath) {
             $global:voiceRecorded = $true
             $global:lastAudioFile = $audioOutputPath
+            Show-Progress "Конвертация голосовой записи в MP3..."
+            if (Convert-WavToMp3 -WavPath $audioOutputPath -Mp3Path $audioMp3Path) {
+                $global:lastAudioFile = $audioMp3Path
+                Add-Log "Голосовая запись сконвертирована в MP3"
+            } else {
+                Add-Log "Конвертация не удалась, используется WAV"
+                # Оставляем WAV
+            }
+            Hide-Progress
         } else {
             $global:voiceRecorded = $false
         }
@@ -1201,34 +1221,36 @@ $global:lastAudioFile = $null
 Show-VoiceRecording
 
 # ===================== ПРОМЕЖУТОЧНОЕ ОКНО БЛАГОДАРНОСТИ =====================
-$thankYouForm = New-Object System.Windows.Forms.Form
-$thankYouForm.Text = "Спасибо"
-$thankYouForm.Size = New-Object System.Drawing.Size(500, 180)
-$thankYouForm.StartPosition = "CenterScreen"
-$thankYouForm.FormBorderStyle = "FixedDialog"
-$thankYouForm.MaximizeBox = $false
-$thankYouForm.MinimizeBox = $false
-$thankYouForm.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
-$thankYouForm.ControlBox = $false
-$thankYouForm.TopMost = $true
+$messageForm = New-Object System.Windows.Forms.Form
+$messageForm.Text = "Спасибо"
+$messageForm.Size = New-Object System.Drawing.Size(500, 180)
+$messageForm.StartPosition = "CenterScreen"
+$messageForm.FormBorderStyle = "FixedDialog"
+$messageForm.MaximizeBox = $false
+$messageForm.MinimizeBox = $false
+$messageForm.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
+$messageForm.ControlBox = $false
+$messageForm.TopMost = $true
 
-$thankYouLabel = New-Object System.Windows.Forms.Label
-$thankYouLabel.Text = "Спасибо за ваши ответы, ожидайте, идет проверка.`nЭто займет не более 10 минут."
-$thankYouLabel.Location = New-Object System.Drawing.Point(20, 40)
-$thankYouLabel.Size = New-Object System.Drawing.Size(460, 80)
-$thankYouLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-$thankYouLabel.ForeColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
-$thankYouLabel.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
-$thankYouForm.Controls.Add($thankYouLabel)
+$messageLabel = New-Object System.Windows.Forms.Label
+$messageLabel.Text = "Спасибо за прохождение теста.`nВаши ответы записаны.`nИдет проверка.`nЭто может занять до 10 минут."
+$messageLabel.Location = New-Object System.Drawing.Point(20, 40)
+$messageLabel.Size = New-Object System.Drawing.Size(460, 100)
+$messageLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+$messageLabel.ForeColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
+$messageLabel.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$messageForm.Controls.Add($messageLabel)
 
-$thankYouForm.Show()
+$messageForm.Show()
 [System.Windows.Forms.Application]::DoEvents()
 
-# ===================== ТЕСТ СКОРОСТИ ИНТЕРНЕТА (с фиксированными ID) =====================
+# ===================== ТЕСТ СКОРОСТИ ИНТЕРНЕТА =====================
+# Убираем вывод "Тест скорости интернета..." (просто удаляем строку Show-Progress)
+Start-Sleep -Milliseconds 100
+
 $internetResults = @()
 $internetError = $null
 
-# --- Фиксированные ID серверов (Ижевск, Видное, Кемерово, Москва) ---
 $serverIDs = @(
     @{ City = "Ижевск"; ID = 17014 },
     @{ City = "Видное"; ID = 51387 },
@@ -1240,7 +1262,7 @@ if (Test-Path $speedtestExe) {
     foreach ($server in $serverIDs) {
         $city = $server.City
         $serverId = $server.ID
-        Add-Content $logPath "[$(Get-Date)] Тестируем сервер ${city} (ID $serverId)"
+        Add-Log "Тестируем сервер ${city} (ID $serverId)"
         try {
             $psi = New-Object System.Diagnostics.ProcessStartInfo
             $psi.FileName = $speedtestExe
@@ -1255,7 +1277,7 @@ if (Test-Path $speedtestExe) {
             $p.StartInfo = $psi
             $p.Start() | Out-Null
         
-            if ($p.WaitForExit(60000)) {
+            if ($p.WaitForExit(30000)) {
                 $output = $p.StandardOutput.ReadToEnd()
                 $errorOut = $p.StandardError.ReadToEnd()
                 if ($p.ExitCode -eq 0) {
@@ -1267,7 +1289,7 @@ if (Test-Path $speedtestExe) {
                         Upload = $result.upload.bandwidth / 125000
                         Server = $result.server.name
                     }
-                    Add-Content $logPath "[$(Get-Date)] ${city} успешен: ping=$($result.ping.latency)"
+                    Add-Log "${city} успешен: ping=$($result.ping.latency)"
                 } else {
                     $fullError = $output + $errorOut
                     $err = "speedtest для ${city} завершился с кодом $($p.ExitCode). Вывод: $fullError"
@@ -1275,16 +1297,16 @@ if (Test-Path $speedtestExe) {
                         City = $city
                         Error = $err
                     }
-                    Add-Content $logPath "[$(Get-Date)] Ошибка для ${city}: $err"
+                    Add-Log "Ошибка для ${city}: $err"
                 }
             } else {
                 $p.Kill()
-                $err = "speedtest для ${city} превысил время ожидания"
+                $err = "speedtest для ${city} превысил время ожидания (30 сек)"
                 $internetResults += @{
                     City = $city
                     Error = $err
                 }
-                Add-Content $logPath "[$(Get-Date)] $err"
+                Add-Log "$err"
             }
         } catch {
             $err = "Исключение при запуске speedtest для ${city}: $_"
@@ -1292,12 +1314,12 @@ if (Test-Path $speedtestExe) {
                 City = $city
                 Error = $err
             }
-            Add-Content $logPath "[$(Get-Date)] $err"
+            Add-Log "$err"
         }
     }
 } else {
     $internetError = "speedtest.exe не найден в папке программы"
-    Add-Content $logPath "[$(Get-Date)] $internetError"
+    Add-Log $internetError
 }
 
 # ===================== СОХРАНЕНИЕ ОТЧЁТОВ =====================
@@ -1315,7 +1337,6 @@ if (-not $global:typingResult) {
     }
 }
 
-# Берём первый успешный результат интернета для сравнения (если есть)
 $internetInfoForComparison = $null
 foreach ($res in $internetResults) {
     if (-not $res.ContainsKey('Error')) {
@@ -1324,7 +1345,6 @@ foreach ($res in $internetResults) {
     }
 }
 
-# Выносим вердикт (теперь с возвратом массива проблем)
 $resultCompare = Compare-WithRequirements -Hardware $hardware -NetworkType $networkType -InternetResult $internetInfoForComparison -Requirements $global:requirements -DefaultAudioInput $defaultAudio.Input
 $verdict = $resultCompare.VerdictString
 $issues = $resultCompare.Issues
@@ -1468,61 +1488,90 @@ public class MultipartUploader
 }
 "@
 
-function Submit-Results {
+function Submit-ResultsWithRetry {
     param(
         [string]$Code,
         [string]$ReportPath,
         [string]$ResultsPath,
-        [string]$VoicePath
+        [string]$VoicePath,
+        [int]$MaxRetries = 3
     )
     
-    if ($Code -eq "ADMIN123") {
+    if ($masterKeyEnabled -and $Code -eq "ADMIN123") {
         return $true
     }
     
     $url = "https://grafic1.netlify.app/.netlify/functions/submitResults"
     
-    try {
-        if (-not (Test-Path $ReportPath)) { throw "Файл отчёта не найден: $ReportPath" }
-        if (-not (Test-Path $ResultsPath)) { throw "Файл результатов не найден: $ResultsPath" }
-        if (-not (Test-Path $VoicePath)) { throw "Файл голоса не найден: $VoicePath" }
-        
-        $reportSize = (Get-Item $ReportPath).Length
-        $resultsSize = (Get-Item $ResultsPath).Length
-        $voiceSize = (Get-Item $VoicePath).Length
-        Add-Content $logPath "[$(Get-Date)] Размеры: report=$reportSize, results=$resultsSize, voice=$voiceSize"
-        Add-Content $logPath "[$(Get-Date)] Отправка для кода: $Code"
-        
-        $totalSize = $reportSize + $resultsSize + $voiceSize
-        if ($totalSize -gt 10MB) {
-            Add-Content $logPath "[$(Get-Date)] ОШИБКА: общий размер превышает 10 МБ ($totalSize байт)"
-            return $false
+    $attempt = 0
+    while ($attempt -lt $MaxRetries) {
+        try {
+            if (-not (Test-Path $ReportPath)) { throw "Файл отчёта не найден: $ReportPath" }
+            if (-not (Test-Path $ResultsPath)) { throw "Файл результатов не найден: $ResultsPath" }
+            if (-not (Test-Path $VoicePath)) { throw "Файл голоса не найден: $VoicePath" }
+            
+            $reportSize = (Get-Item $ReportPath).Length
+            $resultsSize = (Get-Item $ResultsPath).Length
+            $voiceSize = (Get-Item $VoicePath).Length
+            Add-Log "Размеры: report=$reportSize, results=$resultsSize, voice=$voiceSize"
+            Add-Log "Отправка для кода: $Code, попытка $($attempt+1)"
+            
+            $totalSize = $reportSize + $resultsSize + $voiceSize
+            if ($totalSize -gt 10MB) {
+                Add-Log "ОШИБКА: общий размер превышает 10 МБ ($totalSize байт)"
+                return $false
+            }
+            
+            Add-Log "Начинаем отправку на $url"
+            $responseBody = [MultipartUploader]::UploadFiles($url, $Code, $ReportPath, $ResultsPath, $VoicePath)
+            Add-Log "Успешно отправлено. Ответ: $responseBody"
+            return $true
+        } catch {
+            $attempt++
+            $errMsg = $_.ToString()
+            Add-Log "Ошибка (попытка $attempt): $errMsg"
+            if ($attempt -ge $MaxRetries) {
+                return $false
+            }
+            Start-Sleep -Seconds (5 * $attempt)
         }
-        
-        Add-Content $logPath "[$(Get-Date)] Начинаем отправку на $url"
-        $responseBody = [MultipartUploader]::UploadFiles($url, $Code, $ReportPath, $ResultsPath, $VoicePath)
-        Add-Content $logPath "[$(Get-Date)] Успешно отправлено. Ответ: $responseBody"
-        return $true
-    } catch {
-        $errMsg = $_.ToString()
-        Add-Content $logPath "[$(Get-Date)] Ошибка: $errMsg"
-        return $false
     }
+    return $false
 }
 
 # Отправляем результаты
-$submitted = Submit-Results -Code $candidateCode -ReportPath $reportPath -ResultsPath $jsonPath -VoicePath $audioOutputPath
+$submitted = Submit-ResultsWithRetry -Code $candidateCode -ReportPath $reportPath -ResultsPath $jsonPath -VoicePath $global:lastAudioFile
 
-# Закрываем окно благодарности
-$thankYouForm.Close()
+# Закрываем промежуточное окно после отправки
+$messageForm.Close()
 
-# ===================== ЛОГИРОВАНИЕ ВЕРДИКТА =====================
-Add-Content $logPath "[$(Get-Date)] Вердикт перед финальным окном: $verdict"
+# ===================== ЛОКАЛЬНОЕ СОХРАНЕНИЕ ПРИ НЕУДАЧЕ =====================
+if (-not $submitted) {
+    $failDir = Join-Path $scriptDir "failed_submits"
+    if (-not (Test-Path $failDir)) { New-Item -ItemType Directory -Path $failDir | Out-Null }
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    Copy-Item $reportPath "$failDir\${candidateCode}_${timestamp}_report.txt"
+    Copy-Item $jsonPath "$failDir\${candidateCode}_${timestamp}_results.json"
+    if (Test-Path $global:lastAudioFile) {
+        Copy-Item $global:lastAudioFile "$failDir\${candidateCode}_${timestamp}_voice.$(Split-Path $global:lastAudioFile -Extension)"
+    }
+    Add-Log "Данные сохранены локально в $failDir"
+    [System.Windows.Forms.MessageBox]::Show(
+        "Не удалось отправить данные на сервер. Результаты сохранены в папке `"failed_submits`". Свяжитесь с администратором.",
+        "Ошибка отправки",
+        [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxIcon]::Error
+    )
+} else {
+    Add-Log "Отправка успешна"
+}
 
-# ===================== ФИНАЛЬНОЕ ОКНО С ДЕТАЛИЗИРОВАННЫМ ВЕРДИКТОМ =====================
+# ===================== ФИНАЛЬНОЕ ОКНО =====================
+Hide-Progress
+
 $finalForm = New-Object System.Windows.Forms.Form
 $finalForm.Text = "Результат проверки"
-$finalForm.Size = New-Object System.Drawing.Size(800, 550)   # такой же размер, как у приветственного окна
+$finalForm.Size = New-Object System.Drawing.Size(800, 550)
 $finalForm.StartPosition = "CenterScreen"
 $finalForm.FormBorderStyle = "FixedDialog"
 $finalForm.MaximizeBox = $false
@@ -1530,8 +1579,8 @@ $finalForm.MinimizeBox = $false
 $finalForm.BackColor = [System.Drawing.Color]::FromArgb(0, 0, 0)
 $finalForm.ControlBox = $false
 $finalForm.TopMost = $true
+$finalForm.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon([System.Windows.Forms.Application]::ExecutablePath)
 
-# Создаём RichTextBox для отображения многострочного текста с прокруткой
 $richMessage = New-Object System.Windows.Forms.RichTextBox
 $richMessage.Location = New-Object System.Drawing.Point(20, 20)
 $richMessage.Size = New-Object System.Drawing.Size(760, 450)
@@ -1546,7 +1595,7 @@ $finalForm.Controls.Add($richMessage)
 
 $buttonClose = New-Object System.Windows.Forms.Button
 $buttonClose.Text = "Закрыть"
-$buttonClose.Location = New-Object System.Drawing.Point(350, 480)   # по центру
+$buttonClose.Location = New-Object System.Drawing.Point(350, 480)
 $buttonClose.Size = New-Object System.Drawing.Size(100, 30)
 $buttonClose.BackColor = [System.Drawing.Color]::FromArgb(255, 215, 0)
 $buttonClose.ForeColor = [System.Drawing.Color]::Black
@@ -1560,43 +1609,39 @@ $buttonClose.Add_Click({
     [System.Windows.Forms.Application]::Exit()
 })
 
-# Формируем текст в зависимости от проблем
 if ($issues.Count -eq 0) {
-    # Подходит
-    $richMessage.Text = "✅ ПОДХОДИТ`n`nВсе технические требования проекта выполнены. Спасибо за прохождение проверки!"
+    if ($global:requirements) {
+        $richMessage.Text = "✅ ПОДХОДИТ`n`nВсе технические требования проекта выполнены. Спасибо за прохождение проверки!"
+    } else {
+        $richMessage.Text = "ℹ️ ДАННЫЕ ОТПРАВЛЕНЫ`n`nХарактеристики проекта не заданы. Ожидайте решения HR-менеджера."
+    }
 } else {
-    # Не подходит – собираем детализированные пункты по категориям
     $message = "Благодарим вас за прохождение проверки. К сожалению, по ее результатам мы вынуждены сообщить, что ваше рабочее место не соответствует техническим требованиям, необходимым для выполнения задач.`n`n"
     $message += "Детализация причин:`n"
     
-    # Категория "ПК" (ОС, RAM, Cores)
     $pcIssues = $issues | Where-Object { $_ -in @("OS", "RAM", "Cores") }
     if ($pcIssues.Count -gt 0) {
         $message += "• По характеристикам ПК: К сожалению, технические характеристики вашего устройства (в частности, объем оперативной памяти, количество ядер процессора и тактовая частота) не дотягивают до минимально необходимого уровня.`n"
     }
     
-    # Скорость интернета
     if ($issues -contains "InternetSpeed") {
         $message += "• По скорости интернета: Зафиксированная скорость интернет-соединения ниже минимально допустимой для стабильной работы.`n"
     }
     
-    # Тип подключения (LAN/Wi-Fi)
     if ($issues -contains "ConnectionType") {
         $message += "• По типу подключения к сети: Для обеспечения стабильной связи обязательно использование проводного подключения (LAN-кабель). В данный момент вы используете Wi-Fi, что не гарантирует надежности соединения.`n"
     }
     
-    # Тип подключения наушников (USB)
     if ($issues -contains "AudioType") {
         $message += "• По типу подключения наушников: Для работы требуется гарнитура с USB-подключением. Обнаруженный тип подключения ваших наушников не соответствует этим требованиям.`n"
     }
     
     $message += "`nДля более подробной информацией напишите нам:`n"
-    $message += "Вацап `n"
-    $message += "Телеграмм:"
+    $message += "Вацап +7 909 373 9341`n"
+    $message += "Телеграмм: @Rucontactservices"
     
     $richMessage.Text = $message
 }
 
 $finalForm.ShowDialog()
 [System.Windows.Forms.Application]::Exit()
-```
