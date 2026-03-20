@@ -1580,7 +1580,7 @@
             hideLoading();
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ ОТПРАВКИ ДЛЯ R2 ==========
+        // ========== ОТПРАВКА РЕЗУЛЬТАТОВ РУЧНОЙ ПРОВЕРКИ (С ДОБАВЛЕНИЕМ ТЕКСТОВЫХ ОТВЕТОВ И ТЕСТОВ) ==========
         async function submitManualResults() {
             console.log('=== submitManualResults started ===');
             const formData = getFormData();
@@ -1606,6 +1606,22 @@
                 return;
             }
             console.log('Files to upload indices:', filesIndicesWithData);
+
+            // Вычисляем результаты теста (задание №3)
+            const taskScores = {};
+            for (let i = 0; i < tasks.length; i++) {
+                if (tasks[i].questions) {
+                    const score = calculateQuizScore(i);
+                    if (score) taskScores[i] = score;
+                }
+            }
+
+            // Добавляем в formData текстовые ответы и результаты теста
+            const extendedFormData = {
+                ...formData,
+                taskInputs: taskInputs,
+                taskScores: taskScores
+            };
 
             showLoading();
 
@@ -1644,7 +1660,7 @@
                         name: fileToSend.name,
                         type: fileToSend.type,
                         size: fileToSend.size,
-                        file: fileToSend, // сам файл для последующей загрузки
+                        file: fileToSend,
                     });
                 }
             }
@@ -1656,7 +1672,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        formData,
+                        formData: extendedFormData,
                         filesInfo: filesInfo.map(f => ({ index: f.index, name: f.name, type: f.type, size: f.size })),
                         candidateId: currentManualId,
                     }),
