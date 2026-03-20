@@ -2898,11 +2898,7 @@
                         taskFiles[taskNum] = { url, filename };
                     }
                 }
-                for (let i = 1; i <= 7; i++) {
-                    if (taskFiles[i]) {
-                        filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">${taskFiles[i].filename}</a></li>`;
-                    }
-                }
+            filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">Скачать</a></li>`;
                 filesHtml += '</ul>';
             } else {
                 filesHtml = '<p>Файлы отсутствуют или проверка ещё не завершена.</p>';
