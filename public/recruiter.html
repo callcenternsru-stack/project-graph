@@ -1437,11 +1437,92 @@
     </div>
 
     <!-- Модальные окна (оставлены без изменений) -->
-    <div id="messageModal" class="message-modal">...</div>
-    <div id="transferModal" class="transfer-modal">...</div>
-    <div id="stageModal" class="stage-modal">...</div>
-    <div id="bulkTransferModal" class="bulk-transfer-modal">...</div>
-    <div class="login-container" id="loginContainer">...</div>
+    <div id="messageModal" class="message-modal">
+        <div class="modal-header">
+            <span id="messageModalTitle">Выберите сообщение</span>
+            <button class="modal-close" onclick="closeMessageModal()">×</button>
+        </div>
+        <div class="modal-content">
+            <div id="messageList" class="message-list"></div>
+            <div class="message-preview">
+                <div class="label">Предпросмотр:</div>
+                <div id="messagePreviewText" class="text"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="send-btn" onclick="sendSelectedMessage()">Отправить</button>
+                <button class="cancel-btn" onclick="closeMessageModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="transferModal" class="transfer-modal">
+        <div class="modal-header">
+            <span>Передать кандидата</span>
+            <button class="modal-close" onclick="closeTransferModal()">×</button>
+        </div>
+        <div class="modal-content">
+            <h4 style="margin-bottom: 12px;">Выберите рекрутера</h4>
+            <div id="transferRecruiterList" class="transfer-recruiter-list"></div>
+            <div class="transfer-actions">
+                <button class="transfer-confirm-btn" onclick="confirmTransfer()">Передать</button>
+                <button class="transfer-cancel-btn" onclick="closeTransferModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stageModal" class="stage-modal">
+        <div class="modal-header">
+            <span id="stageModalTitle">Кандидаты этапа</span>
+            <button class="modal-close" onclick="closeStageModal()">×</button>
+        </div>
+        <div class="modal-content">
+            <div id="stageCandidatesList"></div>
+        </div>
+    </div>
+
+    <div id="bulkTransferModal" class="bulk-transfer-modal">
+        <div class="modal-header">
+            <span>Массовая передача кандидатов</span>
+            <button class="modal-close" onclick="closeBulkTransferModal()">×</button>
+        </div>
+        <div class="modal-content">
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="transfer-category-btn" data-category="contacts">Контакты</button>
+                    <button class="transfer-category-btn" data-category="verification">Проверка</button>
+                    <button class="transfer-category-btn" data-category="draft">Черновик</button>
+                    <button class="transfer-category-btn" data-category="orgMeeting">Орг. встреча</button>
+                    <button class="transfer-category-btn" data-category="training">Обучение</button>
+                    <button class="transfer-category-btn" data-category="rejects">Отказы</button>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label>Передать рекрутеру:</label>
+                    <select id="bulkTransferRecruiterSelect" class="recruiter-select"></select>
+                </div>
+            </div>
+            <div id="bulkTransferCandidatesList" class="bulk-transfer-list"></div>
+            <div class="bulk-transfer-actions">
+                <button class="select-all-btn" onclick="selectAllTransferCandidates()">Выбрать всех</button>
+                <button class="clear-all-btn" onclick="deselectAllTransferCandidates()">Снять всех</button>
+                <button class="transfer-btn" onclick="confirmBulkTransfer()">Передать выбранных</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Восстановленная форма входа -->
+    <div class="login-container" id="loginContainer">
+        <h2><i class="fas fa-address-card"></i> Вход в систему</h2>
+        <div class="form-group">
+            <label>Логин</label>
+            <input type="text" id="loginUsername" placeholder="Введите имя рекрутера" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" id="loginPassword" placeholder="Введите пароль" autocomplete="current-password">
+        </div>
+        <button class="login-btn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Войти</button>
+        <div id="loginError" class="error-message"></div>
+    </div>
 
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
@@ -2889,7 +2970,8 @@
                             <th>Описание</th>
                             <th>Качество</th>
                             <th>Файл</th>
-                        </thead>
+                        </tr>
+                    </thead>
                     <tbody>
             `;
             myAnalytics.forEach(entry => {
@@ -2899,14 +2981,14 @@
                 const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
                 html += `
                     <tr>
-                        <td>${date}侧
-                        <td>${description}侧
-                        <td><span class="quality-badge">${quality}</span>侧
-                        <td>${fileLink}侧
+                        <td>${date}</td>
+                        <td>${description}</td>
+                        <td><span class="quality-badge">${quality}</span></td>
+                        <td>${fileLink}</td>
                     </tr>
                 `;
             });
-            html += '</tbody>   \\</table>';
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
@@ -2969,12 +3051,13 @@
                             <tr>
                                 <th>Проект</th>
                                 ${statuses.map(st => `<th>${st}</th>`).join('')}
-                            </thead>
+                            </tr>
+                        </thead>
                         <tbody>
             `;
 
             projects.forEach(proj => {
-                tableHtml += `</tr><td>${proj}</td>`;
+                tableHtml += `<tr><td>${proj}</td>`;
                 statuses.forEach(st => {
                     tableHtml += `<td>${matrix[proj][st] || 0}</td>`;
                 });
@@ -3681,6 +3764,17 @@
                     loadTransferCandidates(category);
                 });
             });
+
+            // Добавляем обработчик нажатия Enter для формы входа
+            const loginUsername = document.getElementById('loginUsername');
+            const loginPassword = document.getElementById('loginPassword');
+            const handleEnter = (e) => {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            };
+            loginUsername.addEventListener('keypress', handleEnter);
+            loginPassword.addEventListener('keypress', handleEnter);
         });
 
         const state = { recruiters: [], scripts: [], characteristics: [] };
