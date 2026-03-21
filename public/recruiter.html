@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ===== УЛУЧШЕННЫЕ СТИЛИ ===== */
         * {
             margin: 0;
             padding: 0;
@@ -52,7 +51,6 @@
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* ===== БОКОВОЕ МЕНЮ ===== */
         .side-menu {
             width: var(--sidebar-width);
             background: var(--bg-secondary);
@@ -103,7 +101,6 @@
         .collapse-toggle button { background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 20px; transition: transform 0.2s; }
         .collapse-toggle button:hover { transform: scale(1.1); }
 
-        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
         .recruiter-interface {
             flex: 1;
             padding: 30px 40px;
@@ -158,7 +155,6 @@
         .refresh-btn:hover { background: var(--accent); color: #000; }
         .schedule-btn:hover, .logout-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
-        /* Карточки статистики */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -208,7 +204,6 @@
         }
         .stat-trend { margin-top: 12px; font-size: 13px; display: flex; align-items: center; gap: 4px; color: var(--success); }
 
-        /* Прогресс-статус */
         .progress-section {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -269,7 +264,6 @@
         .progress-label:hover { color: var(--accent); }
         .progress-label.active { color: var(--accent); font-weight: 600; }
 
-        /* Форма */
         .content-wrapper {
             display: flex;
             gap: 24px;
@@ -361,7 +355,6 @@
         .whatsapp-btn { background: #25D366; color: white; }
         .telegram-btn:hover, .whatsapp-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-        /* Панель кандидатов */
         .candidates-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -484,7 +477,6 @@
         }
         .transfer-icon:hover { background: var(--border-color); color: var(--accent); }
 
-        /* Модальные окна */
         .stage-modal, .message-modal, .transfer-modal, .bulk-transfer-modal {
             position: fixed;
             top: 50%;
@@ -532,7 +524,6 @@
             max-height: calc(85vh - 70px);
         }
 
-        /* Уведомления */
         .notification {
             position: fixed;
             bottom: 20px;
@@ -554,7 +545,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Скелетон */
         .skeleton {
             background: linear-gradient(90deg, var(--bg-tertiary) 25%, #2a2a2a 50%, var(--bg-tertiary) 75%);
             background-size: 200% 100%;
@@ -566,7 +556,6 @@
             100% { background-position: 200% 0; }
         }
 
-        /* Адаптивность */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .side-menu {
@@ -697,39 +686,7 @@
     <div class="login-container" id="loginContainer"><h2><i class="fas fa-address-card"></i> Вход в систему</h2><div class="form-group"><input type="text" id="loginUsername" placeholder=" "><label>Логин</label></div><div class="form-group"><input type="password" id="loginPassword" placeholder=" "><label>Пароль</label></div><button class="login-btn" onclick="login()">Войти</button><div id="loginError" class="error-message"></div></div>
 
     <script>
-        // ========== ПОЛНЫЙ JS-КОД ИЗ ИСХОДНОГО ФАЙЛА ==========
-        // (здесь должен быть весь исходный JavaScript, который был в первом сообщении)
-        // В целях соблюдения длины ответа, он был полностью скопирован из исходного файла,
-        // но в этом фрагменте для краткости я обозначу его комментарием.
-        // В реальном проекте необходимо вставить полный код из исходного файла.
-        // Для демонстрации я приведу только заглушку, но вы можете скопировать его из первого сообщения.
-        console.log("CRM Contact – полная версия с улучшениями");
-        // ... (весь JS из исходного файла)
-        // Важно: все функции (login, initInterface, loadMyCandidates, updateStats, openMessageModal, sendSelectedMessage, и т.д.)
-        // должны быть вставлены без изменений.
-
-        // Дополнительные улучшения: сворачивание меню, анимация чисел, закрытие по Escape
-        (function() {
-            const sideMenu = document.getElementById('sideMenu');
-            const collapseBtn = document.getElementById('collapseSidebarBtn');
-            if (collapseBtn) {
-                collapseBtn.addEventListener('click', () => {
-                    sideMenu.classList.toggle('collapsed');
-                    localStorage.setItem('sidebarCollapsed', sideMenu.classList.contains('collapsed'));
-                });
-                if (localStorage.getItem('sidebarCollapsed') === 'true') sideMenu.classList.add('collapsed');
-            }
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    document.querySelectorAll('.stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show').forEach(modal => {
-                        modal.classList.remove('show');
-                        document.body.classList.remove('menu-open');
-                    });
-                }
-            });
-        })();
-    <script>
-       // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        // ========== ПОЛНЫЙ JS-КОД (рабочая логика) ==========
         let currentRecruiter = null;
         let myCandidates = [];
         let allCandidates = [];
@@ -737,19 +694,11 @@
         let analytics = [];
         let currentCandidateIndex = -1;
         let currentScriptTitle = null;
-        let appData = {
-            projects: [],
-            callResults: [],
-            contactTypes: [],
-            scripts: [],
-            projectTrainings: {}
-        };
+        let appData = { projects: [], callResults: [], contactTypes: [], scripts: [], projectTrainings: {} };
         let currentView = 'main';
         let candidatesTab = 'contacts';
         let scriptProjects = [];
         let previousDraftKeys = new Set();
-        let currentIsDraft = false;
-        let currentDraftId = null;
         let editingExternalCandidate = null;
         let currentMessageType = null;
         let selectedMessageIndex = -1;
@@ -759,24 +708,14 @@
         let selectedTransferRecruiter = null;
         let searchQuery = '';
         let currentCandidateIdForMessage = null;
-
-        // ========== ХРАНЕНИЕ ПРЕДЫДУЩИХ ЗНАЧЕНИЙ ДЛЯ ПОДВКЛАДОК ==========
-        let prevSubCounts = {
-            contacts: 0,
-            verification: 0,
-            draft: 0,
-            orgMeeting: 0,
-            training: 0,
-            rejects: 0
-        };
+        let prevSubCounts = { contacts:0, verification:0, draft:0, orgMeeting:0, training:0, rejects:0 };
         let prevAnalyticsCount = 0;
-
-        // ========== ПЕРЕМЕННЫЕ ДЛЯ МАССОВОЙ ПЕРЕДАЧИ ==========
         let currentTransferCategory = null;
         let currentTransferCandidates = [];
         let selectedTransferIds = new Set();
+        let refreshInterval = null;
+        let isRefreshing = false;
 
-        // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
             const notif = document.createElement('div');
             notif.className = `notification ${type}`;
@@ -785,7 +724,6 @@
             setTimeout(() => notif.remove(), 5000);
         }
 
-        // ========== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ПРЕОБРАЗОВАНИЯ HTML В ТЕКСТ ==========
         function htmlToPlainText(html) {
             const div = document.createElement('div');
             div.style.position = 'absolute';
@@ -797,15 +735,15 @@
             return text;
         }
 
-        // ========== ВХОД ==========
         async function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             if (!username || !password) {
-                showLoginError('Введите логин и пароль');
+                const err = document.getElementById('loginError');
+                err.textContent = 'Введите логин и пароль';
+                err.style.display = 'block';
                 return;
             }
-
             try {
                 const response = await fetch('/.netlify/functions/loginRecruiter', {
                     method: 'POST',
@@ -813,29 +751,20 @@
                     body: JSON.stringify({ username, password })
                 });
                 const data = await response.json();
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || 'Ошибка входа');
-                }
+                if (!response.ok || !data.success) throw new Error(data.error || 'Ошибка входа');
                 currentRecruiter = data.recruiter;
                 sessionStorage.setItem('recruiter', JSON.stringify(currentRecruiter));
-
                 document.querySelector('.side-menu').style.display = 'flex';
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('recruiterInterface').style.display = 'block';
                 initInterface();
             } catch (error) {
-                console.error(error);
-                showLoginError('Неверный логин или пароль');
+                const err = document.getElementById('loginError');
+                err.textContent = 'Неверный логин или пароль';
+                err.style.display = 'block';
             }
         }
 
-        function showLoginError(msg) {
-            const err = document.getElementById('loginError');
-            err.textContent = msg;
-            err.style.display = 'block';
-        }
-
-        // ========== ПРОВЕРКА СТАТУСА GOOGLE ==========
         async function checkGoogleStatus() {
             if (!currentRecruiter) return;
             try {
@@ -851,44 +780,26 @@
                         btn.textContent = '🔗 Подключить Google Контакты';
                     }
                 }
-            } catch (e) {
-                console.error('Ошибка проверки статуса Google', e);
-            }
+            } catch (e) {}
         }
 
-        // ========== ЗАГРУЗКА ВСЕХ РЕКРУТЕРОВ ==========
         async function loadAllRecruiters() {
             try {
                 const res = await fetch('/.netlify/functions/getRecruiters');
-                if (res.ok) {
-                    allRecruiters = await res.json();
-                } else {
-                    console.error('Ошибка загрузки рекрутеров');
-                }
-            } catch (error) {
-                console.error(error);
-            }
+                if (res.ok) allRecruiters = await res.json();
+            } catch (e) {}
         }
 
-        // ========== ЗАГРУЗКА АНАЛИТИКИ ==========
         async function loadAnalytics() {
             try {
                 const res = await fetch('/.netlify/functions/getAnalytics');
-                if (res.ok) {
-                    analytics = await res.json();
-                } else {
-                    console.error('Ошибка загрузки аналитики');
-                }
-            } catch (error) {
-                console.error(error);
-            }
+                if (res.ok) analytics = await res.json();
+            } catch (e) {}
         }
 
-        // ========== ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ВХОДА ==========
         async function initInterface() {
             document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
             document.getElementById('recruiterField').value = currentRecruiter.name;
-
             await loadAllRecruiters();
             await loadReferenceData();
             await loadScripts();
@@ -896,47 +807,31 @@
             await loadAllCandidates();
             await loadAnalytics();
             await checkGoogleStatus();
-
             if (myCandidates.length > 0) {
                 const firstEmptyIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
-                if (firstEmptyIndex !== -1) {
-                    currentCandidateIndex = firstEmptyIndex;
-                    loadCandidateIntoForm(firstEmptyIndex);
-                } else {
-                    currentCandidateIndex = -1;
-                    loadCandidateIntoForm(-1);
-                }
+                if (firstEmptyIndex !== -1) currentCandidateIndex = firstEmptyIndex;
+                else currentCandidateIndex = -1;
+                loadCandidateIntoForm(currentCandidateIndex);
             } else {
                 currentCandidateIndex = -1;
                 loadCandidateIntoForm(-1);
             }
-
             updateStats();
             updateBreadcrumbs();
             updateTabCounts();
             updateMenuCounts();
-
             showForm();
             startAutoRefresh();
-
             initSearch();
         }
 
-        // ========== ЗАГРУЗКА ВСЕХ АНКЕТ ==========
         async function loadAllCandidates() {
             try {
                 const response = await fetch('/.netlify/functions/getAllCandidates');
-                if (response.ok) {
-                    allCandidates = await response.json();
-                } else {
-                    console.error('Ошибка загрузки всех анкет');
-                }
-            } catch (error) {
-                console.error(error);
-            }
+                if (response.ok) allCandidates = await response.json();
+            } catch (e) {}
         }
 
-        // ========== ЗАГРУЗКА СПРАВОЧНИКОВ ==========
         async function loadReferenceData() {
             try {
                 const [projectsRes, callResultsRes, contactTypesRes, trainingsRes] = await Promise.all([
@@ -949,17 +844,12 @@
                 appData.callResults = await callResultsRes.json();
                 appData.contactTypes = await contactTypesRes.json();
                 appData.projectTrainings = await trainingsRes.json();
-
                 fillProjects();
                 fillCallResults();
                 fillContactTypes();
-            } catch (error) {
-                console.error('Ошибка загрузки справочников:', error);
-                showNotification('Не удалось загрузить данные', 'error');
-            }
+            } catch (e) { showNotification('Не удалось загрузить данные', 'error'); }
         }
 
-        // ========== ЗАГРУЗКА СКРИПТОВ ==========
         async function loadScripts() {
             try {
                 const res = await fetch('/.netlify/functions/getScripts');
@@ -968,111 +858,77 @@
                 fillProjects();
                 updateScriptsUI();
                 chatScripts = appData.scripts.filter(s => s.type === 'test' || s.type === 'Чат' || s.type === 'chat');
-                console.log('Загруженные скрипты:', appData.scripts);
-                console.log('Скрипты чата:', chatScripts);
-            } catch (error) {
-                console.error('Ошибка загрузки скриптов:', error);
-            }
+            } catch (e) {}
         }
 
         function updateScriptProjects() {
             const projectSet = new Set();
             appData.scripts.forEach(script => {
                 if (script.type === 'call' || !script.type) {
-                    if (script.projectNames && Array.isArray(script.projectNames)) {
-                        script.projectNames.forEach(name => projectSet.add(name));
-                    } else if (script.projectName) {
-                        projectSet.add(script.projectName);
-                    }
+                    if (script.projectNames && Array.isArray(script.projectNames)) script.projectNames.forEach(name => projectSet.add(name));
+                    else if (script.projectName) projectSet.add(script.projectName);
                 }
             });
             scriptProjects = Array.from(projectSet);
         }
 
-        // ========== ЗАГРУЗКА МОИХ КАНДИДАТОВ ==========
         async function loadMyCandidates() {
             try {
                 const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
                 if (response.ok) {
                     myCandidates = await response.json();
-                    myCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                } else {
-                    console.error('Ошибка загрузки кандидатов');
+                    myCandidates.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                 }
-            } catch (error) {
-                console.error(error);
-            }
+            } catch (e) {}
         }
 
-        // ========== ЗАПОЛНЕНИЕ SELECTОВ ==========
         function fillProjects() {
             const select = document.getElementById('project');
-            select.innerHTML = '<option value="">— выберите проект —</option>' +
-                scriptProjects.map(p => `<option value="${p}">${p}</option>`).join('');
+            select.innerHTML = '<option value="">— выберите проект —</option>' + scriptProjects.map(p => `<option value="${p}">${p}</option>`).join('');
         }
-
         function fillCallResults() {
             const select = document.getElementById('callResult');
             const results = appData.callResults.map(r => r.name);
-            select.innerHTML = '<option value="">— выберите —</option>' +
-                results.map(r => `<option value="${r}">${r}</option>`).join('');
+            select.innerHTML = '<option value="">— выберите —</option>' + results.map(r => `<option value="${r}">${r}</option>`).join('');
         }
-
         function fillContactTypes() {
             const select = document.getElementById('contactType');
             const types = appData.contactTypes.map(t => t.name);
-            select.innerHTML = '<option value="">— выберите —</option>' +
-                types.map(t => `<option value="${t}">${t}</option>`).join('');
+            select.innerHTML = '<option value="">— выберите —</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
         }
-
         function updateCallResults() {
             const select = document.getElementById('callResult');
-            if (!currentScriptTitle) {
-                fillCallResults();
-                return;
-            }
+            if (!currentScriptTitle) { fillCallResults(); return; }
             const script = appData.scripts.find(s => s.title === currentScriptTitle);
             if (script && script.statuses && script.statuses.length > 0) {
-                select.innerHTML = '<option value="">— выберите —</option>' +
-                    script.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
-            } else {
-                fillCallResults();
-            }
+                select.innerHTML = '<option value="">— выберите —</option>' + script.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else fillCallResults();
         }
-
         function updateScriptsUI() {
             const selector = document.getElementById('scriptSelector');
             const container = document.getElementById('selectedScriptContainer');
             const noMsg = document.getElementById('noScriptMessage');
             const previousTitle = currentScriptTitle;
-
             selector.innerHTML = '<option value="">— выберите скрипт звонка —</option>';
-
             const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
-
             if (callScripts.length === 0) {
                 container.style.display = 'none';
                 noMsg.style.display = 'block';
                 updateCallResults();
                 return;
             }
-
             callScripts.forEach((script, index) => {
                 const option = document.createElement('option');
                 option.value = index;
                 option.textContent = script.title;
                 selector.appendChild(option);
             });
-
             let selectedIndex = -1;
             if (previousTitle) {
                 const foundIndex = callScripts.findIndex(s => s.title === previousTitle);
                 if (foundIndex !== -1) selectedIndex = foundIndex;
             }
-            if (selectedIndex === -1 && callScripts.length > 0) {
-                selectedIndex = 0;
-            }
-
+            if (selectedIndex === -1 && callScripts.length > 0) selectedIndex = 0;
             if (selectedIndex !== -1) {
                 selector.value = selectedIndex;
                 currentScriptTitle = callScripts[selectedIndex].title;
@@ -1088,13 +944,11 @@
                 updateCallResults();
             }
         }
-
         function displayScript(script) {
             if (!script) return;
             document.getElementById('selectedScriptTitle').textContent = script.title;
             document.getElementById('selectedScriptContent').innerHTML = script.content;
         }
-
         function setProjectFromScript(scriptTitle) {
             if (!scriptTitle) return;
             if (!scriptProjects.includes(scriptTitle)) {
@@ -1104,96 +958,57 @@
             document.getElementById('project').value = scriptTitle;
             updateTrainingDates(scriptTitle);
         }
-
-        // ========== ДАТЫ ОБУЧЕНИЯ ==========
         function updateTrainingDates(project) {
             const select = document.getElementById('trainingDateSelect');
-            if (!project) {
-                select.innerHTML = '<option value="">— нет данных —</option>';
-                return;
-            }
-
+            if (!project) { select.innerHTML = '<option value="">— нет данных —</option>'; return; }
             const dates = [];
             for (const key in appData.projectTrainings) {
                 if (key.startsWith(project + '_')) {
                     const parts = key.split('_');
                     if (parts.length === 3) {
-                        const dateStr = `${parts[1]}-${parts[2].padStart(2, '0')}`;
-                        dates.push({
-                            date: dateStr,
-                            time: appData.projectTrainings[key]
-                        });
+                        const dateStr = `${parts[1]}-${parts[2].padStart(2,'0')}`;
+                        dates.push({ date: dateStr, time: appData.projectTrainings[key] });
                     }
                 }
             }
-
-            dates.sort((a, b) => a.date.localeCompare(b.date));
-
+            dates.sort((a,b) => a.date.localeCompare(b.date));
             let options = '<option value="">— выберите дату —</option>';
-            dates.forEach(d => {
-                options += `<option value="${d.date}" data-time="${d.time}">${d.date}</option>`;
-            });
-
+            dates.forEach(d => { options += `<option value="${d.date}" data-time="${d.time}">${d.date}</option>`; });
             select.innerHTML = options;
         }
-
         function onTrainingDateChange() {
             const select = document.getElementById('trainingDateSelect');
             const selectedOption = select.options[select.selectedIndex];
             const time = selectedOption ? selectedOption.getAttribute('data-time') : '';
             document.getElementById('trainingTimeInput').value = time || '';
         }
-
-        document.getElementById('project').addEventListener('change', function(e) {
-            const project = e.target.value;
-            updateTrainingDates(project);
-        });
+        document.getElementById('project').addEventListener('change', e => updateTrainingDates(e.target.value));
         document.getElementById('trainingDateSelect').addEventListener('change', onTrainingDateChange);
 
-        // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ ==========
         function loadCandidateIntoForm(idx) {
             if (editingExternalCandidate) {
-                const candidate = editingExternalCandidate;
-                document.getElementById('fullName').value = candidate.fullName || '';
-                document.getElementById('phoneNumber').value = candidate.phone || '';
-                if (candidate.project) {
-                    document.getElementById('project').value = candidate.project;
-                    updateTrainingDates(candidate.project);
-                } else if (currentScriptTitle) {
-                    setProjectFromScript(currentScriptTitle);
-                } else {
-                    document.getElementById('project').value = '';
-                    updateTrainingDates('');
-                }
-                document.getElementById('callResult').value = candidate.recruitmentStatus || '';
-                if (candidate.trainingDate) {
+                const c = editingExternalCandidate;
+                document.getElementById('fullName').value = c.fullName || '';
+                document.getElementById('phoneNumber').value = c.phone || '';
+                if (c.project) { document.getElementById('project').value = c.project; updateTrainingDates(c.project); }
+                else if (currentScriptTitle) setProjectFromScript(currentScriptTitle);
+                else { document.getElementById('project').value = ''; updateTrainingDates(''); }
+                document.getElementById('callResult').value = c.recruitmentStatus || '';
+                if (c.trainingDate) {
                     const select = document.getElementById('trainingDateSelect');
-                    let optionExists = false;
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].value === candidate.trainingDate) {
-                            select.selectedIndex = i;
-                            optionExists = true;
-                            break;
-                        }
+                    let exists = false;
+                    for(let i=0;i<select.options.length;i++) if(select.options[i].value === c.trainingDate) { select.selectedIndex=i; exists=true; break; }
+                    if(!exists){
+                        const opt = document.createElement('option');
+                        opt.value = c.trainingDate; opt.text = c.trainingDate; opt.setAttribute('data-time',c.trainingTime||'');
+                        select.appendChild(opt); select.value = c.trainingDate;
                     }
-                    if (!optionExists) {
-                        const option = document.createElement('option');
-                        option.value = candidate.trainingDate;
-                        option.text = candidate.trainingDate;
-                        option.setAttribute('data-time', candidate.trainingTime || '');
-                        select.appendChild(option);
-                        select.value = candidate.trainingDate;
-                    }
-                    document.getElementById('trainingTimeInput').value = candidate.trainingTime || '';
-                } else {
-                    document.getElementById('trainingDateSelect').value = '';
-                    document.getElementById('trainingTimeInput').value = '';
-                }
-                document.getElementById('candidateCounter').textContent = `Редактирование кандидата из списка`;
-                updateCandidateProgress(candidate.phone, candidate.project);
+                    document.getElementById('trainingTimeInput').value = c.trainingTime || '';
+                } else { document.getElementById('trainingDateSelect').value = ''; document.getElementById('trainingTimeInput').value = ''; }
+                document.getElementById('candidateCounter').textContent = 'Редактирование кандидата из списка';
+                updateCandidateProgress(c.phone, c.project);
                 return;
             }
-
             if (idx < 0 || idx >= myCandidates.length) {
                 document.getElementById('fullName').value = 'Бахтияруулу Нурбек';
                 document.getElementById('phoneNumber').value = '+996 772 95-90-77';
@@ -1209,1781 +1024,366 @@
                 document.getElementById('progressSection').style.display = 'none';
                 return;
             }
-
             const candidate = myCandidates[idx];
             document.getElementById('fullName').value = candidate.fullName || '';
             document.getElementById('phoneNumber').value = candidate.phone || '';
-
-            if (candidate.project) {
-                document.getElementById('project').value = candidate.project;
-                updateTrainingDates(candidate.project);
-            } else if (currentScriptTitle) {
-                setProjectFromScript(currentScriptTitle);
-            } else {
-                document.getElementById('project').value = '';
-                updateTrainingDates('');
-            }
-
-            const digits = candidate.phone.replace(/\D/g, '');
-            if (digits.startsWith('996')) document.getElementById('country').value = 'Кыргызстан';
-            else if (digits.startsWith('998')) document.getElementById('country').value = 'Узбекистан';
-            else if (digits.startsWith('77')) document.getElementById('country').value = 'Казахстан';
-            else if (digits.startsWith('79')) document.getElementById('country').value = 'Россия';
-            else if (candidate.country) document.getElementById('country').value = candidate.country;
-
+            if (candidate.project) { document.getElementById('project').value = candidate.project; updateTrainingDates(candidate.project); }
+            else if (currentScriptTitle) setProjectFromScript(currentScriptTitle);
+            else { document.getElementById('project').value = ''; updateTrainingDates(''); }
+            const digits = candidate.phone.replace(/\D/g,'');
+            if(digits.startsWith('996')) document.getElementById('country').value = 'Кыргызстан';
+            else if(digits.startsWith('998')) document.getElementById('country').value = 'Узбекистан';
+            else if(digits.startsWith('77')) document.getElementById('country').value = 'Казахстан';
+            else if(digits.startsWith('79')) document.getElementById('country').value = 'Россия';
+            else if(candidate.country) document.getElementById('country').value = candidate.country;
             if (candidate.trainingDate) {
                 const select = document.getElementById('trainingDateSelect');
-                let optionExists = false;
-                for (let i = 0; i < select.options.length; i++) {
-                    if (select.options[i].value === candidate.trainingDate) {
-                        select.selectedIndex = i;
-                        optionExists = true;
-                        break;
-                    }
-                }
-                if (!optionExists) {
-                    const option = document.createElement('option');
-                    option.value = candidate.trainingDate;
-                    option.text = candidate.trainingDate;
-                    option.setAttribute('data-time', candidate.trainingTime || '');
-                    select.appendChild(option);
-                    select.value = candidate.trainingDate;
+                let exists = false;
+                for(let i=0;i<select.options.length;i++) if(select.options[i].value === candidate.trainingDate) { select.selectedIndex=i; exists=true; break; }
+                if(!exists){
+                    const opt = document.createElement('option');
+                    opt.value = candidate.trainingDate; opt.text = candidate.trainingDate; opt.setAttribute('data-time',candidate.trainingTime||'');
+                    select.appendChild(opt); select.value = candidate.trainingDate;
                 }
                 document.getElementById('trainingTimeInput').value = candidate.trainingTime || '';
-            } else {
-                document.getElementById('trainingDateSelect').value = '';
-                document.getElementById('trainingTimeInput').value = '';
-            }
-
+            } else { document.getElementById('trainingDateSelect').value = ''; document.getElementById('trainingTimeInput').value = ''; }
             document.getElementById('callResult').value = candidate.callResult || '';
             document.getElementById('contactType').value = candidate.contactType || '';
             document.getElementById('comment').value = candidate.comment || '';
             document.getElementById('candidateIndexField').value = idx;
-
             const total = myCandidates.length;
             document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
-
             updateCandidateProgress(candidate.phone, candidate.project);
         }
-
         function loadCandidateById(id) {
             const idx = myCandidates.findIndex(c => c.id === id);
-            if (idx !== -1) {
-                currentCandidateIndex = idx;
-                loadCandidateIntoForm(idx);
-                return;
-            }
-            const candidate = allCandidates.find(c => c.id === id);
-            if (candidate) {
-                editingExternalCandidate = candidate;
-                loadCandidateIntoForm(-1);
-            } else {
-                showNotification('Кандидат не найден', 'error');
-            }
+            if(idx!==-1){ currentCandidateIndex=idx; loadCandidateIntoForm(idx); return; }
+            const c = allCandidates.find(c=>c.id===id);
+            if(c){ editingExternalCandidate=c; loadCandidateIntoForm(-1); }
+            else showNotification('Кандидат не найден','error');
         }
-
         function matchesTwoFields(candidate, phone, fullName, project) {
-            const cPhone = (candidate.phone || '').replace(/\D/g, '');
+            const cPhone = (candidate.phone || '').replace(/\D/g,'');
             const cFullName = (candidate.fullName || '').toLowerCase().trim();
             const cProject = (candidate.project || '').toLowerCase().trim();
-
-            const normPhone = (phone || '').replace(/\D/g, '');
+            const normPhone = (phone || '').replace(/\D/g,'');
             const normFullName = (fullName || '').toLowerCase().trim();
             const normProject = (project || '').toLowerCase().trim();
-
-            let matches = 0;
-            if (cPhone && cPhone === normPhone) matches++;
-            if (cFullName && cFullName === normFullName) matches++;
-            if (cProject && cProject === normProject) matches++;
-            return matches >= 2;
+            let matches=0;
+            if(cPhone && cPhone===normPhone) matches++;
+            if(cFullName && cFullName===normFullName) matches++;
+            if(cProject && cProject===normProject) matches++;
+            return matches>=2;
         }
-
         function getCandidateStage(phone, fullName, project) {
-            const normPhone = (phone || '').replace(/\D/g, '');
+            const normPhone = (phone || '').replace(/\D/g,'');
             const normFullName = (fullName || '').toLowerCase().trim();
             const normProject = (project || '').toLowerCase().trim();
-
-            let foundInAnketa = null;
-            for (let c of allCandidates) {
-                if (matchesTwoFields(c, normPhone, normFullName, normProject)) {
-                    foundInAnketa = c;
-                    break;
-                }
-            }
-
-            let foundInContacts = null;
-            for (let c of myCandidates) {
-                if (matchesTwoFields(c, normPhone, normFullName, normProject)) {
-                    foundInContacts = c;
-                    break;
-                }
-            }
-
+            let foundInAnketa = null, foundInContacts = null;
+            for(let c of allCandidates) if(matchesTwoFields(c,normPhone,normFullName,normProject)){ foundInAnketa=c; break; }
+            for(let c of myCandidates) if(matchesTwoFields(c,normPhone,normFullName,normProject)){ foundInContacts=c; break; }
             let status = null;
-            if (foundInAnketa) {
-                status = foundInAnketa.recruitmentStatus;
-            } else if (foundInContacts) {
-                status = foundInContacts.callResult;
-            }
-
-            if (!status || status.trim() === '') {
-                return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: 'Ожидает связи' };
-            }
-
-            const stage1statuses = ['Автоответчик', 'Не берет трубку', 'Сброс', 'Выключен', 'Перезвонить'];
-            if (stage1statuses.includes(status)) {
-                return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status };
-            }
-
-            const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча', 'Вышел на орг. встречу'];
-            if (stage2statuses.includes(status)) {
-                return { stage: 2, color: 'var(--stage2)', label: 'Проверка', status: status };
-            }
-
-            const stage3statuses = ['Обучение', 'Приглашение на обучение', 'Вышел на обучение'];
-            if (stage3statuses.includes(status)) {
-                return { stage: 3, color: 'var(--stage3)', label: 'Обучение', status: status };
-            }
-
-            if (status === 'employee' || status === 'Сотрудник') {
-                return { stage: 4, color: 'var(--stage4)', label: 'Линия', status: status };
-            }
-
-            const stage5statuses = [
-                'Отказ акцент', 'Отказ фрикативная речь', 'Отказ интернет',
-                'Отказ наушники', 'Отказ не вышел на орг.встречу', 'Отказ не вышел на обучение',
-                'Не интересует', 'Нет ПК ноутбука', 'Номер не существует',
-                'фрикативная речь', 'Нет гарнитуры', 'Нет Lan кабеля'
-            ];
-            if (stage5statuses.includes(status)) {
-                return { stage: 5, color: 'var(--stage5)', label: 'Отказ', status: status };
-            }
-
-            return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status || 'Ожидает связи' };
+            if(foundInAnketa) status = foundInAnketa.recruitmentStatus;
+            else if(foundInContacts) status = foundInContacts.callResult;
+            if(!status || status.trim()==='') return { stage:1, label:'Ожидает связи', status:'Ожидает связи' };
+            const stage1s=['Автоответчик','Не берет трубку','Сброс','Выключен','Перезвонить'];
+            if(stage1s.includes(status)) return { stage:1, label:'Ожидает связи', status };
+            const stage2s=['draft','passed','напоминание','Проверка','Приглашение орг.встреча','Вышел на орг. встречу'];
+            if(stage2s.includes(status)) return { stage:2, label:'Проверка', status };
+            const stage3s=['Обучение','Приглашение на обучение','Вышел на обучение'];
+            if(stage3s.includes(status)) return { stage:3, label:'Обучение', status };
+            if(status==='employee'||status==='Сотрудник') return { stage:4, label:'Линия', status };
+            const stage5s=['Отказ акцент','Отказ фрикативная речь','Отказ интернет','Отказ наушники','Отказ не вышел на орг.встречу','Отказ не вышел на обучение','Не интересует','Нет ПК ноутбука','Номер не существует','фрикативная речь','Нет гарнитуры','Нет Lan кабеля'];
+            if(stage5s.includes(status)) return { stage:5, label:'Отказ', status };
+            return { stage:1, label:'Ожидает связи', status:status||'Ожидает связи' };
         }
-
         function updateCandidateProgress(phone, project) {
             const fullName = document.getElementById('fullName').value.trim();
-            const stageInfo = getCandidateStage(phone, fullName, project);
-            const currentStage = stageInfo.stage;
-            const currentStatus = stageInfo.status;
-
-            const steps = [
-                { stage: 1, label: 'Ожидает связи', color: 'var(--stage1)' },
-                { stage: 2, label: 'Проверка', color: 'var(--stage2)' },
-                { stage: 3, label: 'Обучение', color: 'var(--stage3)' },
-                { stage: 4, label: 'Линия', color: 'var(--stage4)' },
-                { stage: 5, label: 'Отказ', color: 'var(--stage5)' }
-            ];
-
-            let stepsHtml = '';
-            let labelsHtml = '';
-            for (let i = 0; i < steps.length; i++) {
-                const step = steps[i];
-                const isActive = step.stage === currentStage;
-                const stepClass = `progress-step stage${step.stage} ${isActive ? 'active' : ''}`;
-                stepsHtml += `<div class="${stepClass}" onclick="showStageModal(${step.stage}, '${step.label}')"></div>`;
-
+            const { stage:currentStage, status:currentStatus } = getCandidateStage(phone,fullName,project);
+            const steps = [{stage:1,label:'Ожидает связи'},{stage:2,label:'Проверка'},{stage:3,label:'Обучение'},{stage:4,label:'Линия'},{stage:5,label:'Отказ'}];
+            let stepsHtml='', labelsHtml='';
+            steps.forEach(step=>{
+                const isActive = step.stage===currentStage;
+                stepsHtml += `<div class="progress-step stage${step.stage} ${isActive?'active':''}" onclick="showStageModal(${step.stage},'${step.label}')"></div>`;
                 const label = isActive ? currentStatus : step.label;
-                const labelClass = `progress-label ${isActive ? 'active' : ''}`;
-                labelsHtml += `<div class="${labelClass}" onclick="showStageModal(${step.stage}, '${step.label}')">${label}</div>`;
-            }
-
+                labelsHtml += `<div class="progress-label ${isActive?'active':''}" onclick="showStageModal(${step.stage},'${step.label}')">${label}</div>`;
+            });
             document.getElementById('progressSteps').innerHTML = stepsHtml;
             document.getElementById('progressLabels').innerHTML = labelsHtml;
             document.getElementById('progressSection').style.display = 'block';
         }
-
         function showStageModal(stage, label) {
-            let candidates = [];
-            if (stage === 1) {
-                candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
-            } else if (stage === 2) {
-                const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча', 'Вышел на орг. встречу'];
-                candidates = myCandidates.filter(c => stage2statuses.includes(c.callResult));
-            } else if (stage === 3) {
-                const stage3statuses = ['Обучение', 'Приглашение на обучение', 'Вышел на обучение'];
-                candidates = myCandidates.filter(c => stage3statuses.includes(c.callResult));
-            } else if (stage === 4) {
-                candidates = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name);
-            } else if (stage === 5) {
-                const rejectStatuses = [
-                    'Отказ акцент', 'Отказ фрикативная речь', 'Отказ интернет',
-                    'Отказ наушники', 'Отказ не вышел на орг.встречу', 'Отказ не вышел на обучение',
-                    'Не интересует', 'Нет ПК ноутбука', 'Номер не существует',
-                    'фрикативная речь', 'Нет гарнитуры', 'Нет Lan кабеля'
-                ];
-                candidates = myCandidates.filter(c => rejectStatuses.includes(c.callResult));
-            }
-
+            let candidates=[];
+            if(stage===1) candidates = myCandidates.filter(c=>!c.callResult||c.callResult.trim()==='');
+            else if(stage===2) candidates = myCandidates.filter(c=>['draft','passed','напоминание','Проверка','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.callResult));
+            else if(stage===3) candidates = myCandidates.filter(c=>['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.callResult));
+            else if(stage===4) candidates = allCandidates.filter(c=>c.recruitmentStatus==='employee' && c.recruiter===currentRecruiter.name);
+            else if(stage===5) candidates = myCandidates.filter(c=>['Отказ акцент','Отказ фрикативная речь','Отказ интернет','Отказ наушники','Отказ не вышел на орг.встречу','Отказ не вышел на обучение','Не интересует','Нет ПК ноутбука','Номер не существует','фрикативная речь','Нет гарнитуры','Нет Lan кабеля'].includes(c.callResult));
             document.getElementById('stageModalTitle').textContent = `${label} (${candidates.length})`;
             const listContainer = document.getElementById('stageCandidatesList');
-            if (candidates.length === 0) {
-                listContainer.innerHTML = '<div class="no-candidates">Нет кандидатов</div>';
-            } else {
-                let html = '';
-                candidates.forEach(c => {
-                    html += `
-                        <div class="stage-candidate-item" onclick="selectCandidateFromStage('${c.phone}', '${c.project}')">
-                            <div class="name">${c.fullName || '—'}</div>
-                            <div class="details">${c.phone || '—'} | ${c.project || '—'}</div>
-                        </div>
-                    `;
-                });
-                listContainer.innerHTML = html;
+            if(candidates.length===0) listContainer.innerHTML='<div class="no-candidates">Нет кандидатов</div>';
+            else{
+                let html='';
+                candidates.forEach(c=>{ html+=`<div class="stage-candidate-item" onclick="selectCandidateFromStage('${c.phone}','${c.project}')"><div class="name">${c.fullName||'—'}</div><div class="details">${c.phone||'—'} | ${c.project||'—'}</div></div>`; });
+                listContainer.innerHTML=html;
             }
             document.getElementById('stageModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
-
         function closeStageModal() {
             document.getElementById('stageModal').classList.remove('show');
             document.body.classList.remove('menu-open');
         }
-
         function selectCandidateFromStage(phone, project) {
-            const cleanPhone = phone.replace(/\D/g, '');
-            const index = myCandidates.findIndex(c => {
-                const cPhone = (c.phone || '').replace(/\D/g, '');
-                return cPhone === cleanPhone && c.project === project;
-            });
-            if (index !== -1) {
-                editingExternalCandidate = null;
-                currentCandidateIndex = index;
-                loadCandidateIntoForm(index);
-                showForm();
-                closeStageModal();
-            } else {
-                showNotification('Кандидат не найден в вашем списке', 'error');
-            }
+            const cleanPhone = phone.replace(/\D/g,'');
+            const idx = myCandidates.findIndex(c=> (c.phone||'').replace(/\D/g,'')===cleanPhone && c.project===project);
+            if(idx!==-1){ editingExternalCandidate=null; currentCandidateIndex=idx; loadCandidateIntoForm(idx); showForm(); closeStageModal(); }
+            else showNotification('Кандидат не найден в вашем списке','error');
         }
-
         function initSearch() {
             const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function() {
-                searchQuery = this.value.toLowerCase().trim();
-                applySearchAndFilter();
-            });
+            searchInput.addEventListener('input', function(){ searchQuery = this.value.toLowerCase().trim(); applySearchAndFilter(); });
         }
-
         function applySearchAndFilter() {
-            let currentList = [];
-            if (candidatesTab === 'contacts') {
-                currentList = myCandidates;
-            } else if (candidatesTab === 'verification') {
-                currentList = myCandidates.filter(c => c.callResult === "Проверка");
-            } else if (candidatesTab === 'draft') {
-                currentList = getDraftCandidates();
-            } else if (candidatesTab === 'orgMeeting') {
-                currentList = allCandidates.filter(c => 
-                    (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') && 
-                    c.recruiter === currentRecruiter.name
-                );
-            } else if (candidatesTab === 'training') {
-                currentList = allCandidates.filter(c => 
-                    (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') && 
-                    c.recruiter === currentRecruiter.name
-                );
-            } else if (candidatesTab === 'rejects') {
-                const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
-                currentList = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name);
-            }
-
-            if (searchQuery) {
+            let currentList=[];
+            if(candidatesTab==='contacts') currentList = myCandidates;
+            else if(candidatesTab==='verification') currentList = myCandidates.filter(c=>c.callResult==="Проверка");
+            else if(candidatesTab==='draft') currentList = getDraftCandidates();
+            else if(candidatesTab==='orgMeeting') currentList = allCandidates.filter(c=>['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name);
+            else if(candidatesTab==='training') currentList = allCandidates.filter(c=>['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name);
+            else if(candidatesTab==='rejects') currentList = allCandidates.filter(c=>['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name);
+            if(searchQuery){
                 const searchLower = searchQuery.toLowerCase().trim();
-                const searchPhone = searchQuery.replace(/\D/g, '');
-                currentList = currentList.filter(c => {
-                    const fullName = (c.fullName || '').toLowerCase().trim();
-                    const phoneNorm = (c.phone || '').replace(/\D/g, '');
-                    const project = (c.project || '').toLowerCase().trim();
-                    const status = (c.callResult || c.recruitmentStatus || '').toLowerCase().trim();
-                    return fullName.includes(searchLower) || phoneNorm.includes(searchPhone) || project.includes(searchLower) || status.includes(searchLower);
-                });
+                const searchPhone = searchQuery.replace(/\D/g,'');
+                currentList = currentList.filter(c=> (c.fullName||'').toLowerCase().trim().includes(searchLower) || (c.phone||'').replace(/\D/g,'').includes(searchPhone) || (c.project||'').toLowerCase().trim().includes(searchLower) || (c.callResult||c.recruitmentStatus||'').toLowerCase().trim().includes(searchLower));
             }
-
-            if (candidatesTab === 'contacts') {
-                renderContactsCandidates(currentList);
-            } else if (candidatesTab === 'verification') {
-                renderVerificationCandidates(currentList);
-            } else if (candidatesTab === 'draft') {
-                renderDraftCandidates(currentList);
-            } else if (candidatesTab === 'orgMeeting') {
-                renderOrgMeetingCandidates(currentList);
-            } else if (candidatesTab === 'training') {
-                renderTrainingCandidates(currentList);
-            } else if (candidatesTab === 'rejects') {
-                renderRejectsCandidates(currentList);
-            }
+            if(candidatesTab==='contacts') renderContactsCandidates(currentList);
+            else if(candidatesTab==='verification') renderVerificationCandidates(currentList);
+            else if(candidatesTab==='draft') renderDraftCandidates(currentList);
+            else if(candidatesTab==='orgMeeting') renderOrgMeetingCandidates(currentList);
+            else if(candidatesTab==='training') renderTrainingCandidates(currentList);
+            else if(candidatesTab==='rejects') renderRejectsCandidates(currentList);
         }
-
-        // Функции рендеринга кандидатов (сохранены из исходного файла)
         function renderContactsCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            if (filteredList.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет контактов</div>';
-                return;
-            }
-
-            let html = '';
-            filteredList.forEach((candidate) => {
-                const status = candidate.callResult || 'ожидает связи';
-                const statusClass = candidate.callResult ? '' : 'waiting';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight" title="${candidate.fullName || '—'}">${candidate.fullName || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge ${statusClass}">${status}</span></div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    if (id) {
-                        editingExternalCandidate = null;
-                        loadCandidateById(id);
-                        showForm();
-                    }
-                });
-            });
+            if(filteredList.length===0){ container.innerHTML='<div class="no-candidates">Нет контактов</div>'; return; }
+            let html='';
+            filteredList.forEach(c=>{ html+=`<div class="candidate-card" data-id="${c.id}"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${c.fullName||'—'}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${c.phone||'—'}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${c.callResult||'ожидает связи'}</span></div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${c.project||'—'}</div></div></div>`; });
+            container.innerHTML=html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card=>{ card.addEventListener('click',()=>{ const id=card.dataset.id; if(id){ editingExternalCandidate=null; loadCandidateById(id); showForm(); } }); });
         }
-
         function renderVerificationCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            if (filteredList.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на проверку</div>';
-                return;
-            }
-            let html = '';
-            filteredList.forEach(candidate => {
-                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Обучение</div>
-                            <div class="value">${trainingInfo}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.callResult}</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    if (id) {
-                        editingExternalCandidate = null;
-                        loadCandidateById(id);
-                        showForm();
-                    }
-                });
-            });
+            if(filteredList.length===0){ container.innerHTML='<div class="no-candidates">Нет кандидатов на проверку</div>'; return; }
+            let html='';
+            filteredList.forEach(c=>{ const trainingInfo = c.trainingDate ? `${c.trainingDate} ${c.trainingTime||''}` : '—'; html+=`<div class="candidate-card" data-id="${c.id}"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${c.fullName}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${c.phone}</div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${c.project||'—'}</div></div><div class="candidate-field"><div class="label">Обучение</div><div class="value">${trainingInfo}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${c.callResult}</span></div></div></div>`; });
+            container.innerHTML=html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card=>{ card.addEventListener('click',()=>{ const id=card.dataset.id; if(id){ editingExternalCandidate=null; loadCandidateById(id); showForm(); } }); });
         }
-
         function getDraftCandidates() {
-            const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            return allCandidates.filter(c =>
-                c.recruitmentStatus === 'draft' &&
-                new Date(c.createdAt).getTime() < oneHourAgo &&
-                c.recruiter === currentRecruiter.name
-            );
+            const oneHourAgo = Date.now() - 60*60*1000;
+            return allCandidates.filter(c=> c.recruitmentStatus==='draft' && new Date(c.createdAt).getTime()<oneHourAgo && c.recruiter===currentRecruiter.name);
         }
-
         function renderDraftCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            const draftCandidates = filteredList;
-            const newKeys = draftCandidates.map(c => `${c.fullName}_${c.phone}`);
+            const newKeys = filteredList.map(c=>`${c.fullName}_${c.phone}`);
             const newKeysSet = new Set(newKeys);
-            let newAdded = false;
-            for (let key of newKeysSet) {
-                if (!previousDraftKeys.has(key)) {
-                    newAdded = true;
-                    break;
-                }
-            }
-            if (newAdded) {
-                showNotification('Добавлен новый черновик', 'info');
-            }
-            previousDraftKeys = newKeysSet;
-            if (draftCandidates.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет черновиков</div>';
-                return;
-            }
-            let html = '';
-            draftCandidates.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Обучение</div>
-                            <div class="value">${trainingInfo}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus || 'draft'}</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const id = card.dataset.id;
-                    if (id) {
-                        loadCandidateById(id);
-                        showForm();
-                    }
-                });
-            });
+            let newAdded=false;
+            for(let key of newKeysSet) if(!previousDraftKeys.has(key)){ newAdded=true; break; }
+            if(newAdded) showNotification('Добавлен новый черновик','info');
+            previousDraftKeys=newKeysSet;
+            if(filteredList.length===0){ container.innerHTML='<div class="no-candidates">Нет черновиков</div>'; return; }
+            let html='';
+            filteredList.forEach(c=>{ const trainingInfo = c.trainingDate ? `${c.trainingDate} ${c.trainingTime||''}` : '—'; html+=`<div class="candidate-card" data-id="${c.id}"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${c.fullName}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${c.phone}</div></div><div class="candidate-field"><div class="label">Telegram</div><div class="value">${c.telegram||'—'}</div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${c.project||'—'}</div></div><div class="candidate-field"><div class="label">Обучение</div><div class="value">${trainingInfo}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${c.recruitmentStatus||'draft'}</span></div></div></div>`; });
+            container.innerHTML=html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card=>{ card.addEventListener('click',()=>{ const id=card.dataset.id; if(id){ loadCandidateById(id); showForm(); } }); });
         }
-
         function renderOrgMeetingCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            if (filteredList.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на орг. встречу</div>';
-                return;
-            }
-            let html = '';
-            filteredList.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Обучение</div>
-                            <div class="value">${trainingInfo}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
-                            <i class="fas fa-exchange-alt"></i> Передать
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
-                    const id = card.dataset.id;
-                    if (id) {
-                        loadCandidateById(id);
-                        showForm();
-                    }
-                });
-            });
+            if(filteredList.length===0){ container.innerHTML='<div class="no-candidates">Нет кандидатов на орг. встречу</div>'; return; }
+            let html='';
+            filteredList.forEach(c=>{ const trainingInfo = c.trainingDate ? `${c.trainingDate} ${c.trainingTime||''}` : '—'; html+=`<div class="candidate-card" data-id="${c.id}" data-type="${c.type}"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${c.fullName}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${c.phone}</div></div><div class="candidate-field"><div class="label">Telegram</div><div class="value">${c.telegram||'—'}</div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${c.project||'—'}</div></div><div class="candidate-field"><div class="label">Обучение</div><div class="value">${trainingInfo}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${c.recruitmentStatus}</span></div></div><button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${c.id}','${c.type}')"><i class="fas fa-exchange-alt"></i> Передать</button></div>`; });
+            container.innerHTML=html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card=>{ card.addEventListener('click',(e)=>{ if(e.target.classList.contains('transfer-btn')||e.target.closest('.transfer-btn')) return; const id=card.dataset.id; if(id){ loadCandidateById(id); showForm(); } }); });
         }
-
         function renderTrainingCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            if (filteredList.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет кандидатов на обучение</div>';
-                return;
-            }
-            let html = '';
-            filteredList.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Обучение</div>
-                            <div class="value">${trainingInfo}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
-                            <i class="fas fa-exchange-alt"></i> Передать
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
-                    const id = card.dataset.id;
-                    if (id) {
-                        loadCandidateById(id);
-                        showForm();
-                    }
-                });
-            });
+            if(filteredList.length===0){ container.innerHTML='<div class="no-candidates">Нет кандидатов на обучение</div>'; return; }
+            let html='';
+            filteredList.forEach(c=>{ const trainingInfo = c.trainingDate ? `${c.trainingDate} ${c.trainingTime||''}` : '—'; html+=`<div class="candidate-card" data-id="${c.id}" data-type="${c.type}"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${c.fullName}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${c.phone}</div></div><div class="candidate-field"><div class="label">Telegram</div><div class="value">${c.telegram||'—'}</div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${c.project||'—'}</div></div><div class="candidate-field"><div class="label">Обучение</div><div class="value">${trainingInfo}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${c.recruitmentStatus}</span></div></div><button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${c.id}','${c.type}')"><i class="fas fa-exchange-alt"></i> Передать</button></div>`; });
+            container.innerHTML=html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card=>{ card.addEventListener('click',(e)=>{ if(e.target.classList.contains('transfer-btn')||e.target.closest('.transfer-btn')) return; const id=card.dataset.id; if(id){ loadCandidateById(id); showForm(); } }); });
         }
-
         function renderRejectsCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            if (filteredList.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет отказов</div>';
-                return;
-            }
-            let html = '';
-            filteredList.forEach(candidate => {
-                const telegram = candidate.telegram || '—';
-                const trainingInfo = candidate.trainingDate ? `${candidate.trainingDate} ${candidate.trainingTime || ''}` : '—';
-                html += `
-                    <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
-                        <div class="candidate-field">
-                            <div class="label">ФИО</div>
-                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Телефон</div>
-                            <div class="value">${candidate.phone}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Telegram</div>
-                            <div class="value">${telegram}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Проект</div>
-                            <div class="value">${candidate.project || '—'}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Обучение</div>
-                            <div class="value">${trainingInfo}</div>
-                        </div>
-                        <div class="candidate-field">
-                            <div class="label">Статус</div>
-                            <div class="value"><span class="candidate-status-badge">${candidate.recruitmentStatus}</span></div>
-                        </div>
-                        <button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${candidate.id}', '${candidate.type}')">
-                            <i class="fas fa-exchange-alt"></i> Передать
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('transfer-btn') || e.target.closest('.transfer-btn')) return;
-                    const id = card.dataset.id;
-                    if (id) {
-                        loadCandidateById(id);
-                        showForm();
-                    }
-                });
-            });
+            if(filteredList.length===0){ container.innerHTML='<div class="no-candidates">Нет отказов</div>'; return; }
+            let html='';
+            filteredList.forEach(c=>{ const trainingInfo = c.trainingDate ? `${c.trainingDate} ${c.trainingTime||''}` : '—'; html+=`<div class="candidate-card" data-id="${c.id}" data-type="${c.type}"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${c.fullName}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${c.phone}</div></div><div class="candidate-field"><div class="label">Telegram</div><div class="value">${c.telegram||'—'}</div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${c.project||'—'}</div></div><div class="candidate-field"><div class="label">Обучение</div><div class="value">${trainingInfo}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${c.recruitmentStatus}</span></div></div><button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${c.id}','${c.type}')"><i class="fas fa-exchange-alt"></i> Передать</button></div>`; });
+            container.innerHTML=html;
+            document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card=>{ card.addEventListener('click',(e)=>{ if(e.target.classList.contains('transfer-btn')||e.target.closest('.transfer-btn')) return; const id=card.dataset.id; if(id){ loadCandidateById(id); showForm(); } }); });
         }
-
         function updateStats() {
-            if (!currentRecruiter) return;
-
-            const newCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
+            if(!currentRecruiter) return;
+            const newCount = myCandidates.filter(c=>!c.callResult||c.callResult.trim()==='').length;
             document.getElementById('statNew').textContent = newCount.toLocaleString();
-
-            const inProgressCount = myCandidates.filter(c => c.callResult === "Проверка").length;
+            const inProgressCount = myCandidates.filter(c=>c.callResult==="Проверка").length;
             document.getElementById('statInProgress').textContent = inProgressCount.toLocaleString();
-
-            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
-            let avgQuality = 0;
-            if (myAnalytics.length > 0) {
-                const sum = myAnalytics.reduce((acc, a) => acc + (a.quality || 0), 0);
-                avgQuality = Math.round(sum / myAnalytics.length);
-            }
-            document.getElementById('statAnalytics').textContent = avgQuality + '%';
-
-            const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
-            const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
-            const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
-            const verificationCount = allCandidates.filter(c => c.recruitmentStatus === 'Проверка' && c.recruiter === currentRecruiter.name).length;
-            
-            const part1 = (rejects + verificationCount) > 0 ? passed / (rejects + verificationCount) : 0;
-
-            const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на орг. встречу' && c.recruiter === currentRecruiter.name).length;
-            const part2 = passed > 0 ? orgMeeting / passed : 0;
-
-            const training = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на обучение' && c.recruiter === currentRecruiter.name).length;
-            const part3 = orgMeeting > 0 ? training / orgMeeting : 0;
-
-            const avgQualityFactor = avgQuality / 100;
-            const part4 = avgQualityFactor;
-
-            const efficiency = part1 * part2 * part3 * part4 * 100;
-            document.getElementById('statEfficiency').textContent = Math.round(efficiency) + '%';
-
-            const employeeCount = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name).length;
+            const myAnalytics = analytics.filter(a=>a.recruiterName===currentRecruiter.name);
+            let avgQuality=0;
+            if(myAnalytics.length>0){ const sum=myAnalytics.reduce((a,b)=>a+(b.quality||0),0); avgQuality=Math.round(sum/myAnalytics.length); }
+            document.getElementById('statAnalytics').textContent = avgQuality+'%';
+            const passed = allCandidates.filter(c=>c.recruitmentStatus==='passed' && c.recruiter===currentRecruiter.name).length;
+            const rejectStatuses = ['Не интересует','Нет ПК/Ноутбука','Фрикативная речь','Акцент','Нет гарнитуры','Нет Lan кабеля'];
+            const rejects = allCandidates.filter(c=>rejectStatuses.includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name).length;
+            const verificationCount = allCandidates.filter(c=>c.recruitmentStatus==='Проверка' && c.recruiter===currentRecruiter.name).length;
+            const part1 = (rejects+verificationCount)>0 ? passed/(rejects+verificationCount) : 0;
+            const orgMeeting = allCandidates.filter(c=>c.recruitmentStatus==='Вышел на орг. встречу' && c.recruiter===currentRecruiter.name).length;
+            const part2 = passed>0 ? orgMeeting/passed : 0;
+            const training = allCandidates.filter(c=>c.recruitmentStatus==='Вышел на обучение' && c.recruiter===currentRecruiter.name).length;
+            const part3 = orgMeeting>0 ? training/orgMeeting : 0;
+            const part4 = avgQuality/100;
+            const efficiency = part1*part2*part3*part4*100;
+            document.getElementById('statEfficiency').textContent = Math.round(efficiency)+'%';
+            const employeeCount = allCandidates.filter(c=>c.recruitmentStatus==='employee' && c.recruiter===currentRecruiter.name).length;
             document.getElementById('statResult').textContent = employeeCount.toLocaleString();
         }
-
         function updateBreadcrumbs() {
-            const titleSpan = document.getElementById('currentPageTitle');
-            switch (currentView) {
-                case 'main':
-                    titleSpan.textContent = 'Главная';
-                    break;
-                case 'candidates':
-                    titleSpan.textContent = 'Кандидаты';
-                    break;
-                case 'analytics':
-                    titleSpan.textContent = 'Аналитика';
-                    break;
-                case 'knowledgeBase':
-                    titleSpan.textContent = 'База знаний';
-                    break;
-                case 'statistics':
-                    titleSpan.textContent = 'Статистика';
-                    break;
-                case 'personalAccount':
-                    titleSpan.textContent = 'Личный кабинет';
-                    break;
-                default:
-                    titleSpan.textContent = 'Панель рекрутера';
-            }
+            const titles={main:'Главная',candidates:'Кандидаты',analytics:'Аналитика',knowledgeBase:'База знаний',statistics:'Статистика',personalAccount:'Личный кабинет'};
+            document.getElementById('currentPageTitle').textContent = titles[currentView]||'Панель рекрутера';
         }
-
-        document.getElementById('candidateForm').addEventListener('submit', async (e) => {
+        document.getElementById('candidateForm').addEventListener('submit', async (e)=>{
             e.preventDefault();
-
-            if (editingExternalCandidate) {
+            if(editingExternalCandidate){
                 const newStatus = document.getElementById('callResult').value;
                 const country = document.getElementById('country').value;
                 const trainingDate = document.getElementById('trainingDateSelect').value;
                 const trainingTime = document.getElementById('trainingTimeInput').value.trim();
-                if (!newStatus || !country || !trainingDate || !trainingTime) {
-                    showNotification('Заполните обязательные поля: Страна, Дата обучения, Время обучения, Результат звонка', 'error');
-                    return;
-                }
-
-                const updatedCandidate = {
-                    id: editingExternalCandidate.id,
-                    type: editingExternalCandidate.type,
-                    fullName: document.getElementById('fullName').value.trim(),
-                    phone: document.getElementById('phoneNumber').value.trim(),
-                    project: document.getElementById('project').value,
-                    country: country,
-                    trainingDate: trainingDate,
-                    trainingTime: trainingTime,
-                    recruitmentStatus: newStatus,
-                    comment: document.getElementById('comment').value.trim()
-                };
-
+                if(!newStatus||!country||!trainingDate||!trainingTime){ showNotification('Заполните обязательные поля','error'); return; }
+                const updatedCandidate = { id:editingExternalCandidate.id, type:editingExternalCandidate.type, fullName:document.getElementById('fullName').value.trim(), phone:document.getElementById('phoneNumber').value.trim(), project:document.getElementById('project').value, country, trainingDate, trainingTime, recruitmentStatus:newStatus, comment:document.getElementById('comment').value.trim() };
                 showLoading();
-                try {
-                    const url = editingExternalCandidate.type === 'manual' 
-                        ? '/.netlify/functions/submitManualResults' 
-                        : '/.netlify/functions/updateCandidateStatus';
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedCandidate)
-                    });
-                    if (response.ok) {
-                        showNotification('Кандидат сохранён', 'success');
-                        await refreshAllCandidates();
-                        await refreshMyCandidates();
-                        updateStats();
-                        editingExternalCandidate = null;
-                        showCandidatesPanel();
-                    } else {
-                        const err = await response.json();
-                        showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
-                    }
-                } catch (error) {
-                    console.error(error);
-                    showNotification('Ошибка сети', 'error');
-                } finally {
-                    hideLoading();
-                }
+                try{
+                    const url = editingExternalCandidate.type==='manual' ? '/.netlify/functions/submitManualResults' : '/.netlify/functions/updateCandidateStatus';
+                    const resp = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(updatedCandidate)});
+                    if(resp.ok){ showNotification('Кандидат сохранён','success'); await refreshAllCandidates(); await refreshMyCandidates(); updateStats(); editingExternalCandidate=null; showCandidatesPanel(); }
+                    else{ const err=await resp.json(); showNotification('Ошибка сохранения: '+(err.error||''),'error'); }
+                }catch(err){ showNotification('Ошибка сети','error'); }finally{ hideLoading(); }
                 return;
             }
-
-            const fullName = document.getElementById('fullName').value.trim();
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const project = document.getElementById('project').value;
-            const country = document.getElementById('country').value;
-            const trainingDate = document.getElementById('trainingDateSelect').value;
-            const trainingTime = document.getElementById('trainingTimeInput').value.trim();
-            const callResult = document.getElementById('callResult').value;
-
-            if (!fullName || !phoneNumber || !project || !country || !trainingDate || !trainingTime || !callResult) {
-                showNotification('Заполните обязательные поля: ФИО, телефон, проект, страна, дата обучения, время обучения, результат звонка', 'error');
-                return;
-            }
-
-            const idx = parseInt(document.getElementById('candidateIndexField').value, 10);
-            if (idx < 0 || idx >= myCandidates.length) {
-                showNotification('Нет активного кандидата для обновления', 'error');
-                return;
-            }
-
-            const candidate = myCandidates[idx];
-            candidate.fullName = fullName;
-            candidate.phone = phoneNumber;
-            candidate.project = project;
-            candidate.country = country;
-            candidate.trainingDate = trainingDate;
-            candidate.trainingTime = trainingTime;
-            candidate.meetingTime = trainingTime;
-            candidate.callResult = callResult;
-            candidate.contactType = document.getElementById('contactType').value;
-            candidate.comment = document.getElementById('comment').value.trim();
-
-            try {
-                const response = await fetch('/.netlify/functions/submitCandidate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(candidate)
-                });
-                if (response.ok) {
-                    showNotification('Кандидат сохранён', 'success');
-                    updateStats();
-                    updateCandidateProgress(candidate.phone, candidate.project);
-                    goToNextCandidate();
-                } else {
-                    const err = await response.json();
-                    showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                showNotification('Ошибка сети', 'error');
-            }
+            const fullName=document.getElementById('fullName').value.trim(), phoneNumber=document.getElementById('phoneNumber').value.trim(), project=document.getElementById('project').value, country=document.getElementById('country').value, trainingDate=document.getElementById('trainingDateSelect').value, trainingTime=document.getElementById('trainingTimeInput').value.trim(), callResult=document.getElementById('callResult').value;
+            if(!fullName||!phoneNumber||!project||!country||!trainingDate||!trainingTime||!callResult){ showNotification('Заполните обязательные поля','error'); return; }
+            const idx=parseInt(document.getElementById('candidateIndexField').value,10);
+            if(idx<0||idx>=myCandidates.length){ showNotification('Нет активного кандидата','error'); return; }
+            const candidate=myCandidates[idx];
+            candidate.fullName=fullName; candidate.phone=phoneNumber; candidate.project=project; candidate.country=country; candidate.trainingDate=trainingDate; candidate.trainingTime=trainingTime; candidate.meetingTime=trainingTime; candidate.callResult=callResult; candidate.contactType=document.getElementById('contactType').value; candidate.comment=document.getElementById('comment').value.trim();
+            try{
+                const resp=await fetch('/.netlify/functions/submitCandidate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(candidate)});
+                if(resp.ok){ showNotification('Кандидат сохранён','success'); updateStats(); updateCandidateProgress(candidate.phone,candidate.project); goToNextCandidate(); }
+                else{ const err=await resp.json(); showNotification('Ошибка сохранения: '+(err.error||''),'error'); }
+            }catch(err){ showNotification('Ошибка сети','error'); }
         });
-
-        function goToNextCandidate() {
-            if (myCandidates.length === 0) {
-                currentCandidateIndex = -1;
-                loadCandidateIntoForm(-1);
-                return;
-            }
-
-            let nextIndex = -1;
-            if (currentCandidateIndex >= 0) {
-                for (let i = currentCandidateIndex + 1; i < myCandidates.length; i++) {
-                    if (!myCandidates[i].callResult || myCandidates[i].callResult.trim() === '') {
-                        nextIndex = i;
-                        break;
-                    }
-                }
-                if (nextIndex === -1) {
-                    for (let i = 0; i < currentCandidateIndex; i++) {
-                        if (!myCandidates[i].callResult || myCandidates[i].callResult.trim() === '') {
-                            nextIndex = i;
-                            break;
-                        }
-                    }
-                }
-            } else {
-                for (let i = 0; i < myCandidates.length; i++) {
-                    if (!myCandidates[i].callResult || myCandidates[i].callResult.trim() === '') {
-                        nextIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            if (nextIndex === -1) {
-                currentCandidateIndex = -1;
-                loadCandidateIntoForm(-1);
-            } else {
-                currentCandidateIndex = nextIndex;
-                loadCandidateIntoForm(nextIndex);
-            }
+        function goToNextCandidate(){
+            if(myCandidates.length===0){ currentCandidateIndex=-1; loadCandidateIntoForm(-1); return; }
+            let nextIndex=-1;
+            if(currentCandidateIndex>=0){
+                for(let i=currentCandidateIndex+1;i<myCandidates.length;i++) if(!myCandidates[i].callResult||myCandidates[i].callResult.trim()===''){ nextIndex=i; break; }
+                if(nextIndex===-1) for(let i=0;i<currentCandidateIndex;i++) if(!myCandidates[i].callResult||myCandidates[i].callResult.trim()===''){ nextIndex=i; break; }
+            } else for(let i=0;i<myCandidates.length;i++) if(!myCandidates[i].callResult||myCandidates[i].callResult.trim()===''){ nextIndex=i; break; }
+            if(nextIndex===-1){ currentCandidateIndex=-1; loadCandidateIntoForm(-1); } else{ currentCandidateIndex=nextIndex; loadCandidateIntoForm(nextIndex); }
         }
-
-        function logout() {
-            stopAutoRefresh();
-            sessionStorage.removeItem('recruiter');
-            currentRecruiter = null;
-            document.querySelector('.side-menu').style.display = 'none';
-            document.getElementById('loginContainer').style.display = 'block';
-            document.getElementById('recruiterInterface').style.display = 'none';
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginError').style.display = 'none';
-        }
-
-        function showForm() {
-            document.querySelector('.content-wrapper').style.display = 'flex';
-            document.getElementById('candidatesPanel').style.display = 'none';
-            document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('knowledgeBasePanel').style.display = 'none';
-            document.getElementById('personalAccountPanel').style.display = 'none';
-            document.getElementById('statisticsPanel').style.display = 'none';
-            if (currentCandidateIndex >= 0 || editingExternalCandidate) {
-                document.getElementById('progressSection').style.display = 'block';
-            } else {
-                document.getElementById('progressSection').style.display = 'none';
-            }
-            currentView = 'main';
-            updateBreadcrumbs();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function showCandidatesPanel() {
-            document.querySelector('.content-wrapper').style.display = 'none';
-            document.getElementById('candidatesPanel').style.display = 'block';
-            document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('knowledgeBasePanel').style.display = 'none';
-            document.getElementById('personalAccountPanel').style.display = 'none';
-            document.getElementById('statisticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'none';
-            editingExternalCandidate = null;
-            currentView = 'candidates';
-            updateBreadcrumbs();
-            switchCandidatesTab('contacts');
-        }
-
-        function showAnalyticsPanel() {
-            document.querySelector('.content-wrapper').style.display = 'none';
-            document.getElementById('candidatesPanel').style.display = 'none';
-            document.getElementById('analyticsPanel').style.display = 'block';
-            document.getElementById('knowledgeBasePanel').style.display = 'none';
-            document.getElementById('personalAccountPanel').style.display = 'none';
-            document.getElementById('statisticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'none';
-            currentView = 'analytics';
-            updateBreadcrumbs();
-            renderAnalytics();
-        }
-
-        function showKnowledgeBase() {
-            document.querySelector('.content-wrapper').style.display = 'none';
-            document.getElementById('candidatesPanel').style.display = 'none';
-            document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('knowledgeBasePanel').style.display = 'block';
-            document.getElementById('personalAccountPanel').style.display = 'none';
-            document.getElementById('statisticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'none';
-            currentView = 'knowledgeBase';
-            updateBreadcrumbs();
-        }
-
-        function showPersonalAccount() {
-            document.querySelector('.content-wrapper').style.display = 'none';
-            document.getElementById('candidatesPanel').style.display = 'none';
-            document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('knowledgeBasePanel').style.display = 'none';
-            document.getElementById('personalAccountPanel').style.display = 'block';
-            document.getElementById('statisticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'none';
-            currentView = 'personalAccount';
-            updateBreadcrumbs();
-        }
-
-        function showStatistics() {
-            document.querySelector('.content-wrapper').style.display = 'none';
-            document.getElementById('candidatesPanel').style.display = 'none';
-            document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('knowledgeBasePanel').style.display = 'none';
-            document.getElementById('personalAccountPanel').style.display = 'none';
-            document.getElementById('statisticsPanel').style.display = 'block';
-            document.getElementById('progressSection').style.display = 'none';
-            currentView = 'statistics';
-            updateBreadcrumbs();
-            renderStatisticsPage();
-        }
-
-        function renderAnalytics() {
+        function logout(){ stopAutoRefresh(); sessionStorage.removeItem('recruiter'); currentRecruiter=null; document.querySelector('.side-menu').style.display='none'; document.getElementById('loginContainer').style.display='block'; document.getElementById('recruiterInterface').style.display='none'; document.getElementById('loginUsername').value=''; document.getElementById('loginPassword').value=''; document.getElementById('loginError').style.display='none'; }
+        function showForm(){ document.querySelector('.content-wrapper').style.display='flex'; document.getElementById('candidatesPanel').style.display='none'; document.getElementById('analyticsPanel').style.display='none'; document.getElementById('knowledgeBasePanel').style.display='none'; document.getElementById('personalAccountPanel').style.display='none'; document.getElementById('statisticsPanel').style.display='none'; if(currentCandidateIndex>=0||editingExternalCandidate) document.getElementById('progressSection').style.display='block'; else document.getElementById('progressSection').style.display='none'; currentView='main'; updateBreadcrumbs(); window.scrollTo({top:0,behavior:'smooth'}); }
+        function showCandidatesPanel(){ document.querySelector('.content-wrapper').style.display='none'; document.getElementById('candidatesPanel').style.display='block'; document.getElementById('analyticsPanel').style.display='none'; document.getElementById('knowledgeBasePanel').style.display='none'; document.getElementById('personalAccountPanel').style.display='none'; document.getElementById('statisticsPanel').style.display='none'; document.getElementById('progressSection').style.display='none'; editingExternalCandidate=null; currentView='candidates'; updateBreadcrumbs(); switchCandidatesTab('contacts'); }
+        function showAnalyticsPanel(){ document.querySelector('.content-wrapper').style.display='none'; document.getElementById('candidatesPanel').style.display='none'; document.getElementById('analyticsPanel').style.display='block'; document.getElementById('knowledgeBasePanel').style.display='none'; document.getElementById('personalAccountPanel').style.display='none'; document.getElementById('statisticsPanel').style.display='none'; document.getElementById('progressSection').style.display='none'; currentView='analytics'; updateBreadcrumbs(); renderAnalytics(); }
+        function showKnowledgeBase(){ document.querySelector('.content-wrapper').style.display='none'; document.getElementById('candidatesPanel').style.display='none'; document.getElementById('analyticsPanel').style.display='none'; document.getElementById('knowledgeBasePanel').style.display='block'; document.getElementById('personalAccountPanel').style.display='none'; document.getElementById('statisticsPanel').style.display='none'; document.getElementById('progressSection').style.display='none'; currentView='knowledgeBase'; updateBreadcrumbs(); }
+        function showPersonalAccount(){ document.querySelector('.content-wrapper').style.display='none'; document.getElementById('candidatesPanel').style.display='none'; document.getElementById('analyticsPanel').style.display='none'; document.getElementById('knowledgeBasePanel').style.display='none'; document.getElementById('personalAccountPanel').style.display='block'; document.getElementById('statisticsPanel').style.display='none'; document.getElementById('progressSection').style.display='none'; currentView='personalAccount'; updateBreadcrumbs(); }
+        function showStatistics(){ document.querySelector('.content-wrapper').style.display='none'; document.getElementById('candidatesPanel').style.display='none'; document.getElementById('analyticsPanel').style.display='none'; document.getElementById('knowledgeBasePanel').style.display='none'; document.getElementById('personalAccountPanel').style.display='none'; document.getElementById('statisticsPanel').style.display='block'; document.getElementById('progressSection').style.display='none'; currentView='statistics'; updateBreadcrumbs(); renderStatisticsPage(); }
+        function renderAnalytics(){
             const container = document.getElementById('analyticsContainer');
-            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
-            if (myAnalytics.length === 0) {
-                container.innerHTML = '<div class="no-candidates">Нет записей аналитики</div>';
-                return;
-            }
-
-            let html = `
-                <table class="analytics-table">
-                    <thead>
-                        <tr>
-                            <th>Дата</th>
-                            <th>Описание</th>
-                            <th>Качество</th>
-                            <th>Файл</th>
-                        </thead>
-                    <tbody>
-            `;
-            myAnalytics.forEach(entry => {
-                const date = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '—';
-                const description = entry.description || '—';
-                const quality = entry.quality !== undefined ? entry.quality : '—';
-                const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
-                html += `
-                    <tr>
-                        <td>${date}侧
-                        <td>${description}侧
-                        <td><span class="quality-badge">${quality}</span>侧
-                        <td>${fileLink}侧
-                    </tr>
-                `;
-            });
-            html += '</tbody>   \\</table>';
-            container.innerHTML = html;
+            const myAnalytics = analytics.filter(a=>a.recruiterName===currentRecruiter.name);
+            if(myAnalytics.length===0){ container.innerHTML='<div class="no-candidates">Нет записей аналитики</div>'; return; }
+            let html=`<table class="analytics-table"><thead><tr><th>Дата</th><th>Описание</th><th>Качество</th><th>Файл</th></tr></thead><tbody>`;
+            myAnalytics.forEach(e=>{ const date=e.createdAt?new Date(e.createdAt).toLocaleString():'—'; const desc=e.description||'—'; const qual=e.quality!==undefined?e.quality:'—'; const file=e.fileUrl?`<a href="${e.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>`:'—'; html+=`<tr><td>${date}</td><td>${desc}</td><td><span class="quality-badge">${qual}</span></td><td>${file}</td></tr>`; });
+            html+=`</tbody></table>`; container.innerHTML=html;
         }
-
-        function renderStatisticsPage() {
-            const container = document.getElementById('statisticsContent');
-            if (!container) return;
-
-            const totalContacts = allCandidates.length;
-            const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            const savedLastHour = allCandidates.filter(c => new Date(c.createdAt).getTime() > oneHourAgo).length;
-            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
-            let avgQuality = 0;
-            if (myAnalytics.length > 0) {
-                const sum = myAnalytics.reduce((acc, a) => acc + (a.quality || 0), 0);
-                avgQuality = Math.round(sum / myAnalytics.length);
-            }
-
-            const projects = appData.projects.map(p => p.name || p);
-            const statusSet = new Set();
-            allCandidates.forEach(c => {
-                if (c.recruitmentStatus) statusSet.add(c.recruitmentStatus);
-            });
-            const statuses = Array.from(statusSet).sort();
-
-            const matrix = {};
-            projects.forEach(proj => {
-                matrix[proj] = {};
-                statuses.forEach(st => { matrix[proj][st] = 0; });
-            });
-            allCandidates.forEach(c => {
-                const proj = c.project;
-                const st = c.recruitmentStatus;
-                if (proj && st && matrix[proj] && matrix[proj][st] !== undefined) {
-                    matrix[proj][st]++;
-                }
-            });
-
-            let tableHtml = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-title"><i class="fas fa-address-book"></i> Всего контактов</div>
-                        <div class="stat-number">${totalContacts}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-title"><i class="fas fa-clock"></i> Анкет за час</div>
-                        <div class="stat-number">${savedLastHour}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-title"><i class="fas fa-chart-line"></i> Среднее качество</div>
-                        <div class="stat-number">${avgQuality}%</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-title"><i class="fas fa-phone-alt"></i> Средняя длительность звонка</div>
-                        <div class="stat-number">—</div>
-                    </div>
-                </div>
-                <div class="stats-table-container">
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>Проект</th>
-                                ${statuses.map(st => `<th>${st}</th>`).join('')}
-                            </thead>
-                        <tbody>
-            `;
-
-            projects.forEach(proj => {
-                tableHtml += `</tr><td>${proj}</td>`;
-                statuses.forEach(st => {
-                    tableHtml += `<td>${matrix[proj][st] || 0}</td>`;
-                });
-                tableHtml += `</tr>`;
-            });
-
-            if (projects.length === 0) {
-                tableHtml += `<tr><td colspan="${statuses.length+1}" class="empty-message">Нет данных</td></tr>`;
-            }
-
-            tableHtml += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            container.innerHTML = tableHtml;
+        function renderStatisticsPage(){
+            const container = document.getElementById('statisticsContent'); if(!container) return;
+            const totalContacts=allCandidates.length, oneHourAgo=Date.now()-60*60*1000, savedLastHour=allCandidates.filter(c=>new Date(c.createdAt).getTime()>oneHourAgo).length;
+            const myAnalytics=analytics.filter(a=>a.recruiterName===currentRecruiter.name);
+            let avgQuality=0; if(myAnalytics.length>0){ const sum=myAnalytics.reduce((a,b)=>a+(b.quality||0),0); avgQuality=Math.round(sum/myAnalytics.length); }
+            const projects=appData.projects.map(p=>p.name||p);
+            const statusSet=new Set(); allCandidates.forEach(c=>{ if(c.recruitmentStatus) statusSet.add(c.recruitmentStatus); });
+            const statuses=Array.from(statusSet).sort();
+            const matrix={}; projects.forEach(p=>{ matrix[p]={}; statuses.forEach(s=>{ matrix[p][s]=0; }); });
+            allCandidates.forEach(c=>{ const proj=c.project; const st=c.recruitmentStatus; if(proj&&st&&matrix[proj]&&matrix[proj][st]!==undefined) matrix[proj][st]++; });
+            let tableHtml=`<div class="stats-grid"><div class="stat-card"><div class="stat-title"><i class="fas fa-address-book"></i> Всего контактов</div><div class="stat-number">${totalContacts}</div></div><div class="stat-card"><div class="stat-title"><i class="fas fa-clock"></i> Анкет за час</div><div class="stat-number">${savedLastHour}</div></div><div class="stat-card"><div class="stat-title"><i class="fas fa-chart-line"></i> Среднее качество</div><div class="stat-number">${avgQuality}%</div></div><div class="stat-card"><div class="stat-title"><i class="fas fa-phone-alt"></i> Средняя длительность звонка</div><div class="stat-number">—</div></div></div><div class="stats-table-container"><table class="stats-table"><thead><tr><th>Проект</th>${statuses.map(s=>`<th>${s}</th>`).join('')}</tr></thead><tbody>`;
+            projects.forEach(proj=>{ tableHtml+=`<tr><td>${proj}</td>`; statuses.forEach(st=>{ tableHtml+=`<td>${matrix[proj][st]||0}</td>`; }); tableHtml+=`</tr>`; });
+            if(projects.length===0) tableHtml+=`<tr><td colspan="${statuses.length+1}" class="empty-message">Нет данных</td></tr>`;
+            tableHtml+=`</tbody></table></div>`; container.innerHTML=tableHtml;
         }
-
-        function switchCandidatesTab(tab) {
-            candidatesTab = tab;
-            document.getElementById('tabContacts').classList.toggle('active', tab === 'contacts');
-            document.getElementById('tabVerification').classList.toggle('active', tab === 'verification');
-            document.getElementById('tabDraft').classList.toggle('active', tab === 'draft');
-            document.getElementById('tabOrgMeeting').classList.toggle('active', tab === 'orgMeeting');
-            document.getElementById('tabTraining').classList.toggle('active', tab === 'training');
-            document.getElementById('tabRejects').classList.toggle('active', tab === 'rejects');
-            updateTabCounts();
-            applySearchAndFilter();
+        function switchCandidatesTab(tab){
+            candidatesTab=tab;
+            ['tabContacts','tabVerification','tabDraft','tabOrgMeeting','tabTraining','tabRejects'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.classList.toggle('active', i===0?tab==='contacts':i===1?tab==='verification':i===2?tab==='draft':i===3?tab==='orgMeeting':i===4?tab==='training':tab==='rejects'); });
+            updateTabCounts(); applySearchAndFilter();
         }
-
-        // ОБНОВЛЕННАЯ ФУНКЦИЯ: отображаем абсолютное количество кандидатов на вкладках
-        function updateTabCounts() {
-            const contactsCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
-            const verificationCount = myCandidates.filter(c => c.callResult === "Проверка").length;
-            const draftList = getDraftCandidates();
-            const draftCount = draftList.length;
-            const orgMeetingList = allCandidates.filter(c => 
-                (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') && 
-                c.recruiter === currentRecruiter.name
-            );
-            const orgMeetingCount = orgMeetingList.length;
-            const trainingList = allCandidates.filter(c => 
-                (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') && 
-                c.recruiter === currentRecruiter.name
-            );
-            const trainingCount = trainingList.length;
-            const rejectsList = allCandidates.filter(c => {
-                const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
-                return rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name;
-            });
-            const rejectsCount = rejectsList.length;
-
-            // Обновляем текст на кнопках – показываем абсолютные значения
-            const setTabText = (id, base, count) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = `${base} (${count})`;
-            };
-            setTabText('tabContacts', 'Контакты', contactsCount);
-            setTabText('tabVerification', 'Проверка', verificationCount);
-            setTabText('tabDraft', 'Черновик', draftCount);
-            setTabText('tabOrgMeeting', 'Орг. встреча', orgMeetingCount);
-            setTabText('tabTraining', 'Обучение', trainingCount);
-            setTabText('tabRejects', 'Отказы', rejectsCount);
-
-            // Для меню «Кандидаты» считаем новые кандидаты как суммарное изменение
-            const newContacts = contactsCount > prevSubCounts.contacts ? contactsCount - prevSubCounts.contacts : 0;
-            const newVerification = verificationCount > prevSubCounts.verification ? verificationCount - prevSubCounts.verification : 0;
-            const newDraft = draftCount > prevSubCounts.draft ? draftCount - prevSubCounts.draft : 0;
-            const newOrgMeeting = orgMeetingCount > prevSubCounts.orgMeeting ? orgMeetingCount - prevSubCounts.orgMeeting : 0;
-            const newTraining = trainingCount > prevSubCounts.training ? trainingCount - prevSubCounts.training : 0;
-            const newRejects = rejectsCount > prevSubCounts.rejects ? rejectsCount - prevSubCounts.rejects : 0;
-
-            prevSubCounts = {
-                contacts: contactsCount,
-                verification: verificationCount,
-                draft: draftCount,
-                orgMeeting: orgMeetingCount,
-                training: trainingCount,
-                rejects: rejectsCount
-            };
-
-            return {
-                totalNewCandidates: newDraft + newOrgMeeting + newTraining + newRejects
-            };
+        function updateTabCounts(){
+            const contactsCount=myCandidates.filter(c=>!c.callResult||c.callResult.trim()==='').length;
+            const verificationCount=myCandidates.filter(c=>c.callResult==="Проверка").length;
+            const draftCount=getDraftCandidates().length;
+            const orgMeetingCount=allCandidates.filter(c=>['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name).length;
+            const trainingCount=allCandidates.filter(c=>['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name).length;
+            const rejectsCount=allCandidates.filter(c=>['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && c.recruiter===currentRecruiter.name).length;
+            const setTabText=(id,base,count)=>{ const el=document.getElementById(id); if(el) el.textContent=`${base} (${count})`; };
+            setTabText('tabContacts','Контакты',contactsCount); setTabText('tabVerification','Проверка',verificationCount); setTabText('tabDraft','Черновик',draftCount); setTabText('tabOrgMeeting','Орг. встреча',orgMeetingCount); setTabText('tabTraining','Обучение',trainingCount); setTabText('tabRejects','Отказы',rejectsCount);
+            const newContacts=contactsCount>prevSubCounts.contacts?contactsCount-prevSubCounts.contacts:0;
+            const newVerification=verificationCount>prevSubCounts.verification?verificationCount-prevSubCounts.verification:0;
+            const newDraft=draftCount>prevSubCounts.draft?draftCount-prevSubCounts.draft:0;
+            const newOrgMeeting=orgMeetingCount>prevSubCounts.orgMeeting?orgMeetingCount-prevSubCounts.orgMeeting:0;
+            const newTraining=trainingCount>prevSubCounts.training?trainingCount-prevSubCounts.training:0;
+            const newRejects=rejectsCount>prevSubCounts.rejects?rejectsCount-prevSubCounts.rejects:0;
+            prevSubCounts={contacts:contactsCount,verification:verificationCount,draft:draftCount,orgMeeting:orgMeetingCount,training:trainingCount,rejects:rejectsCount};
+            return {totalNewCandidates:newDraft+newOrgMeeting+newTraining+newRejects};
         }
-
-        function updateMenuCounts() {
-            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
-            const totalAnalyticsCount = myAnalytics.length;
-            const newAnalytics = totalAnalyticsCount > prevAnalyticsCount ? totalAnalyticsCount - prevAnalyticsCount : 0;
-            prevAnalyticsCount = totalAnalyticsCount;
-
-            const newCounts = updateTabCounts();
-            const newCandidatesTotal = newCounts.totalNewCandidates;
-
-            const setMenuText = (selector, base, count) => {
-                const btn = document.querySelector(`.side-menu .menu-btn[data-tab="${selector}"]`);
-                if (btn) {
-                    btn.textContent = `${base} ${count}`;
-                }
-            };
-            setMenuText('candidates', 'Кандидаты', newCandidatesTotal);
-            setMenuText('analytics', 'Аналитика', newAnalytics);
+        function updateMenuCounts(){
+            const myAnalytics=analytics.filter(a=>a.recruiterName===currentRecruiter.name);
+            const totalAnalyticsCount=myAnalytics.length;
+            const newAnalytics=totalAnalyticsCount>prevAnalyticsCount?totalAnalyticsCount-prevAnalyticsCount:0;
+            prevAnalyticsCount=totalAnalyticsCount;
+            const newCounts=updateTabCounts();
+            const newCandidatesTotal=newCounts.totalNewCandidates;
+            const candidatesBadge=document.getElementById('candidatesBadge'); if(candidatesBadge) candidatesBadge.textContent=newCandidatesTotal;
+            const analyticsBadge=document.getElementById('analyticsBadge'); if(analyticsBadge) analyticsBadge.textContent=newAnalytics;
         }
-
-        function openTransferModal(candidateId, candidateType) {
-            transferCandidateId = candidateId;
-            transferCandidateType = candidateType;
-            selectedTransferRecruiter = null;
-            const otherRecruiters = allRecruiters.filter(r => r.name !== currentRecruiter.name);
-            const listContainer = document.getElementById('transferRecruiterList');
-            let html = '';
-            otherRecruiters.forEach(recruiter => {
-                html += `<div class="transfer-recruiter-item" data-recruiter="${recruiter.name}">${recruiter.name}</div>`;
-            });
-            if (otherRecruiters.length === 0) {
-                html = '<div class="no-candidates">Нет других рекрутеров</div>';
-            }
-            listContainer.innerHTML = html;
-            document.querySelectorAll('.transfer-recruiter-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.transfer-recruiter-item').forEach(el => el.classList.remove('selected'));
-                    item.classList.add('selected');
-                    selectedTransferRecruiter = item.dataset.recruiter;
-                });
-            });
-            document.getElementById('transferModal').classList.add('show');
-            document.body.classList.add('menu-open');
-        }
-
-        function closeTransferModal() {
-            document.getElementById('transferModal').classList.remove('show');
-            document.body.classList.remove('menu-open');
-            transferCandidateId = null;
-            transferCandidateType = null;
-            selectedTransferRecruiter = null;
-        }
-
-        async function confirmTransfer() {
-            if (!selectedTransferRecruiter) {
-                showNotification('Выберите рекрутера', 'error');
-                return;
-            }
-            if (!transferCandidateId || !transferCandidateType) return;
-            showLoading();
-            try {
-                const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: transferCandidateId,
-                        type: transferCandidateType,
-                        recruiter: selectedTransferRecruiter
-                    })
-                });
-                if (response.ok) {
-                    showNotification('Кандидат передан', 'success');
-                    await refreshAllCandidates();
-                    updateStats();
-                    updateTabCounts();
-                    switchCandidatesTab(candidatesTab);
-                    closeTransferModal();
-                } else {
-                    const err = await response.json();
-                    showNotification('Ошибка передачи: ' + (err.error || ''), 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                showNotification('Ошибка сети', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        document.getElementById('scriptSelector').addEventListener('change', function(e) {
-            const index = e.target.value;
-            if (index === '') {
-                document.getElementById('selectedScriptContainer').style.display = 'none';
-                document.getElementById('noScriptMessage').style.display = 'block';
-                currentScriptTitle = null;
-                updateCallResults();
-                return;
-            }
-            const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
-            const idx = parseInt(index, 10);
-            if (!isNaN(idx) && idx >= 0 && idx < callScripts.length) {
-                currentScriptTitle = callScripts[idx].title;
-                displayScript(callScripts[idx]);
-                document.getElementById('selectedScriptContainer').style.display = 'block';
-                document.getElementById('noScriptMessage').style.display = 'none';
-                setProjectFromScript(currentScriptTitle);
-                updateCallResults();
-            }
-        });
-
-        window.addEventListener('load', () => {
-            const saved = sessionStorage.getItem('recruiter');
-            const sideMenu = document.querySelector('.side-menu');
-            if (saved) {
-                try {
-                    currentRecruiter = JSON.parse(saved);
-                    sideMenu.style.display = 'flex';
-                    document.getElementById('loginContainer').style.display = 'none';
-                    document.getElementById('recruiterInterface').style.display = 'block';
-                    initInterface();
-                } catch (e) {
-                    sessionStorage.removeItem('recruiter');
-                    sideMenu.style.display = 'none';
-                    document.getElementById('loginContainer').style.display = 'block';
-                    document.getElementById('recruiterInterface').style.display = 'none';
-                }
-            } else {
-                sideMenu.style.display = 'none';
-                document.getElementById('loginContainer').style.display = 'block';
-                document.getElementById('recruiterInterface').style.display = 'none';
-            }
-        });
-
-        function connectGoogle() {
-            const state = encodeURIComponent(currentRecruiter.name);
-            window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
-        }
-
-        // ========== ФУНКЦИИ ДЛЯ ОТПРАВКИ СООБЩЕНИЙ ==========
-        function openMessageModal(type) {
-            const phone = document.getElementById('phoneNumber').value.trim();
-            const fullName = document.getElementById('fullName').value.trim();
-            if (!phone || !fullName) {
-                showNotification('Заполните ФИО и номер телефона', 'error');
-                return;
-            }
-            if (!chatScripts || chatScripts.length === 0) {
-                showNotification('Нет доступных скриптов для чата', 'error');
-                return;
-            }
-
-            const idx = parseInt(document.getElementById('candidateIndexField').value, 10);
-            if (idx >= 0 && myCandidates[idx]) {
-                currentCandidateIdForMessage = myCandidates[idx].id;
-            } else if (editingExternalCandidate) {
-                currentCandidateIdForMessage = editingExternalCandidate.id;
-            } else {
-                currentCandidateIdForMessage = null;
-            }
-
-            currentMessageType = type;
-            document.getElementById('messageModalTitle').textContent = type === 'telegram' ? 'Выберите сообщение для Telegram' : 'Выберите сообщение для WhatsApp';
-            const listContainer = document.getElementById('messageList');
-            let html = '';
-            chatScripts.forEach((script, index) => {
-                const plainText = htmlToPlainText(script.content);
-                html += `
-                    <div class="message-item ${selectedMessageIndex === index ? 'selected' : ''}" data-index="${index}">
-                        <div class="title">${script.title}</div>
-                        <div class="content">${plainText.substring(0, 150)}${plainText.length > 150 ? '…' : ''}</div>
-                    </div>
-                `;
-            });
-            listContainer.innerHTML = html;
-            document.querySelectorAll('.message-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.message-item').forEach(el => el.classList.remove('selected'));
-                    item.classList.add('selected');
-                    const index = item.dataset.index;
-                    if (index !== undefined) {
-                        selectedMessageIndex = parseInt(index);
-                        updateMessagePreview();
-                    }
-                });
-            });
-            if (selectedMessageIndex === -1 && chatScripts.length > 0) {
-                selectedMessageIndex = 0;
-                document.querySelector('.message-item')?.classList.add('selected');
-                updateMessagePreview();
-            }
-            document.getElementById('messageModal').classList.add('show');
-            document.body.classList.add('menu-open');
-        }
-
-        function closeMessageModal() {
-            document.getElementById('messageModal').classList.remove('show');
-            document.body.classList.remove('menu-open');
-        }
-
-        function updateMessagePreview() {
-            if (selectedMessageIndex === -1 || !chatScripts[selectedMessageIndex]) return;
-            const script = chatScripts[selectedMessageIndex];
-            const projectName = document.getElementById('project').value;
-            const projectObj = appData.projects.find(p => p.name === projectName);
-            const projectId = projectObj ? projectObj.id : '';
-            const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
-
-            let plainText = htmlToPlainText(script.content);
-            if (link && script.title.trim().toLowerCase() === 'проверка') {
-                plainText += '\n\nСсылка для заполнения анкеты: ' + link;
-            }
-            document.getElementById('messagePreviewText').textContent = plainText;
-        }
-
-        async function sendSelectedMessage() {
-            if (selectedMessageIndex === -1) {
-                showNotification('Выберите сообщение', 'error');
-                return;
-            }
-            const script = chatScripts[selectedMessageIndex];
-            const phone = document.getElementById('phoneNumber').value.trim();
-            const fullName = document.getElementById('fullName').value.trim();
-            const projectName = document.getElementById('project').value;
-            const projectObj = appData.projects.find(p => p.name === projectName);
-            const projectId = projectObj ? projectObj.id : '';
-
-            let link = `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}`;
-            if (currentCandidateIdForMessage) {
-                link += `&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`;
-            }
-
-            let text = htmlToPlainText(script.content);
-            if (link && script.title.trim().toLowerCase() === 'проверка') {
-                text += '\n\nСсылка для заполнения анкеты: ' + link;
-            }
-
-            const cleanPhone = phone.replace(/\D/g, '');
-            if (currentMessageType === 'telegram') {
-                try {
-                    await navigator.clipboard.writeText(text);
-                    showLoading();
-                    const response = await fetch('/.netlify/functions/add-google-contact', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            recruiterId: currentRecruiter.name,
-                            phoneNumber: phone,
-                            fullName: fullName
-                        })
-                    });
-                    hideLoading();
-                    if (response.ok) {
-                        const data = await response.json();
-                        window.open(data.chatUrl, '_blank');
-                        showNotification('Текст скопирован! Вставьте его в открывшемся чате Telegram.', 'success');
-                    } else if (response.status === 401) {
-                        showNotification('Необходимо подключить Google Контакты', 'error');
-                    } else {
-                        const err = await response.json();
-                        showNotification('Ошибка при открытии чата: ' + (err.error || ''), 'error');
-                    }
-                } catch (err) {
-                    hideLoading();
-                    console.error(err);
-                    showNotification('Ошибка при копировании или открытии чата', 'error');
-                }
-            } else {
-                const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
-                window.open(url, '_blank');
-            }
-            closeMessageModal();
-        }
-
-        // ========== ФУНКЦИИ МАССОВОЙ ПЕРЕДАЧИ ==========
-        function openBulkTransferModal() {
-            const select = document.getElementById('bulkTransferRecruiterSelect');
-            select.innerHTML = '<option value="">— выберите рекрутера —</option>';
-            allRecruiters.forEach(rec => {
-                if (rec.name !== currentRecruiter.name) {
-                    select.innerHTML += `<option value="${rec.name}">${rec.name}</option>`;
-                }
-            });
-            if (allRecruiters.length === 1) {
-                select.innerHTML = '<option value="">Нет других рекрутеров</option>';
-                select.disabled = true;
-            } else {
-                select.disabled = false;
-            }
-
-            currentTransferCategory = null;
-            selectedTransferIds.clear();
-            document.getElementById('bulkTransferCandidatesList').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Выберите категорию</div>';
-            document.querySelectorAll('.transfer-category-btn').forEach(btn => btn.classList.remove('active'));
-
-            document.getElementById('bulkTransferModal').classList.add('show');
-            document.body.classList.add('menu-open');
-        }
-
-        function closeBulkTransferModal() {
-            document.getElementById('bulkTransferModal').classList.remove('show');
-            document.body.classList.remove('menu-open');
-            currentTransferCategory = null;
-            selectedTransferIds.clear();
-        }
-
-        function loadTransferCandidates(category) {
-            currentTransferCategory = category;
-            selectedTransferIds.clear();
-
-            let candidates = [];
-            switch (category) {
-                case 'contacts':
-                    candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').map(c => ({
-                        id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult || ''
-                    }));
-                    break;
-                case 'verification':
-                    candidates = myCandidates.filter(c => c.callResult === "Проверка").map(c => ({
-                        id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult
-                    }));
-                    break;
-                case 'draft':
-                    const oneHourAgo = Date.now() - 60 * 60 * 1000;
-                    candidates = allCandidates.filter(c =>
-                        c.recruitmentStatus === 'draft' &&
-                        new Date(c.createdAt).getTime() < oneHourAgo &&
-                        c.recruiter === currentRecruiter.name
-                    ).map(c => ({
-                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
-                    }));
-                    break;
-                case 'orgMeeting':
-                    candidates = allCandidates.filter(c =>
-                        (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') &&
-                        c.recruiter === currentRecruiter.name
-                    ).map(c => ({
-                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
-                    }));
-                    break;
-                case 'training':
-                    candidates = allCandidates.filter(c =>
-                        (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') &&
-                        c.recruiter === currentRecruiter.name
-                    ).map(c => ({
-                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
-                    }));
-                    break;
-                case 'rejects':
-                    const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
-                    candidates = allCandidates.filter(c =>
-                        rejectStatuses.includes(c.recruitmentStatus) &&
-                        c.recruiter === currentRecruiter.name
-                    ).map(c => ({
-                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
-                    }));
-                    break;
-                default:
-                    return;
-            }
-
-            currentTransferCandidates = candidates;
-
-            const container = document.getElementById('bulkTransferCandidatesList');
-            if (candidates.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Нет кандидатов в этой категории</div>';
-                return;
-            }
-
-            let html = '';
-            candidates.forEach(cand => {
-                const checked = selectedTransferIds.has(cand.id) ? 'checked' : '';
-                html += `
-                    <div class="candidate-item" data-id="${cand.id}">
-                        <input type="checkbox" class="candidate-checkbox" value="${cand.id}" ${checked} onchange="toggleTransferCandidate('${cand.id}', this.checked)">
-                        <div class="candidate-info">
-                            <div class="candidate-field">
-                                <div class="label">ФИО</div>
-                                <div class="value highlight">${escapeHtml(cand.fullName)}</div>
-                            </div>
-                            <div class="candidate-field">
-                                <div class="label">Телефон</div>
-                                <div class="value">${escapeHtml(cand.phone)}</div>
-                            </div>
-                            <div class="candidate-field">
-                                <div class="label">Проект</div>
-                                <div class="value">${escapeHtml(cand.project || '—')}</div>
-                            </div>
-                            <div class="candidate-field">
-                                <div class="label">Статус</div>
-                                <div class="value">${escapeHtml(cand.status)}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function toggleTransferCandidate(id, checked) {
-            if (checked) {
-                selectedTransferIds.add(id);
-            } else {
-                selectedTransferIds.delete(id);
-            }
-        }
-
-        function selectAllTransferCandidates() {
-            const checkboxes = document.querySelectorAll('#bulkTransferCandidatesList .candidate-checkbox');
-            checkboxes.forEach(cb => {
-                cb.checked = true;
-                selectedTransferIds.add(cb.value);
-            });
-        }
-
-        function deselectAllTransferCandidates() {
-            const checkboxes = document.querySelectorAll('#bulkTransferCandidatesList .candidate-checkbox');
-            checkboxes.forEach(cb => {
-                cb.checked = false;
-                selectedTransferIds.delete(cb.value);
-            });
-        }
-
-        async function confirmBulkTransfer() {
-            const targetRecruiter = document.getElementById('bulkTransferRecruiterSelect').value;
-            if (!targetRecruiter) {
-                showNotification('Выберите рекрутера для передачи', 'error');
-                return;
-            }
-            if (selectedTransferIds.size === 0) {
-                showNotification('Выберите хотя бы одного кандидата', 'error');
-                return;
-            }
-
-            const selectedCandidates = currentTransferCandidates.filter(c => selectedTransferIds.has(c.id));
-            if (selectedCandidates.length === 0) return;
-
-            showLoading();
-            let successCount = 0;
-            for (const cand of selectedCandidates) {
-                try {
-                    if (cand.type === 'contact') {
-                        const fullCandidate = myCandidates.find(c => c.id === cand.id);
-                        if (fullCandidate) {
-                            fullCandidate.recruiter = targetRecruiter;
-                            fullCandidate.updatedAt = new Date().toISOString();
-                            const response = await fetch('/.netlify/functions/submitCandidate', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(fullCandidate)
-                            });
-                            if (response.ok) successCount++;
-                        }
-                    } else {
-                        const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                id: cand.id,
-                                type: cand.type,
-                                recruiter: targetRecruiter
-                            })
-                        });
-                        if (response.ok) successCount++;
-                    }
-                } catch (err) {
-                    console.error('Ошибка передачи кандидата', cand.id, err);
-                }
-            }
-
-            hideLoading();
-            if (successCount > 0) {
-                showNotification(`Передано кандидатов: ${successCount}`, 'success');
-                await refreshMyCandidates();
-                await refreshAllCandidates();
-                closeBulkTransferModal();
-            } else {
-                showNotification('Не удалось передать ни одного кандидата', 'error');
-            }
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        // ========== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ==========
-        let refreshInterval = null;
-        let isRefreshing = false;
-
-        async function refreshMyCandidates() {
-            if (isRefreshing || !currentRecruiter) return;
-            isRefreshing = true;
-            try {
-                const response = await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`);
-                if (response.ok) {
-                    const newCandidates = await response.json();
-                    newCandidates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    
-                    const oldIndex = currentCandidateIndex;
-                    const currentId = (oldIndex >= 0 && oldIndex < myCandidates.length) ? myCandidates[oldIndex].id : null;
-                    
-                    myCandidates = newCandidates;
-                    
-                    let newIndex = -1;
-                    if (currentId) {
-                        newIndex = myCandidates.findIndex(c => c.id === currentId);
-                    }
-                    if (newIndex === -1) {
-                        newIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
-                    }
-                    if (newIndex === -1 && myCandidates.length > 0) {
-                        newIndex = 0;
-                    }
-                    
-                    if (newIndex !== oldIndex) {
-                        currentCandidateIndex = newIndex;
-                        if (currentView === 'main') {
-                            loadCandidateIntoForm(currentCandidateIndex);
-                        }
-                    } else {
-                        if (currentView === 'main') {
-                            updateStats();
-                            if (currentCandidateIndex >= 0 && myCandidates[currentCandidateIndex]) {
-                                const candidate = myCandidates[currentCandidateIndex];
-                                updateCandidateProgress(candidate.phone, candidate.project);
-                            }
-                        }
-                    }
-                    if (currentView === 'candidates') {
-                        applySearchAndFilter();
-                    }
-                    updateTabCounts();
-                    updateMenuCounts();
-                }
-            } catch (error) {
-                console.error('Ошибка при обновлении кандидатов:', error);
-            } finally {
-                isRefreshing = false;
-            }
-        }
-
-        async function refreshAllCandidates() {
-            try {
-                const response = await fetch('/.netlify/functions/getAllCandidates');
-                if (response.ok) {
-                    const newAll = await response.json();
-                    allCandidates = newAll;
-                    if (currentView === 'candidates') {
-                        applySearchAndFilter();
-                    }
-                    updateStats();
-                    updateTabCounts();
-                    updateMenuCounts();
-                    if (currentView === 'statistics') renderStatisticsPage();
-                }
-            } catch (error) {
-                console.error('Ошибка при обновлении всех анкет:', error);
-            }
-        }
-
-        // Ручное обновление
-        async function forceRefresh() {
-            showLoading();
-            await refreshMyCandidates();
-            await refreshAllCandidates();
-            hideLoading();
-            showNotification('Данные обновлены', 'success');
-        }
-
-        function startAutoRefresh(intervalMs = 20000) {
-            if (refreshInterval) clearInterval(refreshInterval);
-            refreshInterval = setInterval(() => {
-                refreshMyCandidates();
-                refreshAllCandidates();
-            }, intervalMs);
-        }
-
-        function stopAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
-            }
-        }
-
-        window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
-        });
-
-        function showLoading() {
-            let overlay = document.getElementById('loadingOverlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'loadingOverlay';
-                overlay.className = 'loading-overlay';
-                overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">Идет загрузка...</div>';
-                document.body.appendChild(overlay);
-            }
-            overlay.classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) overlay.classList.add('hidden');
-        }
-
-        // Инициализация обработчиков для кнопок категорий в модалке массовой передачи
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.transfer-category-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const category = btn.dataset.category;
-                    document.querySelectorAll('.transfer-category-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    loadTransferCandidates(category);
-                });
-            });
-        });
-
-        const state = { recruiters: [], scripts: [], characteristics: [] };
-        async function loadStateForMenu() {
-            try {
-                const refRes = await fetch('/.netlify/functions/getAllReferences');
-                const refData = await refRes.json();
-                state.recruiters = refData.recruiters || [];
-                state.scripts = refData.scripts || [];
-                const charRes = await fetch('/.netlify/functions/getCharacteristics');
-                state.characteristics = await charRes.json();
-            } catch (e) {}
-        }
-        const origInit = initInterface;
-        initInterface = async function() {
-            await loadStateForMenu();
-            await origInit();
-        };
+        function openTransferModal(candidateId,candidateType){ transferCandidateId=candidateId; transferCandidateType=candidateType; selectedTransferRecruiter=null; const otherRecruiters=allRecruiters.filter(r=>r.name!==currentRecruiter.name); const listContainer=document.getElementById('transferRecruiterList'); let html=''; otherRecruiters.forEach(r=>{ html+=`<div class="transfer-recruiter-item" data-recruiter="${r.name}">${r.name}</div>`; }); if(otherRecruiters.length===0) html='<div class="no-candidates">Нет других рекрутеров</div>'; listContainer.innerHTML=html; document.querySelectorAll('.transfer-recruiter-item').forEach(item=>{ item.addEventListener('click',()=>{ document.querySelectorAll('.transfer-recruiter-item').forEach(el=>el.classList.remove('selected')); item.classList.add('selected'); selectedTransferRecruiter=item.dataset.recruiter; }); }); document.getElementById('transferModal').classList.add('show'); document.body.classList.add('menu-open'); }
+        function closeTransferModal(){ document.getElementById('transferModal').classList.remove('show'); document.body.classList.remove('menu-open'); transferCandidateId=null; transferCandidateType=null; selectedTransferRecruiter=null; }
+        async function confirmTransfer(){ if(!selectedTransferRecruiter){ showNotification('Выберите рекрутера','error'); return; } if(!transferCandidateId||!transferCandidateType) return; showLoading(); try{ const resp=await fetch('/.netlify/functions/updateCandidateRecruiter',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:transferCandidateId,type:transferCandidateType,recruiter:selectedTransferRecruiter})}); if(resp.ok){ showNotification('Кандидат передан','success'); await refreshAllCandidates(); updateStats(); updateTabCounts(); switchCandidatesTab(candidatesTab); closeTransferModal(); } else{ const err=await resp.json(); showNotification('Ошибка передачи: '+(err.error||''),'error'); } }catch(err){ showNotification('Ошибка сети','error'); }finally{ hideLoading(); } }
+        document.getElementById('scriptSelector').addEventListener('change',function(e){ const idx=e.target.value; if(idx===''){ document.getElementById('selectedScriptContainer').style.display='none'; document.getElementById('noScriptMessage').style.display='block'; currentScriptTitle=null; updateCallResults(); return; } const callScripts=appData.scripts.filter(s=>s.type==='call'||!s.type); const i=parseInt(idx,10); if(!isNaN(i)&&i>=0&&i<callScripts.length){ currentScriptTitle=callScripts[i].title; displayScript(callScripts[i]); document.getElementById('selectedScriptContainer').style.display='block'; document.getElementById('noScriptMessage').style.display='none'; setProjectFromScript(currentScriptTitle); updateCallResults(); } });
+        window.addEventListener('load',()=>{ const saved=sessionStorage.getItem('recruiter'); const sideMenu=document.querySelector('.side-menu'); if(saved){ try{ currentRecruiter=JSON.parse(saved); sideMenu.style.display='flex'; document.getElementById('loginContainer').style.display='none'; document.getElementById('recruiterInterface').style.display='block'; initInterface(); }catch(e){ sessionStorage.removeItem('recruiter'); sideMenu.style.display='none'; document.getElementById('loginContainer').style.display='block'; document.getElementById('recruiterInterface').style.display='none'; } } else{ sideMenu.style.display='none'; document.getElementById('loginContainer').style.display='block'; document.getElementById('recruiterInterface').style.display='none'; } });
+        function connectGoogle(){ const state=encodeURIComponent(currentRecruiter.name); window.location.href=`/.netlify/functions/auth-google-redirect?state=${state}`; }
+        function openMessageModal(type){ const phone=document.getElementById('phoneNumber').value.trim(); const fullName=document.getElementById('fullName').value.trim(); if(!phone||!fullName){ showNotification('Заполните ФИО и номер телефона','error'); return; } if(!chatScripts||chatScripts.length===0){ showNotification('Нет доступных скриптов для чата','error'); return; } const idx=parseInt(document.getElementById('candidateIndexField').value,10); if(idx>=0&&myCandidates[idx]) currentCandidateIdForMessage=myCandidates[idx].id; else if(editingExternalCandidate) currentCandidateIdForMessage=editingExternalCandidate.id; else currentCandidateIdForMessage=null; currentMessageType=type; document.getElementById('messageModalTitle').textContent=type==='telegram'?'Выберите сообщение для Telegram':'Выберите сообщение для WhatsApp'; const listContainer=document.getElementById('messageList'); let html=''; chatScripts.forEach((script,index)=>{ const plainText=htmlToPlainText(script.content); html+=`<div class="message-item ${selectedMessageIndex===index?'selected':''}" data-index="${index}"><div class="title">${script.title}</div><div class="content">${plainText.substring(0,150)}${plainText.length>150?'…':''}</div></div>`; }); listContainer.innerHTML=html; document.querySelectorAll('.message-item').forEach(item=>{ item.addEventListener('click',()=>{ document.querySelectorAll('.message-item').forEach(el=>el.classList.remove('selected')); item.classList.add('selected'); const index=item.dataset.index; if(index!==undefined){ selectedMessageIndex=parseInt(index); updateMessagePreview(); } }); }); if(selectedMessageIndex===-1&&chatScripts.length>0){ selectedMessageIndex=0; document.querySelector('.message-item')?.classList.add('selected'); updateMessagePreview(); } document.getElementById('messageModal').classList.add('show'); document.body.classList.add('menu-open'); }
+        function closeMessageModal(){ document.getElementById('messageModal').classList.remove('show'); document.body.classList.remove('menu-open'); }
+        function updateMessagePreview(){ if(selectedMessageIndex===-1||!chatScripts[selectedMessageIndex]) return; const script=chatScripts[selectedMessageIndex]; const projectName=document.getElementById('project').value; const projectObj=appData.projects.find(p=>p.name===projectName); const projectId=projectObj?projectObj.id:''; const link=projectId?`${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}`:''; let plainText=htmlToPlainText(script.content); if(link&&script.title.trim().toLowerCase()==='проверка') plainText+='\n\nСсылка для заполнения анкеты: '+link; document.getElementById('messagePreviewText').textContent=plainText; }
+        async function sendSelectedMessage(){ if(selectedMessageIndex===-1){ showNotification('Выберите сообщение','error'); return; } const script=chatScripts[selectedMessageIndex]; const phone=document.getElementById('phoneNumber').value.trim(); const fullName=document.getElementById('fullName').value.trim(); const projectName=document.getElementById('project').value; const projectObj=appData.projects.find(p=>p.name===projectName); const projectId=projectObj?projectObj.id:''; let link=`${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}`; if(currentCandidateIdForMessage) link+=`&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`; let text=htmlToPlainText(script.content); if(link&&script.title.trim().toLowerCase()==='проверка') text+='\n\nСсылка для заполнения анкеты: '+link; const cleanPhone=phone.replace(/\D/g,''); if(currentMessageType==='telegram'){ try{ await navigator.clipboard.writeText(text); showLoading(); const resp=await fetch('/.netlify/functions/add-google-contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recruiterId:currentRecruiter.name,phoneNumber:phone,fullName:fullName})}); hideLoading(); if(resp.ok){ const data=await resp.json(); window.open(data.chatUrl,'_blank'); showNotification('Текст скопирован! Вставьте его в открывшемся чате Telegram.','success'); } else if(resp.status===401) showNotification('Необходимо подключить Google Контакты','error'); else{ const err=await resp.json(); showNotification('Ошибка при открытии чата: '+(err.error||''),'error'); } }catch(err){ hideLoading(); showNotification('Ошибка при копировании или открытии чата','error'); } } else{ const url=`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`; window.open(url,'_blank'); } closeMessageModal(); }
+        function openBulkTransferModal(){ const select=document.getElementById('bulkTransferRecruiterSelect'); select.innerHTML='<option value="">— выберите рекрутера —</option>'; allRecruiters.forEach(rec=>{ if(rec.name!==currentRecruiter.name) select.innerHTML+=`<option value="${rec.name}">${rec.name}</option>`; }); if(allRecruiters.length===1){ select.innerHTML='<option value="">Нет других рекрутеров</option>'; select.disabled=true; } else select.disabled=false; currentTransferCategory=null; selectedTransferIds.clear(); document.getElementById('bulkTransferCandidatesList').innerHTML='<div style="text-align: center; padding: 40px;">Выберите категорию</div>'; document.querySelectorAll('.transfer-category-btn').forEach(btn=>btn.classList.remove('active')); document.getElementById('bulkTransferModal').classList.add('show'); document.body.classList.add('menu-open'); }
+        function closeBulkTransferModal(){ document.getElementById('bulkTransferModal').classList.remove('show'); document.body.classList.remove('menu-open'); currentTransferCategory=null; selectedTransferIds.clear(); }
+        function loadTransferCandidates(category){ currentTransferCategory=category; selectedTransferIds.clear(); let candidates=[]; switch(category){ case'contacts': candidates=myCandidates.filter(c=>!c.callResult||c.callResult.trim()==='').map(c=>({id:c.id,type:'contact',fullName:c.fullName,phone:c.phone,project:c.project,status:c.callResult||''})); break; case'verification': candidates=myCandidates.filter(c=>c.callResult==="Проверка").map(c=>({id:c.id,type:'contact',fullName:c.fullName,phone:c.phone,project:c.project,status:c.callResult})); break; case'draft': const oneHourAgo=Date.now()-60*60*1000; candidates=allCandidates.filter(c=>c.recruitmentStatus==='draft'&&new Date(c.createdAt).getTime()<oneHourAgo&&c.recruiter===currentRecruiter.name).map(c=>({id:c.id,type:c.type,fullName:c.fullName,phone:c.phone,project:c.project,status:c.recruitmentStatus})); break; case'orgMeeting': candidates=allCandidates.filter(c=>['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus)&&c.recruiter===currentRecruiter.name).map(c=>({id:c.id,type:c.type,fullName:c.fullName,phone:c.phone,project:c.project,status:c.recruitmentStatus})); break; case'training': candidates=allCandidates.filter(c=>['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus)&&c.recruiter===currentRecruiter.name).map(c=>({id:c.id,type:c.type,fullName:c.fullName,phone:c.phone,project:c.project,status:c.recruitmentStatus})); break; case'rejects': const rs=['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент']; candidates=allCandidates.filter(c=>rs.includes(c.recruitmentStatus)&&c.recruiter===currentRecruiter.name).map(c=>({id:c.id,type:c.type,fullName:c.fullName,phone:c.phone,project:c.project,status:c.recruitmentStatus})); break; default: return; } currentTransferCandidates=candidates; const container=document.getElementById('bulkTransferCandidatesList'); if(candidates.length===0){ container.innerHTML='<div style="text-align:center;padding:40px;">Нет кандидатов в этой категории</div>'; return; } let html=''; candidates.forEach(cand=>{ const checked=selectedTransferIds.has(cand.id)?'checked':''; html+=`<div class="candidate-item" data-id="${cand.id}"><input type="checkbox" class="candidate-checkbox" value="${cand.id}" ${checked} onchange="toggleTransferCandidate('${cand.id}',this.checked)"><div class="candidate-info"><div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${escapeHtml(cand.fullName)}</div></div><div class="candidate-field"><div class="label">Телефон</div><div class="value">${escapeHtml(cand.phone)}</div></div><div class="candidate-field"><div class="label">Проект</div><div class="value">${escapeHtml(cand.project||'—')}</div></div><div class="candidate-field"><div class="label">Статус</div><div class="value">${escapeHtml(cand.status)}</div></div></div></div>`; }); container.innerHTML=html; }
+        function toggleTransferCandidate(id,checked){ if(checked) selectedTransferIds.add(id); else selectedTransferIds.delete(id); }
+        function selectAllTransferCandidates(){ document.querySelectorAll('#bulkTransferCandidatesList .candidate-checkbox').forEach(cb=>{ cb.checked=true; selectedTransferIds.add(cb.value); }); }
+        function deselectAllTransferCandidates(){ document.querySelectorAll('#bulkTransferCandidatesList .candidate-checkbox').forEach(cb=>{ cb.checked=false; selectedTransferIds.delete(cb.value); }); }
+        async function confirmBulkTransfer(){ const targetRecruiter=document.getElementById('bulkTransferRecruiterSelect').value; if(!targetRecruiter){ showNotification('Выберите рекрутера для передачи','error'); return; } if(selectedTransferIds.size===0){ showNotification('Выберите хотя бы одного кандидата','error'); return; } const selectedCandidates=currentTransferCandidates.filter(c=>selectedTransferIds.has(c.id)); if(selectedCandidates.length===0) return; showLoading(); let successCount=0; for(const cand of selectedCandidates){ try{ if(cand.type==='contact'){ const fullCandidate=myCandidates.find(c=>c.id===cand.id); if(fullCandidate){ fullCandidate.recruiter=targetRecruiter; fullCandidate.updatedAt=new Date().toISOString(); const resp=await fetch('/.netlify/functions/submitCandidate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fullCandidate)}); if(resp.ok) successCount++; } } else{ const resp=await fetch('/.netlify/functions/updateCandidateRecruiter',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cand.id,type:cand.type,recruiter:targetRecruiter})}); if(resp.ok) successCount++; } }catch(err){ console.error(err); } } hideLoading(); if(successCount>0){ showNotification(`Передано кандидатов: ${successCount}`,'success'); await refreshMyCandidates(); await refreshAllCandidates(); closeBulkTransferModal(); } else showNotification('Не удалось передать ни одного кандидата','error'); }
+        function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g,function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        async function refreshMyCandidates(){ if(isRefreshing||!currentRecruiter) return; isRefreshing=true; try{ const resp=await fetch(`/.netlify/functions/getMyCandidates?recruiter=${encodeURIComponent(currentRecruiter.name)}`); if(resp.ok){ const newCandidates=await resp.json(); newCandidates.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); const oldIndex=currentCandidateIndex; const currentId=(oldIndex>=0&&oldIndex<myCandidates.length)?myCandidates[oldIndex].id:null; myCandidates=newCandidates; let newIndex=-1; if(currentId) newIndex=myCandidates.findIndex(c=>c.id===currentId); if(newIndex===-1) newIndex=myCandidates.findIndex(c=>!c.callResult||c.callResult.trim()===''); if(newIndex===-1&&myCandidates.length>0) newIndex=0; if(newIndex!==oldIndex){ currentCandidateIndex=newIndex; if(currentView==='main') loadCandidateIntoForm(currentCandidateIndex); } else{ if(currentView==='main'){ updateStats(); if(currentCandidateIndex>=0&&myCandidates[currentCandidateIndex]){ const candidate=myCandidates[currentCandidateIndex]; updateCandidateProgress(candidate.phone,candidate.project); } } } if(currentView==='candidates') applySearchAndFilter(); updateTabCounts(); updateMenuCounts(); } }catch(e){ console.error(e); }finally{ isRefreshing=false; } }
+        async function refreshAllCandidates(){ try{ const resp=await fetch('/.netlify/functions/getAllCandidates'); if(resp.ok){ const newAll=await resp.json(); allCandidates=newAll; if(currentView==='candidates') applySearchAndFilter(); updateStats(); updateTabCounts(); updateMenuCounts(); if(currentView==='statistics') renderStatisticsPage(); } }catch(e){} }
+        async function forceRefresh(){ showLoading(); await refreshMyCandidates(); await refreshAllCandidates(); hideLoading(); showNotification('Данные обновлены','success'); }
+        function startAutoRefresh(intervalMs=20000){ if(refreshInterval) clearInterval(refreshInterval); refreshInterval=setInterval(()=>{ refreshMyCandidates(); refreshAllCandidates(); },intervalMs); }
+        function stopAutoRefresh(){ if(refreshInterval){ clearInterval(refreshInterval); refreshInterval=null; } }
+        window.addEventListener('beforeunload',()=>stopAutoRefresh());
+        function showLoading(){ let overlay=document.getElementById('loadingOverlay'); if(!overlay){ overlay=document.createElement('div'); overlay.id='loadingOverlay'; overlay.className='loading-overlay'; overlay.innerHTML='<div class="loading-spinner"></div><div class="loading-text">Идет загрузка...</div>'; document.body.appendChild(overlay); } overlay.classList.remove('hidden'); }
+        function hideLoading(){ const overlay=document.getElementById('loadingOverlay'); if(overlay) overlay.classList.add('hidden'); }
+        document.addEventListener('DOMContentLoaded',()=>{ document.querySelectorAll('.transfer-category-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ const category=btn.dataset.category; document.querySelectorAll('.transfer-category-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); loadTransferCandidates(category); }); }); const collapseBtn=document.getElementById('collapseSidebarBtn'); if(collapseBtn){ collapseBtn.addEventListener('click',()=>{ const sideMenu=document.getElementById('sideMenu'); sideMenu.classList.toggle('collapsed'); localStorage.setItem('sidebarCollapsed',sideMenu.classList.contains('collapsed')); }); if(localStorage.getItem('sidebarCollapsed')==='true') document.getElementById('sideMenu').classList.add('collapsed'); } document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ document.querySelectorAll('.stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show').forEach(modal=>{ modal.classList.remove('show'); document.body.classList.remove('menu-open'); }); } }); });
+        const state={recruiters:[],scripts:[],characteristics:[]};
+        async function loadStateForMenu(){ try{ const refRes=await fetch('/.netlify/functions/getAllReferences'); const refData=await refRes.json(); state.recruiters=refData.recruiters||[]; state.scripts=refData.scripts||[]; const charRes=await fetch('/.netlify/functions/getCharacteristics'); state.characteristics=await charRes.json(); }catch(e){} }
+        const origInit=initInterface;
+        initInterface=async function(){ await loadStateForMenu(); await origInit(); };
     </script>
 </body>
 </html>
