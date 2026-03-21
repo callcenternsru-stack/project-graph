@@ -162,7 +162,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1400px; /* увеличено для нового столбца */
+            min-width: 1400px;
         }
         th {
             background: #000000;
@@ -342,7 +342,6 @@
         .modal-content select[multiple] {
             height: 120px;
         }
-        /* Стили для контейнера чекбоксов */
         .checkbox-group {
             max-height: 200px;
             overflow-y: auto;
@@ -696,8 +695,6 @@
             color: #ffd700;
             font-size: 18px;
         }
-
-        /* Стили для модального окна деталей кандидата */
         .file-list {
             list-style: none;
             padding: 0;
@@ -744,7 +741,6 @@
         .task-info strong {
             color: #ffd700;
         }
-        /* Дополнительные стили для кнопок в модальном окне */
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -772,8 +768,6 @@
         .modal-actions .delete-time-btn:hover {
             background: #ff8a8a;
         }
-
-        /* Стили для списка статусов в модальном окне */
         .items-list {
             max-height: 250px;
             overflow-y: auto;
@@ -819,8 +813,6 @@
         .list-item .delete-btn:hover {
             background: #ff8a8a;
         }
-
-        /* ===== НОВЫЙ СТИЛЬ ДЛЯ СЕЛЕКТА РЕКРУТЕРА ===== */
         .recruiter-select {
             background: #1a1a1a;
             color: #ffd700;
@@ -835,8 +827,6 @@
             outline: none;
             border-color: #ffd700;
         }
-
-        /* Стиль для поля качества в аналитике */
         .quality-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -846,8 +836,6 @@
             color: #ffd700;
             font-weight: 600;
         }
-
-        /* ===== НОВЫЕ СТИЛИ ДЛЯ МАССОВОГО ВЫДЕЛЕНИЯ ===== */
         .checkbox-col {
             width: 40px;
             text-align: center;
@@ -892,8 +880,6 @@
             cursor: not-allowed;
             transform: none;
         }
-
-        /* Стили для кнопок фильтра */
         .filter-btn {
             padding: 8px 16px;
             background: #1a1a1a;
@@ -917,6 +903,55 @@
             background: #ff6b6b;
             color: #fff;
         }
+        .vacancies-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .vacancy-card {
+            background: #1a1a1a;
+            border: 2px solid #ffd700;
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .vacancy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+        }
+        .vacancy-logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .vacancy-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        .vacancy-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #ffd700;
+            color: #000;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .vacancy-link:hover {
+            background: #ffe44d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+        .vacancy-desc {
+            color: #ccc;
+            margin-top: 15px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -929,6 +964,7 @@
         <button class="menu-btn" data-tab="candidatesAll" onclick="switchTab('candidatesAll')">Анкеты</button>
         <button class="menu-btn" data-tab="characteristics" onclick="switchTab('characteristics')">Характеристики</button>
         <button class="menu-btn" data-tab="analytics" onclick="switchTab('analytics')">Аналитика</button>
+        <button class="menu-btn" data-tab="vacancies" onclick="switchTab('vacancies')">Вакансии</button>
     </div>
 
     <div class="admin-container">
@@ -1136,9 +1172,7 @@
             <span>Детали анкеты</span>
             <button class="modal-close" onclick="closeCandidateDetails()">✕</button>
         </div>
-        <div class="modal-content" id="candidateDetailsContent">
-            <!-- будет заполнено динамически -->
-        </div>
+        <div class="modal-content" id="candidateDetailsContent"></div>
     </div>
 
     <!-- Модальное окно фильтра для Базы контактов -->
@@ -1151,29 +1185,41 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>ФИО</label>
-                    <input type="text" id="filterFullName" placeholder="Введите ФИО">
+                    <select id="filterFullNameSelect">
+                        <option value="">Все</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Проект</label>
-                    <input type="text" id="filterProject" placeholder="Название проекта">
+                    <select id="filterProjectSelect">
+                        <option value="">Все</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Страна</label>
-                    <input type="text" id="filterCountry" placeholder="Страна">
+                    <select id="filterCountrySelect">
+                        <option value="">Все</option>
+                    </select>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Дата обучения</label>
-                    <input type="date" id="filterTrainingDate">
+                    <select id="filterTrainingDateSelect">
+                        <option value="">Все</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Результат звонка</label>
-                    <input type="text" id="filterCallResult" placeholder="Статус">
+                    <select id="filterCallResultSelect">
+                        <option value="">Все</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Рекрутер</label>
-                    <input type="text" id="filterRecruiter" placeholder="Имя рекрутера">
+                    <select id="filterRecruiterSelect">
+                        <option value="">Все</option>
+                    </select>
                 </div>
             </div>
             <div class="form-row" style="justify-content: flex-end; gap: 10px;">
@@ -1215,7 +1261,6 @@
         let currentCommentContext = null;
         let candidatesSortColumn = 0;
         let candidatesSortDirection = 'desc';
-        // Объект для хранения параметров фильтрации
         let candidatesFilters = {
             fullName: '',
             project: '',
@@ -1250,7 +1295,6 @@
             });
         }
 
-        // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
             const notif = document.createElement('div');
             notif.className = `notification ${type}`;
@@ -1259,7 +1303,7 @@
             setTimeout(() => notif.remove(), 5000);
         }
 
-        // ========== ЗАГРУЗКА ДАННЫХ С СЕРВЕРА ==========
+        // ========== ЗАГРУЗКА ДАННЫХ (все функции без изменений) ==========
         async function loadCharacteristics() {
             try {
                 const res = await fetch('/.netlify/functions/getCharacteristics');
@@ -1302,7 +1346,6 @@
             }
         }
 
-        // ========== АВТОМАТИЧЕСКОЕ НАЗНАЧЕНИЕ РЕКРУТЕРА ==========
         async function autoAssignRecruiters() {
             if (!state.allCandidates || !state.candidates) return;
             const updates = [];
@@ -1329,7 +1372,6 @@
             }
         }
 
-        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОИСКА РЕКРУТЕРА ==========
         function findMatchingRecruiter(candidate) {
             if (!state.candidates || state.candidates.length === 0) return null;
             const normPhone = (candidate.phone || '').replace(/\D/g, '');
@@ -1419,7 +1461,6 @@
             }
         }
 
-        // ========== АВТОМАТИЧЕСКОЕ ПРОСТАВЛЕНИЕ СТАТУСА "ПРОВЕРКА ПРОЙДЕНА" ==========
         async function processCompletedCandidates() {
             if (!state.allCandidates) return;
             const updates = [];
@@ -1435,7 +1476,6 @@
             }
         }
 
-        // ========== ОБНОВЛЕНИЕ СЧЕТЧИКОВ НА КНОПКАХ МЕНЮ ==========
         function updateMenuCounts() {
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => {
                 const tab = btn.dataset.tab;
@@ -1449,6 +1489,7 @@
                     case 'candidatesAll': count = state.allCandidates.length; break;
                     case 'characteristics': count = state.characteristics.length; break;
                     case 'analytics': count = state.analytics.length; break;
+                    case 'vacancies': count = 0; break;
                 }
                 let baseText = btn.innerText.replace(/\s*\(\d+\)$/, '');
                 if (count > 0) {
@@ -1459,7 +1500,6 @@
             });
         }
 
-        // ========== УДАЛЕНИЕ АНКЕТ ==========
         async function deleteAutoForm(code) {
             if (!confirm('Удалить автоматическую анкету?')) return;
             try {
@@ -1506,12 +1546,11 @@
             }
         }
 
-        // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tabId) {
             if (scheduleOnly) return;
             currentTab = tabId;
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => btn.classList.remove('active'));
-            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'candidatesAll', 'characteristics', 'analytics'].indexOf(tabId);
+            const index = ['recruiters', 'candidates', 'scripts', 'schedule', 'candidatesAll', 'characteristics', 'analytics', 'vacancies'].indexOf(tabId);
             if (index !== -1) {
                 document.querySelectorAll('.side-menu .menu-btn')[index].classList.add('active');
             }
@@ -1534,45 +1573,79 @@
                 renderCharacteristics(area);
             } else if (currentTab === 'analytics') {
                 renderAnalytics(area);
+            } else if (currentTab === 'vacancies') {
+                renderVacancies(area);
             }
         }
 
-        // ========== ФУНКЦИИ ФИЛЬТРАЦИИ КАНДИДАТОВ ==========
+        // ========== ФУНКЦИИ ФИЛЬТРАЦИИ ==========
         function applyCandidatesFilters(candidates) {
             let filtered = [...candidates];
             if (candidatesFilters.fullName.trim()) {
-                const search = candidatesFilters.fullName.toLowerCase().trim();
-                filtered = filtered.filter(c => (c.fullName || '').toLowerCase().includes(search));
+                filtered = filtered.filter(c => (c.fullName || '').toLowerCase() === candidatesFilters.fullName.toLowerCase());
             }
             if (candidatesFilters.project.trim()) {
-                const search = candidatesFilters.project.toLowerCase().trim();
-                filtered = filtered.filter(c => (c.project || '').toLowerCase().includes(search));
+                filtered = filtered.filter(c => (c.project || '').toLowerCase() === candidatesFilters.project.toLowerCase());
             }
             if (candidatesFilters.country.trim()) {
-                const search = candidatesFilters.country.toLowerCase().trim();
-                filtered = filtered.filter(c => (c.country || '').toLowerCase().includes(search));
+                filtered = filtered.filter(c => (c.country || '').toLowerCase() === candidatesFilters.country.toLowerCase());
             }
             if (candidatesFilters.trainingDate) {
                 filtered = filtered.filter(c => c.trainingDate === candidatesFilters.trainingDate);
             }
             if (candidatesFilters.callResult.trim()) {
-                const search = candidatesFilters.callResult.toLowerCase().trim();
-                filtered = filtered.filter(c => (c.callResult || '').toLowerCase().includes(search));
+                filtered = filtered.filter(c => (c.callResult || '').toLowerCase() === candidatesFilters.callResult.toLowerCase());
             }
             if (candidatesFilters.recruiter.trim()) {
-                const search = candidatesFilters.recruiter.toLowerCase().trim();
-                filtered = filtered.filter(c => (c.recruiter || '').toLowerCase().includes(search));
+                filtered = filtered.filter(c => (c.recruiter || '').toLowerCase() === candidatesFilters.recruiter.toLowerCase());
             }
             return filtered;
         }
 
+        function populateFilterSelects() {
+            const fullNameSet = new Set();
+            const projectSet = new Set();
+            const countrySet = new Set();
+            const trainingDateSet = new Set();
+            const callResultSet = new Set();
+            const recruiterSet = new Set();
+
+            state.candidates.forEach(c => {
+                if (c.fullName) fullNameSet.add(c.fullName);
+                if (c.project) projectSet.add(c.project);
+                if (c.country) countrySet.add(c.country);
+                if (c.trainingDate) trainingDateSet.add(c.trainingDate);
+                if (c.callResult) callResultSet.add(c.callResult);
+                if (c.recruiter) recruiterSet.add(c.recruiter);
+            });
+
+            const fullNameOptions = Array.from(fullNameSet).sort();
+            const projectOptions = Array.from(projectSet).sort();
+            const countryOptions = Array.from(countrySet).sort();
+            const trainingDateOptions = Array.from(trainingDateSet).sort();
+            const callResultOptions = Array.from(callResultSet).sort();
+            const recruiterOptions = Array.from(recruiterSet).sort();
+
+            const fillSelect = (id, options, currentValue) => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                select.innerHTML = '<option value="">Все</option>';
+                options.forEach(opt => {
+                    const selected = (opt === currentValue) ? 'selected' : '';
+                    select.innerHTML += `<option value="${opt}" ${selected}>${opt}</option>`;
+                });
+            };
+
+            fillSelect('filterFullNameSelect', fullNameOptions, candidatesFilters.fullName);
+            fillSelect('filterProjectSelect', projectOptions, candidatesFilters.project);
+            fillSelect('filterCountrySelect', countryOptions, candidatesFilters.country);
+            fillSelect('filterTrainingDateSelect', trainingDateOptions, candidatesFilters.trainingDate);
+            fillSelect('filterCallResultSelect', callResultOptions, candidatesFilters.callResult);
+            fillSelect('filterRecruiterSelect', recruiterOptions, candidatesFilters.recruiter);
+        }
+
         function openFilterModal() {
-            document.getElementById('filterFullName').value = candidatesFilters.fullName;
-            document.getElementById('filterProject').value = candidatesFilters.project;
-            document.getElementById('filterCountry').value = candidatesFilters.country;
-            document.getElementById('filterTrainingDate').value = candidatesFilters.trainingDate;
-            document.getElementById('filterCallResult').value = candidatesFilters.callResult;
-            document.getElementById('filterRecruiter').value = candidatesFilters.recruiter;
+            populateFilterSelects();
             document.getElementById('filterCandidatesModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
@@ -1583,12 +1656,12 @@
         }
 
         function applyCandidatesFilterModal() {
-            candidatesFilters.fullName = document.getElementById('filterFullName').value;
-            candidatesFilters.project = document.getElementById('filterProject').value;
-            candidatesFilters.country = document.getElementById('filterCountry').value;
-            candidatesFilters.trainingDate = document.getElementById('filterTrainingDate').value;
-            candidatesFilters.callResult = document.getElementById('filterCallResult').value;
-            candidatesFilters.recruiter = document.getElementById('filterRecruiter').value;
+            candidatesFilters.fullName = document.getElementById('filterFullNameSelect').value;
+            candidatesFilters.project = document.getElementById('filterProjectSelect').value;
+            candidatesFilters.country = document.getElementById('filterCountrySelect').value;
+            candidatesFilters.trainingDate = document.getElementById('filterTrainingDateSelect').value;
+            candidatesFilters.callResult = document.getElementById('filterCallResultSelect').value;
+            candidatesFilters.recruiter = document.getElementById('filterRecruiterSelect').value;
             closeFilterModal();
             renderContent();
         }
@@ -1635,20 +1708,20 @@
                 }
                 headerHtml += `<th class="${sortClass}" onclick="${h.field ? `sortCandidates(${idx})` : ''}">${h.label}</th>`;
             });
-            headerHtml += ' </tr>';
+            headerHtml += '  </tr>';
 
             let rowsHtml = '';
             if (sorted.length === 0) {
-                rowsHtml = ' <td colspan="' + (headers.length+1) + '" style="text-align:center;">Нет контактов</td> </tr>';
+                rowsHtml = '<tr><td colspan="' + (headers.length+1) + '" style="text-align:center;">Нет контактов</td></tr>';
             } else {
                 sorted.forEach(c => {
-                    const training = c.trainingDate || '—';   // только дата, без времени
+                    const training = c.trainingDate || '—';
                     const meeting = c.meetingTime ? c.meetingTime : '—';
                     const updatedAtStr = c.updatedAt ? new Date(c.updatedAt).toLocaleString() : (c.createdAt ? new Date(c.createdAt).toLocaleString() : '—');
                     const createdAtStr = new Date(c.createdAt).toLocaleString();
                     const checked = selectedCandidateIds.has(c.id) ? 'checked' : '';
                     rowsHtml += `
-                         <tr>
+                        <tr>
                             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
                             <td>${updatedAtStr}</td>
                             <td>${createdAtStr}</td>
@@ -1663,7 +1736,7 @@
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
                             <td><button class="delete-candidate-btn" onclick="deleteCandidateFromBase('${c.id}')">✕</button></td>
-                         </tr>
+                        </tr>
                     `;
                 });
             }
@@ -1675,7 +1748,7 @@
             let html = `
                 <div class="section-header">
                     <h2>База контактов</h2>
-                    <div class="filter-buttons">
+                    <div style="display: flex; gap: 10px; align-items: center;">
                         <button class="filter-btn" onclick="openFilterModal()">${filterBtnText}</button>
                         ${isFilterActive ? '<button class="filter-btn clear-filter-btn" onclick="resetCandidatesFilter()">Сбросить фильтр</button>' : ''}
                         <div class="bulk-actions">
@@ -1798,7 +1871,6 @@
             });
         }
 
-        // ========== ФУНКЦИЯ УДАЛЕНИЯ ОДНОГО КАНДИДАТА ИЗ БАЗЫ КОНТАКТОВ ==========
         async function deleteCandidateFromBase(id) {
             if (!confirm('Удалить этот контакт?')) return;
             try {
@@ -2277,7 +2349,6 @@
             return `${months[parseInt(month) - 1]} ${year}`;
         }
 
-        // ========== УДАЛЕНИЕ ЭЛЕМЕНТОВ ==========
         async function deleteItem(type, index) {
             if (!confirm('Удалить элемент?')) return;
 
@@ -2309,7 +2380,6 @@
             showNotification('Элемент удалён', 'success');
         }
 
-        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
         function generatePassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let password = '';
@@ -2448,7 +2518,6 @@
             if (passField) passField.value = newPass;
         }
 
-        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ ОТКРЫТИЯ РЕДАКТИРОВАНИЯ ==========
         function openEditModal(type, index) {
             editingType = type;
             editingId = index;
@@ -2571,7 +2640,6 @@
             document.body.classList.add('menu-open');
         }
 
-        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ ==========
         async function saveModal() {
             try {
                 if (editingType === 'recruiter') {
@@ -2713,7 +2781,6 @@
             editingType = null;
         }
 
-        // ========== ИМПОРТ КАНДИДАТОВ ИЗ EXCEL ==========
         function importCandidates(recruiterIndex) {
             currentRecruiterForImport = recruiterIndex;
             const fileInput = document.getElementById('excelUpload');
@@ -2794,7 +2861,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // ========== СОХРАНЕНИЕ ДАННЫХ ГРАФИКОВ ==========
         async function saveProjectMeetings() {
             try {
                 await fetch('/.netlify/functions/saveProjectMeetings', {
@@ -2855,10 +2921,6 @@
             }
         }
 
-        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ РЕКРУТЕРА ==========
-        // функция findMatchingRecruiter уже исправлена выше
-
-        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateCandidateRecruiter ==========
         async function updateCandidateRecruiter(id, type, newRecruiter) {
             try {
                 const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
@@ -2869,7 +2931,6 @@
                 if (response.ok) {
                     const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
                     if (candidate) candidate.recruiter = newRecruiter;
-                    // также обновим updatedAt для кандидата из базы контактов, если он там есть
                     const candidateInBase = state.candidates.find(c => c.id === id);
                     if (candidateInBase) {
                         candidateInBase.updatedAt = new Date().toISOString();
@@ -2891,7 +2952,6 @@
             }
         }
 
-        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДКИ "Анкеты" ==========
         function renderCandidatesAll(container) {
             const candidates = state.allCandidates || [];
             const systemStatuses = ['draft', 'passed'];
@@ -3360,6 +3420,34 @@
                 hideLoading();
             }
         });
+
+        // ========== ВКЛАДКА ВАКАНСИЙ ==========
+        function renderVacancies(container) {
+            const html = `
+                <div class="section-header">
+                    <h2>Вакансии</h2>
+                </div>
+                <div class="vacancies-container">
+                    <div class="vacancy-card">
+                        <div class="vacancy-logo">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="vacancy-title">HeadHunter</div>
+                        <a href="https://hh.ru/" target="_blank" class="vacancy-link">Перейти на HH.ru</a>
+                        <div class="vacancy-desc">Крупнейшая платформа по поиску работы и сотрудников</div>
+                    </div>
+                    <div class="vacancy-card">
+                        <div class="vacancy-logo">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div class="vacancy-title">Авито Работа</div>
+                        <a href="https://www.avito.ru/rabota" target="_blank" class="vacancy-link">Перейти на Авито</a>
+                        <div class="vacancy-desc">Популярный сервис объявлений с разделом вакансий</div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
 
         // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ ==========
         function showLoading() {
