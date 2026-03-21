@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Рекрутер – панель управления</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>CRM Contact – Рекрутер</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ===== СБРОС И БАЗОВЫЕ ПЕРЕМЕННЫЕ ===== */
+        /* ===== RESET & GLOBAL VARIABLES (MODERN CRM STYLE) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -15,620 +15,551 @@
         }
 
         :root {
-            --bg-primary: #0A0A0A;
-            --bg-secondary: #141414;
-            --bg-tertiary: #1A1A1A;
-            --border-color: #2A2A2A;
-            --accent: #FFD700;
-            --accent-hover: #ffe44d;
-            --text-primary: #FFFFFF;
-            --text-secondary: #A0A0A0;
-            --text-muted: #6B7280;
-            --danger: #ff6b6b;
-            --success: #4caf50;
-            --warning: #FFA500;
-            --stage1: #FFC107;
-            --stage2: #FF9800;
-            --stage3: #4CAF50;
-            --stage4: #4CAF50;
-            --stage5: #F44336;
-            --font-family: 'Inter', sans-serif;
+            --bg-deep: #050505;
+            --bg-surface: #0c0c0c;
+            --bg-elevated: #121212;
+            --bg-glass: rgba(18, 18, 18, 0.75);
+            --border-glow: rgba(255, 215, 0, 0.3);
+            --accent-gold: #FFD700;
+            --accent-gold-dark: #e6c200;
+            --accent-gradient: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            --text-primary: #F5F5F5;
+            --text-secondary: #B0B0B0;
+            --text-muted: #6B6F76;
+            --danger: #FF6B6B;
+            --success: #4CAF50;
+            --warning: #FFB347;
+            --card-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 215, 0, 0.05);
+            --hover-transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            --border-radius-lg: 28px;
+            --border-radius-md: 20px;
+            --border-radius-sm: 14px;
         }
 
         body {
-            background: var(--bg-primary);
+            background: radial-gradient(circle at 20% 30%, #0a0a0a, #010101);
             color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
             display: flex;
-            font-family: var(--font-family);
+            backdrop-filter: blur(1px);
         }
 
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-            border-radius: 4px;
+            background: #1a1a1a;
+            border-radius: 8px;
         }
         ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
+            background: var(--accent-gold);
+            border-radius: 8px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent);
-        }
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: var(--border-color) var(--bg-secondary);
+            background: #ffea80;
         }
 
-        /* ===== БОКОВОЕ МЕНЮ ===== */
         .side-menu {
             width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            padding: 30px 20px;
+            background: rgba(8, 8, 8, 0.75);
+            backdrop-filter: blur(18px);
+            border-right: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 28px 18px;
             position: sticky;
             top: 0;
             height: 100vh;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
+            transition: all 0.3s;
+            z-index: 100;
         }
+
         .side-menu::before {
-            content: "CRM Contact";
+            content: "CRM CONTACT";
             display: block;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 40px;
-            padding-left: 16px;
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(120deg, #FFD700, #FFB347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+            padding-left: 12px;
+            border-left: 4px solid var(--accent-gold);
         }
+
         .menu-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            background: transparent;
+            gap: 14px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.02);
             border: none;
-            border-radius: 12px;
+            border-radius: 18px;
             color: var(--text-secondary);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--hover-transition);
             width: 100%;
             text-align: left;
-        }
-        .menu-btn i {
-            width: 24px;
-            font-size: 20px;
-            color: #5A5A5A;
-        }
-        .menu-btn:hover {
-            background: var(--border-color);
-            color: var(--accent);
-        }
-        .menu-btn:hover i {
-            color: var(--accent);
-        }
-        .menu-btn.logout {
-            margin-top: auto;
-            color: var(--danger);
-        }
-        .menu-btn.logout i {
-            color: var(--danger);
-        }
-        .menu-btn.logout:hover {
-            background: var(--danger);
-            color: #000;
-        }
-        .menu-btn.logout:hover i {
-            color: #000;
+            backdrop-filter: blur(4px);
         }
 
-        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+        .menu-btn i {
+            width: 26px;
+            font-size: 1.2rem;
+            color: #5a5a5a;
+            transition: 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: linear-gradient(95deg, rgba(255, 215, 0, 0.12), rgba(255, 165, 0, 0.08));
+            color: var(--accent-gold);
+            transform: translateX(5px);
+        }
+
+        .menu-btn:hover i {
+            color: var(--accent-gold);
+        }
+
+        .menu-btn.logout {
+            margin-top: auto;
+            color: #ff8a8a;
+        }
+        .menu-btn.logout i {
+            color: #ff8a8a;
+        }
+        .menu-btn.logout:hover {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ffbaba;
+        }
+
         .recruiter-interface {
             flex: 1;
-            padding: 30px 40px;
+            padding: 28px 40px;
             overflow-y: auto;
             max-width: 1600px;
             margin: 0 auto;
         }
+
         .breadcrumbs {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 20px;
-            color: var(--text-secondary);
             font-size: 14px;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 100px;
+            width: fit-content;
+            backdrop-filter: blur(4px);
         }
-        .breadcrumbs a {
-            color: var(--accent);
+        .breadcrumbs a, .breadcrumbs span {
+            color: var(--text-secondary);
             text-decoration: none;
         }
-        .breadcrumbs span {
-            color: var(--text-primary);
-            font-weight: 500;
+        .breadcrumbs a:hover {
+            color: var(--accent-gold);
         }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .header h1 span {
-            color: var(--accent);
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(130deg, #FFFFFF 20%, #FFD700 80%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
         }
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 14px;
         }
-        .schedule-btn, .logout-btn {
+        .schedule-btn, .logout-btn, .refresh-btn {
             padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 500;
-            border: 2px solid var(--accent);
-            background: transparent;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 215, 0, 0.4);
             color: var(--text-primary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--hover-transition);
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 15px;
         }
-        .schedule-btn:hover, .logout-btn:hover {
-            background: var(--accent);
-            color: #000000;
+        .schedule-btn:hover, .logout-btn:hover, .refresh-btn:hover {
+            background: var(--accent-gradient);
+            border-color: transparent;
+            color: #000;
             transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(255,215,0,0.3);
         }
 
-        /* Карточки статистики */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 24px;
-            margin-bottom: 30px;
+            margin-bottom: 36px;
         }
         .stat-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            background: rgba(18, 18, 18, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: var(--border-radius-md);
             padding: 24px;
-            transition: all 0.2s;
+            transition: var(--hover-transition);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 10px 25px -8px rgba(0,0,0,0.4);
         }
-        .stat-card::before {
+        .stat-card::after {
             content: '';
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--accent);
-            opacity: 0.5;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
         .stat-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+            transform: translateY(-6px);
+            border-color: rgba(255, 215, 0, 0.7);
+            box-shadow: 0 20px 30px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,215,0,0.3);
+        }
+        .stat-card:hover::after {
+            transform: scaleX(1);
         }
         .stat-title {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             color: var(--text-secondary);
             font-size: 14px;
-            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+            margin-bottom: 14px;
         }
         .stat-title i {
-            color: var(--accent);
-            font-size: 18px;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
         }
         .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--accent);
-            line-height: 1.2;
-        }
-        .stat-trend {
-            margin-top: 8px;
-            font-size: 13px;
-            color: var(--success);
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            font-size: 38px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFD700, #FFB347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1;
         }
 
-        /* Прогресс-бар */
         .progress-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 20px 25px;
-            margin-bottom: 30px;
+            background: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 28px;
+            padding: 24px 28px;
+            margin-bottom: 32px;
         }
         .progress-title {
-            color: var(--accent);
+            color: var(--accent-gold);
             font-weight: 600;
             margin-bottom: 20px;
             display: flex;
-            align-items: center;
             gap: 10px;
-            font-size: 18px;
+            font-size: 1.1rem;
         }
         .progress-steps {
             display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 15px;
+            gap: 6px;
+            margin-bottom: 12px;
         }
         .progress-step {
             flex: 1;
-            height: 12px;
-            border-radius: 6px;
-            background: var(--border-color);
+            height: 8px;
+            border-radius: 8px;
+            background: #2a2a2a;
             transition: all 0.2s;
             cursor: pointer;
         }
-        .progress-step.stage1 { background: var(--stage1); }
-        .progress-step.stage2 { background: var(--stage2); }
-        .progress-step.stage3 { background: var(--stage3); }
-        .progress-step.stage4 { background: var(--stage4); }
-        .progress-step.stage5 { background: var(--stage5); }
+        .progress-step.stage1 { background: #FFC107; }
+        .progress-step.stage2 { background: #FF9800; }
+        .progress-step.stage3 { background: #4CAF50; }
+        .progress-step.stage4 { background: #4CAF50; }
+        .progress-step.stage5 { background: #F44336; }
         .progress-step.active {
-            box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px rgba(255,215,0,0.3);
-            transform: scaleY(1.2);
-        }
-        .progress-step:hover {
-            filter: brightness(1.2);
-            transform: scaleY(1.1);
+            box-shadow: 0 0 0 2px var(--accent-gold), 0 0 0 4px rgba(255,215,0,0.3);
+            transform: scaleY(1.3);
         }
         .progress-labels {
             display: flex;
             justify-content: space-between;
             font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 5px;
-        }
-        .progress-label {
-            flex: 1;
-            text-align: center;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .progress-label:hover {
-            color: var(--accent);
+            color: #9e9e9e;
         }
         .progress-label.active {
-            color: var(--accent);
+            color: var(--accent-gold);
             font-weight: 600;
         }
 
-        /* Основная рабочая область */
         .content-wrapper {
             display: flex;
-            gap: 24px;
+            gap: 28px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
-        .left-panel {
-            flex: 2;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 24px;
-            max-height: 70vh;
-            overflow-y: auto;
+        .left-panel, .right-panel {
+            background: rgba(12, 12, 12, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,215,0,0.15);
+            border-radius: 28px;
+            padding: 26px;
+            transition: all 0.2s;
         }
-        .script-selector, select, .form-group select {
-            width: 100%;
-            padding: 14px 16px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-primary);
+        .left-panel { flex: 2; }
+        .right-panel { flex: 1.2; }
+
+        select, input, textarea {
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 12px 16px;
+            color: #fff;
             font-size: 14px;
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            background-size: 16px;
-            padding-right: 40px;
+            transition: 0.2s;
+            width: 100%;
         }
-        .script-selector:focus, select:focus, .form-group select:focus {
+        select:focus, input:focus, textarea:focus {
             outline: none;
-            border-color: var(--accent);
-        }
-        select option {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            padding: 10px;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(255,215,0,0.2);
         }
         .script-item {
-            background: var(--bg-tertiary);
-            border-radius: 16px;
+            background: #0a0a0a;
+            border-radius: 24px;
             padding: 20px;
-            border-left: 4px solid var(--accent);
+            border-left: 4px solid var(--accent-gold);
             margin-top: 20px;
         }
-        .script-item .title {
-            font-weight: 600;
-            color: var(--accent);
-            margin-bottom: 12px;
-            font-size: 18px;
-        }
-        .script-item .content {
-            color: #E0E0E0;
-            font-size: 14px;
-            line-height: 1.6;
-            max-height: 400px;
-            overflow-y: auto;
-            background: #111;
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        #noScriptMessage {
-            color: var(--text-secondary);
-            text-align: center;
-            padding: 40px;
-        }
-        .right-panel {
-            flex: 1;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 24px;
-            max-height: 70vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        .right-panel h3 {
-            color: var(--accent);
-            margin-bottom: 16px;
-            font-size: 18px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 12px;
-        }
-        .candidate-counter {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 20px;
-            text-align: right;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-        }
-        .form-group {
-            margin-bottom: 4px;
-        }
-        .form-group.full-width {
-            grid-column: span 2;
-        }
-        .form-group label {
-            display: block;
-            color: var(--accent);
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 6px;
-        }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px 14px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 14px;
-            color: var(--text-primary);
-            transition: all 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: #222;
-        }
         .save-btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--accent);
-            color: #000;
+            background: var(--accent-gradient);
             border: none;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 700;
             font-size: 16px;
-            font-weight: 600;
+            color: #000;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: 0.2s;
+            width: 100%;
             margin-top: 20px;
         }
         .save-btn:hover {
-            background: var(--accent-hover);
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            box-shadow: 0 8px 20px rgba(255,215,0,0.4);
         }
         .telegram-btn, .whatsapp-btn {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,215,0,0.4);
+            border-radius: 40px;
+            padding: 12px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            transition: 0.2s;
         }
-        .telegram-btn {
-            background: #0088cc;
-            color: white;
-        }
-        .telegram-btn:hover {
-            background: #0077b5;
-            transform: translateY(-2px);
-        }
-        .whatsapp-btn {
-            background: #25D366;
-            color: white;
-        }
-        .whatsapp-btn:hover {
-            background: #20b859;
-            transform: translateY(-2px);
+        .telegram-btn:hover, .whatsapp-btn:hover {
+            background: var(--accent-gradient);
+            color: #000;
+            transform: scale(0.98);
         }
         .google-connect-btn {
+            background: #4285f4;
+            border-radius: 40px;
+            margin-top: 12px;
             width: 100%;
             padding: 12px;
-            background: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-        .google-connect-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #2a5ca0;
-        }
-        .google-connect-btn:hover:not(:disabled) {
-            background: #5a95f5;
-            transform: translateY(-2px);
         }
 
-        /* Панель кандидатов */
         .candidates-panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 24px;
+            background: rgba(12,12,12,0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 28px;
             margin-top: 20px;
         }
-        .candidates-panel h3 {
-            color: var(--accent);
-            margin-bottom: 20px;
-            font-size: 20px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-        .search-container {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 30px;
-            padding: 5px 15px;
-        }
-        .search-container i {
-            color: var(--accent);
-            font-size: 18px;
-        }
-        .search-container input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-size: 14px;
-            outline: none;
-            padding: 8px 0;
-        }
-        .search-container input::placeholder {
-            color: var(--text-secondary);
-        }
-        .candidates-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
         .candidates-tab {
-            padding: 10px 20px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 30px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
+            background: #1a1a1a;
+            border-radius: 40px;
+            padding: 8px 20px;
+            transition: 0.2s;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-        .candidates-tab:hover {
-            border-color: var(--accent);
-            color: var(--accent);
         }
         .candidates-tab.active {
-            background: var(--accent);
+            background: var(--accent-gradient);
             color: #000;
-            border-color: var(--accent);
-        }
-        .candidates-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-height: 60vh;
-            overflow-y: auto;
         }
         .candidate-card {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 18px 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            position: relative;
-            align-items: flex-start;
-            min-height: 120px;
+            background: #0f0f0f;
+            border-radius: 24px;
+            transition: 0.2s;
         }
         .candidate-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
+            transform: translateY(-3px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 12px 25px -12px rgba(255,215,0,0.2);
         }
-        .candidate-field {
-            flex: 1 1 180px;
-            min-width: 0;
+
+        .stage-modal, .message-modal, .transfer-modal, .bulk-transfer-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.96);
+            background: rgba(8,8,8,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border: 1px solid rgba(255,215,0,0.4);
+            box-shadow: 0 30px 50px rgba(0,0,0,0.7);
         }
-        .candidate-field .label {
-            color: var(--text-secondary);
-            font-size: 12px;
-            margin-bottom: 4px;
+        .stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
         }
-        .candidate-field .value {
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 500;
-            word-break: break-word;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .modal-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(255,215,0,0.2);
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .candidate-field .value.highlight {
-            color: var(--accent);
+        .modal-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 28px;
+            cursor: pointer;
         }
+        .modal-content {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        .transfer-recruiter-item, .message-item, .stage-candidate-item {
+            background: #111;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .transfer-recruiter-item:hover, .message-item:hover, .stage-candidate-item:hover {
+            background: #1f1f1f;
+            border-color: var(--accent-gold);
+        }
+
+        @media (max-width: 880px) {
+            .side-menu {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                overflow-x: auto;
+                position: sticky;
+                top: 0;
+                backdrop-filter: blur(20px);
+                gap: 10px;
+                padding: 12px 20px;
+            }
+            .side-menu::before { display: none; }
+            .recruiter-interface { padding: 20px; }
+            .content-wrapper { flex-direction: column; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card, .progress-section, .candidate-card {
+            animation: fadeSlideUp 0.4s ease-out forwards;
+        }
+        .notification {
+            background: #111;
+            border-left: 4px solid var(--accent-gold);
+            backdrop-filter: blur(12px);
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            z-index: 20000;
+        }
+        .loading-overlay {
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .login-container {
+            background: rgba(10,10,10,0.85);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--accent-gold);
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            padding: 48px 40px;
+            max-width: 420px;
+            margin: 10vh auto;
+            text-align: center;
+        }
+        .login-btn {
+            background: var(--accent-gradient);
+            color: black;
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .form-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 1fr 1fr;
+        }
+        .full-width {
+            grid-column: span 2;
+        }
+        .hidden { display: none; }
         .candidate-status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -636,7 +567,7 @@
             font-size: 12px;
             font-weight: 500;
             background: var(--border-color);
-            color: var(--accent);
+            color: var(--accent-gold);
             white-space: nowrap;
         }
         .candidate-status-badge.waiting {
@@ -646,293 +577,6 @@
             text-align: center;
             color: var(--text-secondary);
             padding: 40px;
-        }
-
-        /* Модальные окна */
-        .stage-modal, .message-modal, .transfer-modal, .bulk-transfer-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--bg-secondary);
-            border-radius: 24px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-            width: 900px;
-            max-width: 90vw;
-            max-height: 85vh;
-            z-index: 10000;
-            display: none;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            overflow: hidden;
-            backdrop-filter: blur(2px);
-        }
-        .stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show {
-            display: block;
-            animation: modalAppear 0.3s ease;
-        }
-        @keyframes modalAppear {
-            from { opacity: 0; transform: translate(-50%, -45%); }
-            to { opacity: 1; transform: translate(-50%, -50%); }
-        }
-        .stage-modal .modal-header, .message-modal .modal-header, .transfer-modal .modal-header, .bulk-transfer-modal .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 25px;
-            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-            font-weight: 600;
-            color: var(--accent);
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.9);
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--accent);
-            font-size: 24px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        .modal-close:hover {
-            opacity: 1;
-        }
-        .modal-content {
-            padding: 24px;
-            background: var(--bg-secondary);
-        }
-        .transfer-category-btn {
-            padding: 8px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 30px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .transfer-category-btn.active {
-            background: var(--accent);
-            color: #000;
-            border-color: var(--accent);
-        }
-        .transfer-category-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        .bulk-transfer-list .candidate-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-            transition: background 0.2s;
-        }
-        .bulk-transfer-list .candidate-item:hover {
-            background: var(--bg-tertiary);
-        }
-        .bulk-transfer-list .candidate-checkbox {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--accent);
-            cursor: pointer;
-        }
-        .bulk-transfer-list .candidate-info {
-            flex: 1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .bulk-transfer-list .candidate-field {
-            flex: 1 1 180px;
-        }
-        .bulk-transfer-list .candidate-field .label {
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-        .bulk-transfer-list .candidate-field .value {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        .recruiter-select {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .recruiter-select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        .bulk-transfer-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-        .bulk-transfer-actions button {
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-        .bulk-transfer-actions .select-all-btn {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-        .bulk-transfer-actions .select-all-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        .bulk-transfer-actions .clear-all-btn {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-        .bulk-transfer-actions .clear-all-btn:hover {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-        .bulk-transfer-actions .transfer-btn {
-            background: var(--accent);
-            color: #000;
-        }
-        .bulk-transfer-actions .transfer-btn:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-        .bulk-transfer-actions .transfer-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Другие стили модальных окон */
-        .message-list {
-            margin-bottom: 20px;
-        }
-        .message-item {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .message-item:hover, .message-item.selected {
-            border-color: var(--accent);
-            background: #222;
-        }
-        .message-item .title {
-            color: var(--accent);
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        .message-item .content {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .message-preview {
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .message-preview .label {
-            color: var(--accent);
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        .message-preview .text {
-            color: var(--text-primary);
-            white-space: pre-wrap;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .modal-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .send-btn {
-            background: var(--accent);
-            color: #000;
-        }
-        .send-btn:hover {
-            background: var(--accent-hover);
-        }
-        .cancel-btn {
-            background: var(--border-color);
-            color: var(--accent);
-        }
-        .cancel-btn:hover {
-            background: #333;
-        }
-        .transfer-recruiter-list {
-            margin-bottom: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .transfer-recruiter-item {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .transfer-recruiter-item:hover, .transfer-recruiter-item.selected {
-            border-color: var(--accent);
-            background: #222;
-            color: var(--accent);
-        }
-        .transfer-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .transfer-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .transfer-confirm-btn {
-            background: var(--accent);
-            color: #000;
-        }
-        .transfer-confirm-btn:hover {
-            background: var(--accent-hover);
-        }
-        .transfer-cancel-btn {
-            background: var(--border-color);
-            color: var(--accent);
-        }
-        .transfer-cancel-btn:hover {
-            background: #333;
         }
         .transfer-btn {
             background: #6b8cff;
@@ -953,20 +597,12 @@
             background: #8aa5ff;
             transform: scale(1.05);
         }
-
         .analytics-panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 24px;
+            background: rgba(12,12,12,0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 28px;
             margin-top: 20px;
-        }
-        .analytics-panel h3 {
-            color: var(--accent);
-            margin-bottom: 20px;
-            font-size: 20px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
         }
         .analytics-table {
             width: 100%;
@@ -975,12 +611,12 @@
         }
         .analytics-table th {
             background: #000000;
-            color: var(--accent);
+            color: var(--accent-gold);
             font-weight: 600;
             font-size: 14px;
             padding: 12px;
             text-align: left;
-            border-bottom: 2px solid var(--accent);
+            border-bottom: 2px solid var(--accent-gold);
         }
         .analytics-table td {
             padding: 12px;
@@ -995,12 +631,12 @@
             padding: 4px 8px;
             border-radius: 12px;
             background: var(--bg-tertiary);
-            border: 1px solid var(--accent);
-            color: var(--accent);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
             font-weight: 600;
         }
         .file-link {
-            background: var(--accent);
+            background: var(--accent-gold);
             color: #000;
             padding: 4px 8px;
             border-radius: 6px;
@@ -1010,231 +646,144 @@
             transition: all 0.2s;
         }
         .file-link:hover {
-            background: var(--accent-hover);
+            background: var(--accent-gold-dark);
         }
-
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            background: var(--bg-secondary);
-            border: 2px solid var(--accent);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-            z-index: 20000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 300px;
-            animation: slideIn 0.3s ease;
-        }
-        .notification.success {
-            border-color: var(--success);
-        }
-        .notification.error {
-            border-color: var(--danger);
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .hidden {
-            display: none !important;
-        }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .loading-overlay.hidden {
-            display: none;
-        }
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #333;
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        .loading-text {
-            color: var(--accent);
-            font-size: 24px;
-            font-weight: 600;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .side-menu {
-                width: 100%;
-                height: auto;
-                position: static;
-                flex-direction: row;
-                overflow-x: auto;
-                padding: 15px;
-            }
-            .side-menu::before {
-                display: none;
-            }
-            .recruiter-interface {
-                padding: 20px;
-            }
-            .content-wrapper {
-                flex-direction: column;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .progress-steps {
-                flex-wrap: wrap;
-            }
-            .analytics-table {
-                min-width: 600px;
-            }
-            .candidate-field {
-                flex: 1 1 100%;
-            }
-        }
-
-        /* ===== УЛУЧШЕННЫЙ ДИЗАЙН ФОРМЫ ВХОДА ===== */
-        .login-container {
-            max-width: 420px;
-            margin: auto;
-            background: var(--bg-secondary);
-            border-radius: 32px;
-            padding: 48px 40px;
-            border: 2px solid var(--accent);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 215, 0, 0.2);
-            text-align: center;
-        }
-        .login-container h2 {
-            color: var(--accent);
-            font-size: 28px;
-            margin-bottom: 32px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-        .login-container h2 i {
-            font-size: 32px;
-            color: var(--accent);
-        }
-        .login-container .form-group {
-            margin-bottom: 24px;
-            text-align: left;
-        }
-        .login-container .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--accent);
-        }
-        .login-container .form-group input {
-            width: 100%;
-            padding: 16px 18px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            transition: all 0.2s;
-        }
-        .login-container .form-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
-        }
-        .login-btn {
-            width: 100%;
-            padding: 18px;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            border-radius: 16px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .login-btn:hover {
-            background: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(255, 215, 0, 0.4);
-        }
-        .error-message {
-            color: var(--danger);
-            margin-top: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        /* Стили для новых страниц */
         .knowledge-base-panel, .personal-account-panel, .statistics-panel {
-            background: var(--bg-secondary);
-            border-radius: 24px;
-            padding: 30px;
+            background: rgba(12,12,12,0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 28px;
             margin-top: 20px;
-            border: 1px solid var(--border-color);
         }
-        .statistics-panel .stats-table-container {
+        .stats-table-container {
             overflow-x: auto;
         }
-        .statistics-panel .stats-table {
+        .stats-table {
             min-width: 600px;
         }
-        .statistics-panel .stats-table th,
-        .statistics-panel .stats-table td {
+        .stats-table th, .stats-table td {
             text-align: center;
+            padding: 8px;
         }
-        .statistics-panel .stats-table td:first-child {
+        .stats-table td:first-child {
             text-align: left;
             font-weight: 600;
-            color: var(--accent);
+            color: var(--accent-gold);
         }
-        .statistics-panel .empty-message {
+        .empty-message {
             text-align: center;
             padding: 40px;
             color: var(--text-secondary);
         }
+        .recruiter-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .bulk-transfer-list .candidate-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+        .bulk-transfer-list .candidate-item:hover {
+            background: var(--bg-tertiary);
+        }
+        .bulk-transfer-list .candidate-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-gold);
+            cursor: pointer;
+        }
+        .bulk-transfer-list .candidate-info {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .bulk-transfer-list .candidate-field {
+            flex: 1 1 180px;
+        }
+        .bulk-transfer-list .candidate-field .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .bulk-transfer-list .candidate-field .value {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .bulk-transfer-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .bulk-transfer-actions button {
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .select-all-btn, .clear-all-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .select-all-btn:hover, .clear-all-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        .clear-all-btn:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .transfer-category-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .transfer-category-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            border-color: var(--accent-gold);
+        }
+        .transfer-category-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
     </style>
 </head>
 <body>
-    <!-- Боковое меню (скрыто по умолчанию) -->
     <div class="side-menu" style="display: none;">
         <button class="menu-btn" onclick="showForm()"><i class="fas fa-home"></i> Главная</button>
         <button class="menu-btn" onclick="showCandidatesPanel()"><i class="fas fa-users"></i> Кандидаты</button>
         <button class="menu-btn" onclick="showAnalyticsPanel()"><i class="fas fa-chart-line"></i> Аналитика</button>
-        <!-- Новые пункты -->
         <button class="menu-btn" onclick="showKnowledgeBase()"><i class="fas fa-database"></i> База знаний</button>
         <button class="menu-btn" onclick="showStatistics()"><i class="fas fa-chart-bar"></i> Статистика</button>
         <button class="menu-btn" onclick="showPersonalAccount()"><i class="fas fa-user-circle"></i> Личный кабинет</button>
         <button class="menu-btn logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
-    <!-- Основной интерфейс (скрыт по умолчанию) -->
     <div class="recruiter-interface" id="recruiterInterface" style="display: none;">
         <div class="breadcrumbs" id="breadcrumbs">
-            <a href="#">Главная</a> <i class="fas fa-chevron-right" style="font-size: 12px;"></i>
+            <a href="#">Главная</a> <i class="fas fa-chevron-right"></i>
             <span id="currentPageTitle">Панель рекрутера</span>
         </div>
 
@@ -1243,35 +792,16 @@
             <div class="header-actions">
                 <button class="schedule-btn" onclick="window.location.href='hr control panel.html?tab=schedule-only'"><i class="fas fa-calendar-alt"></i> График</button>
                 <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+                <button class="refresh-btn" onclick="forceRefresh()"><i class="fas fa-sync-alt"></i> Обновить</button>
             </div>
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card" id="statNewCard">
-                <div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div>
-                <div class="stat-number" id="statNew">0</div>
-                <div class="stat-trend" id="statNewTrend"></div>
-            </div>
-            <div class="stat-card" id="statInProgressCard">
-                <div class="stat-title"><i class="fas fa-spinner"></i> В работе</div>
-                <div class="stat-number" id="statInProgress">0</div>
-                <div class="stat-trend" id="statInProgressTrend"></div>
-            </div>
-            <div class="stat-card" id="statAnalyticsCard">
-                <div class="stat-title"><i class="fas fa-chart-simple"></i> Аналитика (средняя)</div>
-                <div class="stat-number" id="statAnalytics">0%</div>
-                <div class="stat-trend" id="statAnalyticsTrend"></div>
-            </div>
-            <div class="stat-card" id="statEfficiencyCard">
-                <div class="stat-title"><i class="fas fa-gauge-high"></i> Эффективность</div>
-                <div class="stat-number" id="statEfficiency">0%</div>
-                <div class="stat-trend" id="statEfficiencyTrend"></div>
-            </div>
-            <div class="stat-card" id="statResultCard">
-                <div class="stat-title"><i class="fas fa-users"></i> Операторов на линии</div>
-                <div class="stat-number" id="statResult">0</div>
-                <div class="stat-trend" id="statResultTrend"></div>
-            </div>
+            <div class="stat-card"><div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div><div class="stat-number" id="statNew">0</div></div>
+            <div class="stat-card"><div class="stat-title"><i class="fas fa-spinner"></i> В работе</div><div class="stat-number" id="statInProgress">0</div></div>
+            <div class="stat-card"><div class="stat-title"><i class="fas fa-chart-simple"></i> Аналитика (средняя)</div><div class="stat-number" id="statAnalytics">0%</div></div>
+            <div class="stat-card"><div class="stat-title"><i class="fas fa-gauge-high"></i> Эффективность</div><div class="stat-number" id="statEfficiency">0%</div></div>
+            <div class="stat-card"><div class="stat-title"><i class="fas fa-users"></i> Операторов на линии</div><div class="stat-number" id="statResult">0</div></div>
         </div>
 
         <div class="progress-section" id="progressSection" style="display: none;">
@@ -1294,19 +824,19 @@
                 <div id="noScriptMessage" style="color: #8f9bb3; text-align: center;">Нет доступных скриптов звонков</div>
             </div>
             <div class="right-panel">
-                <h3>Обработка кандидата</h3>
+                <h3 style="color: var(--accent-gold);">Обработка кандидата</h3>
                 <div id="candidateCounter" class="candidate-counter"></div>
                 <form id="candidateForm">
                     <div class="form-grid">
-                        <div class="form-group full-width">
+                        <div class="full-width">
                             <label>ФИО кандидата <span style="color: #ff6b6b;">*</span></label>
                             <input type="text" id="fullName" placeholder="Иванов Иван Иванович" required>
                         </div>
-                        <div class="form-group full-width">
+                        <div class="full-width">
                             <label>Номер телефона <span style="color: #ff6b6b;">*</span></label>
                             <input type="tel" id="phoneNumber" placeholder="+7 999 999-99-99" required>
                         </div>
-                        <div class="form-group">
+                        <div>
                             <label>Проект <span style="color: #ff6b6b;">*</span></label>
                             <select id="project" required>
                                 <option value="">— выберите проект —</option>
@@ -1315,7 +845,7 @@
                                 <option value="Опросы">Опросы</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div>
                             <label>Страна <span style="color: #ff6b6b;">*</span></label>
                             <select id="country" required>
                                 <option value="Кыргызстан" selected>Кыргызстан</option>
@@ -1324,7 +854,7 @@
                                 <option value="Казахстан">Казахстан</option>
                             </select>
                         </div>
-                        <div class="form-group full-width">
+                        <div>
                             <label>Дата обучения <span style="color: #ff6b6b;">*</span></label>
                             <select id="trainingDateSelect" required>
                                 <option value="">— выберите дату —</option>
@@ -1332,11 +862,11 @@
                                 <option value="2026-03-05" data-time="09:00-17:00">2026-03-05</option>
                             </select>
                         </div>
-                        <div class="form-group full-width">
+                        <div>
                             <label>Время обучения <span style="color: #ff6b6b;">*</span></label>
                             <input type="text" id="trainingTimeInput" placeholder="чч:мм" value="10:00-18:00" required>
                         </div>
-                        <div class="form-group">
+                        <div>
                             <label>Результат звонка <span style="color: #ff6b6b;">*</span></label>
                             <select id="callResult" required>
                                 <option value="">— выберите —</option>
@@ -1345,7 +875,7 @@
                                 <option value="Перезвонить">Перезвонить</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div>
                             <label>Тип обращения</label>
                             <select id="contactType">
                                 <option value="">— выберите —</option>
@@ -1355,14 +885,13 @@
                         </div>
                         <input type="hidden" id="recruiterField">
                         <input type="hidden" id="candidateIndexField" value="-1">
-                        <div class="form-group full-width">
+                        <div class="full-width">
                             <label>Комментарий</label>
                             <textarea id="comment" rows="4" placeholder="Дополнительная информация..."></textarea>
                         </div>
                     </div>
-
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
-                    <div class="action-buttons">
+                    <div class="action-buttons" style="display: flex; gap: 12px; margin-top: 15px;">
                         <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')"><i class="fab fa-telegram-plane"></i> Telegram</button>
                         <button type="button" class="whatsapp-btn" onclick="openMessageModal('whatsapp')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                     </div>
@@ -1373,18 +902,18 @@
 
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
-            <div class="search-container">
+            <div class="search-container" style="display: flex; align-items: center; gap: 8px; background: #0a0a0a; border-radius: 40px; padding: 5px 15px; margin-bottom: 20px;">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Поиск по ФИО, телефону, проекту, статусу...">
+                <input type="text" id="searchInput" placeholder="Поиск по ФИО, телефону, проекту, статусу..." style="background: transparent; border: none; flex:1;">
             </div>
-            <div class="candidates-tabs">
+            <div class="candidates-tabs" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
                 <button class="candidates-tab active" id="tabContacts" onclick="switchCandidatesTab('contacts')">Контакты</button>
                 <button class="candidates-tab" id="tabVerification" onclick="switchCandidatesTab('verification')">Проверка</button>
                 <button class="candidates-tab" id="tabDraft" onclick="switchCandidatesTab('draft')">Черновик</button>
                 <button class="candidates-tab" id="tabOrgMeeting" onclick="switchCandidatesTab('orgMeeting')">Орг. встреча</button>
                 <button class="candidates-tab" id="tabTraining" onclick="switchCandidatesTab('training')">Обучение</button>
                 <button class="candidates-tab" id="tabRejects" onclick="switchCandidatesTab('rejects')">Отказы</button>
-                <button class="candidates-tab" id="tabTransfer" onclick="openBulkTransferModal()">Передача</button>
+                <button class="candidates-tab" onclick="openBulkTransferModal()">Передача</button>
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
         </div>
@@ -1394,38 +923,27 @@
             <div id="analyticsContainer"></div>
         </div>
 
-        <!-- Новые панели -->
-        <div id="knowledgeBasePanel" class="knowledge-base-panel" style="display: none;">
-            <h3>База знаний</h3>
-            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                <i class="fas fa-book-open" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
-                <p>Раздел находится в разработке</p>
-            </div>
-        </div>
-
-        <div id="personalAccountPanel" class="personal-account-panel" style="display: none;">
-            <h3>Личный кабинет</h3>
-            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                <i class="fas fa-user-circle" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
-                <p>Настройка профиля и персональные данные</p>
-            </div>
-        </div>
-
-        <div id="statisticsPanel" class="statistics-panel" style="display: none;">
-            <h3>Статистика</h3>
-            <div id="statisticsContent"></div>
-        </div>
+        <div id="knowledgeBasePanel" class="knowledge-base-panel" style="display: none;"><h3>База знаний</h3><div style="text-align:center; padding:40px;"><i class="fas fa-book-open" style="font-size:48px; opacity:0.5;"></i><p>Раздел в разработке</p></div></div>
+        <div id="personalAccountPanel" class="personal-account-panel" style="display: none;"><h3>Личный кабинет</h3><div style="text-align:center; padding:40px;"><i class="fas fa-user-circle" style="font-size:48px; opacity:0.5;"></i><p>Настройка профиля</p></div></div>
+        <div id="statisticsPanel" class="statistics-panel" style="display: none;"><h3>Статистика</h3><div id="statisticsContent"></div></div>
     </div>
 
-    <!-- Модальные окна (оставлены без изменений) -->
-    <div id="messageModal" class="message-modal">...</div>
-    <div id="transferModal" class="transfer-modal">...</div>
-    <div id="stageModal" class="stage-modal">...</div>
-    <div id="bulkTransferModal" class="bulk-transfer-modal">...</div>
-    <div class="login-container" id="loginContainer">...</div>
+    <!-- Модальные окна -->
+    <div id="messageModal" class="message-modal"><div class="modal-header"><span id="messageModalTitle">Выберите сообщение</span><button class="modal-close" onclick="closeMessageModal()">&times;</button></div><div class="modal-content"><div id="messageList" class="message-list"></div><div class="message-preview" style="margin-top:20px; background:#111; padding:12px; border-radius:20px;"><div class="label">Предпросмотр:</div><div id="messagePreviewText" class="text"></div></div><div class="modal-actions" style="display:flex; gap:12px; margin-top:20px;"><button class="send-btn" style="flex:1; background:var(--accent-gradient); border:none; border-radius:40px; padding:12px;" onclick="sendSelectedMessage()">Отправить</button><button class="cancel-btn" style="flex:1; background:#222; border-radius:40px;" onclick="closeMessageModal()">Отмена</button></div></div></div>
+    <div id="transferModal" class="transfer-modal"><div class="modal-header">Передать кандидата<button class="modal-close" onclick="closeTransferModal()">&times;</button></div><div class="modal-content"><div id="transferRecruiterList"></div><div class="transfer-actions" style="display:flex; gap:12px; margin-top:20px;"><button class="transfer-confirm-btn" style="flex:1; background:var(--accent-gradient); border:none; border-radius:40px; padding:12px;" onclick="confirmTransfer()">Передать</button><button class="transfer-cancel-btn" style="flex:1; background:#222; border-radius:40px;" onclick="closeTransferModal()">Отмена</button></div></div></div>
+    <div id="stageModal" class="stage-modal"><div class="modal-header"><span id="stageModalTitle">Кандидаты этапа</span><button class="modal-close" onclick="closeStageModal()">&times;</button></div><div class="modal-content"><div id="stageCandidatesList"></div></div></div>
+    <div id="bulkTransferModal" class="bulk-transfer-modal"><div class="modal-header">Массовая передача<button class="modal-close" onclick="closeBulkTransferModal()">&times;</button></div><div class="modal-content"><div class="transfer-categories" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;"><button class="transfer-category-btn" data-category="contacts">Контакты</button><button class="transfer-category-btn" data-category="verification">Проверка</button><button class="transfer-category-btn" data-category="draft">Черновик</button><button class="transfer-category-btn" data-category="orgMeeting">Орг.встреча</button><button class="transfer-category-btn" data-category="training">Обучение</button><button class="transfer-category-btn" data-category="rejects">Отказы</button></div><div><select id="bulkTransferRecruiterSelect" class="recruiter-select"></select></div><div id="bulkTransferCandidatesList" class="bulk-transfer-list" style="max-height: 50vh; overflow-y: auto; margin-top: 20px;"></div><div class="bulk-transfer-actions" style="display:flex; gap:12px; justify-content:flex-end; margin-top:20px;"><button class="select-all-btn" onclick="selectAllTransferCandidates()">Выбрать всех</button><button class="clear-all-btn" onclick="deselectAllTransferCandidates()">Снять всех</button><button class="transfer-btn" onclick="confirmBulkTransfer()">Передать выбранных</button></div></div></div>
+
+    <div class="login-container" id="loginContainer">
+        <h2><i class="fas fa-user-lock"></i> Вход в CRM</h2>
+        <div class="form-group"><label>Логин</label><input type="text" id="loginUsername" placeholder="Ваш логин"></div>
+        <div class="form-group"><label>Пароль</label><input type="password" id="loginPassword" placeholder="Пароль"></div>
+        <button class="login-btn" onclick="login()"><i class="fas fa-arrow-right-to-bracket"></i> Войти</button>
+        <div id="loginError" class="error-message" style="color: #ff6b6b; margin-top: 12px; display: none;"></div>
+    </div>
 
     <script>
-        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+          // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentRecruiter = null;
         let myCandidates = [];
         let allCandidates = [];
@@ -2887,7 +2405,7 @@
                     </tr>
                 `;
             });
-            html += '</tbody>  </table>';
+            html += '</tbody>   \\</table>';
             container.innerHTML = html;
         }
 
@@ -2895,14 +2413,9 @@
             const container = document.getElementById('statisticsContent');
             if (!container) return;
 
-            // Общее количество контактов (все анкеты)
             const totalContacts = allCandidates.length;
-
-            // Количество сохранённых анкет за последний час
             const oneHourAgo = Date.now() - 60 * 60 * 1000;
             const savedLastHour = allCandidates.filter(c => new Date(c.createdAt).getTime() > oneHourAgo).length;
-
-            // Средний процент качества (как на главной)
             const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
             let avgQuality = 0;
             if (myAnalytics.length > 0) {
@@ -2910,7 +2423,6 @@
                 avgQuality = Math.round(sum / myAnalytics.length);
             }
 
-            // Таблица: проекты x статусы
             const projects = appData.projects.map(p => p.name || p);
             const statusSet = new Set();
             allCandidates.forEach(c => {
@@ -2918,7 +2430,6 @@
             });
             const statuses = Array.from(statusSet).sort();
 
-            // Собираем данные по проектам и статусам
             const matrix = {};
             projects.forEach(proj => {
                 matrix[proj] = {};
@@ -2957,13 +2468,12 @@
                             <tr>
                                 <th>Проект</th>
                                 ${statuses.map(st => `<th>${st}</th>`).join('')}
-                            </tr>
-                        </thead>
+                            </thead>
                         <tbody>
             `;
 
             projects.forEach(proj => {
-                tableHtml += `<tr><td>${proj}</td>`;
+                tableHtml += `</tr><td>${proj}</td>`;
                 statuses.forEach(st => {
                     tableHtml += `<td>${matrix[proj][st] || 0}</td>`;
                 });
@@ -2995,6 +2505,7 @@
             applySearchAndFilter();
         }
 
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ: отображаем абсолютное количество кандидатов на вкладках
         function updateTabCounts() {
             const contactsCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
             const verificationCount = myCandidates.filter(c => c.callResult === "Проверка").length;
@@ -3016,23 +2527,25 @@
             });
             const rejectsCount = rejectsList.length;
 
+            // Обновляем текст на кнопках – показываем абсолютные значения
+            const setTabText = (id, base, count) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = `${base} (${count})`;
+            };
+            setTabText('tabContacts', 'Контакты', contactsCount);
+            setTabText('tabVerification', 'Проверка', verificationCount);
+            setTabText('tabDraft', 'Черновик', draftCount);
+            setTabText('tabOrgMeeting', 'Орг. встреча', orgMeetingCount);
+            setTabText('tabTraining', 'Обучение', trainingCount);
+            setTabText('tabRejects', 'Отказы', rejectsCount);
+
+            // Для меню «Кандидаты» считаем новые кандидаты как суммарное изменение
             const newContacts = contactsCount > prevSubCounts.contacts ? contactsCount - prevSubCounts.contacts : 0;
             const newVerification = verificationCount > prevSubCounts.verification ? verificationCount - prevSubCounts.verification : 0;
             const newDraft = draftCount > prevSubCounts.draft ? draftCount - prevSubCounts.draft : 0;
             const newOrgMeeting = orgMeetingCount > prevSubCounts.orgMeeting ? orgMeetingCount - prevSubCounts.orgMeeting : 0;
             const newTraining = trainingCount > prevSubCounts.training ? trainingCount - prevSubCounts.training : 0;
             const newRejects = rejectsCount > prevSubCounts.rejects ? rejectsCount - prevSubCounts.rejects : 0;
-
-            const setTabText = (id, base, count) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = `${base} ${count}`;
-            };
-            setTabText('tabContacts', 'Контакты', newContacts);
-            setTabText('tabVerification', 'Проверка', newVerification);
-            setTabText('tabDraft', 'Черновик', newDraft);
-            setTabText('tabOrgMeeting', 'Орг. встреча', newOrgMeeting);
-            setTabText('tabTraining', 'Обучение', newTraining);
-            setTabText('tabRejects', 'Отказы', newRejects);
 
             prevSubCounts = {
                 contacts: contactsCount,
@@ -3184,6 +2697,7 @@
             const state = encodeURIComponent(currentRecruiter.name);
             window.location.href = `/.netlify/functions/auth-google-redirect?state=${state}`;
         }
+
 
         // ========== ФУНКЦИИ ДЛЯ ОТПРАВКИ СООБЩЕНИЙ ==========
         function openMessageModal(type) {
@@ -3610,6 +3124,15 @@
             } catch (error) {
                 console.error('Ошибка при обновлении всех анкет:', error);
             }
+        }
+
+        // Ручное обновление
+        async function forceRefresh() {
+            showLoading();
+            await refreshMyCandidates();
+            await refreshAllCandidates();
+            hideLoading();
+            showNotification('Данные обновлены', 'success');
         }
 
         function startAutoRefresh(intervalMs = 20000) {
