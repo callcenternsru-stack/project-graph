@@ -657,13 +657,14 @@
             background: var(--bg-secondary);
             border-radius: 24px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-            width: 800px;
+            width: 900px;
             max-width: 90vw;
             max-height: 85vh;
             z-index: 10000;
             display: none;
-            border: 2px solid var(--accent);
+            border: 1px solid rgba(255, 215, 0, 0.3);
             overflow: hidden;
+            backdrop-filter: blur(2px);
         }
         .stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show {
             display: block;
@@ -677,13 +678,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
             padding: 20px 25px;
-            border-bottom: 2px solid var(--accent);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
             font-weight: 600;
             color: var(--accent);
             font-size: 18px;
-            background: #000000;
+            background: rgba(0, 0, 0, 0.9);
         }
         .modal-close {
             background: none;
@@ -691,18 +691,23 @@
             color: var(--accent);
             font-size: 24px;
             cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .modal-close:hover {
+            opacity: 1;
         }
         .modal-content {
-            padding: 25px;
-            background: #111111;
+            padding: 24px;
+            background: var(--bg-secondary);
         }
         .transfer-category-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 30px;
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -751,6 +756,67 @@
             font-weight: 500;
             color: var(--text-primary);
         }
+        .recruiter-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .recruiter-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .bulk-transfer-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .bulk-transfer-actions button {
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .bulk-transfer-actions .select-all-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .bulk-transfer-actions .select-all-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .bulk-transfer-actions .clear-all-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .bulk-transfer-actions .clear-all-btn:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .bulk-transfer-actions .transfer-btn {
+            background: var(--accent);
+            color: #000;
+        }
+        .bulk-transfer-actions .transfer-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .bulk-transfer-actions .transfer-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Другие стили модальных окон */
         .message-list {
             margin-bottom: 20px;
@@ -1333,23 +1399,23 @@
         <div class="stage-candidates-list" id="stageCandidatesList"></div>
     </div>
 
-    <!-- Модальное окно массовой передачи -->
+    <!-- Модальное окно массовой передачи (обновленное) -->
     <div id="bulkTransferModal" class="bulk-transfer-modal">
         <div class="modal-header">
-            <span>📤 Массовая передача кандидатов</span>
+            <span>Массовая передача кандидатов</span>
             <button class="modal-close" onclick="closeBulkTransferModal()">✕</button>
         </div>
         <div class="modal-content">
             <div class="form-group">
                 <label>Выберите рекрутера для передачи</label>
-                <select id="bulkTransferRecruiterSelect" class="recruiter-select" style="width:100%; padding:12px;">
+                <select id="bulkTransferRecruiterSelect" class="recruiter-select">
                     <option value="">— выберите рекрутера —</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label>Выберите категорию кандидатов</label>
-                <div class="bulk-transfer-categories" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                <div class="bulk-transfer-categories" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
                     <button class="transfer-category-btn" data-category="contacts">Контакты</button>
                     <button class="transfer-category-btn" data-category="verification">Проверка</button>
                     <button class="transfer-category-btn" data-category="draft">Черновик</button>
@@ -1359,14 +1425,14 @@
                 </div>
             </div>
 
-            <div id="bulkTransferCandidatesList" class="bulk-transfer-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; margin-bottom: 20px;">
+            <div id="bulkTransferCandidatesList" class="bulk-transfer-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-tertiary);">
                 <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Выберите категорию</div>
             </div>
 
-            <div class="bulk-transfer-actions" style="display: flex; gap: 10px; justify-content: space-between;">
-                <button class="filter-btn" id="selectAllTransferBtn" onclick="selectAllTransferCandidates()">✅ Выбрать всех</button>
-                <button class="filter-btn clear-filter-btn" onclick="deselectAllTransferCandidates()">❌ Снять выделение</button>
-                <button class="save-btn" id="confirmTransferBtn" onclick="confirmBulkTransfer()" style="width: auto; margin: 0;">📤 Передать выбранных</button>
+            <div class="bulk-transfer-actions">
+                <button class="select-all-btn" onclick="selectAllTransferCandidates()">Выбрать всех</button>
+                <button class="clear-all-btn" onclick="deselectAllTransferCandidates()">Снять выделение</button>
+                <button class="transfer-btn" id="confirmTransferBtn" onclick="confirmBulkTransfer()">Передать выбранных</button>
             </div>
         </div>
     </div>
@@ -2777,7 +2843,8 @@
                             <th>Описание</th>
                             <th>Качество</th>
                             <th>Файл</th>
-                        </thead>
+                        </tr>
+                    </thead>
                     <tbody>
             `;
             myAnalytics.forEach(entry => {
@@ -2787,14 +2854,14 @@
                 const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
                 html += `
                     <tr>
-                        <td>${date}侧
-                        <td>${description}侧
-                        <td><span class="quality-badge">${quality}</span>侧
-                        <td>${fileLink}侧
+                        <td>${date}</td>
+                        <td>${description}</td>
+                        <td><span class="quality-badge">${quality}</span></td>
+                        <td>${fileLink}</td>
                     </tr>
                 `;
             });
-            html += '</tbody>  tab';
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
