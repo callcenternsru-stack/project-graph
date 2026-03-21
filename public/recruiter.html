@@ -649,23 +649,23 @@
         }
 
         /* Модальные окна */
-        .stage-modal, .message-modal, .transfer-modal {
+        .stage-modal, .message-modal, .transfer-modal, .bulk-transfer-modal {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: var(--bg-secondary);
             border-radius: 24px;
-            padding: 30px;
-            border: 2px solid var(--accent);
-            z-index: 10000;
-            width: 600px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+            width: 800px;
             max-width: 90vw;
-            max-height: 80vh;
-            overflow-y: auto;
+            max-height: 85vh;
+            z-index: 10000;
             display: none;
+            border: 2px solid var(--accent);
+            overflow: hidden;
         }
-        .stage-modal.show, .message-modal.show, .transfer-modal.show {
+        .stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show {
             display: block;
             animation: modalAppear 0.3s ease;
         }
@@ -673,17 +673,17 @@
             from { opacity: 0; transform: translate(-50%, -45%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
-        .stage-modal .modal-header, .message-modal .modal-header, .transfer-modal .modal-header {
+        .stage-modal .modal-header, .message-modal .modal-header, .transfer-modal .modal-header, .bulk-transfer-modal .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
+            padding: 20px 25px;
             border-bottom: 2px solid var(--accent);
-        }
-        .stage-modal .modal-header h3, .message-modal .modal-header h3, .transfer-modal .modal-header h3 {
+            font-weight: 600;
             color: var(--accent);
-            font-size: 20px;
+            font-size: 18px;
+            background: #000000;
         }
         .modal-close {
             background: none;
@@ -692,6 +692,66 @@
             font-size: 24px;
             cursor: pointer;
         }
+        .modal-content {
+            padding: 25px;
+            background: #111111;
+        }
+        .transfer-category-btn {
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .transfer-category-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+        .transfer-category-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .bulk-transfer-list .candidate-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+        .bulk-transfer-list .candidate-item:hover {
+            background: var(--bg-tertiary);
+        }
+        .bulk-transfer-list .candidate-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .bulk-transfer-list .candidate-info {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .bulk-transfer-list .candidate-field {
+            flex: 1 1 180px;
+        }
+        .bulk-transfer-list .candidate-field .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .bulk-transfer-list .candidate-field .value {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        /* Другие стили модальных окон */
         .message-list {
             margin-bottom: 20px;
         }
@@ -1225,6 +1285,7 @@
                 <button class="candidates-tab" id="tabOrgMeeting" onclick="switchCandidatesTab('orgMeeting')">Орг. встреча</button>
                 <button class="candidates-tab" id="tabTraining" onclick="switchCandidatesTab('training')">Обучение</button>
                 <button class="candidates-tab" id="tabRejects" onclick="switchCandidatesTab('rejects')">Отказы</button>
+                <button class="candidates-tab" id="tabTransfer" onclick="openBulkTransferModal()">Передача</button>
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
         </div>
@@ -1270,6 +1331,44 @@
             <button class="modal-close" onclick="closeStageModal()">✕</button>
         </div>
         <div class="stage-candidates-list" id="stageCandidatesList"></div>
+    </div>
+
+    <!-- Модальное окно массовой передачи -->
+    <div id="bulkTransferModal" class="bulk-transfer-modal">
+        <div class="modal-header">
+            <span>📤 Массовая передача кандидатов</span>
+            <button class="modal-close" onclick="closeBulkTransferModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <div class="form-group">
+                <label>Выберите рекрутера для передачи</label>
+                <select id="bulkTransferRecruiterSelect" class="recruiter-select" style="width:100%; padding:12px;">
+                    <option value="">— выберите рекрутера —</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Выберите категорию кандидатов</label>
+                <div class="bulk-transfer-categories" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="transfer-category-btn" data-category="contacts">Контакты</button>
+                    <button class="transfer-category-btn" data-category="verification">Проверка</button>
+                    <button class="transfer-category-btn" data-category="draft">Черновик</button>
+                    <button class="transfer-category-btn" data-category="orgMeeting">Орг. встреча</button>
+                    <button class="transfer-category-btn" data-category="training">Обучение</button>
+                    <button class="transfer-category-btn" data-category="rejects">Отказы</button>
+                </div>
+            </div>
+
+            <div id="bulkTransferCandidatesList" class="bulk-transfer-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; margin-bottom: 20px;">
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Выберите категорию</div>
+            </div>
+
+            <div class="bulk-transfer-actions" style="display: flex; gap: 10px; justify-content: space-between;">
+                <button class="filter-btn" id="selectAllTransferBtn" onclick="selectAllTransferCandidates()">✅ Выбрать всех</button>
+                <button class="filter-btn clear-filter-btn" onclick="deselectAllTransferCandidates()">❌ Снять выделение</button>
+                <button class="save-btn" id="confirmTransferBtn" onclick="confirmBulkTransfer()" style="width: auto; margin: 0;">📤 Передать выбранных</button>
+            </div>
+        </div>
     </div>
 
     <!-- Форма входа (видна по умолчанию) -->
@@ -1329,6 +1428,11 @@
             rejects: 0
         };
         let prevAnalyticsCount = 0;
+
+        // ========== ПЕРЕМЕННЫЕ ДЛЯ МАССОВОЙ ПЕРЕДАЧИ ==========
+        let currentTransferCategory = null;
+        let currentTransferCandidates = [];
+        let selectedTransferIds = new Set();
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1467,7 +1571,6 @@
 
             updateStats();
             updateBreadcrumbs();
-            // Первый вызов для инициализации prevSubCounts и отображения
             updateTabCounts();
             updateMenuCounts();
 
@@ -2071,6 +2174,7 @@
             }
         }
 
+        // Функции рендеринга кандидатов (сохранены из исходного файла)
         function renderContactsCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
             if (filteredList.length === 0) {
@@ -2707,7 +2811,6 @@
         }
 
         function updateTabCounts() {
-            // Текущие количества
             const contactsCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
             const verificationCount = myCandidates.filter(c => c.callResult === "Проверка").length;
             const draftList = getDraftCandidates();
@@ -2728,7 +2831,6 @@
             });
             const rejectsCount = rejectsList.length;
 
-            // Вычисляем разницу (только положительную)
             const newContacts = contactsCount > prevSubCounts.contacts ? contactsCount - prevSubCounts.contacts : 0;
             const newVerification = verificationCount > prevSubCounts.verification ? verificationCount - prevSubCounts.verification : 0;
             const newDraft = draftCount > prevSubCounts.draft ? draftCount - prevSubCounts.draft : 0;
@@ -2747,7 +2849,6 @@
             setTabText('tabTraining', 'Обучение', newTraining);
             setTabText('tabRejects', 'Отказы', newRejects);
 
-            // Обновляем предыдущие значения
             prevSubCounts = {
                 contacts: contactsCount,
                 verification: verificationCount,
@@ -2757,7 +2858,6 @@
                 rejects: rejectsCount
             };
 
-            // Возвращаем сумму новых по категориям (для бокового меню)
             return {
                 totalNewCandidates: newDraft + newOrgMeeting + newTraining + newRejects
             };
@@ -2769,7 +2869,6 @@
             const newAnalytics = totalAnalyticsCount > prevAnalyticsCount ? totalAnalyticsCount - prevAnalyticsCount : 0;
             prevAnalyticsCount = totalAnalyticsCount;
 
-            // Получаем сумму новых по категориям из updateTabCounts
             const newCounts = updateTabCounts();
             const newCandidatesTotal = newCounts.totalNewCandidates;
 
@@ -3036,6 +3135,223 @@
             closeMessageModal();
         }
 
+        // ========== ФУНКЦИИ МАССОВОЙ ПЕРЕДАЧИ ==========
+        function openBulkTransferModal() {
+            const select = document.getElementById('bulkTransferRecruiterSelect');
+            select.innerHTML = '<option value="">— выберите рекрутера —</option>';
+            allRecruiters.forEach(rec => {
+                if (rec.name !== currentRecruiter.name) {
+                    select.innerHTML += `<option value="${rec.name}">${rec.name}</option>`;
+                }
+            });
+            if (allRecruiters.length === 1) {
+                select.innerHTML = '<option value="">Нет других рекрутеров</option>';
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+            }
+
+            currentTransferCategory = null;
+            selectedTransferIds.clear();
+            document.getElementById('bulkTransferCandidatesList').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Выберите категорию</div>';
+            document.querySelectorAll('.transfer-category-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById('bulkTransferModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeBulkTransferModal() {
+            document.getElementById('bulkTransferModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+            currentTransferCategory = null;
+            selectedTransferIds.clear();
+        }
+
+        function loadTransferCandidates(category) {
+            currentTransferCategory = category;
+            selectedTransferIds.clear();
+
+            let candidates = [];
+            switch (category) {
+                case 'contacts':
+                    candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').map(c => ({
+                        id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult || ''
+                    }));
+                    break;
+                case 'verification':
+                    candidates = myCandidates.filter(c => c.callResult === "Проверка").map(c => ({
+                        id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult
+                    }));
+                    break;
+                case 'draft':
+                    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+                    candidates = allCandidates.filter(c =>
+                        c.recruitmentStatus === 'draft' &&
+                        new Date(c.createdAt).getTime() < oneHourAgo &&
+                        c.recruiter === currentRecruiter.name
+                    ).map(c => ({
+                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
+                    }));
+                    break;
+                case 'orgMeeting':
+                    candidates = allCandidates.filter(c =>
+                        (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') &&
+                        c.recruiter === currentRecruiter.name
+                    ).map(c => ({
+                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
+                    }));
+                    break;
+                case 'training':
+                    candidates = allCandidates.filter(c =>
+                        (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') &&
+                        c.recruiter === currentRecruiter.name
+                    ).map(c => ({
+                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
+                    }));
+                    break;
+                case 'rejects':
+                    const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
+                    candidates = allCandidates.filter(c =>
+                        rejectStatuses.includes(c.recruitmentStatus) &&
+                        c.recruiter === currentRecruiter.name
+                    ).map(c => ({
+                        id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus
+                    }));
+                    break;
+                default:
+                    return;
+            }
+
+            currentTransferCandidates = candidates;
+
+            const container = document.getElementById('bulkTransferCandidatesList');
+            if (candidates.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Нет кандидатов в этой категории</div>';
+                return;
+            }
+
+            let html = '';
+            candidates.forEach(cand => {
+                const checked = selectedTransferIds.has(cand.id) ? 'checked' : '';
+                html += `
+                    <div class="candidate-item" data-id="${cand.id}">
+                        <input type="checkbox" class="candidate-checkbox" value="${cand.id}" ${checked} onchange="toggleTransferCandidate('${cand.id}', this.checked)">
+                        <div class="candidate-info">
+                            <div class="candidate-field">
+                                <div class="label">ФИО</div>
+                                <div class="value highlight">${escapeHtml(cand.fullName)}</div>
+                            </div>
+                            <div class="candidate-field">
+                                <div class="label">Телефон</div>
+                                <div class="value">${escapeHtml(cand.phone)}</div>
+                            </div>
+                            <div class="candidate-field">
+                                <div class="label">Проект</div>
+                                <div class="value">${escapeHtml(cand.project || '—')}</div>
+                            </div>
+                            <div class="candidate-field">
+                                <div class="label">Статус</div>
+                                <div class="value">${escapeHtml(cand.status)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleTransferCandidate(id, checked) {
+            if (checked) {
+                selectedTransferIds.add(id);
+            } else {
+                selectedTransferIds.delete(id);
+            }
+        }
+
+        function selectAllTransferCandidates() {
+            const checkboxes = document.querySelectorAll('#bulkTransferCandidatesList .candidate-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                selectedTransferIds.add(cb.value);
+            });
+        }
+
+        function deselectAllTransferCandidates() {
+            const checkboxes = document.querySelectorAll('#bulkTransferCandidatesList .candidate-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                selectedTransferIds.delete(cb.value);
+            });
+        }
+
+        async function confirmBulkTransfer() {
+            const targetRecruiter = document.getElementById('bulkTransferRecruiterSelect').value;
+            if (!targetRecruiter) {
+                showNotification('Выберите рекрутера для передачи', 'error');
+                return;
+            }
+            if (selectedTransferIds.size === 0) {
+                showNotification('Выберите хотя бы одного кандидата', 'error');
+                return;
+            }
+
+            const selectedCandidates = currentTransferCandidates.filter(c => selectedTransferIds.has(c.id));
+            if (selectedCandidates.length === 0) return;
+
+            showLoading();
+            let successCount = 0;
+            for (const cand of selectedCandidates) {
+                try {
+                    if (cand.type === 'contact') {
+                        const fullCandidate = myCandidates.find(c => c.id === cand.id);
+                        if (fullCandidate) {
+                            fullCandidate.recruiter = targetRecruiter;
+                            fullCandidate.updatedAt = new Date().toISOString();
+                            const response = await fetch('/.netlify/functions/submitCandidate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(fullCandidate)
+                            });
+                            if (response.ok) successCount++;
+                        }
+                    } else {
+                        const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: cand.id,
+                                type: cand.type,
+                                recruiter: targetRecruiter
+                            })
+                        });
+                        if (response.ok) successCount++;
+                    }
+                } catch (err) {
+                    console.error('Ошибка передачи кандидата', cand.id, err);
+                }
+            }
+
+            hideLoading();
+            if (successCount > 0) {
+                showNotification(`Передано кандидатов: ${successCount}`, 'success');
+                await refreshMyCandidates();
+                await refreshAllCandidates();
+                closeBulkTransferModal();
+            } else {
+                showNotification('Не удалось передать ни одного кандидата', 'error');
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
         // ========== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ==========
         let refreshInterval = null;
         let isRefreshing = false;
@@ -3082,7 +3398,6 @@
                     if (currentView === 'candidates') {
                         applySearchAndFilter();
                     }
-                    // Обновляем счётчики после обновления данных
                     updateTabCounts();
                     updateMenuCounts();
                 }
@@ -3147,12 +3462,19 @@
             if (overlay) overlay.classList.add('hidden');
         }
 
-        // Дополнительная инициализация state для меню (имитация)
-        const state = {
-            recruiters: [],
-            scripts: [],
-            characteristics: []
-        };
+        // Инициализация обработчиков для кнопок категорий в модалке массовой передачи
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.transfer-category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const category = btn.dataset.category;
+                    document.querySelectorAll('.transfer-category-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    loadTransferCandidates(category);
+                });
+            });
+        });
+
+        const state = { recruiters: [], scripts: [], characteristics: [] };
         async function loadStateForMenu() {
             try {
                 const refRes = await fetch('/.netlify/functions/getAllReferences');
