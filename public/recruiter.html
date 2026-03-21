@@ -1244,6 +1244,38 @@
             .content-wrapper                 { flex-direction: column; }
             .candidate-card                  { grid-template-columns: 1fr 1fr; }
         }
+
+        /* ===================== NEW CANDIDATE BADGES ===================== */
+        .candidate-card.is-new {
+            border-color: var(--accent);
+            box-shadow:   0 0 0 1px rgba(255, 215, 0, 0.3);
+        }
+
+        .new-badge {
+            position:      absolute;
+            top:           10px;
+            right:         10px;
+            background:    var(--danger);
+            color:         #fff;
+            font-size:     11px;
+            font-weight:   700;
+            padding:       3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .tab-new-badge {
+            display:       inline-block;
+            background:    var(--danger);
+            color:         #fff;
+            font-size:     11px;
+            font-weight:   700;
+            padding:       2px 7px;
+            border-radius: 20px;
+            margin-left:   4px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -1612,6 +1644,8 @@
         let searchQuery               = '';
         let currentCandidateIdForMessage = null;
         let prevSubCounts             = { contacts: 0, verification: 0, draft: 0, orgMeeting: 0, training: 0, rejects: 0 };
+        // Множество ID просмотренных кандидатов — хранится в localStorage
+        let seenCandidateIds          = new Set();
         let prevAnalyticsCount        = 0;
         let currentTransferCategory   = null;
         let currentTransferCandidates = [];
@@ -1719,9 +1753,34 @@
         /* =====================================================================
            INIT
         ===================================================================== */
+        // Ключ в localStorage зависит от рекрутера
+        function seenStorageKey() {
+            return 'seenCandidates_' + currentRecruiter.name;
+        }
+
+        function loadSeenIds() {
+            try {
+                const raw = localStorage.getItem(seenStorageKey());
+                seenCandidateIds = raw ? new Set(JSON.parse(raw)) : new Set();
+            } catch {
+                seenCandidateIds = new Set();
+            }
+        }
+
+        function markAsSeen(id) {
+            if (!id || seenCandidateIds.has(id)) return;
+            seenCandidateIds.add(id);
+            try {
+                localStorage.setItem(seenStorageKey(), JSON.stringify([...seenCandidateIds]));
+            } catch {}
+            updateTabCounts();
+            updateMenuCounts();
+        }
+
         async function initInterface() {
             document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
             document.getElementById('recruiterField').value             = currentRecruiter.name;
+            loadSeenIds();
 
             await loadAllRecruiters();
             await loadReferenceData();
@@ -2465,16 +2524,18 @@
         /* =====================================================================
            CANDIDATE RENDERERS
         ===================================================================== */
-        function makeCandidateCard(c, extraFields = [], extraActions = '') {
+        function makeCandidateCard(c, extraFields = [], extraActions = '', isNew = false) {
             const baseFields = `
                 <div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${escapeHtml(c.fullName || '—')}</div></div>
                 <div class="candidate-field"><div class="label">Телефон</div><div class="value">${escapeHtml(c.phone || '—')}</div></div>
             `;
-            const extra   = extraFields.join('');
-            const status  = c.callResult || c.recruitmentStatus || 'ожидает связи';
+            const extra    = extraFields.join('');
+            const status   = c.callResult || c.recruitmentStatus || 'ожидает связи';
+            const newBadge = isNew ? '<span class="new-badge">Новый</span>' : '';
 
             return `
-                <div class="candidate-card" data-id="${c.id}" data-type="${c.type || ''}">
+                <div class="candidate-card ${isNew ? 'is-new' : ''}" data-id="${c.id}" data-type="${c.type || ''}">
+                    ${newBadge}
                     ${baseFields}
                     ${extra}
                     <div class="candidate-field">
@@ -2492,7 +2553,12 @@
                 card.addEventListener('click', e => {
                     if (stopPropKey && (e.target.classList.contains(stopPropKey) || e.target.closest('.' + stopPropKey))) return;
                     const id = card.dataset.id;
-                    if (id) { editingExternalCandidate = null; loadCandidateById(id); showForm(); }
+                    if (id) {
+                        markAsSeen(id);
+                        editingExternalCandidate = null;
+                        loadCandidateById(id);
+                        showForm();
+                    }
                 });
             });
         }
@@ -2535,11 +2601,12 @@
             previousDraftKeys = newKeys;
 
             const cards = list.map(c => {
-                const info = c.trainingDate ? `${c.trainingDate} ${c.trainingTime || ''}` : '—';
+                const info  = c.trainingDate ? `${c.trainingDate} ${c.trainingTime || ''}` : '—';
+                const isNew = !seenCandidateIds.has(c.id);
                 return makeCandidateCard(c, [
                     `<div class="candidate-field"><div class="label">Telegram</div><div class="value">${escapeHtml(c.telegram || '—')}</div></div>`,
                     `<div class="candidate-field"><div class="label">Обучение</div><div class="value">${info}</div></div>`
-                ]);
+                ], '', isNew);
             }).join('');
             setContainerHTML(cards, 'Нет черновиков');
             attachCardListeners();
@@ -2547,12 +2614,13 @@
 
         function renderWithTransfer(list, emptyMsg) {
             const cards = list.map(c => {
-                const info = c.trainingDate ? `${c.trainingDate} ${c.trainingTime || ''}` : '—';
+                const info        = c.trainingDate ? `${c.trainingDate} ${c.trainingTime || ''}` : '—';
+                const isNew       = !seenCandidateIds.has(c.id);
                 const transferBtn = `<div class="candidate-field"><button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${c.id}','${c.type}')"><i class="fas fa-exchange-alt"></i> Передать</button></div>`;
                 return makeCandidateCard(c, [
                     `<div class="candidate-field"><div class="label">Telegram</div><div class="value">${escapeHtml(c.telegram || '—')}</div></div>`,
                     `<div class="candidate-field"><div class="label">Обучение</div><div class="value">${info}</div></div>`
-                ], transferBtn);
+                ], transferBtn, isNew);
             }).join('');
             setContainerHTML(cards, emptyMsg);
             attachCardListeners('transfer-btn');
@@ -2575,15 +2643,28 @@
         }
 
         function updateTabCounts() {
-            const byMe = c => c.recruiter === currentRecruiter.name;
+            const byMe   = c => c.recruiter === currentRecruiter.name;
+            const unseen = c => !seenCandidateIds.has(c.id);
 
-            const counts = {
-                contacts:    myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
+            const draftList   = getDraftCandidates();
+            const orgList     = allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c));
+            const trainList   = allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c));
+
+            // Общее количество для текста кнопок
+            const totals = {
+                contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
                 verification: myCandidates.filter(c => c.callResult === 'Проверка').length,
-                draft:       getDraftCandidates().length,
-                orgMeeting:  allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c)).length,
-                training:    allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)).length,
-                rejects:     allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).length
+                draft:        draftList.length,
+                orgMeeting:   orgList.length,
+                training:     trainList.length,
+                rejects:      allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).length
+            };
+
+            // Количество НОВЫХ (непросмотренных) — только для Черновик / Орг.встреча / Обучение
+            const newUnseen = {
+                draft:      draftList.filter(unseen).length,
+                orgMeeting: orgList.filter(unseen).length,
+                training:   trainList.filter(unseen).length,
             };
 
             const labels = { contacts: 'Контакты', verification: 'Проверка', draft: 'Черновик', orgMeeting: 'Орг. встреча', training: 'Обучение', rejects: 'Отказы' };
@@ -2591,29 +2672,46 @@
 
             for (const key in ids) {
                 const el = document.getElementById(ids[key]);
-                if (el) el.textContent = `${labels[key]} (${counts[key]})`;
+                if (!el) continue;
+                const total  = totals[key];
+                const newCnt = newUnseen[key];  // undefined для контактов/проверки/отказов
+                if (newCnt !== undefined && newCnt > 0) {
+                    el.innerHTML = `${labels[key]} (${total}) <span class="tab-new-badge">${newCnt}</span>`;
+                } else {
+                    el.textContent = `${labels[key]} (${total})`;
+                }
             }
 
-            const totalNew = Object.entries(counts).reduce((sum, [k, v]) => {
-                const prev = prevSubCounts[k] || 0;
-                return sum + (v > prev ? v - prev : 0);
-            }, 0);
-
-            prevSubCounts = { ...counts };
-            return { totalNewCandidates: totalNew };
+            const totalUnseen = newUnseen.draft + newUnseen.orgMeeting + newUnseen.training;
+            const totalAll    = totals.draft + totals.orgMeeting + totals.training;
+            return { totalUnseen, totalAll };
         }
 
         function updateMenuCounts() {
-            const myAnalytics      = analytics.filter(a => a.recruiterName === currentRecruiter.name);
-            const totalAnalytics   = myAnalytics.length;
-            const newAnalytics     = totalAnalytics > prevAnalyticsCount ? totalAnalytics - prevAnalyticsCount : 0;
-            prevAnalyticsCount     = totalAnalytics;
+            const myAnalytics    = analytics.filter(a => a.recruiterName === currentRecruiter.name);
+            const totalAnalytics = myAnalytics.length;
+            const newAnalytics   = totalAnalytics > prevAnalyticsCount ? totalAnalytics - prevAnalyticsCount : 0;
+            prevAnalyticsCount   = totalAnalytics;
 
-            const newCounts = updateTabCounts();
-            const badgeC    = document.getElementById('candidatesBadge');
-            const badgeA    = document.getElementById('analyticsBadge');
-            if (badgeC) badgeC.textContent = newCounts.totalNewCandidates;
-            if (badgeA) badgeA.textContent = newAnalytics;
+            const { totalUnseen, totalAll } = updateTabCounts();
+
+            const badgeC = document.getElementById('candidatesBadge');
+            const badgeA = document.getElementById('analyticsBadge');
+
+            // Бейдж "Кандидаты" в сайдбаре: общее кол-во, красный если есть непросмотренные
+            if (badgeC) {
+                if (totalUnseen > 0) {
+                    badgeC.textContent       = totalUnseen;
+                    badgeC.style.background  = 'var(--danger)';
+                    badgeC.title             = `${totalUnseen} непросмотренных из ${totalAll}`;
+                } else {
+                    badgeC.textContent       = totalAll || '';
+                    badgeC.style.background  = 'var(--accent)';
+                    badgeC.title             = '';
+                }
+            }
+
+            if (badgeA) badgeA.textContent = newAnalytics > 0 ? newAnalytics : '';
         }
 
         /* =====================================================================
