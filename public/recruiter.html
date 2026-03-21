@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ===== СБРОС И БАЗОВЫЕ ПЕРЕМЕННЫЕ (без изменений) ===== */
+        /* ===== СБРОС И БАЗОВЫЕ ПЕРЕМЕННЫЕ ===== */
         * {
             margin: 0;
             padding: 0;
@@ -129,7 +129,7 @@
             color: #000;
         }
 
-        /* ===== ОСНОВНОЙ КОНТЕНТ (без изменений) ===== */
+        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
         .recruiter-interface {
             flex: 1;
             padding: 30px 40px;
@@ -191,7 +191,7 @@
             transform: translateY(-2px);
         }
 
-        /* Карточки статистики (без изменений) */
+        /* Карточки статистики */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -249,7 +249,7 @@
             gap: 4px;
         }
 
-        /* Прогресс-бар (без изменений) */
+        /* Прогресс-бар */
         .progress-section {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -314,7 +314,7 @@
             font-weight: 600;
         }
 
-        /* Основная рабочая область (без изменений) */
+        /* Основная рабочая область */
         .content-wrapper {
             display: flex;
             gap: 24px;
@@ -515,7 +515,7 @@
             transform: translateY(-2px);
         }
 
-        /* Панель кандидатов (без изменений) */
+        /* Панель кандидатов */
         .candidates-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -648,7 +648,7 @@
             padding: 40px;
         }
 
-        /* Модальные окна (без изменений) */
+        /* Модальные окна */
         .stage-modal, .message-modal, .transfer-modal {
             position: fixed;
             top: 50%;
@@ -1319,18 +1319,16 @@
         let searchQuery = '';
         let currentCandidateIdForMessage = null;
 
-        // --- Хранение времени последнего входа и подсчёт новых записей ---
-        let lastLoginTime = null;
-
-        // Вспомогательная функция: количество новых записей в массиве (сравнение createdAt)
-        function countNewItems(items, dateField = 'createdAt') {
-            if (!lastLoginTime) return items.length; // если нет времени входа, считаем все новыми
-            const threshold = new Date(lastLoginTime);
-            return items.filter(item => {
-                const itemDate = new Date(item[dateField]);
-                return itemDate > threshold;
-            }).length;
-        }
+        // ========== ХРАНЕНИЕ ПРЕДЫДУЩИХ ЗНАЧЕНИЙ ДЛЯ ПОДВКЛАДОК ==========
+        let prevSubCounts = {
+            contacts: 0,
+            verification: 0,
+            draft: 0,
+            orgMeeting: 0,
+            training: 0,
+            rejects: 0
+        };
+        let prevAnalyticsCount = 0;
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1374,10 +1372,6 @@
                 }
                 currentRecruiter = data.recruiter;
                 sessionStorage.setItem('recruiter', JSON.stringify(currentRecruiter));
-
-                // Сохраняем время входа
-                lastLoginTime = new Date().toISOString();
-                sessionStorage.setItem('lastLoginTime', lastLoginTime);
 
                 document.querySelector('.side-menu').style.display = 'flex';
                 document.getElementById('loginContainer').style.display = 'none';
@@ -1449,10 +1443,6 @@
             document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
             document.getElementById('recruiterField').value = currentRecruiter.name;
 
-            // Восстанавливаем lastLoginTime из sessionStorage
-            const storedTime = sessionStorage.getItem('lastLoginTime');
-            if (storedTime) lastLoginTime = storedTime;
-
             await loadAllRecruiters();
             await loadReferenceData();
             await loadScripts();
@@ -1477,6 +1467,7 @@
 
             updateStats();
             updateBreadcrumbs();
+            // Первый вызов для инициализации prevSubCounts и отображения
             updateTabCounts();
             updateMenuCounts();
 
@@ -2622,9 +2613,7 @@
         function logout() {
             stopAutoRefresh();
             sessionStorage.removeItem('recruiter');
-            sessionStorage.removeItem('lastLoginTime');
             currentRecruiter = null;
-            lastLoginTime = null;
             document.querySelector('.side-menu').style.display = 'none';
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('recruiterInterface').style.display = 'none';
@@ -2701,7 +2690,7 @@
                     </tr>
                 `;
             });
-            html += '</tbody> </table>';
+            html += '</tbody>  tab';
             container.innerHTML = html;
         }
 
@@ -2718,32 +2707,38 @@
         }
 
         function updateTabCounts() {
-            // Для каждой категории считаем только новые записи (createdAt > lastLoginTime)
-            const allContacts = myCandidates;
-            const newContacts = countNewItems(allContacts);
-            const verificationList = myCandidates.filter(c => c.callResult === "Проверка");
-            const newVerification = countNewItems(verificationList);
+            // Текущие количества
+            const contactsCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
+            const verificationCount = myCandidates.filter(c => c.callResult === "Проверка").length;
             const draftList = getDraftCandidates();
-            const newDraft = countNewItems(draftList);
+            const draftCount = draftList.length;
             const orgMeetingList = allCandidates.filter(c => 
                 (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') && 
                 c.recruiter === currentRecruiter.name
             );
-            const newOrgMeeting = countNewItems(orgMeetingList);
+            const orgMeetingCount = orgMeetingList.length;
             const trainingList = allCandidates.filter(c => 
                 (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') && 
                 c.recruiter === currentRecruiter.name
             );
-            const newTraining = countNewItems(trainingList);
+            const trainingCount = trainingList.length;
             const rejectsList = allCandidates.filter(c => {
                 const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
                 return rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name;
             });
-            const newRejects = countNewItems(rejectsList);
+            const rejectsCount = rejectsList.length;
+
+            // Вычисляем разницу (только положительную)
+            const newContacts = contactsCount > prevSubCounts.contacts ? contactsCount - prevSubCounts.contacts : 0;
+            const newVerification = verificationCount > prevSubCounts.verification ? verificationCount - prevSubCounts.verification : 0;
+            const newDraft = draftCount > prevSubCounts.draft ? draftCount - prevSubCounts.draft : 0;
+            const newOrgMeeting = orgMeetingCount > prevSubCounts.orgMeeting ? orgMeetingCount - prevSubCounts.orgMeeting : 0;
+            const newTraining = trainingCount > prevSubCounts.training ? trainingCount - prevSubCounts.training : 0;
+            const newRejects = rejectsCount > prevSubCounts.rejects ? rejectsCount - prevSubCounts.rejects : 0;
 
             const setTabText = (id, base, count) => {
                 const el = document.getElementById(id);
-                if (el) el.textContent = `${base} ${count}`;  // без скобок
+                if (el) el.textContent = `${base} ${count}`;
             };
             setTabText('tabContacts', 'Контакты', newContacts);
             setTabText('tabVerification', 'Проверка', newVerification);
@@ -2751,23 +2746,41 @@
             setTabText('tabOrgMeeting', 'Орг. встреча', newOrgMeeting);
             setTabText('tabTraining', 'Обучение', newTraining);
             setTabText('tabRejects', 'Отказы', newRejects);
+
+            // Обновляем предыдущие значения
+            prevSubCounts = {
+                contacts: contactsCount,
+                verification: verificationCount,
+                draft: draftCount,
+                orgMeeting: orgMeetingCount,
+                training: trainingCount,
+                rejects: rejectsCount
+            };
+
+            // Возвращаем сумму новых по категориям (для бокового меню)
+            return {
+                totalNewCandidates: newDraft + newOrgMeeting + newTraining + newRejects
+            };
         }
 
         function updateMenuCounts() {
-            // Для бокового меню: новые записи в базе контактов (myCandidates) и новые аналитические записи
-            const newCandidatesCount = countNewItems(myCandidates);
-            const newAnalyticsCount = countNewItems(analytics.filter(a => a.recruiterName === currentRecruiter.name));
+            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
+            const totalAnalyticsCount = myAnalytics.length;
+            const newAnalytics = totalAnalyticsCount > prevAnalyticsCount ? totalAnalyticsCount - prevAnalyticsCount : 0;
+            prevAnalyticsCount = totalAnalyticsCount;
+
+            // Получаем сумму новых по категориям из updateTabCounts
+            const newCounts = updateTabCounts();
+            const newCandidatesTotal = newCounts.totalNewCandidates;
 
             const setMenuText = (selector, base, count) => {
                 const btn = document.querySelector(`.side-menu .menu-btn[data-tab="${selector}"]`);
                 if (btn) {
-                    let text = base;
-                    if (count > 0) text += ` ${count}`;  // без скобок
-                    btn.textContent = text;
+                    btn.textContent = `${base} ${count}`;
                 }
             };
-            setMenuText('candidates', 'Кандидаты', newCandidatesCount);
-            setMenuText('analytics', 'Аналитика', newAnalyticsCount);
+            setMenuText('candidates', 'Кандидаты', newCandidatesTotal);
+            setMenuText('analytics', 'Аналитика', newAnalytics);
         }
 
         function openTransferModal(candidateId, candidateType) {
@@ -2862,19 +2875,16 @@
 
         window.addEventListener('load', () => {
             const saved = sessionStorage.getItem('recruiter');
-            const savedTime = sessionStorage.getItem('lastLoginTime');
             const sideMenu = document.querySelector('.side-menu');
             if (saved) {
                 try {
                     currentRecruiter = JSON.parse(saved);
-                    if (savedTime) lastLoginTime = savedTime;
                     sideMenu.style.display = 'flex';
                     document.getElementById('loginContainer').style.display = 'none';
                     document.getElementById('recruiterInterface').style.display = 'block';
                     initInterface();
                 } catch (e) {
                     sessionStorage.removeItem('recruiter');
-                    sessionStorage.removeItem('lastLoginTime');
                     sideMenu.style.display = 'none';
                     document.getElementById('loginContainer').style.display = 'block';
                     document.getElementById('recruiterInterface').style.display = 'none';
@@ -3072,6 +3082,7 @@
                     if (currentView === 'candidates') {
                         applySearchAndFilter();
                     }
+                    // Обновляем счётчики после обновления данных
                     updateTabCounts();
                     updateMenuCounts();
                 }
