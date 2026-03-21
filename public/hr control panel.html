@@ -1253,6 +1253,16 @@
             analytics: []
         };
 
+        // Кэш для уникальных значений фильтра
+        let filterCache = {
+            fullNames: [],
+            projects: [],
+            countries: [],
+            trainingDates: [],
+            callResults: [],
+            recruiters: []
+        };
+
         let currentTab = 'recruiters';
         let editingId = null;
         let editingType = null;
@@ -1453,6 +1463,9 @@
                 await processCompletedCandidates();
                 await autoAssignRecruiters();
 
+                // Обновляем кэш фильтра после загрузки кандидатов
+                updateFilterCache();
+
                 updateMenuCounts();
                 candidatesPage = 1;
             } catch (error) {
@@ -1602,7 +1615,8 @@
             return filtered;
         }
 
-        function populateFilterSelects() {
+        // Обновление кэша уникальных значений на основе текущих кандидатов
+        function updateFilterCache() {
             const fullNameSet = new Set();
             const projectSet = new Set();
             const countrySet = new Set();
@@ -1619,29 +1633,38 @@
                 if (c.recruiter) recruiterSet.add(c.recruiter);
             });
 
-            const fullNameOptions = Array.from(fullNameSet).sort();
-            const projectOptions = Array.from(projectSet).sort();
-            const countryOptions = Array.from(countrySet).sort();
-            const trainingDateOptions = Array.from(trainingDateSet).sort();
-            const callResultOptions = Array.from(callResultSet).sort();
-            const recruiterOptions = Array.from(recruiterSet).sort();
+            filterCache.fullNames = Array.from(fullNameSet).sort();
+            filterCache.projects = Array.from(projectSet).sort();
+            filterCache.countries = Array.from(countrySet).sort();
+            filterCache.trainingDates = Array.from(trainingDateSet).sort();
+            filterCache.callResults = Array.from(callResultSet).sort();
+            filterCache.recruiters = Array.from(recruiterSet).sort();
+        }
 
+        // Заполнение выпадающих списков из кэша (быстро)
+        function populateFilterSelects() {
             const fillSelect = (id, options, currentValue) => {
                 const select = document.getElementById(id);
                 if (!select) return;
+                // Очищаем select (кроме первого "Все")
                 select.innerHTML = '<option value="">Все</option>';
+                const fragment = document.createDocumentFragment();
                 options.forEach(opt => {
-                    const selected = (opt === currentValue) ? 'selected' : '';
-                    select.innerHTML += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    if (opt === currentValue) option.selected = true;
+                    fragment.appendChild(option);
                 });
+                select.appendChild(fragment);
             };
 
-            fillSelect('filterFullNameSelect', fullNameOptions, candidatesFilters.fullName);
-            fillSelect('filterProjectSelect', projectOptions, candidatesFilters.project);
-            fillSelect('filterCountrySelect', countryOptions, candidatesFilters.country);
-            fillSelect('filterTrainingDateSelect', trainingDateOptions, candidatesFilters.trainingDate);
-            fillSelect('filterCallResultSelect', callResultOptions, candidatesFilters.callResult);
-            fillSelect('filterRecruiterSelect', recruiterOptions, candidatesFilters.recruiter);
+            fillSelect('filterFullNameSelect', filterCache.fullNames, candidatesFilters.fullName);
+            fillSelect('filterProjectSelect', filterCache.projects, candidatesFilters.project);
+            fillSelect('filterCountrySelect', filterCache.countries, candidatesFilters.country);
+            fillSelect('filterTrainingDateSelect', filterCache.trainingDates, candidatesFilters.trainingDate);
+            fillSelect('filterCallResultSelect', filterCache.callResults, candidatesFilters.callResult);
+            fillSelect('filterRecruiterSelect', filterCache.recruiters, candidatesFilters.recruiter);
         }
 
         function openFilterModal() {
@@ -1708,7 +1731,7 @@
                 }
                 headerHtml += `<th class="${sortClass}" onclick="${h.field ? `sortCandidates(${idx})` : ''}">${h.label}</th>`;
             });
-            headerHtml += '  </tr>';
+            headerHtml += '   </tr>';
 
             let rowsHtml = '';
             if (sorted.length === 0) {
@@ -1829,6 +1852,7 @@
             if (successCount > 0) {
                 showNotification(`Удалено контактов: ${successCount}`, 'success');
                 selectedCandidateIds.clear();
+                updateFilterCache(); // обновляем кэш после удаления
                 renderContent();
             } else {
                 showNotification('Не удалось удалить ни одного контакта', 'error');
@@ -1878,6 +1902,7 @@
                 if (response.ok) {
                     state.candidates = state.candidates.filter(c => c.id !== id);
                     selectedCandidateIds.delete(id);
+                    updateFilterCache(); // обновляем кэш после удаления
                     renderContent();
                     showNotification('Контакт удалён', 'success');
                 } else {
@@ -2844,6 +2869,7 @@
 
                     if (candidatesAdded.length > 0) {
                         showNotification(`Добавлено контактов: ${candidatesAdded.length}`, 'success');
+                        updateFilterCache(); // обновляем кэш после импорта
                         if (currentTab === 'candidates') {
                             renderContent();
                         }
