@@ -16,6 +16,9 @@ exports.handler = async (event) => {
       };
     }
 
+    // Извлекаем candidateId, если он передан
+    const candidateId = formData.candidateId || null;
+
     const autoStore = getStore({
       name: 'candidates-data',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -77,7 +80,9 @@ exports.handler = async (event) => {
       formData,
       status: 'pending',
       createdAt: new Date().toISOString(),
-      recruitmentStatus: 'draft'
+      recruitmentStatus: 'draft',
+      recruiter: formData.recruiter || null,
+      contactId: candidateId   // <-- ДОБАВЛЕНО
     };
     await autoStore.setJSON(code, candidateData);
 

@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     const bb = Busboy({
       headers: { 'content-type': contentType },
       limits: {
-        fileSize: 15 * 1024 * 1024, // 15 MB
+        fileSize: 15 * 1024 * 1024,
         fieldSize: 15 * 1024 * 1024,
         fields: 50,
         files: 15
@@ -129,20 +129,13 @@ exports.handler = async (event) => {
         const recordId = fields.id || `manual_${Date.now()}`;
         console.log('Record ID:', recordId);
 
-        // Загружаем существующую запись, если есть id
         let existingRecord = null;
         if (fields.id) {
           try {
             existingRecord = await manualStore.get(fields.id, { type: 'json' });
-          } catch (e) {
-            // Игнорируем ошибку, если записи нет
-          }
+          } catch (e) {}
         }
 
-        // Определяем recruitmentStatus:
-        // 1) Если передан явно — используем его (может быть от HR)
-        // 2) При обновлении без явного статуса — оставляем старое значение
-        // 3) Для новой записи — 'draft'
         let recruitmentStatus;
         if (fields.recruitmentStatus) {
           recruitmentStatus = fields.recruitmentStatus;
@@ -152,18 +145,18 @@ exports.handler = async (event) => {
           recruitmentStatus = 'draft';
         }
 
-        // Технический статус анкеты (draft/completed) берётся из поля status
         const technicalStatus = fields.status || 'draft';
 
         const record = {
           id: recordId,
-          ...fields,                     // все поля, включая status
+          ...fields,
           submittedAt: new Date().toISOString(),
-          recruitmentStatus,              // сохраняем корректный рекрутинговый статус
-          status: technicalStatus         // технический статус (draft/completed)
+          recruitmentStatus,
+          status: technicalStatus,
+          // Сохраняем contactId, если передан
+          contactId: fields.candidateId || null   // <-- ДОБАВЛЕНО
         };
 
-        // Сохраняем файлы и формируем ссылки
         const fileUrls = {};
         for (const [name, fileInfo] of Object.entries(files)) {
           const fileKey = `${recordId}/${fileInfo.filename}`;
@@ -174,11 +167,9 @@ exports.handler = async (event) => {
           record.files = fileUrls;
         }
 
-        // Сохраняем запись
         await manualStore.setJSON(recordId, record);
         console.log('Record saved:', recordId);
 
-        // Обновляем индекс
         const indexKey = '_index';
         let index = await manualStore.get(indexKey, { type: 'json' }) || [];
         index = index.filter(item => item.id !== recordId);

@@ -30,7 +30,8 @@ exports.handler = async (event) => {
             projectId: data.formData?.projectId || '',
             status: data.status || 'pending',
             recruitmentStatus: data.recruitmentStatus || 'draft',
-            recruiter: data.recruiter || null,   // <-- ДОБАВЛЕНО
+            recruiter: data.recruiter || null,
+            contactId: data.contactId || null,   // ДОБАВЛЕНО
             createdAt: data.createdAt || data.formData?.timestamp,
             completedAt: data.completedAt,
             files: data.status === 'completed'
@@ -85,7 +86,8 @@ exports.handler = async (event) => {
             projectId: data.projectId || '',
             status: data.status || 'draft',
             recruitmentStatus: data.recruitmentStatus || 'draft',
-            recruiter: data.recruiter || null,   // уже было, но для симметрии
+            recruiter: data.recruiter || null,
+            contactId: data.contactId || null,   // ДОБАВЛЕНО
             createdAt: data.submittedAt,
             files: data.files || {},
             taskInputs,
@@ -97,8 +99,23 @@ exports.handler = async (event) => {
       })
     );
 
+    // Загружаем всех кандидатов из базы контактов для связывания
+    const candidatesStore = getStore({
+      name: 'candidates',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_ACCESS_TOKEN,
+    });
+    const allCandidates = await candidatesStore.get('_all', { type: 'json' }) || [];
+    const candidatesMap = new Map(allCandidates.map(c => [c.id, c]));
+
     const all = [...autoForms, ...manualForms]
       .filter(f => f !== null)
+      .map(f => {
+        if (f.contactId && candidatesMap.has(f.contactId)) {
+          f.contact = candidatesMap.get(f.contactId); // Добавляем данные контакта
+        }
+        return f;
+      })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return {

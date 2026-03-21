@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Рекрутер – панель управления</title>
-    <!-- Google Fonts & Font Awesome -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -44,27 +43,21 @@
             font-family: var(--font-family);
         }
 
-        /* ===== СТИЛИЗАЦИЯ СКРОЛЛБАРА ===== */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-
         ::-webkit-scrollbar-track {
             background: var(--bg-secondary);
             border-radius: 4px;
         }
-
         ::-webkit-scrollbar-thumb {
             background: var(--border-color);
             border-radius: 4px;
-            transition: background 0.2s;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent);
         }
-
         * {
             scrollbar-width: thin;
             scrollbar-color: var(--border-color) var(--bg-secondary);
@@ -84,7 +77,6 @@
             flex-direction: column;
             gap: 8px;
         }
-
         .side-menu::before {
             content: "CRM Contact";
             display: block;
@@ -94,7 +86,6 @@
             margin-bottom: 40px;
             padding-left: 16px;
         }
-
         .menu-btn {
             display: flex;
             align-items: center;
@@ -111,36 +102,29 @@
             width: 100%;
             text-align: left;
         }
-
         .menu-btn i {
             width: 24px;
             font-size: 20px;
             color: #5A5A5A;
         }
-
         .menu-btn:hover {
             background: var(--border-color);
             color: var(--accent);
         }
-
         .menu-btn:hover i {
             color: var(--accent);
         }
-
         .menu-btn.logout {
             margin-top: auto;
             color: var(--danger);
         }
-
         .menu-btn.logout i {
             color: var(--danger);
         }
-
         .menu-btn.logout:hover {
             background: var(--danger);
             color: #000;
         }
-
         .menu-btn.logout:hover i {
             color: #000;
         }
@@ -153,8 +137,6 @@
             max-width: 1600px;
             margin: 0 auto;
         }
-
-        /* Хлебные крошки */
         .breadcrumbs {
             display: flex;
             align-items: center;
@@ -163,42 +145,33 @@
             color: var(--text-secondary);
             font-size: 14px;
         }
-
         .breadcrumbs a {
             color: var(--accent);
             text-decoration: none;
         }
-
         .breadcrumbs span {
             color: var(--text-primary);
             font-weight: 500;
         }
-
-        /* Шапка */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
         }
-
         .header h1 {
             font-size: 28px;
             font-weight: 600;
             color: var(--text-primary);
         }
-
         .header h1 span {
             color: var(--accent);
         }
-
         .header-actions {
             display: flex;
             gap: 12px;
         }
-
-        .schedule-btn,
-        .logout-btn {
+        .schedule-btn, .logout-btn {
             padding: 10px 20px;
             border-radius: 12px;
             font-weight: 500;
@@ -212,9 +185,7 @@
             gap: 8px;
             font-size: 15px;
         }
-
-        .schedule-btn:hover,
-        .logout-btn:hover {
+        .schedule-btn:hover, .logout-btn:hover {
             background: var(--accent);
             color: #000000;
             transform: translateY(-2px);
@@ -227,7 +198,6 @@
             gap: 24px;
             margin-bottom: 30px;
         }
-
         .stat-card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -237,7 +207,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .stat-card::before {
             content: '';
             position: absolute;
@@ -248,17 +217,11 @@
             background: var(--accent);
             opacity: 0.5;
         }
-
         .stat-card:hover {
             border-color: var(--accent);
             transform: translateY(-4px);
             box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
         }
-
-        .stat-card:hover::before {
-            opacity: 1;
-        }
-
         .stat-title {
             display: flex;
             align-items: center;
@@ -267,19 +230,16 @@
             font-size: 14px;
             margin-bottom: 12px;
         }
-
         .stat-title i {
             color: var(--accent);
             font-size: 18px;
         }
-
         .stat-number {
             font-size: 32px;
             font-weight: 700;
             color: var(--accent);
             line-height: 1.2;
         }
-
         .stat-trend {
             margin-top: 8px;
             font-size: 13px;
@@ -297,7 +257,6 @@
             padding: 20px 25px;
             margin-bottom: 30px;
         }
-
         .progress-title {
             color: var(--accent);
             font-weight: 600;
@@ -307,14 +266,12 @@
             gap: 10px;
             font-size: 18px;
         }
-
         .progress-steps {
             display: flex;
             align-items: center;
             gap: 4px;
             margin-bottom: 15px;
         }
-
         .progress-step {
             flex: 1;
             height: 12px;
@@ -323,7 +280,6 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-
         .progress-step.stage1 { background: var(--stage1); }
         .progress-step.stage2 { background: var(--stage2); }
         .progress-step.stage3 { background: var(--stage3); }
@@ -337,7 +293,6 @@
             filter: brightness(1.2);
             transform: scaleY(1.1);
         }
-
         .progress-labels {
             display: flex;
             justify-content: space-between;
@@ -345,7 +300,6 @@
             color: var(--text-secondary);
             margin-top: 5px;
         }
-
         .progress-label {
             flex: 1;
             text-align: center;
@@ -366,7 +320,6 @@
             gap: 24px;
             margin-bottom: 30px;
         }
-
         .left-panel {
             flex: 2;
             background: var(--bg-secondary);
@@ -376,10 +329,7 @@
             max-height: 70vh;
             overflow-y: auto;
         }
-
-        .script-selector,
-        select,
-        .form-group select {
+        .script-selector, select, .form-group select {
             width: 100%;
             padding: 14px 16px;
             background: var(--bg-tertiary);
@@ -394,22 +344,16 @@
             background-position: right 16px center;
             background-size: 16px;
             padding-right: 40px;
-            transition: border-color 0.2s;
         }
-
-        .script-selector:focus,
-        select:focus,
-        .form-group select:focus {
+        .script-selector:focus, select:focus, .form-group select:focus {
             outline: none;
             border-color: var(--accent);
         }
-
         select option {
             background: var(--bg-tertiary);
             color: var(--text-primary);
             padding: 10px;
         }
-
         .script-item {
             background: var(--bg-tertiary);
             border-radius: 16px;
@@ -417,14 +361,12 @@
             border-left: 4px solid var(--accent);
             margin-top: 20px;
         }
-
         .script-item .title {
             font-weight: 600;
             color: var(--accent);
             margin-bottom: 12px;
             font-size: 18px;
         }
-
         .script-item .content {
             color: #E0E0E0;
             font-size: 14px;
@@ -436,13 +378,11 @@
             border-radius: 12px;
             border: 1px solid var(--border-color);
         }
-
         #noScriptMessage {
             color: var(--text-secondary);
             text-align: center;
             padding: 40px;
         }
-
         .right-panel {
             flex: 1;
             background: var(--bg-secondary);
@@ -453,7 +393,6 @@
             overflow-y: auto;
             position: relative;
         }
-
         .right-panel h3 {
             color: var(--accent);
             margin-bottom: 16px;
@@ -461,28 +400,23 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 12px;
         }
-
         .candidate-counter {
             color: var(--text-secondary);
             font-size: 14px;
             margin-bottom: 20px;
             text-align: right;
         }
-
         .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
-
         .form-group {
             margin-bottom: 4px;
         }
-
         .form-group.full-width {
             grid-column: span 2;
         }
-
         .form-group label {
             display: block;
             color: var(--accent);
@@ -490,9 +424,7 @@
             font-weight: 500;
             margin-bottom: 6px;
         }
-
-        .form-group input,
-        .form-group textarea {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 12px 14px;
             background: var(--bg-tertiary);
@@ -502,19 +434,11 @@
             color: var(--text-primary);
             transition: all 0.2s;
         }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: var(--accent);
             background: #222;
         }
-
-        .datetime-row {
-            display: flex;
-            gap: 10px;
-        }
-
         .save-btn {
             width: 100%;
             padding: 16px;
@@ -528,19 +452,16 @@
             transition: all 0.2s;
             margin-top: 20px;
         }
-
         .save-btn:hover {
             background: var(--accent-hover);
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
         }
-
         .action-buttons {
             display: flex;
             gap: 10px;
             margin-top: 15px;
         }
-
         .telegram-btn, .whatsapp-btn {
             flex: 1;
             padding: 14px;
@@ -555,27 +476,22 @@
             justify-content: center;
             gap: 8px;
         }
-
         .telegram-btn {
             background: #0088cc;
             color: white;
         }
-
         .telegram-btn:hover {
             background: #0077b5;
             transform: translateY(-2px);
         }
-
         .whatsapp-btn {
             background: #25D366;
             color: white;
         }
-
         .whatsapp-btn:hover {
             background: #20b859;
             transform: translateY(-2px);
         }
-
         .google-connect-btn {
             width: 100%;
             padding: 12px;
@@ -589,13 +505,11 @@
             transition: all 0.2s;
             margin-top: 10px;
         }
-
         .google-connect-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             background: #2a5ca0;
         }
-
         .google-connect-btn:hover:not(:disabled) {
             background: #5a95f5;
             transform: translateY(-2px);
@@ -609,7 +523,6 @@
             padding: 24px;
             margin-top: 20px;
         }
-
         .candidates-panel h3 {
             color: var(--accent);
             margin-bottom: 20px;
@@ -617,7 +530,6 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
         }
-
         .search-container {
             margin-bottom: 20px;
             display: flex;
@@ -669,17 +581,12 @@
             border-color: var(--accent);
             color: var(--accent);
         }
-        .filter-chip.active:hover {
-            background: var(--accent-hover);
-        }
-
         .candidates-tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 24px;
             flex-wrap: wrap;
         }
-
         .candidates-tab {
             padding: 10px 20px;
             background: var(--bg-tertiary);
@@ -691,18 +598,15 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-
         .candidates-tab:hover {
             border-color: var(--accent);
             color: var(--accent);
         }
-
         .candidates-tab.active {
             background: var(--accent);
             color: #000;
             border-color: var(--accent);
         }
-
         .candidates-list {
             display: flex;
             flex-direction: column;
@@ -710,7 +614,6 @@
             max-height: 60vh;
             overflow-y: auto;
         }
-
         .candidate-card {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
@@ -723,35 +626,25 @@
             gap: 20px;
             position: relative;
         }
-
         .candidate-card:hover {
             border-color: var(--accent);
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
         }
-
-        .candidate-field {
-            flex: 1 1 180px;
-            min-width: 140px;
-        }
-
         .candidate-field .label {
             color: var(--text-secondary);
             font-size: 12px;
             margin-bottom: 4px;
         }
-
         .candidate-field .value {
             color: var(--text-primary);
             font-size: 14px;
             font-weight: 500;
             word-break: break-word;
         }
-
         .candidate-field .value.highlight {
             color: var(--accent);
         }
-
         .candidate-status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -761,11 +654,9 @@
             background: var(--border-color);
             color: var(--accent);
         }
-
         .candidate-status-badge.waiting {
             color: var(--text-secondary);
         }
-
         .no-candidates {
             text-align: center;
             color: var(--text-secondary);
@@ -789,17 +680,14 @@
             overflow-y: auto;
             display: none;
         }
-
         .stage-modal.show, .message-modal.show, .transfer-modal.show {
             display: block;
             animation: modalAppear 0.3s ease;
         }
-
         @keyframes modalAppear {
             from { opacity: 0; transform: translate(-50%, -45%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
-
         .stage-modal .modal-header, .message-modal .modal-header, .transfer-modal .modal-header {
             display: flex;
             justify-content: space-between;
@@ -808,12 +696,10 @@
             padding-bottom: 10px;
             border-bottom: 2px solid var(--accent);
         }
-
         .stage-modal .modal-header h3, .message-modal .modal-header h3, .transfer-modal .modal-header h3 {
             color: var(--accent);
             font-size: 20px;
         }
-
         .modal-close {
             background: none;
             border: none;
@@ -821,11 +707,9 @@
             font-size: 24px;
             cursor: pointer;
         }
-
         .message-list {
             margin-bottom: 20px;
         }
-
         .message-item {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
@@ -835,24 +719,19 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-
-        .message-item:hover,
-        .message-item.selected {
+        .message-item:hover, .message-item.selected {
             border-color: var(--accent);
             background: #222;
         }
-
         .message-item .title {
             color: var(--accent);
             font-weight: 600;
             margin-bottom: 5px;
         }
-
         .message-item .content {
             color: var(--text-secondary);
             font-size: 14px;
         }
-
         .message-preview {
             background: var(--bg-tertiary);
             border: 2px solid var(--border-color);
@@ -860,23 +739,19 @@
             padding: 15px;
             margin-bottom: 20px;
         }
-
         .message-preview .label {
             color: var(--accent);
             font-weight: 500;
             margin-bottom: 8px;
         }
-
         .message-preview .text {
             color: var(--text-primary);
             white-space: pre-wrap;
         }
-
         .modal-actions {
             display: flex;
             gap: 10px;
         }
-
         .modal-actions button {
             flex: 1;
             padding: 12px;
@@ -887,31 +762,25 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-
         .send-btn {
             background: var(--accent);
             color: #000;
         }
-
         .send-btn:hover {
             background: var(--accent-hover);
         }
-
         .cancel-btn {
             background: var(--border-color);
             color: var(--accent);
         }
-
         .cancel-btn:hover {
             background: #333;
         }
-
         .transfer-recruiter-list {
             margin-bottom: 20px;
             max-height: 300px;
             overflow-y: auto;
         }
-
         .transfer-recruiter-item {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
@@ -921,19 +790,15 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-
-        .transfer-recruiter-item:hover,
-        .transfer-recruiter-item.selected {
+        .transfer-recruiter-item:hover, .transfer-recruiter-item.selected {
             border-color: var(--accent);
             background: #222;
             color: var(--accent);
         }
-
         .transfer-actions {
             display: flex;
             gap: 10px;
         }
-
         .transfer-actions button {
             flex: 1;
             padding: 12px;
@@ -944,25 +809,20 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-
         .transfer-confirm-btn {
             background: var(--accent);
             color: #000;
         }
-
         .transfer-confirm-btn:hover {
             background: var(--accent-hover);
         }
-
         .transfer-cancel-btn {
             background: var(--border-color);
             color: var(--accent);
         }
-
         .transfer-cancel-btn:hover {
             background: #333;
         }
-
         .transfer-btn {
             background: #6b8cff;
             color: white;
@@ -978,7 +838,6 @@
             align-items: center;
             gap: 4px;
         }
-
         .transfer-btn:hover {
             background: #8aa5ff;
             transform: scale(1.05);
@@ -991,7 +850,6 @@
             padding: 24px;
             margin-top: 20px;
         }
-
         .analytics-panel h3 {
             color: var(--accent);
             margin-bottom: 20px;
@@ -999,13 +857,11 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
         }
-
         .analytics-table {
             width: 100%;
             border-collapse: collapse;
             min-width: 800px;
         }
-
         .analytics-table th {
             background: #000000;
             color: var(--accent);
@@ -1015,17 +871,14 @@
             text-align: left;
             border-bottom: 2px solid var(--accent);
         }
-
         .analytics-table td {
             padding: 12px;
             color: var(--text-secondary);
             border-bottom: 1px solid var(--border-color);
         }
-
         .analytics-table tr:hover td {
             background: var(--bg-tertiary);
         }
-
         .quality-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -1035,7 +888,6 @@
             color: var(--accent);
             font-weight: 600;
         }
-
         .file-link {
             background: var(--accent);
             color: #000;
@@ -1046,7 +898,6 @@
             font-weight: 500;
             transition: all 0.2s;
         }
-
         .file-link:hover {
             background: var(--accent-hover);
         }
@@ -1066,24 +917,19 @@
             max-width: 300px;
             animation: slideIn 0.3s ease;
         }
-
         .notification.success {
             border-color: var(--success);
         }
-
         .notification.error {
             border-color: var(--danger);
         }
-
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-
         .hidden {
             display: none !important;
         }
-
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -1098,11 +944,9 @@
             flex-direction: column;
             gap: 20px;
         }
-
         .loading-overlay.hidden {
             display: none;
         }
-
         .loading-spinner {
             width: 50px;
             height: 50px;
@@ -1111,17 +955,14 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         .loading-text {
             color: var(--accent);
             font-size: 24px;
             font-weight: 600;
         }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -1245,13 +1086,11 @@
 
     <!-- Основной интерфейс (скрыт по умолчанию) -->
     <div class="recruiter-interface" id="recruiterInterface" style="display: none;">
-        <!-- Хлебные крошки -->
         <div class="breadcrumbs" id="breadcrumbs">
             <a href="#">Главная</a> <i class="fas fa-chevron-right" style="font-size: 12px;"></i>
             <span id="currentPageTitle">Панель рекрутера</span>
         </div>
 
-        <!-- Шапка -->
         <div class="header">
             <h1>Панель рекрутера <span id="recruiterNameDisplay"></span></h1>
             <div class="header-actions">
@@ -1260,7 +1099,6 @@
             </div>
         </div>
 
-        <!-- Карточки статистики -->
         <div class="stats-grid">
             <div class="stat-card" id="statNewCard">
                 <div class="stat-title"><i class="fas fa-user-plus"></i> Новые кандидаты</div>
@@ -1289,14 +1127,12 @@
             </div>
         </div>
 
-        <!-- Прогресс проверки кандидата -->
         <div class="progress-section" id="progressSection" style="display: none;">
             <div class="progress-title"><i class="fas fa-chart-bar"></i> Прогресс кандидата</div>
             <div class="progress-steps" id="progressSteps"></div>
             <div class="progress-labels" id="progressLabels"></div>
         </div>
 
-        <!-- Основная рабочая область (скрипты + форма) -->
         <div class="content-wrapper" id="mainContentWrapper">
             <div class="left-panel">
                 <select id="scriptSelector" class="script-selector">
@@ -1319,12 +1155,10 @@
                             <label>ФИО кандидата <span style="color: #ff6b6b;">*</span></label>
                             <input type="text" id="fullName" placeholder="Иванов Иван Иванович" required>
                         </div>
-
                         <div class="form-group full-width">
                             <label>Номер телефона <span style="color: #ff6b6b;">*</span></label>
                             <input type="tel" id="phoneNumber" placeholder="+7 999 999-99-99" required>
                         </div>
-
                         <div class="form-group">
                             <label>Проект <span style="color: #ff6b6b;">*</span></label>
                             <select id="project" required>
@@ -1334,7 +1168,6 @@
                                 <option value="Опросы">Опросы</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label>Страна <span style="color: #ff6b6b;">*</span></label>
                             <select id="country" required>
@@ -1344,7 +1177,6 @@
                                 <option value="Казахстан">Казахстан</option>
                             </select>
                         </div>
-
                         <div class="form-group full-width">
                             <label>Дата обучения <span style="color: #ff6b6b;">*</span></label>
                             <select id="trainingDateSelect" required>
@@ -1353,12 +1185,10 @@
                                 <option value="2026-03-05" data-time="09:00-17:00">2026-03-05</option>
                             </select>
                         </div>
-
                         <div class="form-group full-width">
                             <label>Время обучения <span style="color: #ff6b6b;">*</span></label>
                             <input type="text" id="trainingTimeInput" placeholder="чч:мм" value="10:00-18:00" required>
                         </div>
-
                         <div class="form-group">
                             <label>Результат звонка <span style="color: #ff6b6b;">*</span></label>
                             <select id="callResult" required>
@@ -1368,7 +1198,6 @@
                                 <option value="Перезвонить">Перезвонить</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label>Тип обращения</label>
                             <select id="contactType">
@@ -1377,17 +1206,14 @@
                                 <option value="Исходящий">Исходящий</option>
                             </select>
                         </div>
-
                         <input type="hidden" id="recruiterField">
                         <input type="hidden" id="candidateIndexField" value="-1">
-
                         <div class="form-group full-width">
                             <label>Комментарий</label>
                             <textarea id="comment" rows="4" placeholder="Дополнительная информация..."></textarea>
                         </div>
                     </div>
 
-                    <!-- Кнопки -->
                     <button type="submit" class="save-btn">Сохранить кандидата</button>
                     <div class="action-buttons">
                         <button type="button" class="telegram-btn" onclick="openMessageModal('telegram')"><i class="fab fa-telegram-plane"></i> Telegram</button>
@@ -1398,10 +1224,8 @@
             </div>
         </div>
 
-        <!-- Панель кандидатов (скрыта) -->
         <div id="candidatesPanel" class="candidates-panel" style="display: none;">
             <h3>Кандидаты</h3>
-            <!-- Поиск -->
             <div class="search-container">
                 <i class="fas fa-search"></i>
                 <input type="text" id="searchInput" placeholder="Поиск по ФИО, телефону, проекту, статусу...">
@@ -1424,7 +1248,6 @@
             <div id="candidatesListContainer" class="candidates-list"></div>
         </div>
 
-        <!-- Панель аналитики (скрыта) -->
         <div id="analyticsPanel" class="analytics-panel" style="display: none;">
             <h3>Аналитика звонков</h3>
             <div id="analyticsContainer"></div>
@@ -1486,10 +1309,10 @@
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentRecruiter = null;
-        let myCandidates = [];               // кандидаты рекрутера (из getMyCandidates)
-        let allCandidates = [];               // все анкеты (из getAllCandidates)
-        let allRecruiters = [];                // все рекрутеры (из getRecruiters)
-        let analytics = [];                    // записи аналитики (из getAnalytics)
+        let myCandidates = [];
+        let allCandidates = [];
+        let allRecruiters = [];
+        let analytics = [];
         let currentCandidateIndex = -1;
         let currentScriptTitle = null;
         let appData = {
@@ -1497,37 +1320,26 @@
             callResults: [],
             contactTypes: [],
             scripts: [],
-            projectTrainings: {}  // для дат обучения
+            projectTrainings: {}
         };
-        let currentView = 'main'; // 'main', 'candidates', 'analytics'
-        let candidatesTab = 'contacts'; // 'contacts', 'verification', 'draft', 'orgMeeting', 'training', 'rejects'
-
-        // список проектов, которые есть в скриптах
+        let currentView = 'main';
+        let candidatesTab = 'contacts';
         let scriptProjects = [];
-
-        // Для отслеживания новых черновиков
         let previousDraftKeys = new Set();
-
-        // Флаг, что текущий кандидат - черновик (чтобы обновлять статус через updateCandidateStatus)
         let currentIsDraft = false;
         let currentDraftId = null;
-
-        // Для редактирования внешнего кандидата (из вкладок Орг. встреча, Обучение, Отказы, а теперь и Черновик)
-        let editingExternalCandidate = null; // { id, type, originalStatus, trainingDate, trainingTime }
-
-        // Для модального окна отправки сообщения
-        let currentMessageType = null; // 'telegram' или 'whatsapp'
+        let editingExternalCandidate = null;
+        let currentMessageType = null;
         let selectedMessageIndex = -1;
-        let chatScripts = []; // скрипты типа 'test', 'Чат', 'chat'
-
-        // Для передачи кандидата
+        let chatScripts = [];
         let transferCandidateId = null;
         let transferCandidateType = null;
         let selectedTransferRecruiter = null;
-
-        // Для поиска
         let searchQuery = '';
         let searchFilter = 'all';
+
+        // НОВАЯ ПЕРЕМЕННАЯ ДЛЯ ХРАНЕНИЯ ID КАНДИДАТА
+        let currentCandidateIdForMessage = null;
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1572,7 +1384,6 @@
                 currentRecruiter = data.recruiter;
                 sessionStorage.setItem('recruiter', JSON.stringify(currentRecruiter));
 
-                // Показываем меню и интерфейс, скрываем логин
                 document.querySelector('.side-menu').style.display = 'flex';
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('recruiterInterface').style.display = 'block';
@@ -1648,10 +1459,9 @@
             await loadScripts();
             await loadMyCandidates();
             await loadAllCandidates();
-            await loadAnalytics();   // загружаем аналитику
+            await loadAnalytics();
             await checkGoogleStatus();
 
-            // Ищем первого кандидата без результата для отображения в форме
             if (myCandidates.length > 0) {
                 const firstEmptyIndex = myCandidates.findIndex(c => !c.callResult || c.callResult.trim() === '');
                 if (firstEmptyIndex !== -1) {
@@ -1666,16 +1476,12 @@
                 loadCandidateIntoForm(-1);
             }
 
-            // Обновляем статистику на главной
             updateStats();
             updateBreadcrumbs();
 
-            // По умолчанию показываем главную вкладку
             showForm();
-            // Запускаем автообновление
             startAutoRefresh();
 
-            // Инициализируем поиск
             initSearch();
         }
 
@@ -1707,7 +1513,7 @@
                 appData.contactTypes = await contactTypesRes.json();
                 appData.projectTrainings = await trainingsRes.json();
 
-                fillProjects(); // заполним проектами из скриптов (пока скрипты не загружены, будет пусто)
+                fillProjects();
                 fillCallResults();
                 fillContactTypes();
             } catch (error) {
@@ -1722,9 +1528,8 @@
                 const res = await fetch('/.netlify/functions/getScripts');
                 appData.scripts = await res.json();
                 updateScriptProjects();
-                fillProjects(); // перезаполнить список проектов
+                fillProjects();
                 updateScriptsUI();
-                // Сохраняем скрипты чата отдельно (поддерживаем несколько вариантов типа)
                 chatScripts = appData.scripts.filter(s => s.type === 'test' || s.type === 'Чат' || s.type === 'chat');
                 console.log('Загруженные скрипты:', appData.scripts);
                 console.log('Скрипты чата:', chatScripts);
@@ -1733,11 +1538,9 @@
             }
         }
 
-        // Функция для сбора уникальных проектов из скриптов (только звонковые скрипты)
         function updateScriptProjects() {
             const projectSet = new Set();
             appData.scripts.forEach(script => {
-                // Берем только скрипты звонков (type='call' или отсутствует)
                 if (script.type === 'call' || !script.type) {
                     if (script.projectNames && Array.isArray(script.projectNames)) {
                         script.projectNames.forEach(name => projectSet.add(name));
@@ -1785,7 +1588,6 @@
                 types.map(t => `<option value="${t}">${t}</option>`).join('');
         }
 
-        // ========== ОБНОВЛЕНИЕ РЕЗУЛЬТАТОВ ЗВОНКА ПО СКРИПТУ ==========
         function updateCallResults() {
             const select = document.getElementById('callResult');
             if (!currentScriptTitle) {
@@ -1801,7 +1603,6 @@
             }
         }
 
-        // ========== РАБОТА СО СКРИПТАМИ ==========
         function updateScriptsUI() {
             const selector = document.getElementById('scriptSelector');
             const container = document.getElementById('selectedScriptContainer');
@@ -1810,7 +1611,6 @@
 
             selector.innerHTML = '<option value="">— выберите скрипт звонка —</option>';
 
-            // Фильтруем только скрипты звонков (type='call' или отсутствует)
             const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
 
             if (callScripts.length === 0) {
@@ -1822,7 +1622,7 @@
 
             callScripts.forEach((script, index) => {
                 const option = document.createElement('option');
-                option.value = index; // но тут index в отфильтрованном массиве
+                option.value = index;
                 option.textContent = script.title;
                 selector.appendChild(option);
             });
@@ -1911,12 +1711,10 @@
             const project = e.target.value;
             updateTrainingDates(project);
         });
-
         document.getElementById('trainingDateSelect').addEventListener('change', onTrainingDateChange);
 
         // ========== ЗАГРУЗКА КАНДИДАТА В ФОРМУ ==========
         function loadCandidateIntoForm(idx) {
-            // Если редактируется внешний кандидат (черновик или из других вкладок)
             if (editingExternalCandidate) {
                 const candidate = editingExternalCandidate;
                 document.getElementById('fullName').value = candidate.fullName || '';
@@ -1931,7 +1729,6 @@
                     updateTrainingDates('');
                 }
                 document.getElementById('callResult').value = candidate.recruitmentStatus || '';
-                // Установка даты и времени обучения
                 if (candidate.trainingDate) {
                     const select = document.getElementById('trainingDateSelect');
                     let optionExists = false;
@@ -1956,13 +1753,11 @@
                     document.getElementById('trainingTimeInput').value = '';
                 }
                 document.getElementById('candidateCounter').textContent = `Редактирование кандидата из списка`;
-                // Обновляем прогресс для этого кандидата
                 updateCandidateProgress(candidate.phone, candidate.project);
                 return;
             }
 
             if (idx < 0 || idx >= myCandidates.length) {
-                // Демо-данные для наглядности (можно убрать)
                 document.getElementById('fullName').value = 'Бахтияруулу Нурбек';
                 document.getElementById('phoneNumber').value = '+996 772 95-90-77';
                 document.getElementById('project').value = 'Синара Банк';
@@ -1974,7 +1769,6 @@
                 document.getElementById('comment').value = '';
                 document.getElementById('candidateIndexField').value = '-1';
                 document.getElementById('candidateCounter').textContent = 'Кандидат 13 из 24';
-                // Скрываем прогресс, если нет кандидата
                 document.getElementById('progressSection').style.display = 'none';
                 return;
             }
@@ -1993,7 +1787,6 @@
                 updateTrainingDates('');
             }
 
-            // Определяем страну по телефону
             const digits = candidate.phone.replace(/\D/g, '');
             if (digits.startsWith('996')) document.getElementById('country').value = 'Кыргызстан';
             else if (digits.startsWith('998')) document.getElementById('country').value = 'Узбекистан';
@@ -2033,20 +1826,16 @@
             const total = myCandidates.length;
             document.getElementById('candidateCounter').textContent = `Кандидат ${idx+1} из ${total}`;
 
-            // Обновляем прогресс для выбранного кандидата
             updateCandidateProgress(candidate.phone, candidate.project);
         }
 
-        // ========== НОВАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ КАНДИДАТА ПО ID ==========
         function loadCandidateById(id) {
-            // Ищем кандидата в myCandidates (контакты рекрутера)
             const idx = myCandidates.findIndex(c => c.id === id);
             if (idx !== -1) {
                 currentCandidateIndex = idx;
                 loadCandidateIntoForm(idx);
                 return;
             }
-            // Если не нашли в myCandidates, ищем в allCandidates (например, черновики, орг. встречи и т.д.)
             const candidate = allCandidates.find(c => c.id === id);
             if (candidate) {
                 editingExternalCandidate = candidate;
@@ -2056,11 +1845,8 @@
             }
         }
 
-        // ========== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ СРАВНЕНИЯ ПО ДВУМ ПАРАМЕТРАМ ==========
         function matchesTwoFields(candidate, phone, fullName, project) {
-            // Нормализуем телефон кандидата
             const cPhone = (candidate.phone || '').replace(/\D/g, '');
-            // Приводим к нижнему регистру для сравнения без учёта регистра
             const cFullName = (candidate.fullName || '').toLowerCase().trim();
             const cProject = (candidate.project || '').toLowerCase().trim();
 
@@ -2075,13 +1861,11 @@
             return matches >= 2;
         }
 
-        // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЭТАПА КАНДИДАТА ==========
         function getCandidateStage(phone, fullName, project) {
             const normPhone = (phone || '').replace(/\D/g, '');
             const normFullName = (fullName || '').toLowerCase().trim();
             const normProject = (project || '').toLowerCase().trim();
 
-            // Поиск в анкетах (allCandidates)
             let foundInAnketa = null;
             for (let c of allCandidates) {
                 if (matchesTwoFields(c, normPhone, normFullName, normProject)) {
@@ -2090,7 +1874,6 @@
                 }
             }
 
-            // Поиск в контактах (myCandidates) – кандидаты текущего рекрутера
             let foundInContacts = null;
             for (let c of myCandidates) {
                 if (matchesTwoFields(c, normPhone, normFullName, normProject)) {
@@ -2099,44 +1882,36 @@
                 }
             }
 
-            // Приоритет: если найден в анкетах, берём статус оттуда, иначе из контактов
             let status = null;
             if (foundInAnketa) {
-                status = foundInAnketa.recruitmentStatus; // в анкетах статус в recruitmentStatus
+                status = foundInAnketa.recruitmentStatus;
             } else if (foundInContacts) {
-                status = foundInContacts.callResult;       // в контактах статус в callResult
+                status = foundInContacts.callResult;
             }
 
-            // Если статуса нет (пустой или undefined), считаем этап 1 (Ожидает связи)
             if (!status || status.trim() === '') {
                 return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: 'Ожидает связи' };
             }
 
-            // Определяем этап по статусу
-            // Этап 1: пустой статус уже обработан выше, но могут быть дополнительные статусы из контактов
             const stage1statuses = ['Автоответчик', 'Не берет трубку', 'Сброс', 'Выключен', 'Перезвонить'];
             if (stage1statuses.includes(status)) {
                 return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status };
             }
 
-            // Этап 2: Проверка (статусы из контактов и анкет) – добавлен "Вышел на орг. встречу"
             const stage2statuses = ['draft', 'passed', 'напоминание', 'Проверка', 'Приглашение орг.встреча', 'Вышел на орг. встречу'];
             if (stage2statuses.includes(status)) {
                 return { stage: 2, color: 'var(--stage2)', label: 'Проверка', status: status };
             }
 
-            // Этап 3: Обучение – добавлен "Вышел на обучение"
             const stage3statuses = ['Обучение', 'Приглашение на обучение', 'Вышел на обучение'];
             if (stage3statuses.includes(status)) {
                 return { stage: 3, color: 'var(--stage3)', label: 'Обучение', status: status };
             }
 
-            // Этап 4: Линия (employee)
             if (status === 'employee' || status === 'Сотрудник') {
                 return { stage: 4, color: 'var(--stage4)', label: 'Линия', status: status };
             }
 
-            // Этап 5: Отказы
             const stage5statuses = [
                 'Отказ акцент', 'Отказ фрикативная речь', 'Отказ интернет',
                 'Отказ наушники', 'Отказ не вышел на орг.встречу', 'Отказ не вышел на обучение',
@@ -2147,17 +1922,14 @@
                 return { stage: 5, color: 'var(--stage5)', label: 'Отказ', status: status };
             }
 
-            // Если статус не распознан, считаем этап 1 (по умолчанию)
             return { stage: 1, color: 'var(--stage1)', label: 'Ожидает связи', status: status || 'Ожидает связи' };
         }
 
-        // ========== ОБНОВЛЕНИЕ ПРОГРЕСС-БАРА КАНДИДАТА ==========
         function updateCandidateProgress(phone, project) {
-            // Получаем fullName из формы, чтобы использовать в поиске
             const fullName = document.getElementById('fullName').value.trim();
             const stageInfo = getCandidateStage(phone, fullName, project);
             const currentStage = stageInfo.stage;
-            const currentStatus = stageInfo.status; // конкретный статус кандидата
+            const currentStatus = stageInfo.status;
 
             const steps = [
                 { stage: 1, label: 'Ожидает связи', color: 'var(--stage1)' },
@@ -2175,7 +1947,6 @@
                 const stepClass = `progress-step stage${step.stage} ${isActive ? 'active' : ''}`;
                 stepsHtml += `<div class="${stepClass}" onclick="showStageModal(${step.stage}, '${step.label}')"></div>`;
 
-                // Для активного этапа подставляем конкретный статус, иначе общее название
                 const label = isActive ? currentStatus : step.label;
                 const labelClass = `progress-label ${isActive ? 'active' : ''}`;
                 labelsHtml += `<div class="${labelClass}" onclick="showStageModal(${step.stage}, '${step.label}')">${label}</div>`;
@@ -2186,9 +1957,7 @@
             document.getElementById('progressSection').style.display = 'block';
         }
 
-        // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА ==========
         function showStageModal(stage, label) {
-            // Получаем список кандидатов текущего рекрутера с этим статусом
             let candidates = [];
             if (stage === 1) {
                 candidates = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '');
@@ -2199,7 +1968,6 @@
                 const stage3statuses = ['Обучение', 'Приглашение на обучение', 'Вышел на обучение'];
                 candidates = myCandidates.filter(c => stage3statuses.includes(c.callResult));
             } else if (stage === 4) {
-                // В базе контактов нет employee, поэтому ищем в allCandidates
                 candidates = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name);
             } else if (stage === 5) {
                 const rejectStatuses = [
@@ -2237,24 +2005,22 @@
         }
 
         function selectCandidateFromStage(phone, project) {
-            // Найти кандидата в myCandidates по телефону и проекту
             const cleanPhone = phone.replace(/\D/g, '');
             const index = myCandidates.findIndex(c => {
                 const cPhone = (c.phone || '').replace(/\D/g, '');
                 return cPhone === cleanPhone && c.project === project;
             });
             if (index !== -1) {
-                editingExternalCandidate = null; // сбрасываем внешнего кандидата
+                editingExternalCandidate = null;
                 currentCandidateIndex = index;
                 loadCandidateIntoForm(index);
-                showForm(); // переходим на главную
+                showForm();
                 closeStageModal();
             } else {
                 showNotification('Кандидат не найден в вашем списке', 'error');
             }
         }
 
-        // ========== ПОИСК ==========
         function initSearch() {
             const searchInput = document.getElementById('searchInput');
             const filterChips = document.querySelectorAll('.filter-chip');
@@ -2275,7 +2041,6 @@
         }
 
         function applySearchAndFilter() {
-            // Получаем текущий список кандидатов в зависимости от вкладки
             let currentList = [];
             if (candidatesTab === 'contacts') {
                 currentList = myCandidates;
@@ -2298,10 +2063,9 @@
                 currentList = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name);
             }
 
-            // Фильтруем по поисковому запросу
             if (searchQuery) {
                 const searchLower = searchQuery.toLowerCase().trim();
-                const searchPhone = searchQuery.replace(/\D/g, ''); // только цифры для телефона
+                const searchPhone = searchQuery.replace(/\D/g, '');
                 currentList = currentList.filter(c => {
                     const fullName = (c.fullName || '').toLowerCase().trim();
                     const phoneNorm = (c.phone || '').replace(/\D/g, '');
@@ -2317,7 +2081,6 @@
                 });
             }
 
-            // Обновляем отображение в зависимости от вкладки
             if (candidatesTab === 'contacts') {
                 renderContactsCandidates(currentList);
             } else if (candidatesTab === 'verification') {
@@ -2333,7 +2096,6 @@
             }
         }
 
-        // ========== ФУНКЦИИ РЕНДЕРА ==========
         function renderContactsCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
             if (filteredList.length === 0) {
@@ -2438,7 +2200,7 @@
 
         function renderDraftCandidates(filteredList) {
             const container = document.getElementById('candidatesListContainer');
-            const draftCandidates = filteredList; // уже отфильтровано
+            const draftCandidates = filteredList;
             const newKeys = draftCandidates.map(c => `${c.fullName}_${c.phone}`);
             const newKeysSet = new Set(newKeys);
             let newAdded = false;
@@ -2491,7 +2253,6 @@
             });
             container.innerHTML = html;
 
-            // Обработчик клика на черновик – загружаем его в форму для редактирования
             document.querySelectorAll('#candidatesListContainer .candidate-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     const id = card.dataset.id;
@@ -2501,10 +2262,6 @@
                     }
                 });
             });
-        }
-
-        async function takeDraft(draftId) {
-            // Эта функция больше не используется, удаляем её
         }
 
         function renderOrgMeetingCandidates(filteredList) {
@@ -2672,19 +2429,15 @@
             });
         }
 
-        // ========== ОБНОВЛЕНИЕ СТАТИСТИКИ ==========
         function updateStats() {
             if (!currentRecruiter) return;
 
-            // 1. Новые кандидаты: в myCandidates с пустым callResult
             const newCount = myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length;
             document.getElementById('statNew').textContent = newCount.toLocaleString();
 
-            // 2. В работе: проверка
             const inProgressCount = myCandidates.filter(c => c.callResult === "Проверка").length;
             document.getElementById('statInProgress').textContent = inProgressCount.toLocaleString();
 
-            // 3. Аналитика: средний процент качества для текущего рекрутера
             const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
             let avgQuality = 0;
             if (myAnalytics.length > 0) {
@@ -2693,7 +2446,6 @@
             }
             document.getElementById('statAnalytics').textContent = avgQuality + '%';
 
-            // 4. Эффективность (формула из 4 частей)
             const passed = allCandidates.filter(c => c.recruitmentStatus === 'passed' && c.recruiter === currentRecruiter.name).length;
             const rejectStatuses = ['Не интересует', 'Нет ПК/Ноутбука', 'Фрикативная речь', 'Акцент', 'Нет гарнитуры', 'Нет Lan кабеля'];
             const rejects = allCandidates.filter(c => rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name).length;
@@ -2701,11 +2453,9 @@
             
             const part1 = (rejects + verificationCount) > 0 ? passed / (rejects + verificationCount) : 0;
 
-            // orgMeeting – кандидаты со статусом "Вышел на орг. встречу"
             const orgMeeting = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на орг. встречу' && c.recruiter === currentRecruiter.name).length;
             const part2 = passed > 0 ? orgMeeting / passed : 0;
 
-            // training – кандидаты со статусом "Вышел на обучение"
             const training = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на обучение' && c.recruiter === currentRecruiter.name).length;
             const part3 = orgMeeting > 0 ? training / orgMeeting : 0;
 
@@ -2715,12 +2465,10 @@
             const efficiency = part1 * part2 * part3 * part4 * 100;
             document.getElementById('statEfficiency').textContent = Math.round(efficiency) + '%';
 
-            // 5. Результат: количество кандидатов со статусом 'employee'
             const employeeCount = allCandidates.filter(c => c.recruitmentStatus === 'employee' && c.recruiter === currentRecruiter.name).length;
             document.getElementById('statResult').textContent = employeeCount.toLocaleString();
         }
 
-        // ========== ОБНОВЛЕНИЕ ХЛЕБНЫХ КРОШЕК ==========
         function updateBreadcrumbs() {
             const titleSpan = document.getElementById('currentPageTitle');
             switch (currentView) {
@@ -2738,11 +2486,9 @@
             }
         }
 
-        // ========== СОХРАНЕНИЕ КАНДИДАТА ==========
         document.getElementById('candidateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Если редактируется внешний кандидат (черновик или из других вкладок)
             if (editingExternalCandidate) {
                 const newStatus = document.getElementById('callResult').value;
                 const country = document.getElementById('country').value;
@@ -2753,7 +2499,6 @@
                     return;
                 }
 
-                // Собираем обновлённые данные
                 const updatedCandidate = {
                     id: editingExternalCandidate.id,
                     type: editingExternalCandidate.type,
@@ -2769,22 +2514,16 @@
 
                 showLoading();
                 try {
-                    // Определяем, какой эндпоинт использовать
                     const url = editingExternalCandidate.type === 'manual' 
                         ? '/.netlify/functions/submitManualResults' 
                         : '/.netlify/functions/updateCandidateStatus';
-
-                    // Для submitManualResults нужно отправить FormData, но у нас нет файлов, поэтому можно отправить JSON
-                    // Временно используем JSON
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(updatedCandidate)
                     });
-
                     if (response.ok) {
                         showNotification('Кандидат сохранён', 'success');
-                        // Обновляем allCandidates и myCandidates (если это черновик, он исчезнет)
                         await refreshAllCandidates();
                         await refreshMyCandidates();
                         updateStats();
@@ -2803,7 +2542,6 @@
                 return;
             }
 
-            // Обычное сохранение кандидата рекрутера
             const fullName = document.getElementById('fullName').value.trim();
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const project = document.getElementById('project').value;
@@ -2843,7 +2581,6 @@
                 });
                 if (response.ok) {
                     showNotification('Кандидат сохранён', 'success');
-                    // Обновляем статистику и прогресс
                     updateStats();
                     updateCandidateProgress(candidate.phone, candidate.project);
                     goToNextCandidate();
@@ -2857,7 +2594,6 @@
             }
         });
 
-        // ========== ПЕРЕХОД К СЛЕДУЮЩЕМУ КАНДИДАТУ ==========
         function goToNextCandidate() {
             if (myCandidates.length === 0) {
                 currentCandidateIndex = -1;
@@ -2899,27 +2635,22 @@
             }
         }
 
-        // ========== ВЫХОД ==========
         function logout() {
             stopAutoRefresh();
             sessionStorage.removeItem('recruiter');
             currentRecruiter = null;
-            // Скрываем меню и интерфейс, показываем логин
             document.querySelector('.side-menu').style.display = 'none';
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('recruiterInterface').style.display = 'none';
-            // Очищаем поля входа
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginError').style.display = 'none';
         }
 
-        // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ГЛАВНОЙ, КАНДИДАТАМИ И АНАЛИТИКОЙ ==========
         function showForm() {
             document.querySelector('.content-wrapper').style.display = 'flex';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'none';
-            // Показываем прогресс, если есть выбранный кандидат
             if (currentCandidateIndex >= 0 || editingExternalCandidate) {
                 document.getElementById('progressSection').style.display = 'block';
             } else {
@@ -2934,8 +2665,8 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'block';
             document.getElementById('analyticsPanel').style.display = 'none';
-            document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс на вкладке кандидатов
-            editingExternalCandidate = null; // сбрасываем внешнего кандидата
+            document.getElementById('progressSection').style.display = 'none';
+            editingExternalCandidate = null;
             currentView = 'candidates';
             updateBreadcrumbs();
             switchCandidatesTab('contacts');
@@ -2945,13 +2676,12 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'block';
-            document.getElementById('progressSection').style.display = 'none'; // скрываем прогресс
+            document.getElementById('progressSection').style.display = 'none';
             currentView = 'analytics';
             updateBreadcrumbs();
             renderAnalytics();
         }
 
-        // ========== РЕНДЕР АНАЛИТИКИ ==========
         function renderAnalytics() {
             const container = document.getElementById('analyticsContainer');
             const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
@@ -2977,19 +2707,18 @@
                 const quality = entry.quality !== undefined ? entry.quality : '—';
                 const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
                 html += `
-                     <tr>
+                    <tr>
                         <td>${date}</td>
                         <td>${description}</td>
                         <td><span class="quality-badge">${quality}</span></td>
                         <td>${fileLink}</td>
-                     </tr>
+                    </tr>
                 `;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
 
-        // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ВНУТРИ КАНДИДАТОВ ==========
         function switchCandidatesTab(tab) {
             candidatesTab = tab;
             document.getElementById('tabContacts').classList.toggle('active', tab === 'contacts');
@@ -2999,10 +2728,9 @@
             document.getElementById('tabTraining').classList.toggle('active', tab === 'training');
             document.getElementById('tabRejects').classList.toggle('active', tab === 'rejects');
 
-            applySearchAndFilter(); // применить поиск при смене вкладки
+            applySearchAndFilter();
         }
 
-        // ========== ФУНКЦИИ ДЛЯ ПЕРЕДАЧИ КАНДИДАТА ==========
         function openTransferModal(candidateId, candidateType) {
             transferCandidateId = candidateId;
             transferCandidateType = candidateType;
@@ -3071,7 +2799,6 @@
             }
         }
 
-        // ========== ОБРАБОТЧИК СМЕНЫ СКРИПТА ==========
         document.getElementById('scriptSelector').addEventListener('change', function(e) {
             const index = e.target.value;
             if (index === '') {
@@ -3093,7 +2820,6 @@
             }
         });
 
-        // ========== ВОССТАНОВЛЕНИЕ СЕССИИ ==========
         window.addEventListener('load', () => {
             const saved = sessionStorage.getItem('recruiter');
             const sideMenu = document.querySelector('.side-menu');
@@ -3134,12 +2860,22 @@
                 showNotification('Нет доступных скриптов для чата', 'error');
                 return;
             }
+
+            // Сохраняем ID текущего кандидата
+            const idx = parseInt(document.getElementById('candidateIndexField').value, 10);
+            if (idx >= 0 && myCandidates[idx]) {
+                currentCandidateIdForMessage = myCandidates[idx].id;
+            } else if (editingExternalCandidate) {
+                currentCandidateIdForMessage = editingExternalCandidate.id;
+            } else {
+                currentCandidateIdForMessage = null;
+            }
+
             currentMessageType = type;
             document.getElementById('messageModalTitle').textContent = type === 'telegram' ? 'Выберите сообщение для Telegram' : 'Выберите сообщение для WhatsApp';
             const listContainer = document.getElementById('messageList');
             let html = '';
             chatScripts.forEach((script, index) => {
-                // Получаем текст с сохранением переносов
                 const plainText = htmlToPlainText(script.content);
                 html += `
                     <div class="message-item ${selectedMessageIndex === index ? 'selected' : ''}" data-index="${index}">
@@ -3174,7 +2910,6 @@
             document.body.classList.remove('menu-open');
         }
 
-        // ========== ОБНОВЛЕНИЕ ПРЕДПРОСМОТРА ==========
         function updateMessagePreview() {
             if (selectedMessageIndex === -1 || !chatScripts[selectedMessageIndex]) return;
             const script = chatScripts[selectedMessageIndex];
@@ -3183,18 +2918,13 @@
             const projectId = projectObj ? projectObj.id : '';
             const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
 
-            // Преобразуем HTML в обычный текст с сохранением переносов
             let plainText = htmlToPlainText(script.content);
-
-            // Добавляем ссылку только если название скрипта точно совпадает с "Проверка"
             if (link && script.title.trim().toLowerCase() === 'проверка') {
                 plainText += '\n\nСсылка для заполнения анкеты: ' + link;
             }
-
             document.getElementById('messagePreviewText').textContent = plainText;
         }
 
-        // ========== ОТПРАВКА СООБЩЕНИЯ ==========
         async function sendSelectedMessage() {
             if (selectedMessageIndex === -1) {
                 showNotification('Выберите сообщение', 'error');
@@ -3206,12 +2936,14 @@
             const projectName = document.getElementById('project').value;
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
-            const link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
 
-            // Преобразуем HTML в обычный текст с сохранением переносов
+            // Формируем ссылку с projectId и candidateId
+            let link = `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}`;
+            if (currentCandidateIdForMessage) {
+                link += `&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`;
+            }
+
             let text = htmlToPlainText(script.content);
-
-            // Добавляем ссылку только если название скрипта точно совпадает с "Проверка"
             if (link && script.title.trim().toLowerCase() === 'проверка') {
                 text += '\n\nСсылка для заполнения анкеты: ' + link;
             }
@@ -3282,14 +3014,12 @@
                         newIndex = 0;
                     }
                     
-                    // Если индекс изменился или кандидат пропал – загружаем нового в форму
                     if (newIndex !== oldIndex) {
                         currentCandidateIndex = newIndex;
                         if (currentView === 'main') {
                             loadCandidateIntoForm(currentCandidateIndex);
                         }
                     } else {
-                        // Индекс не изменился – обновляем только статистику и прогресс-бар
                         if (currentView === 'main') {
                             updateStats();
                             if (currentCandidateIndex >= 0 && myCandidates[currentCandidateIndex]) {

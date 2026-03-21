@@ -870,6 +870,8 @@
                 <!-- Скрытые поля для хранения ID и названия проекта -->
                 <input type="hidden" id="projectId" value="">
                 <input type="hidden" id="projectName" value="">
+                <!-- НОВОЕ ПОЛЕ ДЛЯ CANDIDATE_ID -->
+                <input type="hidden" id="candidateId" value="">
 
                 <!-- Две кнопки -->
                 <div class="button-group">
@@ -937,6 +939,11 @@
             return urlParams.get(param);
         }
 
+        // --- Получаем recruiter из URL (если есть) ---
+        const recruiterFromUrl = getQueryParam('recruiter');
+        // НОВАЯ ПЕРЕМЕННАЯ ДЛЯ CANDIDATE_ID ИЗ URL
+        const candidateIdFromUrl = getQueryParam('candidateId');
+
         // --- Управление загрузкой ---
         function showLoading() {
             document.getElementById('loadingOverlay').classList.remove('hidden');
@@ -972,17 +979,14 @@
                 if (!res.ok) throw new Error('Failed to load project info');
                 const project = await res.json();
 
-                // Заполняем заголовок
                 document.getElementById('projectTitle').textContent = project.name || 'Проект';
                 document.getElementById('projectAreaBadge').textContent = project.area || '—';
                 document.getElementById('projectLineTypeBadge').textContent = project.lineType || '—';
                 document.getElementById('projectAbout').textContent = project.about || 'Информация отсутствует.';
                 
-                // Заполняем скрытые поля формы
                 document.getElementById('projectId').value = project.id;
                 document.getElementById('projectName').value = project.name || '';
 
-                // Функция для заполнения списка из текста (разделение по строкам)
                 const fillList = (elementId, text) => {
                     const list = document.getElementById(elementId);
                     list.innerHTML = '';
@@ -1014,17 +1018,19 @@
             }
         }
 
-        // Вызываем загрузку сразу при загрузке страницы
         window.addEventListener('load', () => {
             loadProjectInfo();
-            // Остальная инициализация (скрываем блоки проверки)
             document.getElementById('autoVerificationBlock').classList.remove('show');
             document.getElementById('manualVerificationBlock').classList.remove('show');
+
+            // Устанавливаем candidateId в скрытое поле, если он передан
+            if (candidateIdFromUrl) {
+                document.getElementById('candidateId').value = candidateIdFromUrl;
+            }
         });
 
         // --- Генерация уникального кода (для авто) ---
         function generateUniqueCode() {
-            // Убрали префикс "ROSSETI-"
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let randomPart = '';
             for (let i = 0; i < 8; i++) {
@@ -1050,7 +1056,7 @@
             return isValid;
         }
 
-        // --- Получение данных из формы ---
+        // --- Получение данных из формы (с добавлением recruiter и candidateId) ---
         function getFormData() {
             return {
                 fullName: document.getElementById('fullName').value.trim(),
@@ -1060,6 +1066,8 @@
                 email: document.getElementById('email').value.trim(),
                 project: document.getElementById('projectName').value,
                 projectId: document.getElementById('projectId').value,
+                recruiter: recruiterFromUrl || null,
+                candidateId: document.getElementById('candidateId').value,   // НОВОЕ ПОЛЕ
                 timestamp: new Date().toISOString()
             };
         }
@@ -1090,7 +1098,6 @@
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Ошибка сервера');
-                // Уведомление об успехе убрано
             } catch (error) {
                 console.error(error);
                 showNotification('Ошибка отправки. Свяжитесь с поддержкой.', 'error');
@@ -1103,7 +1110,6 @@
         }
 
         // ===================== РУЧНАЯ ПРОВЕРКА =====================
-        // Массив заданий (полностью скопирован из исходного candidate.html)
         const tasks = [
             {
                 title: "Задание №1 Пройдите тест на скорость интернета",
@@ -1127,91 +1133,23 @@
                 title: "Задание №3 Пройдите тест на основы знания компьютера",
                 instruction: "Ответьте на вопросы ниже. Все вопросы обязательны.",
                 questions: [
-                    {
-                        text: "Как открыть диспетчер задач?",
-                        options: ["Ctrl+Alt+Del", "Ctrl+Shift+Esc", "Win+R → taskmgr", "Все вышеперечисленное"],
-                        correct: 3
-                    },
-                    {
-                        text: "Где можно удалить программу?",
-                        options: ["Панель управления → Удаление программ", "Корзина", "Диспетчер задач", "Мой компьютер"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как сделать скриншот экрана?",
-                        options: ["Кнопка Print Screen", "Win+Shift+S", "Ножницы", "Все вышеперечисленное"],
-                        correct: 3
-                    },
-                    {
-                        text: "Что делать, если пропал звук?",
-                        options: ["Проверить подключение колонок", "Проверить настройки звука", "Перезагрузить компьютер", "Все вышеперечисленное"],
-                        correct: 3
-                    },
-                    {
-                        text: "Какие браузеры существуют? (выберите один вариант)",
-                        options: ["Google Chrome", "Microsoft Word", "Adobe Photoshop", "Skype"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как копировать выделенный элемент/текст?",
-                        options: ["Ctrl+C", "Ctrl+V", "Ctrl+X", "Ctrl+Z"],
-                        correct: 0
-                    },
-                    {
-                        text: "Через какие приложения можно открыть файлы типа .rar, .zip, .7zip?",
-                        options: ["WinRAR", "7-Zip", "Архиватор Windows", "Все вышеперечисленное"],
-                        correct: 3
-                    },
-                    {
-                        text: "Что такое ПКМ и ЛКМ?",
-                        options: ["Правая и левая кнопки мыши", "Персональный компьютер и монитор", "Программа и команда мыши", "Панель контроля мыши"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как скачать файл или программу из браузера? (выберите правильную последовательность)",
-                        options: ["Нажать на ссылку → Выбрать 'Сохранить'", "Кликнуть правой кнопкой → 'Сохранить как'", "Перетащить файл на рабочий стол", "Все варианты подходят"],
-                        correct: 3
-                    },
-                    {
-                        text: "Как вставить скопированный файл или элемент?",
-                        options: ["Ctrl+V", "Ctrl+C", "Ctrl+X", "Ctrl+Z"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как найти файл на компьютере?",
-                        options: ["Использовать поиск в Проводнике", "Просмотреть все папки вручную", "Открыть каждый диск", "Использовать командную строку"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как открыть проводник Windows?",
-                        options: ["Win+E", "Мой компьютер", "Пуск → Проводник", "Все вышеперечисленное"],
-                        correct: 3
-                    },
-                    {
-                        text: "Что такое архиватор и какие бывают программы для работы с архивами?",
-                        options: ["Программа для сжатия файлов (WinRAR, 7-Zip)", "Антивирусная программа", "Текстовый редактор", "Графический редактор"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как быстро заблокировать компьютер?",
-                        options: ["Win+L", "Ctrl+Alt+Del → Блокировать", "Кнопка питания", "Выключить монитор"],
-                        correct: 0
-                    },
-                    {
-                        text: "Как посмотреть информацию о системе (процессор, память)?",
-                        options: ["Win+Pause/Break", "Диспетчер задач", "Панель управления → Система", "Все вышеперечисленное"],
-                        correct: 3
-                    },
-                    {
-                        text: "Если вы дважды кликните по кнопке «Обновить страницу», сайт обновится сильнее?",
-                        options: ["Да", "Нет", "Зависит от браузера", "Обновится дважды"],
-                        correct: 1
-                    },
-                    {
-                        text: "Как увеличить масштаб на экране?",
-                        options: ["Ctrl+Колесико мыши", "Ctrl++", "Настройки экрана", "Все вышеперечисленное"],
-                        correct: 3
-                    }
+                    { text: "Как открыть диспетчер задач?", options: ["Ctrl+Alt+Del", "Ctrl+Shift+Esc", "Win+R → taskmgr", "Все вышеперечисленное"], correct: 3 },
+                    { text: "Где можно удалить программу?", options: ["Панель управления → Удаление программ", "Корзина", "Диспетчер задач", "Мой компьютер"], correct: 0 },
+                    { text: "Как сделать скриншот экрана?", options: ["Кнопка Print Screen", "Win+Shift+S", "Ножницы", "Все вышеперечисленное"], correct: 3 },
+                    { text: "Что делать, если пропал звук?", options: ["Проверить подключение колонок", "Проверить настройки звука", "Перезагрузить компьютер", "Все вышеперечисленное"], correct: 3 },
+                    { text: "Какие браузеры существуют? (выберите один вариант)", options: ["Google Chrome", "Microsoft Word", "Adobe Photoshop", "Skype"], correct: 0 },
+                    { text: "Как копировать выделенный элемент/текст?", options: ["Ctrl+C", "Ctrl+V", "Ctrl+X", "Ctrl+Z"], correct: 0 },
+                    { text: "Через какие приложения можно открыть файлы типа .rar, .zip, .7zip?", options: ["WinRAR", "7-Zip", "Архиватор Windows", "Все вышеперечисленное"], correct: 3 },
+                    { text: "Что такое ПКМ и ЛКМ?", options: ["Правая и левая кнопки мыши", "Персональный компьютер и монитор", "Программа и команда мыши", "Панель контроля мыши"], correct: 0 },
+                    { text: "Как скачать файл или программу из браузера? (выберите правильную последовательность)", options: ["Нажать на ссылку → Выбрать 'Сохранить'", "Кликнуть правой кнопкой → 'Сохранить как'", "Перетащить файл на рабочий стол", "Все варианты подходят"], correct: 3 },
+                    { text: "Как вставить скопированный файл или элемент?", options: ["Ctrl+V", "Ctrl+C", "Ctrl+X", "Ctrl+Z"], correct: 0 },
+                    { text: "Как найти файл на компьютере?", options: ["Использовать поиск в Проводнике", "Просмотреть все папки вручную", "Открыть каждый диск", "Использовать командную строку"], correct: 0 },
+                    { text: "Как открыть проводник Windows?", options: ["Win+E", "Мой компьютер", "Пуск → Проводник", "Все вышеперечисленное"], correct: 3 },
+                    { text: "Что такое архиватор и какие бывают программы для работы с архивами?", options: ["Программа для сжатия файлов (WinRAR, 7-Zip)", "Антивирусная программа", "Текстовый редактор", "Графический редактор"], correct: 0 },
+                    { text: "Как быстро заблокировать компьютер?", options: ["Win+L", "Ctrl+Alt+Del → Блокировать", "Кнопка питания", "Выключить монитор"], correct: 0 },
+                    { text: "Как посмотреть информацию о системе (процессор, память)?", options: ["Win+Pause/Break", "Диспетчер задач", "Панель управления → Система", "Все вышеперечисленное"], correct: 3 },
+                    { text: "Если вы дважды кликните по кнопке «Обновить страницу», сайт обновится сильнее?", options: ["Да", "Нет", "Зависит от браузера", "Обновится дважды"], correct: 1 },
+                    { text: "Как увеличить масштаб на экране?", options: ["Ctrl+Колесико мыши", "Ctrl++", "Настройки экрана", "Все вышеперечисленное"], correct: 3 }
                 ],
                 fileRequired: false
             },
@@ -1269,7 +1207,6 @@
             };
             try {
                 const compressedBlob = await imageCompression(file, options);
-                // Если сжатие не помогло, пробуем ещё более агрессивно
                 if (compressedBlob.size >= file.size * 0.9) {
                     const aggressiveOptions = { ...options, maxSizeMB: 0.3, maxWidthOrHeight: 600 };
                     const secondTry = await imageCompression(file, aggressiveOptions);
@@ -1301,7 +1238,6 @@
 
                         const samples = new Int16Array(wavData, wavHeader.dataOffset, wavHeader.dataLen / 2);
 
-                        // Динамический выбор битрейта и sample rate
                         let bitrate = 48;
                         let sampleRate = wavHeader.sampleRate;
                         if (wavFile.size > 10 * 1024 * 1024) {
@@ -1361,7 +1297,6 @@
             const container = document.getElementById('taskContainer');
             const progress = document.getElementById('taskProgress');
             
-            // Прогресс
             let progressHtml = '';
             tasks.forEach((t, i) => {
                 let statusClass = '';
@@ -1371,7 +1306,6 @@
             });
             progress.innerHTML = progressHtml;
 
-            // Карточка задания
             let html = `<div class="task-card">
                 <div class="task-title">${task.title}</div>
                 <div class="task-instruction">${task.instruction}</div>`;
@@ -1437,7 +1371,6 @@
             if (input.files.length > 0) {
                 taskFiles[index] = input.files[0];
                 document.getElementById(`fileName_${index}`).textContent = input.files[0].name;
-                // Предупреждение для очень больших голосовых файлов
                 if (index === 1 && taskFiles[1] && taskFiles[1].size > 25 * 1024 * 1024) {
                     alert('Голосовой файл очень большой. Рекомендуется записать более короткое сообщение (до 2 минут), иначе после сжатия он может всё равно превысить лимит.');
                 }
@@ -1524,7 +1457,7 @@
             };
         }
 
-        // ========== СОЗДАНИЕ ЧЕРНОВИКА ==========
+        // ========== СОЗДАНИЕ ЧЕРНОВИКА (с добавлением recruiter и candidateId) ==========
         async function startManualVerification() {
             if (!validateForm()) {
                 alert('Пожалуйста, заполните все обязательные поля.');
@@ -1548,6 +1481,12 @@
                 draftData.append('email', formData.email);
                 draftData.append('project', formData.project);
                 draftData.append('projectId', formData.projectId);
+                if (formData.recruiter) {
+                    draftData.append('recruiter', formData.recruiter);
+                }
+                if (formData.candidateId) {
+                    draftData.append('candidateId', formData.candidateId);   // НОВОЕ ПОЛЕ
+                }
                 draftData.append('status', 'draft');
 
                 const response = await fetch('/.netlify/functions/submitManualResults', {
@@ -1580,7 +1519,7 @@
             hideLoading();
         }
 
-        // ========== ОТПРАВКА РЕЗУЛЬТАТОВ РУЧНОЙ ПРОВЕРКИ (С ДОБАВЛЕНИЕМ ТЕКСТОВЫХ ОТВЕТОВ И ТЕСТОВ) ==========
+        // ========== ОТПРАВКА РЕЗУЛЬТАТОВ РУЧНОЙ ПРОВЕРКИ ==========
         async function submitManualResults() {
             console.log('=== submitManualResults started ===');
             const formData = getFormData();
@@ -1591,7 +1530,6 @@
                 return;
             }
 
-            // Проверка, что есть хотя бы один файл
             let hasAnyFile = false;
             const filesIndicesWithData = [];
             for (let i = 0; i < tasks.length; i++) {
@@ -1607,7 +1545,6 @@
             }
             console.log('Files to upload indices:', filesIndicesWithData);
 
-            // Вычисляем результаты теста (задание №3)
             const taskScores = {};
             for (let i = 0; i < tasks.length; i++) {
                 if (tasks[i].questions) {
@@ -1616,7 +1553,6 @@
                 }
             }
 
-            // Добавляем в formData текстовые ответы и результаты теста
             const extendedFormData = {
                 ...formData,
                 taskInputs: taskInputs,
@@ -1625,12 +1561,10 @@
 
             showLoading();
 
-            // 1. Подготавливаем информацию о файлах для сервера
             const filesInfo = [];
             for (let i = 0; i < tasks.length; i++) {
                 if (taskFiles[i]) {
                     let fileToSend = taskFiles[i];
-                    // Сжатие изображений
                     if (taskFiles[i].type.startsWith('image/')) {
                         try {
                             fileToSend = await compressImage(taskFiles[i]);
@@ -1642,7 +1576,6 @@
                             return;
                         }
                     }
-                    // Конвертация аудио
                     else if (taskFiles[i].name.toLowerCase().endsWith('.wav')) {
                         try {
                             fileToSend = await convertWavToMp3(taskFiles[i]);
@@ -1666,7 +1599,6 @@
             }
 
             try {
-                // 2. Запрос на сервер для получения подписанных URL
                 console.log('Sending request to requestUploadUrls with candidateId:', currentManualId);
                 const response = await fetch('/.netlify/functions/requestUploadUrls', {
                     method: 'POST',
@@ -1695,7 +1627,6 @@
                 const { uploadUrls, fileIndices, fileKeys, candidateId } = result;
                 console.log('Received from server:', { uploadUrls, fileIndices, fileKeys, candidateId });
 
-                // 3. Загружаем файлы напрямую в R2
                 const uploadedFileKeys = [];
                 for (let i = 0; i < uploadUrls.length; i++) {
                     const url = uploadUrls[i];
@@ -1719,7 +1650,6 @@
                     }
                 }
 
-                // 4. Подтверждаем завершение
                 console.log('Confirming upload with fileKeys:', uploadedFileKeys);
                 const confirmRes = await fetch('/.netlify/functions/confirmUpload', {
                     method: 'POST',
@@ -1733,11 +1663,8 @@
 
                 const confirmText = await confirmRes.text();
                 console.log('confirmUpload response status:', confirmRes.status, 'body:', confirmText);
-                if (!confirmRes.ok) {
-                    throw new Error('Ошибка подтверждения загрузки');
-                }
+                if (!confirmRes.ok) throw new Error('Ошибка подтверждения загрузки');
 
-                // 5. Показываем модальное окно благодарности
                 document.getElementById('manualVerificationBlock').classList.remove('show');
                 document.getElementById('thanksModal').classList.add('show');
                 document.body.classList.add('menu-open');
@@ -1750,7 +1677,6 @@
             }
         }
 
-        // ========== ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛА В R2 ==========
         async function uploadFileToR2(presignedUrl, file) {
             console.log(`uploadFileToR2: starting upload of ${file.name}, size ${file.size}`);
             return new Promise((resolve, reject) => {
@@ -1794,17 +1720,13 @@
 
         function copyCode() {
             const code = document.getElementById('codeDisplay').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                // уведомление убрано
-            }).catch(() => alert('Не удалось скопировать код.'));
+            navigator.clipboard.writeText(code).then(() => {}).catch(() => alert('Не удалось скопировать код.'));
         }
 
         function toggleFaq(element) {
             const faqItem = element.closest('.faq-item');
             if (faqItem) faqItem.classList.toggle('active');
         }
-
-        // Инициализация: скрываем блоки проверки (уже в load)
     </script>
 </body>
 </html>
