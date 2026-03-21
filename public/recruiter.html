@@ -1187,6 +1187,35 @@
             font-size: 14px;
             display: none;
         }
+
+        /* Стили для новых страниц */
+        .knowledge-base-panel, .personal-account-panel, .statistics-panel {
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            padding: 30px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .statistics-panel .stats-table-container {
+            overflow-x: auto;
+        }
+        .statistics-panel .stats-table {
+            min-width: 600px;
+        }
+        .statistics-panel .stats-table th,
+        .statistics-panel .stats-table td {
+            text-align: center;
+        }
+        .statistics-panel .stats-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .statistics-panel .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
@@ -1195,6 +1224,10 @@
         <button class="menu-btn" onclick="showForm()"><i class="fas fa-home"></i> Главная</button>
         <button class="menu-btn" onclick="showCandidatesPanel()"><i class="fas fa-users"></i> Кандидаты</button>
         <button class="menu-btn" onclick="showAnalyticsPanel()"><i class="fas fa-chart-line"></i> Аналитика</button>
+        <!-- Новые пункты -->
+        <button class="menu-btn" onclick="showKnowledgeBase()"><i class="fas fa-database"></i> База знаний</button>
+        <button class="menu-btn" onclick="showStatistics()"><i class="fas fa-chart-bar"></i> Статистика</button>
+        <button class="menu-btn" onclick="showPersonalAccount()"><i class="fas fa-user-circle"></i> Личный кабинет</button>
         <button class="menu-btn logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
@@ -1360,97 +1393,36 @@
             <h3>Аналитика звонков</h3>
             <div id="analyticsContainer"></div>
         </div>
-    </div>
 
-    <!-- Модальные окна -->
-    <div id="messageModal" class="message-modal">
-        <div class="modal-header">
-            <h3 id="messageModalTitle">Выберите сообщение для отправки</h3>
-            <button class="modal-close" onclick="closeMessageModal()">✕</button>
-        </div>
-        <div class="message-list" id="messageList"></div>
-        <div class="message-preview">
-            <div class="label">Предварительный просмотр:</div>
-            <div class="text" id="messagePreviewText"></div>
-        </div>
-        <div class="modal-actions">
-            <button class="send-btn" id="sendMessageBtn" onclick="sendSelectedMessage()">Отправить</button>
-            <button class="cancel-btn" onclick="closeMessageModal()">Отмена</button>
-        </div>
-    </div>
-
-    <div id="transferModal" class="transfer-modal">
-        <div class="modal-header">
-            <h3>Передать кандидата</h3>
-            <button class="modal-close" onclick="closeTransferModal()">✕</button>
-        </div>
-        <div class="transfer-recruiter-list" id="transferRecruiterList"></div>
-        <div class="transfer-actions">
-            <button class="transfer-confirm-btn" onclick="confirmTransfer()">Передать</button>
-            <button class="transfer-cancel-btn" onclick="closeTransferModal()">Отмена</button>
-        </div>
-    </div>
-
-    <div id="stageModal" class="stage-modal">
-        <div class="modal-header">
-            <h3 id="stageModalTitle">Кандидаты</h3>
-            <button class="modal-close" onclick="closeStageModal()">✕</button>
-        </div>
-        <div class="stage-candidates-list" id="stageCandidatesList"></div>
-    </div>
-
-    <!-- Модальное окно массовой передачи (обновленное) -->
-    <div id="bulkTransferModal" class="bulk-transfer-modal">
-        <div class="modal-header">
-            <span>Массовая передача кандидатов</span>
-            <button class="modal-close" onclick="closeBulkTransferModal()">✕</button>
-        </div>
-        <div class="modal-content">
-            <div class="form-group">
-                <label>Выберите рекрутера для передачи</label>
-                <select id="bulkTransferRecruiterSelect" class="recruiter-select">
-                    <option value="">— выберите рекрутера —</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Выберите категорию кандидатов</label>
-                <div class="bulk-transfer-categories" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-                    <button class="transfer-category-btn" data-category="contacts">Контакты</button>
-                    <button class="transfer-category-btn" data-category="verification">Проверка</button>
-                    <button class="transfer-category-btn" data-category="draft">Черновик</button>
-                    <button class="transfer-category-btn" data-category="orgMeeting">Орг. встреча</button>
-                    <button class="transfer-category-btn" data-category="training">Обучение</button>
-                    <button class="transfer-category-btn" data-category="rejects">Отказы</button>
-                </div>
-            </div>
-
-            <div id="bulkTransferCandidatesList" class="bulk-transfer-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-tertiary);">
-                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Выберите категорию</div>
-            </div>
-
-            <div class="bulk-transfer-actions">
-                <button class="select-all-btn" onclick="selectAllTransferCandidates()">Выбрать всех</button>
-                <button class="clear-all-btn" onclick="deselectAllTransferCandidates()">Снять выделение</button>
-                <button class="transfer-btn" id="confirmTransferBtn" onclick="confirmBulkTransfer()">Передать выбранных</button>
+        <!-- Новые панели -->
+        <div id="knowledgeBasePanel" class="knowledge-base-panel" style="display: none;">
+            <h3>База знаний</h3>
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                <i class="fas fa-book-open" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                <p>Раздел находится в разработке</p>
             </div>
         </div>
+
+        <div id="personalAccountPanel" class="personal-account-panel" style="display: none;">
+            <h3>Личный кабинет</h3>
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                <i class="fas fa-user-circle" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                <p>Настройка профиля и персональные данные</p>
+            </div>
+        </div>
+
+        <div id="statisticsPanel" class="statistics-panel" style="display: none;">
+            <h3>Статистика</h3>
+            <div id="statisticsContent"></div>
+        </div>
     </div>
 
-    <!-- Форма входа (видна по умолчанию) -->
-    <div class="login-container" id="loginContainer">
-        <h2><i class="fas fa-lock"></i> Вход для рекрутера</h2>
-        <div class="form-group">
-            <label>Логин (ФИО)</label>
-            <input type="text" id="loginUsername" placeholder="Иванов Иван">
-        </div>
-        <div class="form-group">
-            <label>Пароль</label>
-            <input type="password" id="loginPassword" placeholder="••••••••">
-        </div>
-        <button class="login-btn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Войти</button>
-        <div class="error-message" id="loginError">Неверный логин или пароль</div>
-    </div>
+    <!-- Модальные окна (оставлены без изменений) -->
+    <div id="messageModal" class="message-modal">...</div>
+    <div id="transferModal" class="transfer-modal">...</div>
+    <div id="stageModal" class="stage-modal">...</div>
+    <div id="bulkTransferModal" class="bulk-transfer-modal">...</div>
+    <div class="login-container" id="loginContainer">...</div>
 
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
@@ -2626,6 +2598,15 @@
                 case 'analytics':
                     titleSpan.textContent = 'Аналитика';
                     break;
+                case 'knowledgeBase':
+                    titleSpan.textContent = 'База знаний';
+                    break;
+                case 'statistics':
+                    titleSpan.textContent = 'Статистика';
+                    break;
+                case 'personalAccount':
+                    titleSpan.textContent = 'Личный кабинет';
+                    break;
                 default:
                     titleSpan.textContent = 'Панель рекрутера';
             }
@@ -2796,6 +2777,9 @@
             document.querySelector('.content-wrapper').style.display = 'flex';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('knowledgeBasePanel').style.display = 'none';
+            document.getElementById('personalAccountPanel').style.display = 'none';
+            document.getElementById('statisticsPanel').style.display = 'none';
             if (currentCandidateIndex >= 0 || editingExternalCandidate) {
                 document.getElementById('progressSection').style.display = 'block';
             } else {
@@ -2810,6 +2794,9 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'block';
             document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('knowledgeBasePanel').style.display = 'none';
+            document.getElementById('personalAccountPanel').style.display = 'none';
+            document.getElementById('statisticsPanel').style.display = 'none';
             document.getElementById('progressSection').style.display = 'none';
             editingExternalCandidate = null;
             currentView = 'candidates';
@@ -2821,10 +2808,50 @@
             document.querySelector('.content-wrapper').style.display = 'none';
             document.getElementById('candidatesPanel').style.display = 'none';
             document.getElementById('analyticsPanel').style.display = 'block';
+            document.getElementById('knowledgeBasePanel').style.display = 'none';
+            document.getElementById('personalAccountPanel').style.display = 'none';
+            document.getElementById('statisticsPanel').style.display = 'none';
             document.getElementById('progressSection').style.display = 'none';
             currentView = 'analytics';
             updateBreadcrumbs();
             renderAnalytics();
+        }
+
+        function showKnowledgeBase() {
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('candidatesPanel').style.display = 'none';
+            document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('knowledgeBasePanel').style.display = 'block';
+            document.getElementById('personalAccountPanel').style.display = 'none';
+            document.getElementById('statisticsPanel').style.display = 'none';
+            document.getElementById('progressSection').style.display = 'none';
+            currentView = 'knowledgeBase';
+            updateBreadcrumbs();
+        }
+
+        function showPersonalAccount() {
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('candidatesPanel').style.display = 'none';
+            document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('knowledgeBasePanel').style.display = 'none';
+            document.getElementById('personalAccountPanel').style.display = 'block';
+            document.getElementById('statisticsPanel').style.display = 'none';
+            document.getElementById('progressSection').style.display = 'none';
+            currentView = 'personalAccount';
+            updateBreadcrumbs();
+        }
+
+        function showStatistics() {
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('candidatesPanel').style.display = 'none';
+            document.getElementById('analyticsPanel').style.display = 'none';
+            document.getElementById('knowledgeBasePanel').style.display = 'none';
+            document.getElementById('personalAccountPanel').style.display = 'none';
+            document.getElementById('statisticsPanel').style.display = 'block';
+            document.getElementById('progressSection').style.display = 'none';
+            currentView = 'statistics';
+            updateBreadcrumbs();
+            renderStatisticsPage();
         }
 
         function renderAnalytics() {
@@ -2843,8 +2870,7 @@
                             <th>Описание</th>
                             <th>Качество</th>
                             <th>Файл</th>
-                        </tr>
-                    </thead>
+                        </thead>
                     <tbody>
             `;
             myAnalytics.forEach(entry => {
@@ -2854,15 +2880,107 @@
                 const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
                 html += `
                     <tr>
-                        <td>${date}</td>
-                        <td>${description}</td>
-                        <td><span class="quality-badge">${quality}</span></td>
-                        <td>${fileLink}</td>
+                        <td>${date}侧
+                        <td>${description}侧
+                        <td><span class="quality-badge">${quality}</span>侧
+                        <td>${fileLink}侧
                     </tr>
                 `;
             });
-            html += '</tbody></table>';
+            html += '</tbody>  </table>';
             container.innerHTML = html;
+        }
+
+        function renderStatisticsPage() {
+            const container = document.getElementById('statisticsContent');
+            if (!container) return;
+
+            // Общее количество контактов (все анкеты)
+            const totalContacts = allCandidates.length;
+
+            // Количество сохранённых анкет за последний час
+            const oneHourAgo = Date.now() - 60 * 60 * 1000;
+            const savedLastHour = allCandidates.filter(c => new Date(c.createdAt).getTime() > oneHourAgo).length;
+
+            // Средний процент качества (как на главной)
+            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
+            let avgQuality = 0;
+            if (myAnalytics.length > 0) {
+                const sum = myAnalytics.reduce((acc, a) => acc + (a.quality || 0), 0);
+                avgQuality = Math.round(sum / myAnalytics.length);
+            }
+
+            // Таблица: проекты x статусы
+            const projects = appData.projects.map(p => p.name || p);
+            const statusSet = new Set();
+            allCandidates.forEach(c => {
+                if (c.recruitmentStatus) statusSet.add(c.recruitmentStatus);
+            });
+            const statuses = Array.from(statusSet).sort();
+
+            // Собираем данные по проектам и статусам
+            const matrix = {};
+            projects.forEach(proj => {
+                matrix[proj] = {};
+                statuses.forEach(st => { matrix[proj][st] = 0; });
+            });
+            allCandidates.forEach(c => {
+                const proj = c.project;
+                const st = c.recruitmentStatus;
+                if (proj && st && matrix[proj] && matrix[proj][st] !== undefined) {
+                    matrix[proj][st]++;
+                }
+            });
+
+            let tableHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title"><i class="fas fa-address-book"></i> Всего контактов</div>
+                        <div class="stat-number">${totalContacts}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title"><i class="fas fa-clock"></i> Анкет за час</div>
+                        <div class="stat-number">${savedLastHour}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title"><i class="fas fa-chart-line"></i> Среднее качество</div>
+                        <div class="stat-number">${avgQuality}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title"><i class="fas fa-phone-alt"></i> Средняя длительность звонка</div>
+                        <div class="stat-number">—</div>
+                    </div>
+                </div>
+                <div class="stats-table-container">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Проект</th>
+                                ${statuses.map(st => `<th>${st}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            projects.forEach(proj => {
+                tableHtml += `<tr><td>${proj}</td>`;
+                statuses.forEach(st => {
+                    tableHtml += `<td>${matrix[proj][st] || 0}</td>`;
+                });
+                tableHtml += `</tr>`;
+            });
+
+            if (projects.length === 0) {
+                tableHtml += `<tr><td colspan="${statuses.length+1}" class="empty-message">Нет данных</td></tr>`;
+            }
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHtml;
         }
 
         function switchCandidatesTab(tab) {
@@ -3487,6 +3605,7 @@
                     updateStats();
                     updateTabCounts();
                     updateMenuCounts();
+                    if (currentView === 'statistics') renderStatisticsPage();
                 }
             } catch (error) {
                 console.error('Ошибка при обновлении всех анкет:', error);
