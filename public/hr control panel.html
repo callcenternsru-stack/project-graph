@@ -342,6 +342,7 @@
         .modal-content select[multiple] {
             height: 120px;
         }
+        /* Стили для контейнера чекбоксов */
         .checkbox-group {
             max-height: 200px;
             overflow-y: auto;
@@ -695,6 +696,8 @@
             color: #ffd700;
             font-size: 18px;
         }
+
+        /* Стили для модального окна деталей кандидата */
         .file-list {
             list-style: none;
             padding: 0;
@@ -741,6 +744,7 @@
         .task-info strong {
             color: #ffd700;
         }
+        /* Дополнительные стили для кнопок в модальном окне */
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -768,6 +772,8 @@
         .modal-actions .delete-time-btn:hover {
             background: #ff8a8a;
         }
+
+        /* Стили для списка статусов в модальном окне */
         .items-list {
             max-height: 250px;
             overflow-y: auto;
@@ -813,6 +819,8 @@
         .list-item .delete-btn:hover {
             background: #ff8a8a;
         }
+
+        /* ===== НОВЫЙ СТИЛЬ ДЛЯ СЕЛЕКТА РЕКРУТЕРА ===== */
         .recruiter-select {
             background: #1a1a1a;
             color: #ffd700;
@@ -827,6 +835,8 @@
             outline: none;
             border-color: #ffd700;
         }
+
+        /* Стиль для поля качества в аналитике */
         .quality-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -836,6 +846,8 @@
             color: #ffd700;
             font-weight: 600;
         }
+
+        /* ===== НОВЫЕ СТИЛИ ДЛЯ МАССОВОГО ВЫДЕЛЕНИЯ ===== */
         .checkbox-col {
             width: 40px;
             text-align: center;
@@ -880,18 +892,30 @@
             cursor: not-allowed;
             transform: none;
         }
-        .filter-input {
+
+        /* Стили для кнопок фильтра */
+        .filter-btn {
+            padding: 8px 16px;
             background: #1a1a1a;
-            border: 2px solid #333;
+            border: 2px solid #ffd700;
             border-radius: 12px;
-            padding: 8px 12px;
-            color: #fff;
+            color: #ffd700;
             font-size: 14px;
-            width: 260px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .filter-input:focus {
-            outline: none;
-            border-color: #ffd700;
+        .filter-btn:hover {
+            background: #ffd700;
+            color: #000;
+        }
+        .clear-filter-btn {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+        .clear-filter-btn:hover {
+            background: #ff6b6b;
+            color: #fff;
         }
     </style>
 </head>
@@ -914,7 +938,7 @@
         <div class="content-card" id="contentArea"></div>
     </div>
 
-    <!-- Модальные окна (без изменений) -->
+    <!-- Модальное окно для добавления месяца в график -->
     <div id="addMonthModal" class="modal">
         <div class="modal-header">
             <span>Добавить месяц в график</span>
@@ -937,6 +961,7 @@
         <div class="modal-content" id="modalContent"></div>
     </div>
 
+    <!-- Модальное окно для комментариев -->
     <div id="commentModal" class="modal">
         <div class="modal-header">
             <span id="commentModalTitle">Ссылка на группу</span>
@@ -1049,6 +1074,7 @@
         </div>
     </div>
 
+    <!-- Модальное окно для управления статусами -->
     <div id="statusModal" class="modal">
         <div class="modal-header">
             <span>Управление статусами</span>
@@ -1069,6 +1095,7 @@
         </div>
     </div>
 
+    <!-- Модальное окно для добавления/редактирования аналитики -->
     <div id="analyticsModal" class="modal">
         <div class="modal-header">
             <span id="analyticsModalTitle">Добавить запись аналитики</span>
@@ -1103,12 +1130,57 @@
         </div>
     </div>
 
+    <!-- Модальное окно для деталей анкеты кандидата -->
     <div id="candidateDetailsModal" class="modal">
         <div class="modal-header">
             <span>Детали анкеты</span>
             <button class="modal-close" onclick="closeCandidateDetails()">✕</button>
         </div>
-        <div class="modal-content" id="candidateDetailsContent"></div>
+        <div class="modal-content" id="candidateDetailsContent">
+            <!-- будет заполнено динамически -->
+        </div>
+    </div>
+
+    <!-- Модальное окно фильтра для Базы контактов -->
+    <div id="filterCandidatesModal" class="modal">
+        <div class="modal-header">
+            <span>🔍 Фильтр кандидатов</span>
+            <button class="modal-close" onclick="closeFilterModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>ФИО</label>
+                    <input type="text" id="filterFullName" placeholder="Введите ФИО">
+                </div>
+                <div class="form-group">
+                    <label>Проект</label>
+                    <input type="text" id="filterProject" placeholder="Название проекта">
+                </div>
+                <div class="form-group">
+                    <label>Страна</label>
+                    <input type="text" id="filterCountry" placeholder="Страна">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Дата обучения</label>
+                    <input type="date" id="filterTrainingDate">
+                </div>
+                <div class="form-group">
+                    <label>Результат звонка</label>
+                    <input type="text" id="filterCallResult" placeholder="Статус">
+                </div>
+                <div class="form-group">
+                    <label>Рекрутер</label>
+                    <input type="text" id="filterRecruiter" placeholder="Имя рекрутера">
+                </div>
+            </div>
+            <div class="form-row" style="justify-content: flex-end; gap: 10px;">
+                <button class="filter-btn clear-filter-btn" onclick="resetCandidatesFilter()">Сбросить фильтр</button>
+                <button class="filter-btn" onclick="applyCandidatesFilterModal()">Применить фильтр</button>
+            </div>
+        </div>
     </div>
 
     <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display: none;">
@@ -1143,7 +1215,15 @@
         let currentCommentContext = null;
         let candidatesSortColumn = 0;
         let candidatesSortDirection = 'desc';
-        let candidatesFilterText = '';               // НОВАЯ ПЕРЕМЕННАЯ ДЛЯ ФИЛЬТРА
+        // Объект для хранения параметров фильтрации
+        let candidatesFilters = {
+            fullName: '',
+            project: '',
+            country: '',
+            trainingDate: '',
+            callResult: '',
+            recruiter: ''
+        };
         let selectedCandidateIds = new Set();
         let editingAnalyticsId = null;
         let candidatesPage = 1;
@@ -1170,6 +1250,7 @@
             });
         }
 
+        // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
             const notif = document.createElement('div');
             notif.className = `notification ${type}`;
@@ -1178,7 +1259,7 @@
             setTimeout(() => notif.remove(), 5000);
         }
 
-        // ========== ЗАГРУЗКА ДАННЫХ (все функции без изменений, добавлен autoAssignRecruiters) ==========
+        // ========== ЗАГРУЗКА ДАННЫХ С СЕРВЕРА ==========
         async function loadCharacteristics() {
             try {
                 const res = await fetch('/.netlify/functions/getCharacteristics');
@@ -1221,6 +1302,7 @@
             }
         }
 
+        // ========== АВТОМАТИЧЕСКОЕ НАЗНАЧЕНИЕ РЕКРУТЕРА ==========
         async function autoAssignRecruiters() {
             if (!state.allCandidates || !state.candidates) return;
             const updates = [];
@@ -1247,6 +1329,7 @@
             }
         }
 
+        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОИСКА РЕКРУТЕРА ==========
         function findMatchingRecruiter(candidate) {
             if (!state.candidates || state.candidates.length === 0) return null;
             const normPhone = (candidate.phone || '').replace(/\D/g, '');
@@ -1336,6 +1419,7 @@
             }
         }
 
+        // ========== АВТОМАТИЧЕСКОЕ ПРОСТАВЛЕНИЕ СТАТУСА "ПРОВЕРКА ПРОЙДЕНА" ==========
         async function processCompletedCandidates() {
             if (!state.allCandidates) return;
             const updates = [];
@@ -1351,6 +1435,7 @@
             }
         }
 
+        // ========== ОБНОВЛЕНИЕ СЧЕТЧИКОВ НА КНОПКАХ МЕНЮ ==========
         function updateMenuCounts() {
             document.querySelectorAll('.side-menu .menu-btn').forEach(btn => {
                 const tab = btn.dataset.tab;
@@ -1374,6 +1459,7 @@
             });
         }
 
+        // ========== УДАЛЕНИЕ АНКЕТ ==========
         async function deleteAutoForm(code) {
             if (!confirm('Удалить автоматическую анкету?')) return;
             try {
@@ -1420,6 +1506,7 @@
             }
         }
 
+        // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tabId) {
             if (scheduleOnly) return;
             currentTab = tabId;
@@ -1450,27 +1537,76 @@
             }
         }
 
-        // ========== ФУНКЦИЯ ФИЛЬТРАЦИИ ==========
-        function applyCandidatesFilter(candidates) {
-            if (!candidatesFilterText.trim()) return candidates;
-            const search = candidatesFilterText.toLowerCase().trim();
-            return candidates.filter(c => {
-                const fields = [
-                    c.fullName, c.phone, c.project, c.country, c.trainingDate, c.meetingTime,
-                    c.callResult, c.contactType, c.recruiter, c.comment,
-                    c.updatedAt ? new Date(c.updatedAt).toLocaleString() : (c.createdAt ? new Date(c.createdAt).toLocaleString() : ''),
-                    new Date(c.createdAt).toLocaleString()
-                ];
-                return fields.some(field => field && field.toString().toLowerCase().includes(search));
-            });
+        // ========== ФУНКЦИИ ФИЛЬТРАЦИИ КАНДИДАТОВ ==========
+        function applyCandidatesFilters(candidates) {
+            let filtered = [...candidates];
+            if (candidatesFilters.fullName.trim()) {
+                const search = candidatesFilters.fullName.toLowerCase().trim();
+                filtered = filtered.filter(c => (c.fullName || '').toLowerCase().includes(search));
+            }
+            if (candidatesFilters.project.trim()) {
+                const search = candidatesFilters.project.toLowerCase().trim();
+                filtered = filtered.filter(c => (c.project || '').toLowerCase().includes(search));
+            }
+            if (candidatesFilters.country.trim()) {
+                const search = candidatesFilters.country.toLowerCase().trim();
+                filtered = filtered.filter(c => (c.country || '').toLowerCase().includes(search));
+            }
+            if (candidatesFilters.trainingDate) {
+                filtered = filtered.filter(c => c.trainingDate === candidatesFilters.trainingDate);
+            }
+            if (candidatesFilters.callResult.trim()) {
+                const search = candidatesFilters.callResult.toLowerCase().trim();
+                filtered = filtered.filter(c => (c.callResult || '').toLowerCase().includes(search));
+            }
+            if (candidatesFilters.recruiter.trim()) {
+                const search = candidatesFilters.recruiter.toLowerCase().trim();
+                filtered = filtered.filter(c => (c.recruiter || '').toLowerCase().includes(search));
+            }
+            return filtered;
         }
 
-        function handleFilterInput(e) {
-            candidatesFilterText = e.target.value;
+        function openFilterModal() {
+            document.getElementById('filterFullName').value = candidatesFilters.fullName;
+            document.getElementById('filterProject').value = candidatesFilters.project;
+            document.getElementById('filterCountry').value = candidatesFilters.country;
+            document.getElementById('filterTrainingDate').value = candidatesFilters.trainingDate;
+            document.getElementById('filterCallResult').value = candidatesFilters.callResult;
+            document.getElementById('filterRecruiter').value = candidatesFilters.recruiter;
+            document.getElementById('filterCandidatesModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeFilterModal() {
+            document.getElementById('filterCandidatesModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        function applyCandidatesFilterModal() {
+            candidatesFilters.fullName = document.getElementById('filterFullName').value;
+            candidatesFilters.project = document.getElementById('filterProject').value;
+            candidatesFilters.country = document.getElementById('filterCountry').value;
+            candidatesFilters.trainingDate = document.getElementById('filterTrainingDate').value;
+            candidatesFilters.callResult = document.getElementById('filterCallResult').value;
+            candidatesFilters.recruiter = document.getElementById('filterRecruiter').value;
+            closeFilterModal();
             renderContent();
         }
 
-        // ========== ОБНОВЛЁННЫЙ РЕНДЕР КАНДИДАТОВ ==========
+        function resetCandidatesFilter() {
+            candidatesFilters = {
+                fullName: '',
+                project: '',
+                country: '',
+                trainingDate: '',
+                callResult: '',
+                recruiter: ''
+            };
+            closeFilterModal();
+            renderContent();
+        }
+
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ РЕНДЕРА КАНДИДАТОВ ==========
         function renderCandidates(container) {
             const headers = [
                 { label: 'Время изменения', field: 'updatedAt' },
@@ -1488,11 +1624,10 @@
                 { label: 'Действия', field: null }
             ];
 
-            let filtered = applyCandidatesFilter(state.candidates);
+            let filtered = applyCandidatesFilters(state.candidates);
             const sorted = sortCandidatesData([...filtered]);
 
-            let headerHtml = '<tr>';
-            headerHtml += '<th class="checkbox-col"><input type="checkbox" class="select-all-checkbox" onclick="toggleSelectAll(this)"></th>';
+            let headerHtml = ' <th class="checkbox-col"><input type="checkbox" class="select-all-checkbox" onclick="toggleSelectAll(this)"></th>';
             headers.forEach((h, idx) => {
                 let sortClass = '';
                 if (h.field && candidatesSortColumn === idx) {
@@ -1500,20 +1635,20 @@
                 }
                 headerHtml += `<th class="${sortClass}" onclick="${h.field ? `sortCandidates(${idx})` : ''}">${h.label}</th>`;
             });
-            headerHtml += '</tr>';
+            headerHtml += ' </tr>';
 
             let rowsHtml = '';
             if (sorted.length === 0) {
-                rowsHtml = `<tr><td colspan="${headers.length+1}" style="text-align:center;">Нет контактов</td></tr>`;
+                rowsHtml = ' <td colspan="' + (headers.length+1) + '" style="text-align:center;">Нет контактов</td> </tr>';
             } else {
                 sorted.forEach(c => {
-                    const training = c.trainingDate && c.trainingTime ? `${c.trainingDate} ${c.trainingTime}` : '—';
+                    const training = c.trainingDate || '—';   // только дата, без времени
                     const meeting = c.meetingTime ? c.meetingTime : '—';
                     const updatedAtStr = c.updatedAt ? new Date(c.updatedAt).toLocaleString() : (c.createdAt ? new Date(c.createdAt).toLocaleString() : '—');
                     const createdAtStr = new Date(c.createdAt).toLocaleString();
                     const checked = selectedCandidateIds.has(c.id) ? 'checked' : '';
                     rowsHtml += `
-                        <tr>
+                         <tr>
                             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
                             <td>${updatedAtStr}</td>
                             <td>${createdAtStr}</td>
@@ -1528,18 +1663,21 @@
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
                             <td><button class="delete-candidate-btn" onclick="deleteCandidateFromBase('${c.id}')">✕</button></td>
-                        </tr>
+                         </tr>
                     `;
                 });
             }
 
             const bulkDeleteDisabled = selectedCandidateIds.size === 0 ? 'disabled' : '';
+            const isFilterActive = Object.values(candidatesFilters).some(v => v && v.trim && v.trim() !== '' || (v && typeof v === 'string' && v.trim() !== ''));
+            const filterBtnText = isFilterActive ? '🎯 Фильтр (активен)' : '🔍 Фильтр';
 
             let html = `
                 <div class="section-header">
                     <h2>База контактов</h2>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" id="candidatesSearchInput" class="filter-input" placeholder="Фильтр по всем полям..." value="${candidatesFilterText.replace(/"/g, '&quot;')}">
+                    <div class="filter-buttons">
+                        <button class="filter-btn" onclick="openFilterModal()">${filterBtnText}</button>
+                        ${isFilterActive ? '<button class="filter-btn clear-filter-btn" onclick="resetCandidatesFilter()">Сбросить фильтр</button>' : ''}
                         <div class="bulk-actions">
                             <button class="bulk-delete-btn" ${bulkDeleteDisabled} onclick="bulkDeleteCandidates()">
                                 <i class="fas fa-trash-alt"></i> Удалить выбранные (${selectedCandidateIds.size})
@@ -1555,14 +1693,9 @@
                 </div>
             `;
             container.innerHTML = html;
-
-            const filterInput = document.getElementById('candidatesSearchInput');
-            if (filterInput) {
-                filterInput.removeEventListener('input', handleFilterInput);
-                filterInput.addEventListener('input', handleFilterInput);
-            }
         }
 
+        // ========== ФУНКЦИИ ДЛЯ МАССОВОГО ВЫДЕЛЕНИЯ ==========
         function toggleSelectAll(checkbox) {
             const checkboxes = document.querySelectorAll('.row-checkbox');
             checkboxes.forEach(cb => {
@@ -1602,6 +1735,7 @@
         async function bulkDeleteCandidates() {
             if (selectedCandidateIds.size === 0) return;
             if (!confirm(`Удалить ${selectedCandidateIds.size} контактов?`)) return;
+
             const ids = Array.from(selectedCandidateIds);
             let successCount = 0;
             showLoading();
@@ -1664,6 +1798,7 @@
             });
         }
 
+        // ========== ФУНКЦИЯ УДАЛЕНИЯ ОДНОГО КАНДИДАТА ИЗ БАЗЫ КОНТАКТОВ ==========
         async function deleteCandidateFromBase(id) {
             if (!confirm('Удалить этот контакт?')) return;
             try {
@@ -1683,7 +1818,7 @@
             }
         }
 
-        // ========== ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений) ==========
+        // ========== СТАРЫЕ ФУНКЦИИ РЕНДЕРА (без изменений) ==========
         function renderRecruiters(container) {
             let html = `
                 <div class="section-header">
@@ -1901,6 +2036,7 @@
             container.innerHTML = html;
         }
 
+        // ========== ФУНКЦИИ ДЛЯ ХАРАКТЕРИСТИК ==========
         function updateCharProjectSelect() {
             const select = document.getElementById('charProjectSelect');
             if (!select) return;
@@ -1971,6 +2107,7 @@
             }
         }
 
+        // ========== ОБРАБОТКА ГРАФИКА ==========
         function handleTimeChange(input) {
             const type = input.dataset.type;
             const project = input.dataset.project;
@@ -2140,6 +2277,7 @@
             return `${months[parseInt(month) - 1]} ${year}`;
         }
 
+        // ========== УДАЛЕНИЕ ЭЛЕМЕНТОВ ==========
         async function deleteItem(type, index) {
             if (!confirm('Удалить элемент?')) return;
 
@@ -2171,6 +2309,7 @@
             showNotification('Элемент удалён', 'success');
         }
 
+        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
         function generatePassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let password = '';
@@ -2185,6 +2324,7 @@
             document.getElementById('scriptContent').focus();
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ ОТКРЫТИЯ МОДАЛКИ ==========
         function openAddModal(type) {
             editingType = type;
             editingId = null;
@@ -2308,6 +2448,7 @@
             if (passField) passField.value = newPass;
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ ОТКРЫТИЯ РЕДАКТИРОВАНИЯ ==========
         function openEditModal(type, index) {
             editingType = type;
             editingId = index;
@@ -2430,6 +2571,7 @@
             document.body.classList.add('menu-open');
         }
 
+        // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ ==========
         async function saveModal() {
             try {
                 if (editingType === 'recruiter') {
@@ -2571,6 +2713,7 @@
             editingType = null;
         }
 
+        // ========== ИМПОРТ КАНДИДАТОВ ИЗ EXCEL ==========
         function importCandidates(recruiterIndex) {
             currentRecruiterForImport = recruiterIndex;
             const fileInput = document.getElementById('excelUpload');
@@ -2617,7 +2760,7 @@
                             recruiter: state.recruiters[currentRecruiterForImport].name,
                             comment: '',
                             createdAt: now,
-                            updatedAt: now  // <-- добавлено время изменения
+                            updatedAt: now
                         };
 
                         const response = await fetch('/.netlify/functions/submitCandidate', {
@@ -2651,6 +2794,7 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // ========== СОХРАНЕНИЕ ДАННЫХ ГРАФИКОВ ==========
         async function saveProjectMeetings() {
             try {
                 await fetch('/.netlify/functions/saveProjectMeetings', {
@@ -2711,6 +2855,10 @@
             }
         }
 
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ РЕКРУТЕРА ==========
+        // функция findMatchingRecruiter уже исправлена выше
+
+        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateCandidateRecruiter ==========
         async function updateCandidateRecruiter(id, type, newRecruiter) {
             try {
                 const response = await fetch('/.netlify/functions/updateCandidateRecruiter', {
@@ -2725,7 +2873,6 @@
                     const candidateInBase = state.candidates.find(c => c.id === id);
                     if (candidateInBase) {
                         candidateInBase.updatedAt = new Date().toISOString();
-                        // отправляем обновление на сервер
                         await fetch('/.netlify/functions/submitCandidate', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -2744,6 +2891,7 @@
             }
         }
 
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДКИ "Анкеты" ==========
         function renderCandidatesAll(container) {
             const candidates = state.allCandidates || [];
             const systemStatuses = ['draft', 'passed'];
@@ -2927,6 +3075,7 @@
             }
         }
 
+        // ========== УПРАВЛЕНИЕ СТАТУСАМИ ==========
         let editingStatusIndex = -1;
 
         function openStatusModal() {
@@ -3037,6 +3186,7 @@
             }
         }
 
+        // ========== НОВЫЕ ФУНКЦИИ ДЛЯ АНАЛИТИКИ ==========
         function renderAnalytics(container) {
             let html = `
                 <div class="section-header">
@@ -3211,6 +3361,7 @@
             }
         });
 
+        // ========== СТИЛИ ДЛЯ ЗАГРУЗКИ ==========
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
