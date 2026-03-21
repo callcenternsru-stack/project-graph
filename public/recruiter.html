@@ -556,31 +556,6 @@
         .search-container input::placeholder {
             color: var(--text-secondary);
         }
-        .search-filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .filter-chip {
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 30px;
-            padding: 6px 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .filter-chip.active {
-            background: var(--accent);
-            color: #000;
-            border-color: var(--accent);
-        }
-        .filter-chip:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
         .candidates-tabs {
             display: flex;
             gap: 10px;
@@ -625,11 +600,17 @@
             flex-wrap: wrap;
             gap: 20px;
             position: relative;
+            align-items: flex-start;
+            min-height: 120px;
         }
         .candidate-card:hover {
             border-color: var(--accent);
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
+        }
+        .candidate-field {
+            flex: 1 1 180px;
+            min-width: 0;
         }
         .candidate-field .label {
             color: var(--text-secondary);
@@ -641,6 +622,9 @@
             font-size: 14px;
             font-weight: 500;
             word-break: break-word;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .candidate-field .value.highlight {
             color: var(--accent);
@@ -653,6 +637,7 @@
             font-weight: 500;
             background: var(--border-color);
             color: var(--accent);
+            white-space: nowrap;
         }
         .candidate-status-badge.waiting {
             color: var(--text-secondary);
@@ -993,6 +978,9 @@
             .analytics-table {
                 min-width: 600px;
             }
+            .candidate-field {
+                flex: 1 1 100%;
+            }
         }
 
         /* ===== УЛУЧШЕННЫЙ ДИЗАЙН ФОРМЫ ВХОДА ===== */
@@ -1230,13 +1218,6 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="searchInput" placeholder="Поиск по ФИО, телефону, проекту, статусу...">
             </div>
-            <div class="search-filters">
-                <span class="filter-chip active" data-filter="all">Все</span>
-                <span class="filter-chip" data-filter="name">ФИО</span>
-                <span class="filter-chip" data-filter="phone">Телефон</span>
-                <span class="filter-chip" data-filter="project">Проект</span>
-                <span class="filter-chip" data-filter="status">Статус</span>
-            </div>
             <div class="candidates-tabs">
                 <button class="candidates-tab active" id="tabContacts" onclick="switchCandidatesTab('contacts')">Контакты</button>
                 <button class="candidates-tab" id="tabVerification" onclick="switchCandidatesTab('verification')">Проверка</button>
@@ -1336,9 +1317,8 @@
         let transferCandidateType = null;
         let selectedTransferRecruiter = null;
         let searchQuery = '';
-        let searchFilter = 'all';
 
-        // НОВАЯ ПЕРЕМЕННАЯ ДЛЯ ХРАНЕНИЯ ID КАНДИДАТА
+        // ID текущего кандидата для ссылки
         let currentCandidateIdForMessage = null;
 
         // ========== УВЕДОМЛЕНИЯ ==========
@@ -1478,6 +1458,8 @@
 
             updateStats();
             updateBreadcrumbs();
+            updateTabCounts();
+            updateMenuCounts();
 
             showForm();
             startAutoRefresh();
@@ -2023,20 +2005,9 @@
 
         function initSearch() {
             const searchInput = document.getElementById('searchInput');
-            const filterChips = document.querySelectorAll('.filter-chip');
-
             searchInput.addEventListener('input', function() {
                 searchQuery = this.value.toLowerCase().trim();
                 applySearchAndFilter();
-            });
-
-            filterChips.forEach(chip => {
-                chip.addEventListener('click', function() {
-                    filterChips.forEach(c => c.classList.remove('active'));
-                    this.classList.add('active');
-                    searchFilter = this.dataset.filter;
-                    applySearchAndFilter();
-                });
             });
         }
 
@@ -2071,13 +2042,7 @@
                     const phoneNorm = (c.phone || '').replace(/\D/g, '');
                     const project = (c.project || '').toLowerCase().trim();
                     const status = (c.callResult || c.recruitmentStatus || '').toLowerCase().trim();
-                    switch (searchFilter) {
-                        case 'name': return fullName.includes(searchLower);
-                        case 'phone': return phoneNorm.includes(searchPhone);
-                        case 'project': return project.includes(searchLower);
-                        case 'status': return status.includes(searchLower);
-                        default: return fullName.includes(searchLower) || phoneNorm.includes(searchPhone) || project.includes(searchLower) || status.includes(searchLower);
-                    }
+                    return fullName.includes(searchLower) || phoneNorm.includes(searchPhone) || project.includes(searchLower) || status.includes(searchLower);
                 });
             }
 
@@ -2111,7 +2076,7 @@
                     <div class="candidate-card" data-id="${candidate.id}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName || '—'}</div>
+                            <div class="value highlight" title="${candidate.fullName || '—'}">${candidate.fullName || '—'}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Телефон</div>
@@ -2155,7 +2120,7 @@
                     <div class="candidate-card" data-id="${candidate.id}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
+                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Телефон</div>
@@ -2226,7 +2191,7 @@
                     <div class="candidate-card" data-id="${candidate.id}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
+                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Телефон</div>
@@ -2278,7 +2243,7 @@
                     <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
+                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Телефон</div>
@@ -2333,7 +2298,7 @@
                     <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
+                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Телефон</div>
@@ -2388,7 +2353,7 @@
                     <div class="candidate-card" data-id="${candidate.id}" data-type="${candidate.type}">
                         <div class="candidate-field">
                             <div class="label">ФИО</div>
-                            <div class="value highlight">${candidate.fullName}</div>
+                            <div class="value highlight" title="${candidate.fullName}">${candidate.fullName}</div>
                         </div>
                         <div class="candidate-field">
                             <div class="label">Телефон</div>
@@ -2712,7 +2677,7 @@
                         <td>${description}</td>
                         <td><span class="quality-badge">${quality}</span></td>
                         <td>${fileLink}</td>
-                    </tr>
+                     </tr>
                 `;
             });
             html += '</tbody></table>';
@@ -2727,8 +2692,64 @@
             document.getElementById('tabOrgMeeting').classList.toggle('active', tab === 'orgMeeting');
             document.getElementById('tabTraining').classList.toggle('active', tab === 'training');
             document.getElementById('tabRejects').classList.toggle('active', tab === 'rejects');
-
+            updateTabCounts();
             applySearchAndFilter();
+        }
+
+        function updateTabCounts() {
+            const contactsCount = myCandidates.length;
+            const verificationCount = myCandidates.filter(c => c.callResult === "Проверка").length;
+            const draftCount = getDraftCandidates().length;
+            const orgMeetingCount = allCandidates.filter(c => 
+                (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') && 
+                c.recruiter === currentRecruiter.name
+            ).length;
+            const trainingCount = allCandidates.filter(c => 
+                (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') && 
+                c.recruiter === currentRecruiter.name
+            ).length;
+            const rejectsCount = allCandidates.filter(c => {
+                const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
+                return rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name;
+            }).length;
+
+            const setTabText = (id, base, count) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = `${base} (${count})`;
+            };
+            setTabText('tabContacts', 'Контакты', contactsCount);
+            setTabText('tabVerification', 'Проверка', verificationCount);
+            setTabText('tabDraft', 'Черновик', draftCount);
+            setTabText('tabOrgMeeting', 'Орг. встреча', orgMeetingCount);
+            setTabText('tabTraining', 'Обучение', trainingCount);
+            setTabText('tabRejects', 'Отказы', rejectsCount);
+        }
+
+        function updateMenuCounts() {
+            const recruitersCount = state?.recruiters?.length || 0;
+            const candidatesCount = myCandidates.length;
+            const scriptsCount = state?.scripts?.length || 0;
+            const allCandidatesCount = allCandidates.length;
+            const characteristicsCount = state?.characteristics?.length || 0;
+            const analyticsCount = analytics.length;
+
+            const setMenuText = (selector, base, count) => {
+                const btn = document.querySelector(`.side-menu .menu-btn[data-tab="${selector}"]`);
+                if (btn) {
+                    let text = base;
+                    if (count > 0) text += ` (${count})`;
+                    btn.textContent = text;
+                }
+            };
+            // Используем data-tab атрибуты, они есть у кнопок
+            setMenuText('recruiters', 'Рекрутеры', recruitersCount);
+            setMenuText('candidates', 'База контактов', candidatesCount);
+            setMenuText('scripts', 'Скрипты', scriptsCount);
+            setMenuText('schedule', 'График', 0);
+            setMenuText('candidatesAll', 'Анкеты', allCandidatesCount);
+            setMenuText('characteristics', 'Характеристики', characteristicsCount);
+            setMenuText('analytics', 'Аналитика', analyticsCount);
+            setMenuText('vacancies', 'Вакансии', 0);
         }
 
         function openTransferModal(candidateId, candidateType) {
@@ -2785,6 +2806,7 @@
                     showNotification('Кандидат передан', 'success');
                     await refreshAllCandidates();
                     updateStats();
+                    updateTabCounts();
                     switchCandidatesTab(candidatesTab);
                     closeTransferModal();
                 } else {
@@ -2861,7 +2883,6 @@
                 return;
             }
 
-            // Сохраняем ID текущего кандидата
             const idx = parseInt(document.getElementById('candidateIndexField').value, 10);
             if (idx >= 0 && myCandidates[idx]) {
                 currentCandidateIdForMessage = myCandidates[idx].id;
@@ -2937,7 +2958,6 @@
             const projectObj = appData.projects.find(p => p.name === projectName);
             const projectId = projectObj ? projectObj.id : '';
 
-            // Формируем ссылку с projectId и candidateId
             let link = `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}`;
             if (currentCandidateIdForMessage) {
                 link += `&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`;
@@ -3028,6 +3048,11 @@
                             }
                         }
                     }
+                    if (currentView === 'candidates') {
+                        applySearchAndFilter();
+                    }
+                    updateTabCounts();
+                    updateMenuCounts();
                 }
             } catch (error) {
                 console.error('Ошибка при обновлении кандидатов:', error);
@@ -3046,6 +3071,8 @@
                         applySearchAndFilter();
                     }
                     updateStats();
+                    updateTabCounts();
+                    updateMenuCounts();
                 }
             } catch (error) {
                 console.error('Ошибка при обновлении всех анкет:', error);
@@ -3087,6 +3114,30 @@
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) overlay.classList.add('hidden');
         }
+
+        // Добавляем глобальную переменную state для updateMenuCounts (имитация)
+        const state = {
+            recruiters: [],
+            scripts: [],
+            characteristics: []
+        };
+        // Заполним state при загрузке
+        async function loadStateForMenu() {
+            try {
+                const refRes = await fetch('/.netlify/functions/getAllReferences');
+                const refData = await refRes.json();
+                state.recruiters = refData.recruiters || [];
+                state.scripts = refData.scripts || [];
+                const charRes = await fetch('/.netlify/functions/getCharacteristics');
+                state.characteristics = await charRes.json();
+            } catch (e) {}
+        }
+        // вызовем после initInterface
+        const origInit = initInterface;
+        initInterface = async function() {
+            await loadStateForMenu();
+            await origInit();
+        };
     </script>
 </body>
 </html>
