@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ===== СБРОС И БАЗОВЫЕ ПЕРЕМЕННЫЕ ===== */
+        /* ===== СБРОС И БАЗОВЫЕ ПЕРЕМЕННЫЕ (без изменений) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -129,7 +129,7 @@
             color: #000;
         }
 
-        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+        /* ===== ОСНОВНОЙ КОНТЕНТ (без изменений) ===== */
         .recruiter-interface {
             flex: 1;
             padding: 30px 40px;
@@ -191,7 +191,7 @@
             transform: translateY(-2px);
         }
 
-        /* Карточки статистики */
+        /* Карточки статистики (без изменений) */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -249,7 +249,7 @@
             gap: 4px;
         }
 
-        /* Прогресс-бар */
+        /* Прогресс-бар (без изменений) */
         .progress-section {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -314,7 +314,7 @@
             font-weight: 600;
         }
 
-        /* Основная рабочая область */
+        /* Основная рабочая область (без изменений) */
         .content-wrapper {
             display: flex;
             gap: 24px;
@@ -515,7 +515,7 @@
             transform: translateY(-2px);
         }
 
-        /* Панель кандидатов */
+        /* Панель кандидатов (без изменений) */
         .candidates-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -648,7 +648,7 @@
             padding: 40px;
         }
 
-        /* Модальные окна */
+        /* Модальные окна (без изменений) */
         .stage-modal, .message-modal, .transfer-modal {
             position: fixed;
             top: 50%;
@@ -1317,9 +1317,20 @@
         let transferCandidateType = null;
         let selectedTransferRecruiter = null;
         let searchQuery = '';
-
-        // ID текущего кандидата для ссылки
         let currentCandidateIdForMessage = null;
+
+        // --- Хранение времени последнего входа и подсчёт новых записей ---
+        let lastLoginTime = null;
+
+        // Вспомогательная функция: количество новых записей в массиве (сравнение createdAt)
+        function countNewItems(items, dateField = 'createdAt') {
+            if (!lastLoginTime) return items.length; // если нет времени входа, считаем все новыми
+            const threshold = new Date(lastLoginTime);
+            return items.filter(item => {
+                const itemDate = new Date(item[dateField]);
+                return itemDate > threshold;
+            }).length;
+        }
 
         // ========== УВЕДОМЛЕНИЯ ==========
         function showNotification(message, type = 'info') {
@@ -1363,6 +1374,10 @@
                 }
                 currentRecruiter = data.recruiter;
                 sessionStorage.setItem('recruiter', JSON.stringify(currentRecruiter));
+
+                // Сохраняем время входа
+                lastLoginTime = new Date().toISOString();
+                sessionStorage.setItem('lastLoginTime', lastLoginTime);
 
                 document.querySelector('.side-menu').style.display = 'flex';
                 document.getElementById('loginContainer').style.display = 'none';
@@ -1433,6 +1448,10 @@
         async function initInterface() {
             document.getElementById('recruiterNameDisplay').textContent = currentRecruiter.name;
             document.getElementById('recruiterField').value = currentRecruiter.name;
+
+            // Восстанавливаем lastLoginTime из sessionStorage
+            const storedTime = sessionStorage.getItem('lastLoginTime');
+            if (storedTime) lastLoginTime = storedTime;
 
             await loadAllRecruiters();
             await loadReferenceData();
@@ -2603,7 +2622,9 @@
         function logout() {
             stopAutoRefresh();
             sessionStorage.removeItem('recruiter');
+            sessionStorage.removeItem('lastLoginTime');
             currentRecruiter = null;
+            lastLoginTime = null;
             document.querySelector('.side-menu').style.display = 'none';
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('recruiterInterface').style.display = 'none';
@@ -2673,14 +2694,14 @@
                 const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—';
                 html += `
                     <tr>
-                        <td>${date}</td>
-                        <td>${description}</td>
-                        <td><span class="quality-badge">${quality}</span></td>
-                        <td>${fileLink}</td>
-                     </tr>
+                        <td>${date}侧
+                        <td>${description}侧
+                        <td><span class="quality-badge">${quality}</span>侧
+                        <td>${fileLink}侧
+                    </tr>
                 `;
             });
-            html += '</tbody></table>';
+            html += '</tbody> </table>';
             container.innerHTML = html;
         }
 
@@ -2697,59 +2718,56 @@
         }
 
         function updateTabCounts() {
-            const contactsCount = myCandidates.length;
-            const verificationCount = myCandidates.filter(c => c.callResult === "Проверка").length;
-            const draftCount = getDraftCandidates().length;
-            const orgMeetingCount = allCandidates.filter(c => 
+            // Для каждой категории считаем только новые записи (createdAt > lastLoginTime)
+            const allContacts = myCandidates;
+            const newContacts = countNewItems(allContacts);
+            const verificationList = myCandidates.filter(c => c.callResult === "Проверка");
+            const newVerification = countNewItems(verificationList);
+            const draftList = getDraftCandidates();
+            const newDraft = countNewItems(draftList);
+            const orgMeetingList = allCandidates.filter(c => 
                 (c.recruitmentStatus === 'Орг.встреча' || c.recruitmentStatus === 'Приглашение орг.встреча' || c.recruitmentStatus === 'Вышел на орг. встречу') && 
                 c.recruiter === currentRecruiter.name
-            ).length;
-            const trainingCount = allCandidates.filter(c => 
+            );
+            const newOrgMeeting = countNewItems(orgMeetingList);
+            const trainingList = allCandidates.filter(c => 
                 (c.recruitmentStatus === 'Обучение' || c.recruitmentStatus === 'Приглашение на обучение' || c.recruitmentStatus === 'Вышел на обучение') && 
                 c.recruiter === currentRecruiter.name
-            ).length;
-            const rejectsCount = allCandidates.filter(c => {
+            );
+            const newTraining = countNewItems(trainingList);
+            const rejectsList = allCandidates.filter(c => {
                 const rejectStatuses = ['Отказ ТХ', 'Отказ Интернет', 'Отказ подключения', 'Отказ гарнитура', 'Отказ акцент'];
                 return rejectStatuses.includes(c.recruitmentStatus) && c.recruiter === currentRecruiter.name;
-            }).length;
+            });
+            const newRejects = countNewItems(rejectsList);
 
             const setTabText = (id, base, count) => {
                 const el = document.getElementById(id);
-                if (el) el.textContent = `${base} (${count})`;
+                if (el) el.textContent = `${base} ${count}`;  // без скобок
             };
-            setTabText('tabContacts', 'Контакты', contactsCount);
-            setTabText('tabVerification', 'Проверка', verificationCount);
-            setTabText('tabDraft', 'Черновик', draftCount);
-            setTabText('tabOrgMeeting', 'Орг. встреча', orgMeetingCount);
-            setTabText('tabTraining', 'Обучение', trainingCount);
-            setTabText('tabRejects', 'Отказы', rejectsCount);
+            setTabText('tabContacts', 'Контакты', newContacts);
+            setTabText('tabVerification', 'Проверка', newVerification);
+            setTabText('tabDraft', 'Черновик', newDraft);
+            setTabText('tabOrgMeeting', 'Орг. встреча', newOrgMeeting);
+            setTabText('tabTraining', 'Обучение', newTraining);
+            setTabText('tabRejects', 'Отказы', newRejects);
         }
 
         function updateMenuCounts() {
-            const recruitersCount = state?.recruiters?.length || 0;
-            const candidatesCount = myCandidates.length;
-            const scriptsCount = state?.scripts?.length || 0;
-            const allCandidatesCount = allCandidates.length;
-            const characteristicsCount = state?.characteristics?.length || 0;
-            const analyticsCount = analytics.length;
+            // Для бокового меню: новые записи в базе контактов (myCandidates) и новые аналитические записи
+            const newCandidatesCount = countNewItems(myCandidates);
+            const newAnalyticsCount = countNewItems(analytics.filter(a => a.recruiterName === currentRecruiter.name));
 
             const setMenuText = (selector, base, count) => {
                 const btn = document.querySelector(`.side-menu .menu-btn[data-tab="${selector}"]`);
                 if (btn) {
                     let text = base;
-                    if (count > 0) text += ` (${count})`;
+                    if (count > 0) text += ` ${count}`;  // без скобок
                     btn.textContent = text;
                 }
             };
-            // Используем data-tab атрибуты, они есть у кнопок
-            setMenuText('recruiters', 'Рекрутеры', recruitersCount);
-            setMenuText('candidates', 'База контактов', candidatesCount);
-            setMenuText('scripts', 'Скрипты', scriptsCount);
-            setMenuText('schedule', 'График', 0);
-            setMenuText('candidatesAll', 'Анкеты', allCandidatesCount);
-            setMenuText('characteristics', 'Характеристики', characteristicsCount);
-            setMenuText('analytics', 'Аналитика', analyticsCount);
-            setMenuText('vacancies', 'Вакансии', 0);
+            setMenuText('candidates', 'Кандидаты', newCandidatesCount);
+            setMenuText('analytics', 'Аналитика', newAnalyticsCount);
         }
 
         function openTransferModal(candidateId, candidateType) {
@@ -2844,16 +2862,19 @@
 
         window.addEventListener('load', () => {
             const saved = sessionStorage.getItem('recruiter');
+            const savedTime = sessionStorage.getItem('lastLoginTime');
             const sideMenu = document.querySelector('.side-menu');
             if (saved) {
                 try {
                     currentRecruiter = JSON.parse(saved);
+                    if (savedTime) lastLoginTime = savedTime;
                     sideMenu.style.display = 'flex';
                     document.getElementById('loginContainer').style.display = 'none';
                     document.getElementById('recruiterInterface').style.display = 'block';
                     initInterface();
                 } catch (e) {
                     sessionStorage.removeItem('recruiter');
+                    sessionStorage.removeItem('lastLoginTime');
                     sideMenu.style.display = 'none';
                     document.getElementById('loginContainer').style.display = 'block';
                     document.getElementById('recruiterInterface').style.display = 'none';
@@ -3115,13 +3136,12 @@
             if (overlay) overlay.classList.add('hidden');
         }
 
-        // Добавляем глобальную переменную state для updateMenuCounts (имитация)
+        // Дополнительная инициализация state для меню (имитация)
         const state = {
             recruiters: [],
             scripts: [],
             characteristics: []
         };
-        // Заполним state при загрузке
         async function loadStateForMenu() {
             try {
                 const refRes = await fetch('/.netlify/functions/getAllReferences');
@@ -3132,7 +3152,6 @@
                 state.characteristics = await charRes.json();
             } catch (e) {}
         }
-        // вызовем после initInterface
         const origInit = initInterface;
         initInterface = async function() {
             await loadStateForMenu();
