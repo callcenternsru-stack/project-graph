@@ -1,3 +1,4 @@
+// netlify/functions/submitManualResults.js
 const { getStore } = require('@netlify/blobs');
 const Busboy = require('busboy');
 const { Readable } = require('stream');
@@ -129,6 +130,7 @@ exports.handler = async (event) => {
         const recordId = fields.id || `manual_${Date.now()}`;
         console.log('Record ID:', recordId);
 
+        // Получить существующую запись, если есть
         let existingRecord = null;
         if (fields.id) {
           try {
@@ -136,6 +138,7 @@ exports.handler = async (event) => {
           } catch (e) {}
         }
 
+        // Определяем recruitmentStatus
         let recruitmentStatus;
         if (fields.recruitmentStatus) {
           recruitmentStatus = fields.recruitmentStatus;
@@ -147,14 +150,16 @@ exports.handler = async (event) => {
 
         const technicalStatus = fields.status || 'draft';
 
+        // Объединяем существующие и новые поля (новые имеют приоритет)
+        const mergedFields = { ...existingRecord, ...fields };
+
         const record = {
           id: recordId,
-          ...fields,
+          ...mergedFields,
           submittedAt: new Date().toISOString(),
           recruitmentStatus,
           status: technicalStatus,
-          // Сохраняем contactId, если передан
-          contactId: fields.candidateId || null   // <-- ДОБАВЛЕНО
+          contactId: fields.candidateId || existingRecord?.contactId || null
         };
 
         const fileUrls = {};
