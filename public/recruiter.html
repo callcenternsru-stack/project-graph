@@ -2270,15 +2270,13 @@
                 if (res.ok) {
                     if (callResult !== '__reminder__') {
                         showNotification('Кандидат сохранён', 'success');
+                    } else {
+                        showNotification(`🔔 Напоминание #${candidate.reminderCount} добавлено`, 'success');
                     }
                     updateStats();
                     updateCandidateProgress(candidate.phone, candidate.project);
-                    if (callResult !== '__reminder__') {
-                        goToNextCandidate();
-                    } else {
-                        // При напоминании остаёмся на том же кандидате, обновляем карточки
-                        if (currentView === 'candidates') applySearchAndFilter();
-                    }
+                    // FIX 3: при напоминании тоже переходим к следующему кандидату
+                    goToNextCandidate();
                 } else {
                     const err = await res.json();
                     showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
@@ -2611,13 +2609,37 @@
         }
 
         /* =====================================================================
-           SEARCH
+           SEARCH — FIX 2: поиск по всем полям, без зависания (debounce)
         ===================================================================== */
+        let _searchDebounceTimer = null;
+
         function initSearch() {
             document.getElementById('searchInput').addEventListener('input', function () {
-                searchQuery = this.value.toLowerCase().trim();
-                applySearchAndFilter();
+                const val = this.value.toLowerCase().trim();
+                // debounce 150ms — плавный поиск без зависания
+                clearTimeout(_searchDebounceTimer);
+                _searchDebounceTimer = setTimeout(() => {
+                    searchQuery = val;
+                    applySearchAndFilter();
+                }, 150);
             });
+        }
+
+        function candidateMatchesSearch(c, query) {
+            if (!query) return true;
+            const digits = query.replace(/\D/g, '');
+            return (
+                (c.fullName       || '').toLowerCase().includes(query)  ||
+                (c.phone          || '').replace(/\D/g,'').includes(digits) ||
+                (c.project        || '').toLowerCase().includes(query)  ||
+                (c.country        || '').toLowerCase().includes(query)  ||
+                (c.telegram       || '').toLowerCase().includes(query)  ||
+                (c.comment        || '').toLowerCase().includes(query)  ||
+                (c.trainingDate   || '').toLowerCase().includes(query)  ||
+                (c.trainingTime   || '').toLowerCase().includes(query)  ||
+                (c.callResult     || '').toLowerCase().includes(query)  ||
+                (c.recruitmentStatus || '').toLowerCase().includes(query)
+            );
         }
 
         function applySearchAndFilter() {
@@ -2625,22 +2647,16 @@
             let list = [];
 
             switch (candidatesTab) {
-                case 'contacts':    list = myCandidates; break;
+                case 'contacts':     list = myCandidates; break;
                 case 'verification': list = myCandidates.filter(c => c.callResult === 'Проверка'); break;
-                case 'draft':       list = getDraftCandidates(); break;
-                case 'orgMeeting':  list = allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c)); break;
-                case 'training':    list = allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)); break;
-                case 'rejects':     list = allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)); break;
+                case 'draft':        list = getDraftCandidates(); break;
+                case 'orgMeeting':   list = allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c)); break;
+                case 'training':     list = allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)); break;
+                case 'rejects':      list = allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)); break;
             }
 
             if (searchQuery) {
-                const phone = searchQuery.replace(/\D/g, '');
-                list = list.filter(c =>
-                    (c.fullName || '').toLowerCase().includes(searchQuery) ||
-                    (c.phone    || '').replace(/\D/g,'').includes(phone)   ||
-                    (c.project  || '').toLowerCase().includes(searchQuery) ||
-                    (c.callResult || c.recruitmentStatus || '').toLowerCase().includes(searchQuery)
-                );
+                list = list.filter(c => candidateMatchesSearch(c, searchQuery));
             }
 
             const renderMap = {
@@ -2741,11 +2757,16 @@
             previousDraftKeys = newKeys;
 
             const cards = list.map(c => {
-                const info  = c.trainingDate ? `${c.trainingDate} ${c.trainingTime || ''}` : '—';
+                // FIX 1: дата и время обучения отображаются явно
+                const trainingDate = c.trainingDate || '—';
+                const trainingTime = c.trainingTime || c.meetingTime || '';
+                const trainingInfo = trainingDate !== '—'
+                    ? `${trainingDate}${trainingTime ? ' · ' + trainingTime : ''}`
+                    : '—';
                 const isNew = !seenCandidateIds.has(c.id);
                 return makeCandidateCard(c, [
-                    `<div class="candidate-field"><div class="label">Telegram</div><div class="value">${escapeHtml(c.telegram || '—')}</div></div>`,
-                    `<div class="candidate-field"><div class="label">Обучение</div><div class="value">${info}</div></div>`
+                    `<div class="candidate-field"><div class="label">📅 Дата обучения</div><div class="value">${escapeHtml(trainingInfo)}</div></div>`,
+                    `<div class="candidate-field"><div class="label">Telegram</div><div class="value">${escapeHtml(c.telegram || '—')}</div></div>`
                 ], '', isNew);
             }).join('');
             setContainerHTML(cards, 'Нет черновиков');
@@ -2754,12 +2775,17 @@
 
         function renderWithTransfer(list, emptyMsg) {
             const cards = list.map(c => {
-                const info        = c.trainingDate ? `${c.trainingDate} ${c.trainingTime || ''}` : '—';
+                // FIX 1: дата и время обучения отображаются явно
+                const trainingDate = c.trainingDate || '—';
+                const trainingTime = c.trainingTime || c.meetingTime || '';
+                const trainingInfo = trainingDate !== '—'
+                    ? `${trainingDate}${trainingTime ? ' · ' + trainingTime : ''}`
+                    : '—';
                 const isNew       = !seenCandidateIds.has(c.id);
                 const transferBtn = `<div class="candidate-field"><button class="transfer-btn" onclick="event.stopPropagation(); openTransferModal('${c.id}','${c.type}')"><i class="fas fa-exchange-alt"></i> Передать</button></div>`;
                 return makeCandidateCard(c, [
-                    `<div class="candidate-field"><div class="label">Telegram</div><div class="value">${escapeHtml(c.telegram || '—')}</div></div>`,
-                    `<div class="candidate-field"><div class="label">Обучение</div><div class="value">${info}</div></div>`
+                    `<div class="candidate-field"><div class="label">📅 Дата обучения</div><div class="value">${escapeHtml(trainingInfo)}</div></div>`,
+                    `<div class="candidate-field"><div class="label">Telegram</div><div class="value">${escapeHtml(c.telegram || '—')}</div></div>`
                 ], transferBtn, isNew);
             }).join('');
             setContainerHTML(cards, emptyMsg);
