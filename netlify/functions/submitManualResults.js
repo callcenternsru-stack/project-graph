@@ -204,6 +204,26 @@ async function processRecord(fields, files = {}) {
         } catch (e) {}
     }
 
+    // Определяем contactId: из поля → из существующей записи → поиск по телефону
+    let resolvedContactId = fields.candidateId || existingRecord?.contactId || null;
+    if (!resolvedContactId) {
+        try {
+            const candidatesStore = getStore({
+                name: 'candidates',
+                siteID:  process.env.NETLIFY_SITE_ID,
+                token:   process.env.NETLIFY_ACCESS_TOKEN,
+            });
+            const allContacts = await candidatesStore.get('_all', { type: 'json' }) || [];
+            const normPhone = (fields.phone || '').replace(/\D/g, '');
+            if (normPhone.length > 5) {
+                const match = allContacts.find(c => (c.phone || '').replace(/\D/g, '') === normPhone);
+                if (match) resolvedContactId = match.id;
+            }
+        } catch (e) {
+            console.error('Phone lookup for contactId failed:', e);
+        }
+    }
+
     // Определяем recruitmentStatus
     let recruitmentStatus;
     if (fields.recruitmentStatus) {
@@ -225,7 +245,7 @@ async function processRecord(fields, files = {}) {
         submittedAt:       new Date().toISOString(),
         recruitmentStatus,
         status:            technicalStatus,
-        contactId:         fields.candidateId || existingRecord?.contactId || null
+        contactId:         resolvedContactId
     };
 
     // Сохраняем файлы если есть (только multipart)

@@ -17,7 +17,7 @@ exports.handler = async (event) => {
     }
 
     // Извлекаем candidateId, если он передан
-    const candidateId = formData.candidateId || null;
+    let candidateId = formData.candidateId || null;
 
     const autoStore = getStore({
       name: 'candidates-data',
@@ -29,6 +29,25 @@ exports.handler = async (event) => {
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
+
+    // Если contactId не передан — ищем кандидата по телефону в базе контактов
+    if (!candidateId) {
+      try {
+        const candidatesStore = getStore({
+          name: 'candidates',
+          siteID: process.env.NETLIFY_SITE_ID,
+          token: process.env.NETLIFY_ACCESS_TOKEN,
+        });
+        const allContacts = await candidatesStore.get('_all', { type: 'json' }) || [];
+        const normPhone = (formData.phone || '').replace(/\D/g, '');
+        if (normPhone.length > 5) {
+          const match = allContacts.find(c => (c.phone || '').replace(/\D/g, '') === normPhone);
+          if (match) candidateId = match.id;
+        }
+      } catch (e) {
+        console.error('Phone lookup failed:', e);
+      }
+    }
 
     // Нормализуем телефон для поиска
     const normPhone = (formData.phone || '').replace(/\D/g, '');
