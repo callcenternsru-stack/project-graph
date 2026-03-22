@@ -2627,19 +2627,20 @@
 
         function candidateMatchesSearch(c, query) {
             if (!query) return true;
+            // Текстовые поля
+            if ((c.fullName          || '').toLowerCase().includes(query)) return true;
+            if ((c.project           || '').toLowerCase().includes(query)) return true;
+            if ((c.country           || '').toLowerCase().includes(query)) return true;
+            if ((c.telegram          || '').toLowerCase().includes(query)) return true;
+            if ((c.comment           || '').toLowerCase().includes(query)) return true;
+            if ((c.trainingDate      || '').toLowerCase().includes(query)) return true;
+            if ((c.trainingTime      || '').toLowerCase().includes(query)) return true;
+            if ((c.callResult        || '').toLowerCase().includes(query)) return true;
+            if ((c.recruitmentStatus || '').toLowerCase().includes(query)) return true;
+            // Телефон — только если запрос содержит цифры (иначе '' includes '' = true для всех)
             const digits = query.replace(/\D/g, '');
-            return (
-                (c.fullName       || '').toLowerCase().includes(query)  ||
-                (c.phone          || '').replace(/\D/g,'').includes(digits) ||
-                (c.project        || '').toLowerCase().includes(query)  ||
-                (c.country        || '').toLowerCase().includes(query)  ||
-                (c.telegram       || '').toLowerCase().includes(query)  ||
-                (c.comment        || '').toLowerCase().includes(query)  ||
-                (c.trainingDate   || '').toLowerCase().includes(query)  ||
-                (c.trainingTime   || '').toLowerCase().includes(query)  ||
-                (c.callResult     || '').toLowerCase().includes(query)  ||
-                (c.recruitmentStatus || '').toLowerCase().includes(query)
-            );
+            if (digits.length > 0 && (c.phone || '').replace(/\D/g, '').includes(digits)) return true;
+            return false;
         }
 
         function applySearchAndFilter() {
@@ -2937,11 +2938,26 @@
                 matrix[p] = {};
                 STATUSES.forEach(s => { matrix[p][s.key] = 0; });
             });
+            // Анкеты (allCandidates) — recruitmentStatus
             allCandidates.forEach(c => {
                 if (c.project && c.recruitmentStatus && matrix[c.project] !== undefined) {
                     const st = STATUSES.find(s => s.key === c.recruitmentStatus);
                     if (st) matrix[c.project][st.key]++;
                 }
+            });
+            // База контактов (myCandidates) — callResult
+            // "Проверка" и другие статусы хранятся здесь, а не в анкетах
+            const allCandidatesPhones = new Set(allCandidates.map(f => (f.phone || '').replace(/\D/g, '')).filter(Boolean));
+            myCandidates.forEach(c => {
+                const status = c.callResult || '';
+                if (!status || !c.project) return;
+                if (matrix[c.project] === undefined) return;
+                const st = STATUSES.find(s => s.key === status);
+                if (!st) return;
+                // Не считаем дважды если у кандидата уже есть анкета
+                const phone = (c.phone || '').replace(/\D/g, '');
+                if (phone && allCandidatesPhones.has(phone)) return;
+                matrix[c.project][st.key]++;
             });
 
             const totals  = projects.map(p => STATUSES.reduce((s, st) => s + matrix[p][st.key], 0));
