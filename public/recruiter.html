@@ -1067,35 +1067,151 @@
         }
 
         /* ===================== STATISTICS TABLE ===================== */
-        .stats-table-container {
-            overflow-x: auto;
-            margin-top: 24px;
+        /* ── Статистика: сетка карточек проектов ── */
+        .proj-cards-grid {
+            display:               grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap:                   16px;
+            margin-top:            24px;
         }
 
-        .stats-table {
-            width:           100%;
-            border-collapse: collapse;
-            font-size:       13px;
-            min-width:       600px;
+        .proj-card {
+            background:    var(--bg-secondary);
+            border:        1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding:       20px 22px;
+            position:      relative;
+            overflow:      hidden;
+            transition:    border-color 0.2s, transform 0.2s, box-shadow 0.2s;
         }
 
-        .stats-table th,
-        .stats-table td {
-            padding:    10px 14px;
-            border-bottom: 1px solid var(--border-color);
-            text-align: center;
+        .proj-card::after {
+            content:    '';
+            position:   absolute;
+            top: 0; left: 0; right: 0;
+            height:     3px;
+            background: var(--accent-gradient);
         }
 
-        .stats-table th {
-            background: var(--bg-tertiary);
-            color:      var(--accent);
+        .proj-card:hover {
+            border-color: rgba(255, 215, 0, 0.35);
+            transform:    translateY(-3px);
+            box-shadow:   0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        /* шапка карточки */
+        .pc-header {
+            display:         flex;
+            justify-content: space-between;
+            align-items:     flex-start;
+            margin-bottom:   16px;
+            padding-bottom:  14px;
+            border-bottom:   1px solid var(--border-color);
+            gap:             10px;
+        }
+
+        .pc-name {
+            font-size:   13px;
             font-weight: 600;
-            text-align: left;
+            color:       var(--text-primary);
+            line-height: 1.35;
         }
 
-        .stats-table td:first-child { text-align: left; }
+        .pc-total-wrap {
+            text-align:  right;
+            flex-shrink: 0;
+        }
 
-        .stats-table tr:hover td { background: rgba(255, 215, 0, 0.04); }
+        .pc-total-num {
+            font-size:   26px;
+            font-weight: 700;
+            background:  var(--accent-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color:       transparent;
+            line-height: 1;
+        }
+
+        .pc-total-label {
+            font-size: 10px;
+            color:     var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* строки статусов */
+        .pc-rows {
+            display:        flex;
+            flex-direction: column;
+            gap:            7px;
+        }
+
+        .pc-row {
+            display:         flex;
+            align-items:     center;
+            justify-content: space-between;
+            gap:             8px;
+        }
+
+        .pc-row-left {
+            display:     flex;
+            align-items: center;
+            gap:         8px;
+            flex:        1;
+            min-width:   0;
+        }
+
+        .pc-dot {
+            width:         8px;
+            height:        8px;
+            border-radius: 50%;
+            flex-shrink:   0;
+        }
+
+        .pc-label {
+            font-size:     12px;
+            color:         var(--text-secondary);
+            white-space:   nowrap;
+            overflow:      hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pc-bar-bg {
+            flex:          1;
+            height:        3px;
+            background:    var(--border-color);
+            border-radius: 2px;
+            overflow:      hidden;
+            min-width:     30px;
+        }
+
+        .pc-bar-fill {
+            height:        100%;
+            border-radius: 2px;
+            transition:    width 0.4s ease;
+        }
+
+        .pc-val {
+            font-size:   12px;
+            font-weight: 600;
+            color:       var(--text-primary);
+            min-width:   22px;
+            text-align:  right;
+            flex-shrink: 0;
+        }
+
+        .pc-val.pc-zero {
+            color:       var(--text-muted);
+            font-weight: 400;
+        }
+
+
+        .proj-cards-empty {
+            text-align:  center;
+            padding:     40px;
+            color:       var(--text-muted);
+            font-size:   14px;
+            grid-column: 1 / -1;
+        }
 
         .empty-message {
             text-align: center;
@@ -2744,34 +2860,86 @@
         }
 
         function renderStatisticsPage() {
-            const container   = document.getElementById('statisticsContent');
+            const container = document.getElementById('statisticsContent');
             if (!container) return;
 
-            const byMe         = c => c.recruiter === currentRecruiter.name;
-            const oneHourAgo   = Date.now() - 60 * 60 * 1000;
+            const oneHourAgo    = Date.now() - 60 * 60 * 1000;
             const totalContacts = allCandidates.length;
             const savedLastHour = allCandidates.filter(c => new Date(c.createdAt).getTime() > oneHourAgo).length;
 
-            const myAnalytics  = analytics.filter(a => a.recruiterName === currentRecruiter.name);
-            const avgQuality   = myAnalytics.length
+            const myAnalytics = analytics.filter(a => a.recruiterName === currentRecruiter.name);
+            const avgQuality  = myAnalytics.length
                 ? Math.round(myAnalytics.reduce((s, a) => s + (a.quality || 0), 0) / myAnalytics.length)
                 : 0;
 
-            const projects = appData.projects.map(p => p.name || p);
-            const statusSet = new Set();
-            allCandidates.forEach(c => { if (c.recruitmentStatus) statusSet.add(c.recruitmentStatus); });
-            const statuses = Array.from(statusSet).sort();
+            // Корпоративная цветовая схема (тёмный фон, золото = акцент)
+            const STATUSES = [
+                { key: 'Проверка',                label: 'Проверка',            color: '#FFD700' },
+                { key: 'draft',                   label: 'Черновик',            color: '#6B7280' },
+                { key: 'passed',                  label: 'Прошёл',              color: '#4CAF50' },
+                { key: 'Приглашение на обучение', label: 'Пригл. на обучение',  color: '#FF9800' },
+                { key: 'Приглашение орг.встреча', label: 'Пригл. орг. встреча', color: '#2196F3' },
+                { key: 'Вышел на орг. встречу',   label: 'Вышел орг. встреча',  color: '#00BCD4' },
+                { key: 'Вышел на обучение',       label: 'Вышел на обучение',   color: '#8BC34A' },
+                { key: 'employee',                label: 'Линия',               color: '#E91E63' },
+            ];
 
+            const projects = appData.projects.map(p => p.name || p);
+
+            // Считаем по каждому проекту
             const matrix = {};
             projects.forEach(p => {
                 matrix[p] = {};
-                statuses.forEach(s => { matrix[p][s] = 0; });
+                STATUSES.forEach(s => { matrix[p][s.key] = 0; });
             });
             allCandidates.forEach(c => {
-                if (c.project && c.recruitmentStatus && matrix[c.project] && matrix[c.project][c.recruitmentStatus] !== undefined) {
-                    matrix[c.project][c.recruitmentStatus]++;
+                if (c.project && c.recruitmentStatus && matrix[c.project] !== undefined) {
+                    const st = STATUSES.find(s => s.key === c.recruitmentStatus);
+                    if (st) matrix[c.project][st.key]++;
                 }
             });
+
+            // Итого по проекту и максимум для нормировки баров
+            const totals  = projects.map(p => STATUSES.reduce((s, st) => s + matrix[p][st.key], 0));
+            const maxVal  = Math.max(...STATUSES.map(st => Math.max(...projects.map(p => matrix[p][st.key]))), 1);
+
+            // HTML карточки одного проекта
+            function buildCard(p, idx) {
+                const total  = totals[idx];
+                const maxTot = Math.max(...totals, 1);
+                const rows   = STATUSES.map(st => {
+                    const v    = matrix[p][st.key];
+                    const pct  = Math.round((v / maxVal) * 100);
+                    const zero = v === 0;
+                    return `
+                        <div class="pc-row">
+                            <div class="pc-row-left">
+                                <span class="pc-dot" style="background:${st.color};opacity:${zero ? 0.25 : 1}"></span>
+                                <span class="pc-label" style="opacity:${zero ? 0.45 : 1}">${escapeHtml(st.label)}</span>
+                            </div>
+                            <div class="pc-bar-bg">
+                                <div class="pc-bar-fill" style="width:${pct}%;background:${st.color}"></div>
+                            </div>
+                            <span class="pc-val${zero ? ' pc-zero' : ''}">${v}</span>
+                        </div>`;
+                }).join('');
+
+                return `
+                    <div class="proj-card">
+                        <div class="pc-header">
+                            <div class="pc-name">${escapeHtml(p)}</div>
+                            <div class="pc-total-wrap">
+                                <div class="pc-total-num">${total}</div>
+                                <div class="pc-total-label">кандидатов</div>
+                            </div>
+                        </div>
+                        <div class="pc-rows">${rows}</div>
+                    </div>`;
+            }
+
+            const cardsHtml = projects.length
+                ? projects.map((p, i) => buildCard(p, i)).join('')
+                : '<div class="proj-cards-empty">Нет данных по проектам</div>';
 
             container.innerHTML = `
                 <div class="stats-grid">
@@ -2788,31 +2956,11 @@
                         <div class="stat-number">${avgQuality}%</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-title"><i class="fas fa-phone-alt"></i> Средняя длительность</div>
+                        <div class="stat-title"><i class="fas fa-phone-alt"></i> Средняя длит. звонка</div>
                         <div class="stat-number">—</div>
                     </div>
                 </div>
-                <div class="stats-table-container">
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>Проект</th>
-                                ${statuses.map(s => `<th>${escapeHtml(s)}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${projects.length
-                                ? projects.map(p => `
-                                    <tr>
-                                        <td>${escapeHtml(p)}</td>
-                                        ${statuses.map(s => `<td>${matrix[p][s] || 0}</td>`).join('')}
-                                    </tr>
-                                `).join('')
-                                : `<tr><td colspan="${statuses.length + 1}" class="empty-message">Нет данных</td></tr>`
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                <div class="proj-cards-grid">${cardsHtml}</div>
             `;
         }
 
