@@ -99,24 +99,90 @@ exports.handler = async (event) => {
       })
     );
 
-    // Загружаем всех кандидатов из базы контактов для связывания
+    // Загружаем всех кандидатов из базы контактов
     const candidatesStore = getStore({
       name: 'candidates',
       siteID: process.env.NETLIFY_SITE_ID,
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
-    const allCandidates = await candidatesStore.get('_all', { type: 'json' }) || [];
-    const candidatesMap = new Map(allCandidates.map(c => [c.id, c]));
+    const allContacts = await candidatesStore.get('_all', { type: 'json' }) || [];
+
+    // Индекс по ID и по нормализованному телефону
+    const candidatesById    = new Map(allContacts.map(c => [c.id, c]));
+    const candidatesByPhone = new Map(
+      allContacts
+        .filter(c => c.phone)
+        .map(c => [(c.phone).replace(/\D/g, ''), c])
+    );
+
+    // Анкеты без contactId — сохраним его асинхронно
+    const autoToUpdate   = []; // { code, contactId }
+    const manualToUpdate = []; // { id,   contactId }
 
     const all = [...autoForms, ...manualForms]
       .filter(f => f !== null)
       .map(f => {
-        if (f.contactId && candidatesMap.has(f.contactId)) {
-          f.contact = candidatesMap.get(f.contactId); // Добавляем данные контакта
+        let contact = null;
+
+        if (f.contactId && candidatesById.has(f.contactId)) {
+          // Уже привязан
+          contact = candidatesById.get(f.contactId);
+        } else {
+          // Нет contactId — ищем по телефону
+          const normPhone = (f.phone || '').replace(/\D/g, '');
+          if (normPhone.length > 5) {
+            contact = candidatesByPhone.get(normPhone) || null;
+            if (contact) {
+              // Запоминаем для фоновой записи contactId
+              if (f.type === 'auto') {
+                autoToUpdate.push({ code: f.id, contactId: contact.id });
+              } else {
+                manualToUpdate.push({ id: f.id, contactId: contact.id });
+              }
+              f.contactId = contact.id;
+            }
+          }
         }
+
+        if (contact) {
+          f.contact = contact;
+          // Подтягиваем дату/время обучения из контакта если в анкете нет
+          if (!f.trainingDate && contact.trainingDate) f.trainingDate = contact.trainingDate;
+          if (!f.trainingTime && contact.trainingTime) f.trainingTime = contact.trainingTime;
+        }
+
         return f;
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Фоново сохраняем contactId — не блокируем ответ
+    if (autoToUpdate.length > 0) {
+      Promise.all(autoToUpdate.map(async ({ code, contactId }) => {
+        try {
+          const data = await autoStore.get(code, { type: 'json' });
+          if (data && !data.contactId) {
+            data.contactId = contactId;
+            await autoStore.setJSON(code, data);
+          }
+        } catch (e) {
+          console.error(`Failed to update contactId for auto ${code}:`, e);
+        }
+      })).catch(console.error);
+    }
+
+    if (manualToUpdate.length > 0) {
+      Promise.all(manualToUpdate.map(async ({ id, contactId }) => {
+        try {
+          const data = await manualStore.get(id, { type: 'json' });
+          if (data && !data.contactId) {
+            data.contactId = contactId;
+            await manualStore.setJSON(id, data);
+          }
+        } catch (e) {
+          console.error(`Failed to update contactId for manual ${id}:`, e);
+        }
+      })).catch(console.error);
+    }
 
     return {
       statusCode: 200,
