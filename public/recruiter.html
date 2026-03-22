@@ -2306,14 +2306,15 @@
             }
 
             const payload = {
-                id:               editingExternalCandidate.id,
-                type:             editingExternalCandidate.type,
-                fullName:         document.getElementById('fullName').value.trim(),
-                phone:            document.getElementById('phoneNumber').value.trim(),
-                project:          document.getElementById('project').value,
+                id:                editingExternalCandidate.id,
+                type:              editingExternalCandidate.type,
+                fullName:          document.getElementById('fullName').value.trim(),
+                phone:             document.getElementById('phoneNumber').value.trim(),
+                project:           document.getElementById('project').value,
                 country, trainingDate, trainingTime,
                 recruitmentStatus: newStatus,
-                comment:          document.getElementById('comment').value.trim()
+                comment:           document.getElementById('comment').value.trim(),
+                recruiter:         currentRecruiter.name
             };
 
             showLoading();
