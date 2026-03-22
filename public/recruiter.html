@@ -724,6 +724,22 @@
             font-weight:   500;
         }
 
+        /* ===================== REMINDER BADGE — НОВЫЙ ===================== */
+        .reminder-badge {
+            display:        inline-flex;
+            align-items:    center;
+            gap:            4px;
+            padding:        3px 8px;
+            border-radius:  20px;
+            background:     rgba(255, 100, 0, 0.18);
+            color:          #ff9500;
+            font-size:      12px;
+            font-weight:    600;
+            margin-left:    6px;
+            border:         1px solid rgba(255, 150, 0, 0.3);
+            vertical-align: middle;
+        }
+
         .transfer-btn {
             background:    transparent;
             border:        1px solid var(--border-color);
@@ -1067,7 +1083,6 @@
         }
 
         /* ===================== STATISTICS TABLE ===================== */
-        /* ── Статистика: сетка карточек проектов ── */
         .proj-cards-grid {
             display:               grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1099,7 +1114,6 @@
             box-shadow:   0 10px 30px rgba(0,0,0,0.4);
         }
 
-        /* шапка карточки */
         .pc-header {
             display:         flex;
             justify-content: space-between;
@@ -1138,7 +1152,6 @@
             margin-top: 2px;
         }
 
-        /* строки статусов */
         .pc-rows {
             display:        flex;
             flex-direction: column;
@@ -1203,7 +1216,6 @@
             color:       var(--text-muted);
             font-weight: 400;
         }
-
 
         .proj-cards-empty {
             text-align:  center;
@@ -1760,7 +1772,6 @@
         let searchQuery               = '';
         let currentCandidateIdForMessage = null;
         let prevSubCounts             = { contacts: 0, verification: 0, draft: 0, orgMeeting: 0, training: 0, rejects: 0 };
-        // Множество ID просмотренных кандидатов — хранится в localStorage
         let seenCandidateIds          = new Set();
         let prevAnalyticsCount        = 0;
         let currentTransferCategory   = null;
@@ -1869,7 +1880,6 @@
         /* =====================================================================
            INIT
         ===================================================================== */
-        // Ключ в localStorage зависит от рекрутера
         function seenStorageKey() {
             return 'seenCandidates_' + currentRecruiter.name;
         }
@@ -2024,9 +2034,13 @@
                 scriptProjects.map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
+        /* =====================================================================
+           ИЗМЕНЕНИЕ 1: fillCallResults — добавляем "Напоминание"
+        ===================================================================== */
         function fillCallResults() {
             const select = document.getElementById('callResult');
             select.innerHTML = '<option value="">— выберите —</option>' +
+                '<option value="__reminder__">🔔 Напоминание</option>' +
                 appData.callResults.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
         }
 
@@ -2036,75 +2050,22 @@
                 appData.contactTypes.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
         }
 
+        /* =====================================================================
+           ИЗМЕНЕНИЕ 2: updateCallResults — добавляем "Напоминание"
+        ===================================================================== */
         function updateCallResults() {
             const select = document.getElementById('callResult');
             if (!currentScriptTitle) { fillCallResults(); return; }
             const script = appData.scripts.find(s => s.title === currentScriptTitle);
             if (script && script.statuses && script.statuses.length > 0) {
                 select.innerHTML = '<option value="">— выберите —</option>' +
+                    '<option value="__reminder__">🔔 Напоминание</option>' +
                     script.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
             } else {
                 fillCallResults();
             }
         }
 
-        /* =====================================================================
-           SCRIPTS UI
-        ===================================================================== */
-        function updateScriptsUI() {
-            const selector  = document.getElementById('scriptSelector');
-            const container = document.getElementById('selectedScriptContainer');
-            const noMsg     = document.getElementById('noScriptMessage');
-            const prevTitle = currentScriptTitle;
-
-            selector.innerHTML = '<option value="">— выберите скрипт звонка —</option>';
-            const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
-
-            if (callScripts.length === 0) {
-                container.style.display = 'none';
-                noMsg.style.display     = 'block';
-                updateCallResults();
-                return;
-            }
-
-            callScripts.forEach((script, i) => {
-                const opt = document.createElement('option');
-                opt.value       = i;
-                opt.textContent = script.title;
-                selector.appendChild(opt);
-            });
-
-            let selectedIndex = prevTitle ? callScripts.findIndex(s => s.title === prevTitle) : -1;
-            if (selectedIndex === -1) selectedIndex = 0;
-
-            selector.value        = selectedIndex;
-            currentScriptTitle    = callScripts[selectedIndex].title;
-            displayScript(callScripts[selectedIndex]);
-            container.style.display = 'block';
-            noMsg.style.display     = 'none';
-            setProjectFromScript(currentScriptTitle);
-            updateCallResults();
-        }
-
-        function displayScript(script) {
-            if (!script) return;
-            document.getElementById('selectedScriptTitle').textContent = script.title;
-            document.getElementById('selectedScriptContent').innerHTML = script.content;
-        }
-
-        function setProjectFromScript(scriptTitle) {
-            if (!scriptTitle) return;
-            if (!scriptProjects.includes(scriptTitle)) {
-                scriptProjects.push(scriptTitle);
-                fillProjects();
-            }
-            document.getElementById('project').value = scriptTitle;
-            updateTrainingDates(scriptTitle);
-        }
-
-        /* =====================================================================
-           TRAINING DATES
-        ===================================================================== */
         function updateTrainingDates(project) {
             const select = document.getElementById('trainingDateSelect');
             if (!project) { select.innerHTML = '<option value="">— нет данных —</option>'; return; }
@@ -2185,7 +2146,6 @@
                 updateTrainingDates('');
             }
 
-            // Auto-detect country from phone
             const digits = c.phone.replace(/\D/g, '');
             if      (digits.startsWith('996')) document.getElementById('country').value = 'Кыргызстан';
             else if (digits.startsWith('998')) document.getElementById('country').value = 'Узбекистан';
@@ -2236,8 +2196,18 @@
             else showNotification('Кандидат не найден', 'error');
         }
 
+        function setProjectFromScript(scriptTitle) {
+            if (!scriptTitle) return;
+            if (!scriptProjects.includes(scriptTitle)) {
+                scriptProjects.push(scriptTitle);
+                fillProjects();
+            }
+            document.getElementById('project').value = scriptTitle;
+            updateTrainingDates(scriptTitle);
+        }
+
         /* =====================================================================
-           FORM SUBMIT
+           ИЗМЕНЕНИЕ 3: FORM SUBMIT — перехват "Напоминание"
         ===================================================================== */
         document.getElementById('candidateForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -2267,12 +2237,29 @@
             }
 
             const candidate = myCandidates[idx];
-            Object.assign(candidate, {
-                fullName, phone: phoneNumber, project, country, trainingDate,
-                trainingTime, meetingTime: trainingTime, callResult,
-                contactType: document.getElementById('contactType').value,
-                comment:     document.getElementById('comment').value.trim()
-            });
+
+            // ── ЛОГИКА НАПОМИНАНИЯ ──────────────────────────────────────────
+            if (callResult === '__reminder__') {
+                // Основной статус НЕ меняем, только увеличиваем счётчик
+                candidate.reminderCount = (candidate.reminderCount || 0) + 1;
+                Object.assign(candidate, {
+                    fullName, phone: phoneNumber, project, country, trainingDate,
+                    trainingTime, meetingTime: trainingTime,
+                    contactType: document.getElementById('contactType').value,
+                    comment:     document.getElementById('comment').value.trim()
+                    // callResult намеренно не присваиваем
+                });
+                showNotification(`🔔 Напоминание #${candidate.reminderCount} добавлено`, 'success');
+            } else {
+                // При смене основного статуса сбрасываем счётчик напоминаний
+                if (callResult !== candidate.callResult) candidate.reminderCount = 0;
+                Object.assign(candidate, {
+                    fullName, phone: phoneNumber, project, country, trainingDate,
+                    trainingTime, meetingTime: trainingTime, callResult,
+                    contactType: document.getElementById('contactType').value,
+                    comment:     document.getElementById('comment').value.trim()
+                });
+            }
 
             try {
                 const res = await fetch('/.netlify/functions/submitCandidate', {
@@ -2281,10 +2268,17 @@
                     body:    JSON.stringify(candidate)
                 });
                 if (res.ok) {
-                    showNotification('Кандидат сохранён', 'success');
+                    if (callResult !== '__reminder__') {
+                        showNotification('Кандидат сохранён', 'success');
+                    }
                     updateStats();
                     updateCandidateProgress(candidate.phone, candidate.project);
-                    goToNextCandidate();
+                    if (callResult !== '__reminder__') {
+                        goToNextCandidate();
+                    } else {
+                        // При напоминании остаёмся на том же кандидате, обновляем карточки
+                        if (currentView === 'candidates') applySearchAndFilter();
+                    }
                 } else {
                     const err = await res.json();
                     showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
@@ -2294,6 +2288,9 @@
             }
         });
 
+        /* =====================================================================
+           ИЗМЕНЕНИЕ 4: saveExternalCandidate — перехват "Напоминание"
+        ===================================================================== */
         async function saveExternalCandidate() {
             const newStatus    = document.getElementById('callResult').value;
             const country      = document.getElementById('country').value;
@@ -2305,6 +2302,17 @@
                 return;
             }
 
+            // ── ЛОГИКА НАПОМИНАНИЯ для внешнего кандидата ──────────────────
+            const isReminder = newStatus === '__reminder__';
+            const baseStatus = isReminder
+                ? (editingExternalCandidate.recruitmentStatus || editingExternalCandidate.callResult || '')
+                : newStatus;
+            const currentReminderCount = editingExternalCandidate.reminderCount || 0;
+            const prevStatus = editingExternalCandidate.recruitmentStatus || editingExternalCandidate.callResult || '';
+            const newReminderCount = isReminder
+                ? currentReminderCount + 1
+                : (newStatus !== prevStatus ? 0 : currentReminderCount);
+
             const payload = {
                 id:                editingExternalCandidate.id,
                 type:              editingExternalCandidate.type,
@@ -2312,7 +2320,8 @@
                 phone:             document.getElementById('phoneNumber').value.trim(),
                 project:           document.getElementById('project').value,
                 country, trainingDate, trainingTime,
-                recruitmentStatus: newStatus,
+                recruitmentStatus: baseStatus,
+                reminderCount:     newReminderCount,
                 comment:           document.getElementById('comment').value.trim(),
                 recruiter:         currentRecruiter.name
             };
@@ -2330,12 +2339,19 @@
                 });
 
                 if (res.ok) {
-                    showNotification('Кандидат сохранён', 'success');
-                    await refreshAllCandidates();
-                    await refreshMyCandidates();
-                    updateStats();
-                    editingExternalCandidate = null;
-                    showCandidatesPanel();
+                    if (isReminder) {
+                        showNotification(`🔔 Напоминание #${newReminderCount} добавлено`, 'success');
+                        // Обновляем локально
+                        editingExternalCandidate.reminderCount = newReminderCount;
+                        await refreshAllCandidates();
+                    } else {
+                        showNotification('Кандидат сохранён', 'success');
+                        await refreshAllCandidates();
+                        await refreshMyCandidates();
+                        updateStats();
+                        editingExternalCandidate = null;
+                        showCandidatesPanel();
+                    }
                 } else {
                     const err = await res.json();
                     showNotification('Ошибка сохранения: ' + (err.error || ''), 'error');
@@ -2639,7 +2655,7 @@
         }
 
         /* =====================================================================
-           CANDIDATE RENDERERS
+           ИЗМЕНЕНИЕ 5: makeCandidateCard — бейдж напоминания рядом со статусом
         ===================================================================== */
         function makeCandidateCard(c, extraFields = [], extraActions = '', isNew = false) {
             const baseFields = `
@@ -2650,6 +2666,11 @@
             const status   = c.callResult || c.recruitmentStatus || 'ожидает связи';
             const newBadge = isNew ? '<span class="new-badge">Новый</span>' : '';
 
+            // Бейдж напоминания — показываем если reminderCount > 0
+            const reminderBadge = (c.reminderCount && c.reminderCount > 0)
+                ? `<span class="reminder-badge">🔔 ${c.reminderCount}</span>`
+                : '';
+
             return `
                 <div class="candidate-card ${isNew ? 'is-new' : ''}" data-id="${c.id}" data-type="${c.type || ''}">
                     ${newBadge}
@@ -2657,7 +2678,9 @@
                     ${extra}
                     <div class="candidate-field">
                         <div class="label">Статус</div>
-                        <div class="value"><span class="candidate-status-badge">${escapeHtml(status)}</span></div>
+                        <div class="value">
+                            <span class="candidate-status-badge">${escapeHtml(status)}</span>${reminderBadge}
+                        </div>
                     </div>
                     <div class="candidate-field"><div class="label">Проект</div><div class="value">${escapeHtml(c.project || '—')}</div></div>
                     ${extraActions}
@@ -2767,7 +2790,6 @@
             const orgList     = allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c));
             const trainList   = allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c));
 
-            // Общее количество для текста кнопок
             const totals = {
                 contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
                 verification: myCandidates.filter(c => c.callResult === 'Проверка').length,
@@ -2777,7 +2799,6 @@
                 rejects:      allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).length
             };
 
-            // Количество НОВЫХ (непросмотренных) — только для Черновик / Орг.встреча / Обучение
             const newUnseen = {
                 draft:      draftList.filter(unseen).length,
                 orgMeeting: orgList.filter(unseen).length,
@@ -2791,7 +2812,7 @@
                 const el = document.getElementById(ids[key]);
                 if (!el) continue;
                 const total  = totals[key];
-                const newCnt = newUnseen[key];  // undefined для контактов/проверки/отказов
+                const newCnt = newUnseen[key];
                 if (newCnt !== undefined && newCnt > 0) {
                     el.innerHTML = `${labels[key]} (${total}) <span class="tab-new-badge">${newCnt}</span>`;
                 } else {
@@ -2815,7 +2836,6 @@
             const badgeC = document.getElementById('candidatesBadge');
             const badgeA = document.getElementById('analyticsBadge');
 
-            // Бейдж "Кандидаты" в сайдбаре: общее кол-во, красный если есть непросмотренные
             if (badgeC) {
                 if (totalUnseen > 0) {
                     badgeC.textContent       = totalUnseen;
@@ -2873,7 +2893,6 @@
                 ? Math.round(myAnalytics.reduce((s, a) => s + (a.quality || 0), 0) / myAnalytics.length)
                 : 0;
 
-            // Корпоративная цветовая схема (тёмный фон, золото = акцент)
             const STATUSES = [
                 { key: 'Проверка',                label: 'Проверка',            color: '#FFD700' },
                 { key: 'draft',                   label: 'Черновик',            color: '#6B7280' },
@@ -2887,7 +2906,6 @@
 
             const projects = appData.projects.map(p => p.name || p);
 
-            // Считаем по каждому проекту
             const matrix = {};
             projects.forEach(p => {
                 matrix[p] = {};
@@ -2900,14 +2918,11 @@
                 }
             });
 
-            // Итого по проекту и максимум для нормировки баров
             const totals  = projects.map(p => STATUSES.reduce((s, st) => s + matrix[p][st.key], 0));
             const maxVal  = Math.max(...STATUSES.map(st => Math.max(...projects.map(p => matrix[p][st.key]))), 1);
 
-            // HTML карточки одного проекта
             function buildCard(p, idx) {
                 const total  = totals[idx];
-                const maxTot = Math.max(...totals, 1);
                 const rows   = STATUSES.map(st => {
                     const v    = matrix[p][st.key];
                     const pct  = Math.round((v / maxVal) * 100);
@@ -3295,6 +3310,50 @@
         });
 
         /* =====================================================================
+           SCRIPTS UI
+        ===================================================================== */
+        function updateScriptsUI() {
+            const selector  = document.getElementById('scriptSelector');
+            const container = document.getElementById('selectedScriptContainer');
+            const noMsg     = document.getElementById('noScriptMessage');
+            const prevTitle = currentScriptTitle;
+
+            selector.innerHTML = '<option value="">— выберите скрипт звонка —</option>';
+            const callScripts = appData.scripts.filter(s => s.type === 'call' || !s.type);
+
+            if (callScripts.length === 0) {
+                container.style.display = 'none';
+                noMsg.style.display     = 'block';
+                updateCallResults();
+                return;
+            }
+
+            callScripts.forEach((script, i) => {
+                const opt = document.createElement('option');
+                opt.value       = i;
+                opt.textContent = script.title;
+                selector.appendChild(opt);
+            });
+
+            let selectedIndex = prevTitle ? callScripts.findIndex(s => s.title === prevTitle) : -1;
+            if (selectedIndex === -1) selectedIndex = 0;
+
+            selector.value        = selectedIndex;
+            currentScriptTitle    = callScripts[selectedIndex].title;
+            displayScript(callScripts[selectedIndex]);
+            container.style.display = 'block';
+            noMsg.style.display     = 'none';
+            setProjectFromScript(currentScriptTitle);
+            updateCallResults();
+        }
+
+        function displayScript(script) {
+            if (!script) return;
+            document.getElementById('selectedScriptTitle').textContent = script.title;
+            document.getElementById('selectedScriptContent').innerHTML = script.content;
+        }
+
+        /* =====================================================================
            AUTO-REFRESH
         ===================================================================== */
         async function refreshMyCandidates() {
@@ -3371,7 +3430,6 @@
         ===================================================================== */
         document.addEventListener('DOMContentLoaded', () => {
 
-            // Bulk transfer category buttons
             document.querySelectorAll('.transfer-category-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.transfer-category-btn').forEach(b => b.classList.remove('active'));
@@ -3380,7 +3438,6 @@
                 });
             });
 
-            // Sidebar collapse
             const collapseBtn = document.getElementById('collapseSidebarBtn');
             if (collapseBtn) {
                 collapseBtn.addEventListener('click', () => {
@@ -3392,7 +3449,6 @@
                     document.getElementById('sideMenu').classList.add('collapsed');
             }
 
-            // Close modals on Escape
             document.addEventListener('keydown', e => {
                 if (e.key === 'Escape') {
                     document.querySelectorAll('.stage-modal.show, .message-modal.show, .transfer-modal.show, .bulk-transfer-modal.show').forEach(m => {
@@ -3429,7 +3485,7 @@
         });
 
         /* =====================================================================
-           STATE MENU LOADER (preserves original monkey-patch pattern)
+           STATE MENU LOADER
         ===================================================================== */
         const menuState = { recruiters: [], scripts: [], characteristics: [] };
 
