@@ -2765,18 +2765,47 @@
 
         function getReminderCandidates() {
             const byMe = c => c.recruiter === currentRecruiter.name;
-            // Из allCandidates (анкеты)
-            const fromAll  = allCandidates.filter(c => (c.reminderCount || 0) > 0 && byMe(c));
-            // Из myCandidates (контакты), которых нет в allCandidates
-            const allPhones = new Set(allCandidates.map(c => (c.phone || '').replace(/\D/g, '')).filter(Boolean));
-            const fromMy   = myCandidates.filter(c => {
+
+            // Строим карту телефон -> контакт для обогащения анкет
+            const contactByPhone = new Map();
+            myCandidates.forEach(c => {
+                const phone = (c.phone || '').replace(/\D/g, '');
+                if (phone) contactByPhone.set(phone, c);
+            });
+
+            // Анкеты текущего рекрутера — берём reminderCount из анкеты ИЛИ из контакта по телефону
+            const fromAll = allCandidates
+                .filter(byMe)
+                .map(c => {
+                    const phone = (c.phone || '').replace(/\D/g, '');
+                    const contact = phone ? contactByPhone.get(phone) : null;
+                    const reminderCount = (c.reminderCount || 0) > 0
+                        ? c.reminderCount
+                        : (contact ? (contact.reminderCount || 0) : 0);
+                    if (reminderCount <= 0) return null;
+                    const fullName = c.fullName || (contact ? contact.fullName : '') || '';
+                    return { ...c, reminderCount, fullName };
+                })
+                .filter(Boolean);
+
+            // Телефоны анкет у которых нашли reminderCount — не дублируем контакты
+            const formPhones = new Set(fromAll.map(c => (c.phone || '').replace(/\D/g, '')).filter(Boolean));
+
+            // Контакты у которых есть reminderCount и нет анкеты
+            const fromMy = myCandidates.filter(c => {
                 if ((c.reminderCount || 0) <= 0) return false;
                 const phone = (c.phone || '').replace(/\D/g, '');
-                return !(phone && allPhones.has(phone));
+                return !(phone && formPhones.has(phone));
             });
-            // Объединяем и убираем дубли по id
-            const seen = new Set();
-            return [...fromAll, ...fromMy].filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true; });
+
+            // Дедупликация по телефону (приоритет у анкет)
+            const seenPhones = new Set();
+            return [...fromAll, ...fromMy].filter(c => {
+                const phone = (c.phone || '').replace(/\D/g, '') || c.id;
+                if (seenPhones.has(phone)) return false;
+                seenPhones.add(phone);
+                return true;
+            });
         }
 
         function renderReminderCandidates(list) {
