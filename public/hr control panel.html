@@ -270,6 +270,9 @@
             display: block;
             animation: modalAppear 0.3s ease;
         }
+        .modal.show[style*='flex-direction'] {
+            display: flex;
+        }
         @keyframes modalAppear {
             from { opacity: 0; transform: translate(-50%, -45%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
@@ -1233,7 +1236,7 @@
     </div>
 
     <!-- Модальное окно для деталей анкеты кандидата -->
-    <div id="candidateDetailsModal" class="modal" style="max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div id="candidateDetailsModal" class="modal" style="max-height:85vh;overflow:hidden;flex-direction:column;">
         <div class="modal-header">
             <span id="detailsModalTitle">Детали анкеты</span>
             <button class="modal-close" onclick="closeCandidateDetails()">✕</button>
@@ -1251,7 +1254,7 @@
     </div>
 
     <!-- Модальное окно истории кандидата -->
-    <div id="candidateHistoryModal" class="modal" style="max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div id="candidateHistoryModal" class="modal" style="max-height:85vh;overflow:hidden;flex-direction:column;">
         <div class="modal-header">
             <span id="historyModalTitle">История кандидата</span>
             <button class="modal-close" onclick="closeCandidateHistory()">✕</button>
@@ -1828,9 +1831,8 @@
                     const createdAtStr = new Date(c.createdAt).toLocaleString();
                     const checked = selectedCandidateIds.has(c.id) ? 'checked' : '';
                     rowsHtml += `
-                        <tr>
-                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
-
+                        <tr onclick="openCandidateHistory('${c.id}', '${c.fullName}')" style="cursor:pointer;">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="event.stopPropagation(); toggleCandidateSelect('${c.id}', this.checked)"></td>
                             <td>${updatedAtStr}</td>
                             <td>${createdAtStr}</td>
                             <td>${c.fullName}</td>
@@ -1843,7 +1845,7 @@
                             <td>${c.contactType || '—'}</td>
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
-                            <td><button class="delete-candidate-btn" onclick="deleteCandidateFromBase('${c.id}')">✕</button></td>
+                            <td><button class="delete-candidate-btn" onclick="event.stopPropagation(); deleteCandidateFromBase('${c.id}')">✕</button></td>
                         </tr>
                     `;
                 });
