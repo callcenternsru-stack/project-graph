@@ -30,9 +30,34 @@ exports.handler = async (event) => {
     // Обновляем существующего или добавляем нового
     const index = candidates.findIndex(c => c.id === candidateId);
     if (index !== -1) {
+      const prev = candidates[index];
       candidates[index] = updatedCandidate;
+      await appendHistory(candidateId, {
+        type: 'recruiter_action',
+        label: '✏️ Действие рекрутера',
+        recruiter: updatedCandidate.recruiter,
+        details: {
+          project:      updatedCandidate.project,
+          trainingDate: updatedCandidate.trainingDate,
+          trainingTime: updatedCandidate.trainingTime,
+          status:       updatedCandidate.callResult,
+          comment:      updatedCandidate.comment,
+          prevStatus:   prev.callResult
+        }
+      });
     } else {
       candidates.push(updatedCandidate);
+      await appendHistory(candidateId, {
+        type: 'contact_created',
+        label: '📥 Загружен в базу контактов',
+        recruiter: updatedCandidate.recruiter,
+        details: {
+          id:       candidateId,
+          fullName: updatedCandidate.fullName,
+          phone:    updatedCandidate.phone,
+          project:  updatedCandidate.project
+        }
+      });
     }
 
     // Сохраняем весь массив обратно
@@ -47,3 +72,24 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 };
+
+async function appendHistory(contactId, event) {
+  try {
+    const { getStore } = require('@netlify/blobs');
+    const store = getStore({
+      name: 'candidate-history',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_ACCESS_TOKEN,
+    });
+    let history = [];
+    try { history = await store.get(contactId, { type: 'json' }) || []; } catch(e) {}
+    history.push({
+      ...event,
+      timestamp: new Date().toISOString(),
+      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)
+    });
+    await store.setJSON(contactId, history);
+  } catch(e) {
+    console.error('appendHistory error:', e);
+  }
+}

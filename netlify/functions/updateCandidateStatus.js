@@ -46,6 +46,20 @@ exports.handler = async (event) => {
       }
     }
 
+    // Фиксируем смену статуса анкеты в истории
+    const resolvedContactId = contactId || data.contactId || null;
+    if (resolvedContactId) {
+      await appendHistory(resolvedContactId, {
+        type: 'form_status_changed',
+        label: '🔄 Статус анкеты изменён',
+        details: {
+          status:    recruitmentStatus,
+          formId:    id,
+          formType:  type
+        }
+      });
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true }),
@@ -58,3 +72,24 @@ exports.handler = async (event) => {
     };
   }
 };
+
+async function appendHistory(contactId, event) {
+  try {
+    const { getStore } = require('@netlify/blobs');
+    const store = getStore({
+      name: 'candidate-history',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_ACCESS_TOKEN,
+    });
+    let history = [];
+    try { history = await store.get(contactId, { type: 'json' }) || []; } catch(e) {}
+    history.push({
+      ...event,
+      timestamp: new Date().toISOString(),
+      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)
+    });
+    await store.setJSON(contactId, history);
+  } catch(e) {
+    console.error('appendHistory error:', e);
+  }
+}

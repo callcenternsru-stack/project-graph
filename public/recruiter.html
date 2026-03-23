@@ -3416,6 +3416,27 @@
                 window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
             }
 
+            // Фиксируем отправку сообщения в истории
+            if (currentCandidateIdForMessage) {
+                fetch('/.netlify/functions/saveHistory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contactId: currentCandidateIdForMessage,
+                        event: {
+                            type:    'message_sent',
+                            label:   currentMessageType === 'telegram' ? '✈️ Сообщение отправлено (Telegram)' : '💬 Сообщение отправлено (WhatsApp)',
+                            recruiter: currentRecruiter?.name || '—',
+                            details: {
+                                channel:     currentMessageType,
+                                messageText: text,
+                                scriptTitle: script.title
+                            }
+                        }
+                    })
+                }).catch(() => {});
+            }
+
             closeMessageModal();
         }
 

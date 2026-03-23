@@ -262,6 +262,44 @@ async function processRecord(fields, files = {}) {
     await manualStore.setJSON(recordId, record);
     console.log('Record saved:', recordId);
 
+    // Фиксируем в истории
+    if (resolvedContactId) {
+      const isDraft = technicalStatus === 'draft';
+      const isCompleted = technicalStatus === 'completed' || recruitmentStatus !== 'draft';
+      if (isDraft && !existingRecord) {
+        await appendHistory(resolvedContactId, {
+          type: 'form_draft',
+          label: '📝 Попал в черновики',
+          details: {
+            formId:   recordId,
+            formType: 'manual',
+            project:  fields.project,
+            fullName: fields.fullName
+          }
+        });
+      } else if (isCompleted && existingRecord?.status !== 'completed') {
+        await appendHistory(resolvedContactId, {
+          type: 'form_completed',
+          label: '✅ Прошёл проверку (ручная)',
+          details: {
+            formId:   recordId,
+            formType: 'manual',
+            status:   recruitmentStatus
+          }
+        });
+      } else if (existingRecord && existingRecord.recruitmentStatus !== recruitmentStatus) {
+        await appendHistory(resolvedContactId, {
+          type: 'form_status_changed',
+          label: '🔄 Статус анкеты изменён',
+          details: {
+            status:   recruitmentStatus,
+            formId:   recordId,
+            formType: 'manual'
+          }
+        });
+      }
+    }
+
     const indexKey = '_index';
     let index = await manualStore.get(indexKey, { type: 'json' }) || [];
     index = index.filter(item => item.id !== recordId);
@@ -274,4 +312,26 @@ async function processRecord(fields, files = {}) {
         statusCode: 200,
         body: JSON.stringify({ success: true, id: recordId })
     };
+}
+
+
+async function appendHistory(contactId, event) {
+  try {
+    const { getStore } = require('@netlify/blobs');
+    const store = getStore({
+      name: 'candidate-history',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_ACCESS_TOKEN,
+    });
+    let history = [];
+    try { history = await store.get(contactId, { type: 'json' }) || []; } catch(e) {}
+    history.push({
+      ...event,
+      timestamp: new Date().toISOString(),
+      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)
+    });
+    await store.setJSON(contactId, history);
+  } catch(e) {
+    console.error('appendHistory error:', e);
+  }
 }
