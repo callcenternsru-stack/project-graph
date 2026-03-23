@@ -303,6 +303,24 @@
             padding: 25px;
             background: #111111;
         }
+        /* ===== ИСТОРИЯ ===== */
+        .history-timeline { display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+        .history-event { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px 16px; position: relative; }
+        .history-event:hover { border-color: #ffd700; }
+        .history-event .evt-time { font-size: 11px; color: #666; margin-bottom: 4px; }
+        .history-event .evt-label { font-size: 14px; font-weight: 600; color: #ffd700; margin-bottom: 6px; }
+        .history-event .evt-recruiter { font-size: 12px; color: #a0a0a0; margin-bottom: 6px; }
+        .history-event .evt-details { font-size: 12px; color: #ccc; display: flex; flex-wrap: wrap; gap: 6px; }
+        .history-event .evt-detail-chip { background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px 8px; }
+        .history-event .evt-comment { font-size: 13px; color: #fff; background: #111; border-left: 3px solid #ffd700; padding: 6px 10px; border-radius: 0 6px 6px 0; margin-top: 6px; }
+        .history-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .history-tab { background: none; border: none; color: #a0a0a0; font-size: 14px; font-weight: 500; cursor: pointer; padding: 6px 4px; }
+        .history-tab.active { color: #ffd700; border-bottom: 2px solid #ffd700; }
+        .history-add-comment { display: flex; gap: 8px; margin-top: 16px; }
+        .history-add-comment textarea { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 13px; resize: none; height: 60px; font-family: inherit; }
+        .history-add-comment textarea:focus { outline: none; border-color: #ffd700; }
+        .history-add-comment button { background: #ffd700; color: #000; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
         .modal-content .form-row {
             display: flex;
             flex-wrap: wrap;
@@ -1215,12 +1233,30 @@
     </div>
 
     <!-- Модальное окно для деталей анкеты кандидата -->
-    <div id="candidateDetailsModal" class="modal">
+    <div id="candidateDetailsModal" class="modal" style="max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
         <div class="modal-header">
-            <span>Детали анкеты</span>
+            <span id="detailsModalTitle">Детали анкеты</span>
             <button class="modal-close" onclick="closeCandidateDetails()">✕</button>
         </div>
-        <div class="modal-content" id="candidateDetailsContent"></div>
+        <div style="padding:0 25px;background:#111;border-bottom:1px solid #333;">
+            <div class="history-tabs">
+                <button class="history-tab active" id="tabResults" onclick="switchDetailsTab('results')">📋 Результаты проверки</button>
+                <button class="history-tab" id="tabHistory" onclick="switchDetailsTab('history')">🕐 История</button>
+            </div>
+        </div>
+        <div class="modal-content" style="flex:1;overflow-y:auto;">
+            <div id="candidateDetailsContent"></div>
+            <div id="candidateDetailsHistory" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно истории кандидата -->
+    <div id="candidateHistoryModal" class="modal" style="max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+        <div class="modal-header">
+            <span id="historyModalTitle">История кандидата</span>
+            <button class="modal-close" onclick="closeCandidateHistory()">✕</button>
+        </div>
+        <div class="modal-content" style="flex:1;overflow-y:auto;" id="candidateHistoryContent"></div>
     </div>
 
     <!-- Модальное окно фильтра для Базы контактов -->
@@ -1753,7 +1789,6 @@
         // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ РЕНДЕРА КАНДИДАТОВ ==========
         function renderCandidates(container) {
             const headers = [
-                { label: 'ID', field: 'id' },
                 { label: 'Время изменения', field: 'updatedAt' },
                 { label: 'Дата', field: 'createdAt' },
                 { label: 'ФИО', field: 'fullName' },
@@ -1795,12 +1830,7 @@
                     rowsHtml += `
                         <tr>
                             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
-                            <td style="max-width:160px;">
-                                ${c.id
-                                    ? `<span style="font-size:11px;color:#a0a0a0;word-break:break-all;">${c.id}</span>`
-                                    : `<input type="text" placeholder="Введите ID" style="width:100%;background:#1a1a1a;border:1px solid #ffd700;border-radius:6px;padding:4px 6px;color:#fff;font-size:11px;" onblur="saveContactId('${c.id}', 'contact', this.value)" onclick="event.stopPropagation()">`
-                                }
-                            </td>
+
                             <td>${updatedAtStr}</td>
                             <td>${createdAtStr}</td>
                             <td>${c.fullName}</td>
@@ -3049,7 +3079,6 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Дата</th>
                                 <th>ФИО</th>
                                 <th>Проект</th>
@@ -3062,7 +3091,7 @@
                         <tbody>
             `;
             if (candidates.length === 0) {
-                html += '<tr><td colspan="8" style="text-align:center;">Нет анкет</td></tr>';
+                html += '<tr><td colspan="7" style="text-align:center;">Нет анкет</td></tr>';
             } else {
                 candidates.forEach(c => {
                     const date = c.createdAt ? new Date(c.createdAt).toLocaleString() : '—';
@@ -3089,13 +3118,8 @@
                         ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;background:rgba(255,100,0,0.18);color:#ff9500;font-size:11px;font-weight:600;border:1px solid rgba(255,150,0,0.3);margin-left:6px;">🔔 ${c.reminderCount}</span>`
                         : '';
 
-                    const contactIdDisplay = c.contactId
-                        ? `<span style="font-size:11px;color:#a0a0a0;word-break:break-all;">${c.contactId}</span>`
-                        : `<input type="text" placeholder="Введите ID" style="width:120px;background:#1a1a1a;border:1px solid #ffd700;border-radius:6px;padding:4px 6px;color:#fff;font-size:11px;" onblur="saveContactId('${c.id}', '${c.type}', this.value)" onclick="event.stopPropagation()">`;
-
                     html += `
                         <tr data-id="${c.id}" data-type="${c.type}" onclick="showCandidateDetails('${c.id}', '${c.type}')" style="cursor:pointer;">
-                            <td onclick="event.stopPropagation()">${contactIdDisplay}</td>
                             <td>${date}</td>
                             <td>${c.fullName}</td>
                             <td>${c.project}</td>
@@ -3196,6 +3220,12 @@
                 ${filesHtml}
             `;
 
+            _currentDetailsId   = id;
+            _currentDetailsType = type;
+            // Сбрасываем на вкладку Results
+            switchDetailsTab('results');
+            document.getElementById('candidateDetailsContent').style.display = '';
+            document.getElementById('candidateDetailsHistory').style.display = 'none';
             document.getElementById('candidateDetailsModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
@@ -3203,6 +3233,117 @@
         function closeCandidateDetails() {
             document.getElementById('candidateDetailsModal').classList.remove('show');
             document.body.classList.remove('menu-open');
+        }
+
+        // ── Переключение вкладок в деталях анкеты ──
+        let _currentDetailsId   = null;
+        let _currentDetailsType = null;
+
+        function switchDetailsTab(tab) {
+            document.getElementById('tabResults').classList.toggle('active', tab === 'results');
+            document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+            document.getElementById('candidateDetailsContent').style.display  = tab === 'results' ? '' : 'none';
+            document.getElementById('candidateDetailsHistory').style.display  = tab === 'history'  ? '' : 'none';
+            if (tab === 'history' && _currentDetailsId) {
+                const c = state.allCandidates.find(x => x.id === _currentDetailsId && x.type === _currentDetailsType);
+                const contactId = c?.contactId || null;
+                if (contactId) loadHistoryInto('candidateDetailsHistory', contactId);
+                else document.getElementById('candidateDetailsHistory').innerHTML = '<p style="color:#a0a0a0;">Нет привязанного контакта (contactId не найден)</p>';
+            }
+        }
+
+        // ── Модальное окно истории для базы контактов ──
+        async function openCandidateHistory(contactId, fullName) {
+            document.getElementById('historyModalTitle').textContent = '🕐 История: ' + (fullName || contactId);
+            document.getElementById('candidateHistoryContent').innerHTML = '<p style="color:#a0a0a0;text-align:center;padding:30px;">Загрузка...</p>';
+            document.getElementById('candidateHistoryModal').classList.add('show');
+            document.body.classList.add('menu-open');
+            await loadHistoryInto('candidateHistoryContent', contactId);
+        }
+
+        function closeCandidateHistory() {
+            document.getElementById('candidateHistoryModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        // ── Загрузка и рендер истории ──
+        async function loadHistoryInto(containerId, contactId) {
+            const container = document.getElementById(containerId);
+            try {
+                const res = await fetch(`/.netlify/functions/getHistory?contactId=${encodeURIComponent(contactId)}`);
+                const history = res.ok ? await res.json() : [];
+                container.innerHTML = renderHistoryHTML(contactId, history);
+            } catch(e) {
+                container.innerHTML = '<p style="color:#ff6b6b;">Ошибка загрузки истории</p>';
+            }
+        }
+
+        function renderHistoryHTML(contactId, history) {
+            const evtHTML = history.length === 0
+                ? '<p style="color:#666;text-align:center;padding:20px;">История пуста</p>'
+                : history.map(evt => {
+                    const time = evt.timestamp ? new Date(evt.timestamp).toLocaleString() : '—';
+                    const d = evt.details || {};
+                    const chips = [
+                        d.project      && `<span class="evt-detail-chip">📁 ${d.project}</span>`,
+                        d.status       && `<span class="evt-detail-chip">🏷 ${d.status}</span>`,
+                        d.trainingDate && `<span class="evt-detail-chip">📅 ${d.trainingDate}${d.trainingTime ? ' ' + d.trainingTime : ''}</span>`,
+                        d.formId       && `<span class="evt-detail-chip">📄 ${d.formType || ''} ${d.formId.slice(-8)}</span>`,
+                        d.channel      && `<span class="evt-detail-chip">${d.channel === 'whatsapp' ? '💬 WhatsApp' : '✈️ Telegram'}</span>`,
+                        d.messageText  && `<div class="evt-comment">${escapeHtml(d.messageText.slice(0, 200))}</div>`,
+                        d.comment      && `<div class="evt-comment">💬 ${escapeHtml(d.comment)}</div>`,
+                        d.adminComment && `<div class="evt-comment">👤 ${escapeHtml(d.adminComment)}</div>`,
+                    ].filter(Boolean).join('');
+
+                    return \`<div class="history-event">
+                        <div class="evt-time">\${time}</div>
+                        <div class="evt-label">\${evt.label || evt.type}</div>
+                        \${evt.recruiter ? \`<div class="evt-recruiter">👤 \${escapeHtml(evt.recruiter)}</div>\` : ''}
+                        <div class="evt-details">\${chips}</div>
+                    </div>\`;
+                }).join('');
+
+            return \`<div class="history-timeline">\${evtHTML}</div>
+                <div class="history-add-comment">
+                    <textarea id="histComment_\${contactId}" placeholder="Комментарий администратора..."></textarea>
+                    <button onclick="saveHistoryComment('\${contactId}')">💾 Добавить</button>
+                </div>\`;
+        }
+
+        async function saveHistoryComment(contactId) {
+            const input = document.getElementById('histComment_' + contactId);
+            const text = input ? input.value.trim() : '';
+            if (!text) return;
+            try {
+                await fetch('/.netlify/functions/saveHistory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contactId,
+                        event: {
+                            type: 'admin_comment',
+                            label: '💬 Комментарий администратора',
+                            details: { adminComment: text }
+                        }
+                    })
+                });
+                if (input) input.value = '';
+                showNotification('Комментарий добавлен', 'success');
+                // Перезагружаем историю
+                const activeHistory = document.getElementById('candidateHistoryContent');
+                if (activeHistory && activeHistory.innerHTML.includes('history-timeline')) {
+                    await loadHistoryInto('candidateHistoryContent', contactId);
+                } else {
+                    await loadHistoryInto('candidateDetailsHistory', contactId);
+                }
+            } catch(e) {
+                showNotification('Ошибка сохранения', 'error');
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
         // ========== СОХРАНЕНИЕ ID ВРУЧНУЮ ==========
