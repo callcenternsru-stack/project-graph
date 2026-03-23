@@ -3359,7 +3359,8 @@
             const projectName = document.getElementById('project').value;
             const projectObj  = appData.projects.find(p => p.name === projectName);
             const projectId   = projectObj ? projectObj.id : '';
-            const link        = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
+            let link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
+            if (link && currentCandidateIdForMessage) link += `&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`;
 
             let text = htmlToPlainText(script.content);
             if (link && script.title.trim().toLowerCase() === 'проверка')
