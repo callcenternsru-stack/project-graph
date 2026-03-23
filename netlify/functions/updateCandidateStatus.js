@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { id, type, recruitmentStatus, reminderCount } = JSON.parse(event.body);
+    const { id, type, recruitmentStatus, reminderCount, contactId } = JSON.parse(event.body);
     if (!id || !type || !recruitmentStatus) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing fields' }) };
     }
@@ -23,9 +23,10 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }
 
-    // Обновляем статус в анкете
+    // Обновляем статус и contactId в анкете
     data.recruitmentStatus = recruitmentStatus;
     if (reminderCount !== undefined) data.reminderCount = reminderCount;
+    if (contactId !== undefined) data.contactId = contactId;
     await store.setJSON(id, data);
 
     // Если у анкеты есть contactId, обновляем соответствующую запись в базе контактов

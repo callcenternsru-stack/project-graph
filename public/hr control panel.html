@@ -1753,6 +1753,7 @@
         // ========== ОБНОВЛЕННАЯ ФУНКЦИЯ РЕНДЕРА КАНДИДАТОВ ==========
         function renderCandidates(container) {
             const headers = [
+                { label: 'ID', field: 'id' },
                 { label: 'Время изменения', field: 'updatedAt' },
                 { label: 'Дата', field: 'createdAt' },
                 { label: 'ФИО', field: 'fullName' },
@@ -1794,6 +1795,12 @@
                     rowsHtml += `
                         <tr>
                             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="toggleCandidateSelect('${c.id}', this.checked)"></td>
+                            <td style="max-width:160px;">
+                                ${c.id
+                                    ? `<span style="font-size:11px;color:#a0a0a0;word-break:break-all;">${c.id}</span>`
+                                    : `<input type="text" placeholder="Введите ID" style="width:100%;background:#1a1a1a;border:1px solid #ffd700;border-radius:6px;padding:4px 6px;color:#fff;font-size:11px;" onblur="saveContactId('${c.id}', 'contact', this.value)" onclick="event.stopPropagation()">`
+                                }
+                            </td>
                             <td>${updatedAtStr}</td>
                             <td>${createdAtStr}</td>
                             <td>${c.fullName}</td>
@@ -3042,6 +3049,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Дата</th>
                                 <th>ФИО</th>
                                 <th>Проект</th>
@@ -3054,7 +3062,7 @@
                         <tbody>
             `;
             if (candidates.length === 0) {
-                html += '<tr><td colspan="7" style="text-align:center;">Нет анкет</td></tr>';
+                html += '<tr><td colspan="8" style="text-align:center;">Нет анкет</td></tr>';
             } else {
                 candidates.forEach(c => {
                     const date = c.createdAt ? new Date(c.createdAt).toLocaleString() : '—';
@@ -3081,8 +3089,13 @@
                         ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;background:rgba(255,100,0,0.18);color:#ff9500;font-size:11px;font-weight:600;border:1px solid rgba(255,150,0,0.3);margin-left:6px;">🔔 ${c.reminderCount}</span>`
                         : '';
 
+                    const contactIdDisplay = c.contactId
+                        ? `<span style="font-size:11px;color:#a0a0a0;word-break:break-all;">${c.contactId}</span>`
+                        : `<input type="text" placeholder="Введите ID" style="width:120px;background:#1a1a1a;border:1px solid #ffd700;border-radius:6px;padding:4px 6px;color:#fff;font-size:11px;" onblur="saveContactId('${c.id}', '${c.type}', this.value)" onclick="event.stopPropagation()">`;
+
                     html += `
                         <tr data-id="${c.id}" data-type="${c.type}" onclick="showCandidateDetails('${c.id}', '${c.type}')" style="cursor:pointer;">
+                            <td onclick="event.stopPropagation()">${contactIdDisplay}</td>
                             <td>${date}</td>
                             <td>${c.fullName}</td>
                             <td>${c.project}</td>
@@ -3190,6 +3203,51 @@
         function closeCandidateDetails() {
             document.getElementById('candidateDetailsModal').classList.remove('show');
             document.body.classList.remove('menu-open');
+        }
+
+        // ========== СОХРАНЕНИЕ ID ВРУЧНУЮ ==========
+        async function saveContactId(recordId, recordType, newId) {
+            const trimmed = newId.trim();
+            if (!trimmed) return;
+
+            try {
+                if (recordType === 'contact') {
+                    // Обновляем ID контакта в базе контактов
+                    const candidate = state.candidates.find(c => c.id === recordId);
+                    if (candidate) {
+                        candidate.id = trimmed;
+                        await fetch('/.netlify/functions/submitCandidate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(candidate)
+                        });
+                        showNotification('ID контакта сохранён', 'success');
+                        await loadData();
+                        renderContent();
+                    }
+                } else {
+                    // Обновляем contactId в анкете
+                    const res = await fetch('/.netlify/functions/updateCandidateStatus', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: recordId,
+                            type: recordType,
+                            recruitmentStatus: (state.allCandidates.find(c => c.id === recordId)?.recruitmentStatus || 'draft'),
+                            contactId: trimmed
+                        })
+                    });
+                    if (res.ok) {
+                        const c = state.allCandidates.find(c => c.id === recordId);
+                        if (c) c.contactId = trimmed;
+                        showNotification('ID анкеты сохранён', 'success');
+                        renderContent();
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                showNotification('Ошибка сохранения ID', 'error');
+            }
         }
 
         async function updateCandidateStatus(id, type, newStatus, showNotif = true) {
