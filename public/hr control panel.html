@@ -1802,7 +1802,7 @@
                             <td>${c.country || '—'}</td>
                             <td>${training}</td>
                             <td>${meeting}</td>
-                            <td>${c.callResult || '—'}</td>
+                            <td>${c.callResult || '—'}${(c.reminderCount && c.reminderCount > 0) ? ` <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;background:rgba(255,100,0,0.18);color:#ff9500;font-size:11px;font-weight:600;border:1px solid rgba(255,150,0,0.3);">🔔 ${c.reminderCount}</span>` : ''}</td>
                             <td>${c.contactType || '—'}</td>
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
@@ -3077,6 +3077,9 @@
                         statusSelect += `<option value="${opt}" ${selected}>${opt}</option>`;
                     });
                     statusSelect += '</select>';
+                    const reminderBadge = (c.reminderCount && c.reminderCount > 0)
+                        ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;background:rgba(255,100,0,0.18);color:#ff9500;font-size:11px;font-weight:600;border:1px solid rgba(255,150,0,0.3);margin-left:6px;">🔔 ${c.reminderCount}</span>`
+                        : '';
 
                     html += `
                         <tr data-id="${c.id}" data-type="${c.type}" onclick="showCandidateDetails('${c.id}', '${c.type}')" style="cursor:pointer;">
@@ -3085,7 +3088,7 @@
                             <td>${c.project}</td>
                             <td>${recruiterSelect}</td>
                             <td>${typeLabel}</td>
-                            <td>${statusSelect}</td>
+                            <td>${statusSelect}${reminderBadge}</td>
                             <td>
                                 <button class="delete-btn" onclick="event.stopPropagation(); deleteCandidate('${c.id}', '${c.type}')">✕</button>
                             </td>
