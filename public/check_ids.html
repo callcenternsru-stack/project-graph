@@ -4,111 +4,43 @@
     <meta charset="UTF-8">
     <title>Проверка ID анкет</title>
     <style>
-        body {
-            background: #0d0d0d;
-            color: #fff;
-            font-family: monospace;
-            padding: 30px;
-        }
+        body { background: #0d0d0d; color: #fff; font-family: monospace; padding: 30px; }
         h2 { color: #ffd700; margin-bottom: 10px; }
-        .status { color: #aaa; margin-bottom: 20px; font-size: 13px; }
-        .section {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
+        .section { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
         .section h3 { color: #ffd700; margin-bottom: 12px; font-size: 15px; }
         .ok   { color: #6bff9e; }
         .warn { color: #ff6b6b; }
         .info { color: #6b8cff; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        th {
-            background: #000;
-            color: #ffd700;
-            padding: 8px 12px;
-            text-align: left;
-            border-bottom: 1px solid #333;
-        }
-        td {
-            padding: 7px 12px;
-            border-bottom: 1px solid #222;
-            color: #ccc;
-            word-break: break-all;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #000; color: #ffd700; padding: 8px 12px; text-align: left; border-bottom: 1px solid #333; }
+        td { padding: 7px 12px; border-bottom: 1px solid #222; color: #ccc; word-break: break-all; }
         tr:hover td { background: #222; }
-        #log {
-            white-space: pre-wrap;
-            font-size: 12px;
-            color: #888;
-            background: #111;
-            border: 1px solid #222;
-            border-radius: 8px;
-            padding: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        button {
-            background: #ffd700;
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 28px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-bottom: 24px;
-        }
+        #log { white-space: pre-wrap; font-size: 12px; color: #888; background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto; }
+        button { background: #ffd700; color: #000; border: none; border-radius: 8px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 24px; margin-right: 10px; }
         button:hover { background: #ffe44d; }
         button:disabled { opacity: 0.4; cursor: not-allowed; }
-        .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        .badge-red  { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid #ff6b6b; }
-        .badge-green{ background: rgba(107,255,158,0.15); color: #6bff9e; border: 1px solid #6bff9e; }
-        .badge-blue { background: rgba(107,140,255,0.15); color: #6b8cff; border: 1px solid #6b8cff; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+        .badge-red   { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid #ff6b6b; }
+        .badge-green { background: rgba(107,255,158,0.15); color: #6bff9e; border: 1px solid #6bff9e; }
+        .badge-blue  { background: rgba(107,140,255,0.15); color: #6b8cff; border: 1px solid #6b8cff; }
+        pre { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; font-size: 11px; color: #aaa; overflow-x: auto; max-height: 200px; overflow-y: auto; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     </style>
 </head>
 <body>
 
 <h2>🔍 Проверка ID анкет vs База контактов</h2>
-<p class="status">
-    Этот файл должен быть открыт на том же домене, что и ваша панель 
-    (чтобы запросы к <code>/.netlify/functions/...</code> работали).
-</p>
 
-<button id="runBtn" onclick="runCheck()">▶ Запустить проверку</button>
+<button id="debugBtn" onclick="runDebug()">🔬 Шаг 1: Посмотреть структуру данных</button>
+<button id="runBtn"   onclick="runCheck()" style="display:none;">▶ Шаг 2: Запустить проверку</button>
 
 <div id="logSection" class="section" style="display:none;">
-    <h3>Лог загрузки</h3>
+    <h3>Лог</h3>
     <div id="log"></div>
 </div>
 
-<div id="summary" class="section" style="display:none;">
-    <h3>Итог</h3>
-    <div id="summaryContent"></div>
-</div>
-
-<div id="resultsSection" style="display:none;">
-    <div class="section">
-        <h3 id="missingTitle">Анкеты БЕЗ совпадения в Базе контактов</h3>
-        <div id="missingTable"></div>
-    </div>
-    <div class="section">
-        <h3 id="matchedTitle">Анкеты С совпадением в Базе контактов</h3>
-        <div id="matchedTable"></div>
-    </div>
-</div>
+<div id="debugSection" style="display:none;"></div>
+<div id="mainResults"  style="display:none;"></div>
 
 <script>
     function log(msg) {
@@ -119,129 +51,206 @@
 
     async function safeFetch(url, label) {
         try {
-            log(`Загружаю ${label}...`);
+            log('Загружаю ' + label + '...');
             const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            log(`  ✓ ${label}: получено ${Array.isArray(data) ? data.length : Object.keys(data).length} записей`);
+            const count = Array.isArray(data) ? data.length : Object.keys(data).length;
+            log('  OK ' + label + ': ' + count + ' записей');
             return data;
         } catch (e) {
-            log(`  ✗ ${label}: ОШИБКА — ${e.message}`);
+            log('  ОШИБКА ' + label + ': ' + e.message);
             return [];
         }
     }
 
-    function renderTable(rows, columns) {
-        if (!rows.length) return '<p style="color:#888;">Нет записей</p>';
-        let html = '<div style="overflow-x:auto;"><table><thead><tr>';
-        columns.forEach(c => { html += `<th>${c.label}</th>`; });
-        html += '</tr></thead><tbody>';
-        rows.forEach(r => {
-            html += '<tr>';
-            columns.forEach(c => {
-                const val = r[c.key] !== undefined && r[c.key] !== null ? r[c.key] : '—';
-                html += `<td>${val}</td>`;
-            });
-            html += '</tr>';
-        });
-        html += '</tbody></table></div>';
-        return html;
+    function getKeys(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) return [];
+        return Object.keys(arr[0]);
+    }
+
+    function previewJson(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) return '<em style="color:#555">пусто</em>';
+        return '<pre>' + JSON.stringify(arr.slice(0, 2), null, 2) + '</pre>';
+    }
+
+    function detectIdField(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) return null;
+        const keys = Object.keys(arr[0]);
+        const candidates = ['id','_id','code','formId','recordId','uid','ID'];
+        for (const k of candidates) {
+            if (keys.includes(k)) return k;
+        }
+        return null;
+    }
+
+    async function runDebug() {
+        document.getElementById('debugBtn').disabled = true;
+        document.getElementById('logSection').style.display = 'block';
+        document.getElementById('log').textContent = '';
+
+        const [allForms, manualForms, autoForms, candidates] = await Promise.all([
+            safeFetch('/.netlify/functions/getAllForms',    'getAllForms'),
+            safeFetch('/.netlify/functions/getManualForms','getManualForms'),
+            safeFetch('/.netlify/functions/getResults',    'getResults (autoForms)'),
+            safeFetch('/.netlify/functions/getCandidates', 'getCandidates'),
+        ]);
+
+        window._raw = { allForms, manualForms, autoForms, candidates };
+
+        const idFieldForms      = detectIdField(allForms);
+        const idFieldManual     = detectIdField(manualForms);
+        const idFieldAuto       = detectIdField(autoForms);
+        const idFieldCandidates = detectIdField(candidates);
+
+        window._idFields = { idFieldForms, idFieldManual, idFieldAuto, idFieldCandidates };
+
+        log('\nПоля ID:');
+        log('  allForms    -> "' + idFieldForms + '"');
+        log('  manualForms -> "' + idFieldManual + '"');
+        log('  autoForms   -> "' + idFieldAuto + '"');
+        log('  candidates  -> "' + idFieldCandidates + '"');
+
+        const ds = document.getElementById('debugSection');
+        ds.style.display = 'block';
+        ds.innerHTML =
+            '<div class="section">' +
+            '<h3>Количество записей в каждом источнике</h3>' +
+            '<table><thead><tr><th>Источник</th><th>Кол-во</th><th>Поле ID</th><th>Все ключи</th></tr></thead><tbody>' +
+            '<tr><td>getAllForms</td>' +
+                '<td class="' + (allForms.length ? 'ok' : 'warn') + '">' + allForms.length + '</td>' +
+                '<td class="' + (idFieldForms ? 'ok' : 'warn') + '">' + (idFieldForms || 'не найдено') + '</td>' +
+                '<td>' + (getKeys(allForms).join(', ') || '—') + '</td></tr>' +
+            '<tr><td>getManualForms</td>' +
+                '<td class="' + (manualForms.length ? 'ok' : 'warn') + '">' + manualForms.length + '</td>' +
+                '<td class="' + (idFieldManual ? 'ok' : 'warn') + '">' + (idFieldManual || 'не найдено') + '</td>' +
+                '<td>' + (getKeys(manualForms).join(', ') || '—') + '</td></tr>' +
+            '<tr><td>getResults (autoForms)</td>' +
+                '<td class="' + (autoForms.length ? 'ok' : 'warn') + '">' + autoForms.length + '</td>' +
+                '<td class="' + (idFieldAuto ? 'ok' : 'warn') + '">' + (idFieldAuto || 'не найдено') + '</td>' +
+                '<td>' + (getKeys(autoForms).join(', ') || '—') + '</td></tr>' +
+            '<tr><td>getCandidates</td>' +
+                '<td class="' + (candidates.length ? 'ok' : 'warn') + '">' + candidates.length + '</td>' +
+                '<td class="' + (idFieldCandidates ? 'ok' : 'warn') + '">' + (idFieldCandidates || 'не найдено') + '</td>' +
+                '<td>' + (getKeys(candidates).join(', ') || '—') + '</td></tr>' +
+            '</tbody></table></div>' +
+            '<div class="grid2">' +
+            '<div class="section"><h3>Пример: getAllForms (первые 2)</h3>' + previewJson(allForms) + '</div>' +
+            '<div class="section"><h3>Пример: getManualForms (первые 2)</h3>' + previewJson(manualForms) + '</div>' +
+            '<div class="section"><h3>Пример: getResults/autoForms (первые 2)</h3>' + previewJson(autoForms) + '</div>' +
+            '<div class="section"><h3>Пример: getCandidates (первые 2)</h3>' + previewJson(candidates) + '</div>' +
+            '</div>';
+
+        document.getElementById('runBtn').style.display = 'inline-block';
+        document.getElementById('debugBtn').disabled = false;
+        document.getElementById('debugBtn').textContent = 'Обновить структуру';
     }
 
     async function runCheck() {
         const btn = document.getElementById('runBtn');
         btn.disabled = true;
-        btn.textContent = '⏳ Загрузка...';
+        btn.textContent = 'Проверяю...';
 
-        document.getElementById('logSection').style.display = 'block';
-        document.getElementById('summary').style.display = 'none';
-        document.getElementById('resultsSection').style.display = 'none';
-        document.getElementById('log').textContent = '';
+        const { allForms, manualForms, autoForms, candidates } = window._raw;
+        const { idFieldForms, idFieldManual, idFieldAuto, idFieldCandidates } = window._idFields;
 
-        // ── Загружаем данные ──────────────────────────────────────────────
-        const [allForms, manualForms, autoForms, candidates] = await Promise.all([
-            safeFetch('/.netlify/functions/getAllForms',    'Все анкеты (allForms)'),
-            safeFetch('/.netlify/functions/getManualForms','Ручные анкеты (manualForms)'),
-            safeFetch('/.netlify/functions/getResults',    'Авто-анкеты (autoForms)'),
-            safeFetch('/.netlify/functions/getCandidates', 'База контактов (candidates)'),
-        ]);
+        const seen = new Set();
+        const allCombined = [];
 
-        // ── Строим Set ID контактов ───────────────────────────────────────
-        const contactIdSet = new Set(candidates.map(c => String(c.id)));
-        log(`\nID в Базе контактов: ${contactIdSet.size} уникальных`);
+        function addForms(arr, idField, source) {
+            if (!Array.isArray(arr)) return;
+            for (const f of arr) {
+                const fid = String(f[idField] || f.id || f._id || f.code || '');
+                if (!fid || fid === 'undefined' || fid === 'null') continue;
+                if (!seen.has(fid)) {
+                    seen.add(fid);
+                    allCombined.push(Object.assign({}, f, { _resolvedId: fid, _source: source }));
+                }
+            }
+        }
 
-        // ── Работаем с allForms (если пусто — пробуем объединить авто+ручные) ──
-        let forms = Array.isArray(allForms) && allForms.length > 0
-            ? allForms
-            : [...(Array.isArray(autoForms) ? autoForms : []),
-               ...(Array.isArray(manualForms) ? manualForms : [])];
+        addForms(allForms,    idFieldForms,  'allForms');
+        addForms(autoForms,   idFieldAuto,   'autoForms');
+        addForms(manualForms, idFieldManual, 'manualForms');
 
-        log(`Итого анкет для проверки: ${forms.length}`);
+        log('\nОбъединено уникальных анкет: ' + allCombined.length);
 
-        // ── Сравниваем ────────────────────────────────────────────────────
-        const missing = [];  // нет в Базе контактов
-        const matched = [];  // есть в Базе контактов
+        const contactIdSet = new Set(
+            candidates
+                .map(c => String(c[idFieldCandidates] || c.id || c._id || ''))
+                .filter(Boolean)
+        );
+        log('ID в Базе контактов: ' + contactIdSet.size);
 
-        for (const form of forms) {
-            const fid = String(form.id);
+        const sample = allCombined[0] || {};
+        const nameField  = ['fullName','name','ФИО'].find(k => sample[k]) || 'fullName';
+        const phoneField = ['phone','телефон','Phone'].find(k => sample[k]) || 'phone';
+        const projField  = ['project','проект','Project'].find(k => sample[k]) || 'project';
+
+        const missing = [];
+        const matched = [];
+
+        for (const form of allCombined) {
             const row = {
-                id:       fid,
-                fullName: form.fullName || form.name || '—',
-                phone:    form.phone    || '—',
-                project:  form.project  || '—',
-                type:     form.type     || '—',
+                id:       form._resolvedId,
+                source:   form._source,
+                fullName: form[nameField]  || '—',
+                phone:    form[phoneField] || '—',
+                project:  form[projField]  || '—',
                 createdAt: form.createdAt ? new Date(form.createdAt).toLocaleString() : '—',
             };
-            if (contactIdSet.has(fid)) {
+            if (contactIdSet.has(form._resolvedId)) {
                 matched.push(row);
             } else {
                 missing.push(row);
             }
         }
 
-        log(`\n──────────────────────────────`);
-        log(`Без совпадения в контактах: ${missing.length}`);
-        log(`С совпадением в контактах:  ${matched.length}`);
+        log('БЕЗ совпадения: ' + missing.length);
+        log('С совпадением:  ' + matched.length);
 
-        // ── Итог ──────────────────────────────────────────────────────────
-        document.getElementById('summary').style.display = 'block';
-        document.getElementById('summaryContent').innerHTML = `
-            <p>Всего анкет проверено: <strong class="info">${forms.length}</strong></p>
-            <p>Записей в Базе контактов: <strong class="info">${candidates.length}</strong></p>
-            <p style="margin-top:10px;">
-                Анкеты <strong>БЕЗ</strong> пары в контактах:
-                <span class="badge ${missing.length > 0 ? 'badge-red' : 'badge-green'}">${missing.length}</span>
-            </p>
-            <p>
-                Анкеты <strong>С</strong> парой в контактах:
-                <span class="badge badge-blue">${matched.length}</span>
-            </p>
-        `;
-
-        // ── Таблицы результатов ───────────────────────────────────────────
         const cols = [
             { label: 'ID анкеты', key: 'id' },
+            { label: 'Источник',  key: 'source' },
             { label: 'ФИО',       key: 'fullName' },
             { label: 'Телефон',   key: 'phone' },
             { label: 'Проект',    key: 'project' },
-            { label: 'Тип',       key: 'type' },
             { label: 'Дата',      key: 'createdAt' },
         ];
 
-        document.getElementById('missingTitle').innerHTML =
-            `Анкеты <span class="warn">БЕЗ</span> совпадения в Базе контактов
-             <span class="badge badge-red">${missing.length}</span>`;
+        function renderTable(rows) {
+            if (!rows.length) return '<p style="color:#888;">Нет записей</p>';
+            let html = '<div style="overflow-x:auto;"><table><thead><tr>';
+            cols.forEach(function(c) { html += '<th>' + c.label + '</th>'; });
+            html += '</tr></thead><tbody>';
+            rows.forEach(function(r) {
+                html += '<tr>' + cols.map(function(c) {
+                    return '<td>' + (r[c.key] !== undefined ? r[c.key] : '—') + '</td>';
+                }).join('') + '</tr>';
+            });
+            return html + '</tbody></table></div>';
+        }
 
-        document.getElementById('matchedTitle').innerHTML =
-            `Анкеты <span class="ok">С</span> совпадением в Базе контактов
-             <span class="badge badge-blue">${matched.length}</span>`;
+        document.getElementById('mainResults').style.display = 'block';
+        document.getElementById('mainResults').innerHTML =
+            '<div class="section">' +
+            '<h3>Итог</h3>' +
+            '<p>Уникальных анкет проверено: <strong class="info">' + allCombined.length + '</strong></p>' +
+            '<p>Записей в Базе контактов: <strong class="info">' + candidates.length + '</strong></p>' +
+            '<p>Анкеты БЕЗ пары в контактах: <span class="badge ' + (missing.length > 0 ? 'badge-red' : 'badge-green') + '">' + missing.length + '</span></p>' +
+            '<p>Анкеты С парой в контактах: <span class="badge badge-blue">' + matched.length + '</span></p>' +
+            '</div>' +
+            '<div class="section">' +
+            '<h3>Анкеты <span class="warn">БЕЗ</span> совпадения в Базе контактов <span class="badge badge-red">' + missing.length + '</span></h3>' +
+            renderTable(missing) +
+            '</div>' +
+            '<div class="section">' +
+            '<h3>Анкеты <span class="ok">С</span> совпадением в Базе контактов <span class="badge badge-blue">' + matched.length + '</span></h3>' +
+            renderTable(matched) +
+            '</div>';
 
-        document.getElementById('missingTable').innerHTML = renderTable(missing, cols);
-        document.getElementById('matchedTable').innerHTML = renderTable(matched, cols);
-        document.getElementById('resultsSection').style.display = 'block';
-
-        btn.textContent = '🔄 Повторить';
         btn.disabled = false;
+        btn.textContent = 'Повторить проверку';
     }
 </script>
 </body>
