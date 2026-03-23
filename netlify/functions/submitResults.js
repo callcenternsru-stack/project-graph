@@ -32,7 +32,6 @@ exports.handler = async (event) => {
       const chunks = [];
       file.on('data', (chunk) => chunks.push(chunk));
       file.on('end', () => {
-        // Сохраняем информацию о файле, включая оригинальное имя
         files[fieldname] = {
           filename,
           mimeType,
@@ -67,21 +66,26 @@ exports.handler = async (event) => {
           });
           return;
         }
-        if (candidateData.status !== 'pending') {
-          resolve({
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Code already processed' })
-          });
-          return;
-        }
 
-        // Сохраняем файлы с использованием оригинальных имён
+        // Разрешаем повторную отправку если статус уже completed
+        // (на случай если предыдущая отправка прервалась на стороне клиента)
+        // НЕ блокируем — просто перезаписываем файлы
+
+        // Сохраняем файлы
         for (const [fieldname, fileInfo] of Object.entries(files)) {
-          const fileKey = `${code}/${fileInfo.filename}`; // Исправлено: теперь используется оригинальное имя файла
+          // Используем стандартные имена файлов для надёжности
+          let saveFilename = fileInfo.filename;
+          if (!saveFilename || saveFilename.trim() === '') {
+            // Если имя пустое — используем fieldname с расширением по mimeType
+            const extMap = { 'audio/wav': '.wav', 'audio/mpeg': '.mp3', 'text/plain': '.txt', 'application/json': '.json' };
+            saveFilename = fieldname + (extMap[fileInfo.mimeType] || '');
+          }
+          const fileKey = `${code}/${saveFilename}`;
+          console.log(`[submitResults] Saving file: ${fileKey}, size: ${fileInfo.data.length}`);
           await store.set(fileKey, fileInfo.data);
         }
 
-        // Обновляем статус кандидата
+        // Обновляем статус
         candidateData.status = 'completed';
         candidateData.completedAt = new Date().toISOString();
         await store.setJSON(code, candidateData);
