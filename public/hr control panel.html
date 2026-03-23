@@ -307,15 +307,25 @@
             background: #111111;
         }
         /* ===== ИСТОРИЯ ===== */
-        .history-timeline { display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto; padding-right: 4px; }
-        .history-event { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px 16px; position: relative; }
+        .history-header { background: #111; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .history-header-item { display: flex; flex-direction: column; gap: 3px; }
+        .history-header-item .h-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .history-header-item .h-value { font-size: 13px; color: #fff; font-weight: 500; }
+        .history-header-item .h-value.accent { color: #ffd700; }
+        .history-timeline { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; padding-right: 4px; }
+        .history-event { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; }
         .history-event:hover { border-color: #ffd700; }
-        .history-event .evt-time { font-size: 11px; color: #666; margin-bottom: 4px; }
-        .history-event .evt-label { font-size: 14px; font-weight: 600; color: #ffd700; margin-bottom: 6px; }
-        .history-event .evt-recruiter { font-size: 12px; color: #a0a0a0; margin-bottom: 6px; }
-        .history-event .evt-details { font-size: 12px; color: #ccc; display: flex; flex-wrap: wrap; gap: 6px; }
-        .history-event .evt-detail-chip { background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px 8px; }
-        .history-event .evt-comment { font-size: 13px; color: #fff; background: #111; border-left: 3px solid #ffd700; padding: 6px 10px; border-radius: 0 6px 6px 0; margin-top: 6px; }
+        .history-event-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #111; border-bottom: 1px solid #2a2a2a; }
+        .history-event-header .evt-label { font-size: 13px; font-weight: 600; color: #ffd700; }
+        .history-event-header .evt-meta { font-size: 11px; color: #666; display: flex; gap: 12px; }
+        .history-event-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+        .history-change-row { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 8px; align-items: start; font-size: 12px; }
+        .history-change-row .field-name { color: #666; padding-top: 2px; }
+        .history-change-row .old-val { color: #ff6b6b; background: rgba(255,107,107,0.08); border-radius: 4px; padding: 2px 8px; word-break: break-word; }
+        .history-change-row .new-val { color: #6bff9e; background: rgba(107,255,158,0.08); border-radius: 4px; padding: 2px 8px; word-break: break-word; }
+        .history-change-header { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 8px; font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .history-msg-block { background: #111; border-left: 3px solid #ffd700; border-radius: 0 6px 6px 0; padding: 8px 12px; font-size: 12px; color: #ccc; line-height: 1.5; }
+        .history-transfer-block { font-size: 12px; color: #ccc; display: flex; flex-direction: column; gap: 4px; }
         .history-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; }
         .history-tab { background: none; border: none; color: #a0a0a0; font-size: 14px; font-weight: 500; cursor: pointer; padding: 6px 4px; }
         .history-tab.active { color: #ffd700; border-bottom: 2px solid #ffd700; }
@@ -3283,42 +3293,168 @@
             try {
                 const res = await fetch(`/.netlify/functions/getHistory?contactId=${encodeURIComponent(contactId)}`);
                 const history = res.ok ? await res.json() : [];
-                container.innerHTML = renderHistoryHTML(contactId, history);
+                // Ищем метаданные контакта для шапки
+                const contact = state.candidates.find(c => c.id === contactId) || null;
+                container.innerHTML = renderHistoryHTML(contactId, history, contact);
             } catch(e) {
                 container.innerHTML = '<p style="color:#ff6b6b;">Ошибка загрузки истории</p>';
             }
         }
 
-        function renderHistoryHTML(contactId, history) {
+        function renderHistoryHTML(contactId, history, contactMeta) {
+            // ── Шапка ──────────────────────────────────────────────────────
+            var meta = contactMeta || {};
+            var headerHTML = '<div class="history-header">' +
+                '<div class="history-header-item"><span class="h-label">Дата загрузки в базу</span><span class="h-value">' + (meta.createdAt ? new Date(meta.createdAt).toLocaleString() : '—') + '</span></div>' +
+                '<div class="history-header-item"><span class="h-label">Рекрутер</span><span class="h-value accent">' + escapeHtml(meta.recruiter || '—') + '</span></div>' +
+                '<div class="history-header-item"><span class="h-label">Последнее изменение</span><span class="h-value">' + (meta.updatedAt ? new Date(meta.updatedAt).toLocaleString() : '—') + '</span></div>' +
+                '<div class="history-header-item"><span class="h-label">ID кандидата</span><span class="h-value" style="font-size:11px;word-break:break-all;">' + escapeHtml(meta.id || '—') + '</span></div>' +
+                '<div class="history-header-item"><span class="h-label">Текущий статус</span><span class="h-value accent">' + escapeHtml(meta.callResult || 'ожидает связи') + '</span></div>' +
+                '</div>';
+
+            // ── События ────────────────────────────────────────────────────
             var evtHTML = '';
             if (history.length === 0) {
-                evtHTML = '<p style="color:#666;text-align:center;padding:20px;">История пуста</p>';
+                evtHTML = '<p style="color:#666;text-align:center;padding:20px;">История действий пуста</p>';
             } else {
                 history.forEach(function(evt) {
                     var time = evt.timestamp ? new Date(evt.timestamp).toLocaleString() : '—';
                     var d = evt.details || {};
-                    var chips = '';
-                    if (d.project)      chips += '<span class="evt-detail-chip">📁 ' + escapeHtml(d.project) + '</span>';
-                    if (d.status)       chips += '<span class="evt-detail-chip">🏷 ' + escapeHtml(d.status) + '</span>';
-                    if (d.trainingDate) chips += '<span class="evt-detail-chip">📅 ' + escapeHtml(d.trainingDate) + (d.trainingTime ? ' ' + d.trainingTime : '') + '</span>';
-                    if (d.formId)       chips += '<span class="evt-detail-chip">📄 ' + (d.formType || '') + ' ' + d.formId.slice(-8) + '</span>';
-                    if (d.channel)      chips += '<span class="evt-detail-chip">' + (d.channel === 'whatsapp' ? '💬 WhatsApp' : '✈️ Telegram') + '</span>';
-                    if (d.messageText)  chips += '<div class="evt-comment">' + escapeHtml(d.messageText.slice(0, 200)) + '</div>';
-                    if (d.comment)      chips += '<div class="evt-comment">💬 ' + escapeHtml(d.comment) + '</div>';
-                    if (d.adminComment) chips += '<div class="evt-comment">👤 ' + escapeHtml(d.adminComment) + '</div>';
+                    var recruiter = escapeHtml(evt.recruiter || d.recruiter || '—');
+                    var body = '';
+
+                    if (evt.type === 'contact_created') {
+                        // Загрузка в базу
+                        body += '<div class="history-event-body">';
+                        body += renderChangeRows([
+                            { field: 'ФИО',     newVal: d.fullName },
+                            { field: 'Телефон', newVal: d.phone },
+                            { field: 'Проект',  newVal: d.project },
+                            { field: 'ID',      newVal: d.id }
+                        ]);
+                        body += '</div>';
+
+                    } else if (evt.type === 'recruiter_action' || evt.type === 'first_action') {
+                        // Действие рекрутера
+                        var changes = buildChanges(d);
+                        body += '<div class="history-event-body">';
+                        if (changes.length > 0) body += renderChangeRows(changes);
+                        if (d.comment) body += '<div class="history-msg-block">💬 ' + escapeHtml(d.comment) + '</div>';
+                        body += '</div>';
+
+                    } else if (evt.type === 'transfer') {
+                        // Передача контакта
+                        body += '<div class="history-event-body">';
+                        body += '<div class="history-transfer-block">';
+                        body += '<span>👤 Передал: <b>' + escapeHtml(d.from || '—') + '</b> → Получил: <b>' + escapeHtml(d.to || '—') + '</b></span>';
+                        if (d.id) body += '<span style="font-size:11px;color:#666;">ID: ' + escapeHtml(d.id) + '</span>';
+                        body += '</div></div>';
+
+                    } else if (evt.type === 'message_sent') {
+                        // Отправка сообщения
+                        body += '<div class="history-event-body">';
+                        body += '<div class="history-transfer-block">';
+                        body += '<span>' + (d.channel === 'whatsapp' ? '💬 WhatsApp' : '✈️ Telegram') + '</span>';
+                        if (d.scriptTitle) body += '<span style="color:#a0a0a0;">Скрипт: ' + escapeHtml(d.scriptTitle) + '</span>';
+                        body += '</div>';
+                        if (d.messageText) body += '<div class="history-msg-block">' + escapeHtml(d.messageText.slice(0, 300)) + '</div>';
+                        body += '</div>';
+
+                    } else if (evt.type === 'form_status_changed') {
+                        // Смена статуса анкеты
+                        body += '<div class="history-event-body">';
+                        body += renderChangeRows([{ field: 'Статус анкеты', oldVal: d.prevStatus, newVal: d.status }]);
+                        body += '</div>';
+
+                    } else if (evt.type === 'form_draft') {
+                        body += '<div class="history-event-body"><div class="history-transfer-block">';
+                        body += '<span>Тип: ' + escapeHtml(d.formType || '—') + '</span>';
+                        if (d.project) body += '<span>Проект: ' + escapeHtml(d.project) + '</span>';
+                        body += '</div></div>';
+
+                    } else if (evt.type === 'form_completed') {
+                        body += '<div class="history-event-body"><div class="history-transfer-block">';
+                        body += '<span>Тип: ' + escapeHtml(d.formType || '—') + '</span>';
+                        body += '</div></div>';
+
+                    } else if (evt.type === 'admin_comment') {
+                        body += '<div class="history-event-body">';
+                        body += '<div class="history-msg-block">👤 ' + escapeHtml(d.adminComment || '') + '</div>';
+                        body += '</div>';
+
+                    } else {
+                        // Прочие события
+                        body += '<div class="history-event-body">';
+                        if (d.comment) body += '<div class="history-msg-block">' + escapeHtml(d.comment) + '</div>';
+                        body += '</div>';
+                    }
+
                     evtHTML += '<div class="history-event">';
-                    evtHTML += '<div class="evt-time">' + time + '</div>';
-                    evtHTML += '<div class="evt-label">' + escapeHtml(String(evt.label || evt.type || '')) + '</div>';
-                    if (evt.recruiter) evtHTML += '<div class="evt-recruiter">👤 ' + escapeHtml(evt.recruiter) + '</div>';
-                    evtHTML += '<div class="evt-details">' + chips + '</div>';
+                    evtHTML += '<div class="history-event-header">';
+                    evtHTML += '<span class="evt-label">' + escapeHtml(String(evt.label || evt.type || '')) + '</span>';
+                    evtHTML += '<span class="evt-meta"><span>🕐 ' + time + '</span><span>👤 ' + recruiter + '</span></span>';
+                    evtHTML += '</div>';
+                    evtHTML += body;
                     evtHTML += '</div>';
                 });
             }
-            return '<div class="history-timeline">' + evtHTML + '</div>' +
+
+            return headerHTML +
+                '<div class="history-timeline">' + evtHTML + '</div>' +
                 '<div class="history-add-comment">' +
                 '<textarea id="histComment_' + contactId + '" placeholder="Комментарий администратора..."></textarea>' +
                 '<button onclick="saveHistoryComment(\'' + contactId + '\')">💾 Добавить</button>' +
                 '</div>';
+        }
+
+        // Вспомогательная: строит массив изменений из details
+        function buildChanges(d) {
+            var changes = [];
+            var fieldMap = {
+                fullName:     'ФИО',
+                phone:        'Телефон',
+                project:      'Проект',
+                country:      'Страна',
+                status:       'Статус',
+                trainingDate: 'Дата обучения',
+                trainingTime: 'Время обучения',
+                comment:      'Комментарий'
+            };
+            Object.keys(fieldMap).forEach(function(key) {
+                if (d[key] !== undefined || d['prev_' + key] !== undefined) {
+                    var entry = { field: fieldMap[key] };
+                    if (d['prev_' + key] !== undefined) entry.oldVal = d['prev_' + key];
+                    if (d[key] !== undefined) entry.newVal = d[key];
+                    if (entry.oldVal !== undefined || entry.newVal !== undefined) changes.push(entry);
+                }
+            });
+            // Fallback: если нет prev_, просто показываем текущие значения
+            if (changes.length === 0) {
+                ['fullName','phone','project','country','status','trainingDate','trainingTime'].forEach(function(key) {
+                    if (d[key]) changes.push({ field: fieldMap[key], newVal: d[key] });
+                });
+            }
+            return changes;
+        }
+
+        // Вспомогательная: рендерит таблицу изменений
+        function renderChangeRows(changes) {
+            if (!changes || changes.length === 0) return '';
+            var hasOld = changes.some(function(c) { return c.oldVal !== undefined; });
+            var html = '<div class="history-change-header">';
+            html += '<span>Поле</span>';
+            if (hasOld) html += '<span>Было</span>';
+            html += '<span>Стало</span>';
+            html += '</div>';
+            changes.forEach(function(c) {
+                if (!c.newVal && !c.oldVal) return;
+                html += '<div class="history-change-row">';
+                html += '<span class="field-name">' + escapeHtml(c.field) + '</span>';
+                if (hasOld) html += '<span class="old-val">' + escapeHtml(c.oldVal || '—') + '</span>';
+                html += '<span class="new-val">' + escapeHtml(c.newVal || '—') + '</span>';
+                html += '</div>';
+            });
+            return html;
         }
         async function saveHistoryComment(contactId) {
             const input = document.getElementById('histComment_' + contactId);
