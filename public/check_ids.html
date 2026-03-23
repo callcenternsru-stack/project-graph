@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Проверка ID анкет</title>
+    <style>
+        body {
+            background: #0d0d0d;
+            color: #fff;
+            font-family: monospace;
+            padding: 30px;
+        }
+        h2 { color: #ffd700; margin-bottom: 10px; }
+        .status { color: #aaa; margin-bottom: 20px; font-size: 13px; }
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section h3 { color: #ffd700; margin-bottom: 12px; font-size: 15px; }
+        .ok   { color: #6bff9e; }
+        .warn { color: #ff6b6b; }
+        .info { color: #6b8cff; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #000;
+            color: #ffd700;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        td {
+            padding: 7px 12px;
+            border-bottom: 1px solid #222;
+            color: #ccc;
+            word-break: break-all;
+        }
+        tr:hover td { background: #222; }
+        #log {
+            white-space: pre-wrap;
+            font-size: 12px;
+            color: #888;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        button {
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+        button:hover { background: #ffe44d; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-red  { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid #ff6b6b; }
+        .badge-green{ background: rgba(107,255,158,0.15); color: #6bff9e; border: 1px solid #6bff9e; }
+        .badge-blue { background: rgba(107,140,255,0.15); color: #6b8cff; border: 1px solid #6b8cff; }
+    </style>
+</head>
+<body>
+
+<h2>🔍 Проверка ID анкет vs База контактов</h2>
+<p class="status">
+    Этот файл должен быть открыт на том же домене, что и ваша панель 
+    (чтобы запросы к <code>/.netlify/functions/...</code> работали).
+</p>
+
+<button id="runBtn" onclick="runCheck()">▶ Запустить проверку</button>
+
+<div id="logSection" class="section" style="display:none;">
+    <h3>Лог загрузки</h3>
+    <div id="log"></div>
+</div>
+
+<div id="summary" class="section" style="display:none;">
+    <h3>Итог</h3>
+    <div id="summaryContent"></div>
+</div>
+
+<div id="resultsSection" style="display:none;">
+    <div class="section">
+        <h3 id="missingTitle">Анкеты БЕЗ совпадения в Базе контактов</h3>
+        <div id="missingTable"></div>
+    </div>
+    <div class="section">
+        <h3 id="matchedTitle">Анкеты С совпадением в Базе контактов</h3>
+        <div id="matchedTable"></div>
+    </div>
+</div>
+
+<script>
+    function log(msg) {
+        const el = document.getElementById('log');
+        el.textContent += msg + '\n';
+        el.scrollTop = el.scrollHeight;
+    }
+
+    async function safeFetch(url, label) {
+        try {
+            log(`Загружаю ${label}...`);
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            log(`  ✓ ${label}: получено ${Array.isArray(data) ? data.length : Object.keys(data).length} записей`);
+            return data;
+        } catch (e) {
+            log(`  ✗ ${label}: ОШИБКА — ${e.message}`);
+            return [];
+        }
+    }
+
+    function renderTable(rows, columns) {
+        if (!rows.length) return '<p style="color:#888;">Нет записей</p>';
+        let html = '<div style="overflow-x:auto;"><table><thead><tr>';
+        columns.forEach(c => { html += `<th>${c.label}</th>`; });
+        html += '</tr></thead><tbody>';
+        rows.forEach(r => {
+            html += '<tr>';
+            columns.forEach(c => {
+                const val = r[c.key] !== undefined && r[c.key] !== null ? r[c.key] : '—';
+                html += `<td>${val}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    async function runCheck() {
+        const btn = document.getElementById('runBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Загрузка...';
+
+        document.getElementById('logSection').style.display = 'block';
+        document.getElementById('summary').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('log').textContent = '';
+
+        // ── Загружаем данные ──────────────────────────────────────────────
+        const [allForms, manualForms, autoForms, candidates] = await Promise.all([
+            safeFetch('/.netlify/functions/getAllForms',    'Все анкеты (allForms)'),
+            safeFetch('/.netlify/functions/getManualForms','Ручные анкеты (manualForms)'),
+            safeFetch('/.netlify/functions/getResults',    'Авто-анкеты (autoForms)'),
+            safeFetch('/.netlify/functions/getCandidates', 'База контактов (candidates)'),
+        ]);
+
+        // ── Строим Set ID контактов ───────────────────────────────────────
+        const contactIdSet = new Set(candidates.map(c => String(c.id)));
+        log(`\nID в Базе контактов: ${contactIdSet.size} уникальных`);
+
+        // ── Работаем с allForms (если пусто — пробуем объединить авто+ручные) ──
+        let forms = Array.isArray(allForms) && allForms.length > 0
+            ? allForms
+            : [...(Array.isArray(autoForms) ? autoForms : []),
+               ...(Array.isArray(manualForms) ? manualForms : [])];
+
+        log(`Итого анкет для проверки: ${forms.length}`);
+
+        // ── Сравниваем ────────────────────────────────────────────────────
+        const missing = [];  // нет в Базе контактов
+        const matched = [];  // есть в Базе контактов
+
+        for (const form of forms) {
+            const fid = String(form.id);
+            const row = {
+                id:       fid,
+                fullName: form.fullName || form.name || '—',
+                phone:    form.phone    || '—',
+                project:  form.project  || '—',
+                type:     form.type     || '—',
+                createdAt: form.createdAt ? new Date(form.createdAt).toLocaleString() : '—',
+            };
+            if (contactIdSet.has(fid)) {
+                matched.push(row);
+            } else {
+                missing.push(row);
+            }
+        }
+
+        log(`\n──────────────────────────────`);
+        log(`Без совпадения в контактах: ${missing.length}`);
+        log(`С совпадением в контактах:  ${matched.length}`);
+
+        // ── Итог ──────────────────────────────────────────────────────────
+        document.getElementById('summary').style.display = 'block';
+        document.getElementById('summaryContent').innerHTML = `
+            <p>Всего анкет проверено: <strong class="info">${forms.length}</strong></p>
+            <p>Записей в Базе контактов: <strong class="info">${candidates.length}</strong></p>
+            <p style="margin-top:10px;">
+                Анкеты <strong>БЕЗ</strong> пары в контактах:
+                <span class="badge ${missing.length > 0 ? 'badge-red' : 'badge-green'}">${missing.length}</span>
+            </p>
+            <p>
+                Анкеты <strong>С</strong> парой в контактах:
+                <span class="badge badge-blue">${matched.length}</span>
+            </p>
+        `;
+
+        // ── Таблицы результатов ───────────────────────────────────────────
+        const cols = [
+            { label: 'ID анкеты', key: 'id' },
+            { label: 'ФИО',       key: 'fullName' },
+            { label: 'Телефон',   key: 'phone' },
+            { label: 'Проект',    key: 'project' },
+            { label: 'Тип',       key: 'type' },
+            { label: 'Дата',      key: 'createdAt' },
+        ];
+
+        document.getElementById('missingTitle').innerHTML =
+            `Анкеты <span class="warn">БЕЗ</span> совпадения в Базе контактов
+             <span class="badge badge-red">${missing.length}</span>`;
+
+        document.getElementById('matchedTitle').innerHTML =
+            `Анкеты <span class="ok">С</span> совпадением в Базе контактов
+             <span class="badge badge-blue">${matched.length}</span>`;
+
+        document.getElementById('missingTable').innerHTML = renderTable(missing, cols);
+        document.getElementById('matchedTable').innerHTML = renderTable(matched, cols);
+        document.getElementById('resultsSection').style.display = 'block';
+
+        btn.textContent = '🔄 Повторить';
+        btn.disabled = false;
+    }
+</script>
+</body>
+</html>
