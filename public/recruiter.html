@@ -2782,12 +2782,29 @@
         function renderReminderCandidates(list) {
             const cards = list.map(c => {
                 const status = c.callResult || c.recruitmentStatus || 'ожидает связи';
-                const reminderBadge = `<span class="reminder-badge">🔔 ${c.reminderCount}</span>`;
+                const trainingDate = c.trainingDate || '—';
+                const trainingTime = c.trainingTime || c.meetingTime || '';
+                const trainingInfo = trainingDate !== '—'
+                    ? `${trainingDate}${trainingTime ? ' · ' + trainingTime : ''}`
+                    : '—';
                 const isNew = !seenCandidateIds.has(c.id);
-                return makeCandidateCard(c, [
-                    `<div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${escapeHtml(status)}</span> ${reminderBadge}</div></div>`,
-                    `<div class="candidate-field"><div class="label">Комментарий</div><div class="value">${escapeHtml(c.comment || '—')}</div></div>`
-                ], '', isNew);
+                const newBadge = isNew ? '<span class="new-badge">Новый</span>' : '';
+                return `
+                    <div class="candidate-card ${isNew ? 'is-new' : ''}" data-id="${c.id}" data-type="${c.type || ''}">
+                        ${newBadge}
+                        <div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${escapeHtml(c.fullName || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Телефон</div><div class="value">${escapeHtml(c.phone || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Проект</div><div class="value">${escapeHtml(c.project || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">📅 Дата и время обучения</div><div class="value">${escapeHtml(trainingInfo)}</div></div>
+                        <div class="candidate-field">
+                            <div class="label">Статус</div>
+                            <div class="value">
+                                <span class="candidate-status-badge">${escapeHtml(status)}</span>
+                                <span class="reminder-badge">🔔 ${c.reminderCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }).join('');
             setContainerHTML(cards, 'Нет кандидатов с напоминаниями');
             attachCardListeners();
