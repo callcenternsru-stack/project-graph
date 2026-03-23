@@ -6,6 +6,7 @@
     <style>
         body { background: #0d0d0d; color: #fff; font-family: monospace; padding: 30px; }
         h2 { color: #ffd700; margin-bottom: 10px; }
+        p.sub { color: #888; font-size: 13px; margin-bottom: 20px; }
         .section { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
         .section h3 { color: #ffd700; margin-bottom: 12px; font-size: 15px; }
         .ok   { color: #6bff9e; }
@@ -15,32 +16,31 @@
         th { background: #000; color: #ffd700; padding: 8px 12px; text-align: left; border-bottom: 1px solid #333; }
         td { padding: 7px 12px; border-bottom: 1px solid #222; color: #ccc; word-break: break-all; }
         tr:hover td { background: #222; }
-        #log { white-space: pre-wrap; font-size: 12px; color: #888; background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto; }
-        button { background: #ffd700; color: #000; border: none; border-radius: 8px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 24px; margin-right: 10px; }
+        #log { white-space: pre-wrap; font-size: 12px; color: #888; background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; max-height: 200px; overflow-y: auto; }
+        button { background: #ffd700; color: #000; border: none; border-radius: 8px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 24px; }
         button:hover { background: #ffe44d; }
         button:disabled { opacity: 0.4; cursor: not-allowed; }
         .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 8px; }
         .badge-red   { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid #ff6b6b; }
         .badge-green { background: rgba(107,255,158,0.15); color: #6bff9e; border: 1px solid #6bff9e; }
         .badge-blue  { background: rgba(107,140,255,0.15); color: #6b8cff; border: 1px solid #6b8cff; }
-        pre { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; font-size: 11px; color: #aaa; overflow-x: auto; max-height: 200px; overflow-y: auto; }
-        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     </style>
 </head>
 <body>
 
-<h2>🔍 Проверка ID анкет vs База контактов</h2>
+<h2>🔍 Проверка анкет vs База контактов</h2>
+<p class="sub">
+    Сравниваем поле <strong>contactId</strong> в анкете с полем <strong>id</strong> в Базе контактов.
+</p>
 
-<button id="debugBtn" onclick="runDebug()">🔬 Шаг 1: Посмотреть структуру данных</button>
-<button id="runBtn"   onclick="runCheck()" style="display:none;">▶ Шаг 2: Запустить проверку</button>
+<button id="runBtn" onclick="runCheck()">▶ Запустить проверку</button>
 
 <div id="logSection" class="section" style="display:none;">
     <h3>Лог</h3>
     <div id="log"></div>
 </div>
 
-<div id="debugSection" style="display:none;"></div>
-<div id="mainResults"  style="display:none;"></div>
+<div id="results" style="display:none;"></div>
 
 <script>
     function log(msg) {
@@ -55,8 +55,7 @@
             const res = await fetch(url);
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            const count = Array.isArray(data) ? data.length : Object.keys(data).length;
-            log('  OK ' + label + ': ' + count + ' записей');
+            log('  OK ' + label);
             return data;
         } catch (e) {
             log('  ОШИБКА ' + label + ': ' + e.message);
@@ -64,193 +63,152 @@
         }
     }
 
-    function getKeys(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) return [];
-        return Object.keys(arr[0]);
-    }
-
-    function previewJson(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) return '<em style="color:#555">пусто</em>';
-        return '<pre>' + JSON.stringify(arr.slice(0, 2), null, 2) + '</pre>';
-    }
-
-    function detectIdField(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) return null;
-        const keys = Object.keys(arr[0]);
-        const candidates = ['id','_id','code','formId','recordId','uid','ID'];
-        for (const k of candidates) {
-            if (keys.includes(k)) return k;
+    // getCandidates возвращает кривой массив — первый элемент может быть массивом
+    // Распрямляем всё в плоский список объектов
+    function flattenCandidates(raw) {
+        const result = [];
+        if (!Array.isArray(raw)) return result;
+        for (const item of raw) {
+            if (Array.isArray(item)) {
+                // вложенный массив — раскрываем
+                for (const sub of item) {
+                    if (sub && typeof sub === 'object' && !Array.isArray(sub)) {
+                        result.push(sub);
+                    }
+                }
+            } else if (item && typeof item === 'object') {
+                result.push(item);
+            }
         }
-        return null;
+        return result;
     }
 
-    async function runDebug() {
-        document.getElementById('debugBtn').disabled = true;
+    function renderTable(rows, cols) {
+        if (!rows.length) return '<p style="color:#888;">Нет записей</p>';
+        let html = '<div style="overflow-x:auto;"><table><thead><tr>';
+        cols.forEach(function(c) { html += '<th>' + c.label + '</th>'; });
+        html += '</tr></thead><tbody>';
+        rows.forEach(function(r) {
+            html += '<tr>' + cols.map(function(c) {
+                return '<td>' + (r[c.key] !== undefined && r[c.key] !== null ? r[c.key] : '—') + '</td>';
+            }).join('') + '</tr>';
+        });
+        return html + '</tbody></table></div>';
+    }
+
+    async function runCheck() {
+        const btn = document.getElementById('runBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Загружаю данные...';
         document.getElementById('logSection').style.display = 'block';
         document.getElementById('log').textContent = '';
+        document.getElementById('results').style.display = 'none';
 
-        const [allForms, manualForms, autoForms, candidates] = await Promise.all([
+        // Загружаем все источники
+        const [allForms, manualForms, autoForms, rawCandidates] = await Promise.all([
             safeFetch('/.netlify/functions/getAllForms',    'getAllForms'),
             safeFetch('/.netlify/functions/getManualForms','getManualForms'),
             safeFetch('/.netlify/functions/getResults',    'getResults (autoForms)'),
             safeFetch('/.netlify/functions/getCandidates', 'getCandidates'),
         ]);
 
-        window._raw = { allForms, manualForms, autoForms, candidates };
+        // Распрямляем кандидатов
+        const candidates = flattenCandidates(rawCandidates);
+        log('Кандидатов после распрямления: ' + candidates.length);
 
-        const idFieldForms      = detectIdField(allForms);
-        const idFieldManual     = detectIdField(manualForms);
-        const idFieldAuto       = detectIdField(autoForms);
-        const idFieldCandidates = detectIdField(candidates);
+        // Строим Set из id кандидатов
+        const contactIdSet = new Set(
+            candidates.map(function(c) { return String(c.id || ''); }).filter(Boolean)
+        );
+        log('Уникальных ID в Базе контактов: ' + contactIdSet.size);
 
-        window._idFields = { idFieldForms, idFieldManual, idFieldAuto, idFieldCandidates };
-
-        log('\nПоля ID:');
-        log('  allForms    -> "' + idFieldForms + '"');
-        log('  manualForms -> "' + idFieldManual + '"');
-        log('  autoForms   -> "' + idFieldAuto + '"');
-        log('  candidates  -> "' + idFieldCandidates + '"');
-
-        const ds = document.getElementById('debugSection');
-        ds.style.display = 'block';
-        ds.innerHTML =
-            '<div class="section">' +
-            '<h3>Количество записей в каждом источнике</h3>' +
-            '<table><thead><tr><th>Источник</th><th>Кол-во</th><th>Поле ID</th><th>Все ключи</th></tr></thead><tbody>' +
-            '<tr><td>getAllForms</td>' +
-                '<td class="' + (allForms.length ? 'ok' : 'warn') + '">' + allForms.length + '</td>' +
-                '<td class="' + (idFieldForms ? 'ok' : 'warn') + '">' + (idFieldForms || 'не найдено') + '</td>' +
-                '<td>' + (getKeys(allForms).join(', ') || '—') + '</td></tr>' +
-            '<tr><td>getManualForms</td>' +
-                '<td class="' + (manualForms.length ? 'ok' : 'warn') + '">' + manualForms.length + '</td>' +
-                '<td class="' + (idFieldManual ? 'ok' : 'warn') + '">' + (idFieldManual || 'не найдено') + '</td>' +
-                '<td>' + (getKeys(manualForms).join(', ') || '—') + '</td></tr>' +
-            '<tr><td>getResults (autoForms)</td>' +
-                '<td class="' + (autoForms.length ? 'ok' : 'warn') + '">' + autoForms.length + '</td>' +
-                '<td class="' + (idFieldAuto ? 'ok' : 'warn') + '">' + (idFieldAuto || 'не найдено') + '</td>' +
-                '<td>' + (getKeys(autoForms).join(', ') || '—') + '</td></tr>' +
-            '<tr><td>getCandidates</td>' +
-                '<td class="' + (candidates.length ? 'ok' : 'warn') + '">' + candidates.length + '</td>' +
-                '<td class="' + (idFieldCandidates ? 'ok' : 'warn') + '">' + (idFieldCandidates || 'не найдено') + '</td>' +
-                '<td>' + (getKeys(candidates).join(', ') || '—') + '</td></tr>' +
-            '</tbody></table></div>' +
-            '<div class="grid2">' +
-            '<div class="section"><h3>Пример: getAllForms (первые 2)</h3>' + previewJson(allForms) + '</div>' +
-            '<div class="section"><h3>Пример: getManualForms (первые 2)</h3>' + previewJson(manualForms) + '</div>' +
-            '<div class="section"><h3>Пример: getResults/autoForms (первые 2)</h3>' + previewJson(autoForms) + '</div>' +
-            '<div class="section"><h3>Пример: getCandidates (первые 2)</h3>' + previewJson(candidates) + '</div>' +
-            '</div>';
-
-        document.getElementById('runBtn').style.display = 'inline-block';
-        document.getElementById('debugBtn').disabled = false;
-        document.getElementById('debugBtn').textContent = 'Обновить структуру';
-    }
-
-    async function runCheck() {
-        const btn = document.getElementById('runBtn');
-        btn.disabled = true;
-        btn.textContent = 'Проверяю...';
-
-        const { allForms, manualForms, autoForms, candidates } = window._raw;
-        const { idFieldForms, idFieldManual, idFieldAuto, idFieldCandidates } = window._idFields;
-
+        // Объединяем все анкеты, дедупликация по code/id
         const seen = new Set();
-        const allCombined = [];
+        const forms = [];
 
-        function addForms(arr, idField, source) {
+        function addForms(arr, source) {
             if (!Array.isArray(arr)) return;
             for (const f of arr) {
-                const fid = String(f[idField] || f.id || f._id || f.code || '');
-                if (!fid || fid === 'undefined' || fid === 'null') continue;
-                if (!seen.has(fid)) {
-                    seen.add(fid);
-                    allCombined.push(Object.assign({}, f, { _resolvedId: fid, _source: source }));
-                }
+                const formId = String(f.code || f.id || '');
+                if (!formId || seen.has(formId)) continue;
+                seen.add(formId);
+
+                // Достаём поля — они могут быть в formData или на верхнем уровне
+                const fd = f.formData || {};
+                forms.push({
+                    formId:      formId,
+                    contactId:   f.contactId || fd.candidateId || '—',
+                    source:      source,
+                    fullName:    fd.fullName  || f.fullName  || '—',
+                    phone:       fd.phone     || f.phone     || '—',
+                    project:     fd.project   || f.project   || '—',
+                    recruiter:   f.recruiter  || fd.recruiter || '—',
+                    status:      f.recruitmentStatus || f.status || '—',
+                    createdAt:   f.createdAt  ? new Date(f.createdAt).toLocaleString() : '—',
+                });
             }
         }
 
-        addForms(allForms,    idFieldForms,  'allForms');
-        addForms(autoForms,   idFieldAuto,   'autoForms');
-        addForms(manualForms, idFieldManual, 'manualForms');
+        addForms(allForms,    'allForms');
+        addForms(autoForms,   'autoForms');
+        addForms(manualForms, 'manualForms');
 
-        log('\nОбъединено уникальных анкет: ' + allCombined.length);
+        log('Уникальных анкет: ' + forms.length);
 
-        const contactIdSet = new Set(
-            candidates
-                .map(c => String(c[idFieldCandidates] || c.id || c._id || ''))
-                .filter(Boolean)
-        );
-        log('ID в Базе контактов: ' + contactIdSet.size);
+        // Сравниваем contactId анкеты с id кандидата
+        const missing = [];  // contactId не найден в базе контактов
+        const matched = [];  // contactId найден
 
-        const sample = allCombined[0] || {};
-        const nameField  = ['fullName','name','ФИО'].find(k => sample[k]) || 'fullName';
-        const phoneField = ['phone','телефон','Phone'].find(k => sample[k]) || 'phone';
-        const projField  = ['project','проект','Project'].find(k => sample[k]) || 'project';
-
-        const missing = [];
-        const matched = [];
-
-        for (const form of allCombined) {
-            const row = {
-                id:       form._resolvedId,
-                source:   form._source,
-                fullName: form[nameField]  || '—',
-                phone:    form[phoneField] || '—',
-                project:  form[projField]  || '—',
-                createdAt: form.createdAt ? new Date(form.createdAt).toLocaleString() : '—',
-            };
-            if (contactIdSet.has(form._resolvedId)) {
-                matched.push(row);
+        for (const f of forms) {
+            const cid = f.contactId;
+            if (cid && cid !== '—' && contactIdSet.has(cid)) {
+                matched.push(f);
             } else {
-                missing.push(row);
+                missing.push(f);
             }
         }
 
-        log('БЕЗ совпадения: ' + missing.length);
-        log('С совпадением:  ' + matched.length);
+        log('\nРезультат:');
+        log('  Анкет БЕЗ пары в контактах: ' + missing.length);
+        log('  Анкет С парой в контактах:  ' + matched.length);
 
         const cols = [
-            { label: 'ID анкеты', key: 'id' },
-            { label: 'Источник',  key: 'source' },
-            { label: 'ФИО',       key: 'fullName' },
-            { label: 'Телефон',   key: 'phone' },
-            { label: 'Проект',    key: 'project' },
-            { label: 'Дата',      key: 'createdAt' },
+            { label: 'ID анкеты',   key: 'formId' },
+            { label: 'contactId',   key: 'contactId' },
+            { label: 'Источник',    key: 'source' },
+            { label: 'ФИО',         key: 'fullName' },
+            { label: 'Телефон',     key: 'phone' },
+            { label: 'Проект',      key: 'project' },
+            { label: 'Рекрутер',    key: 'recruiter' },
+            { label: 'Статус',      key: 'status' },
+            { label: 'Дата',        key: 'createdAt' },
         ];
 
-        function renderTable(rows) {
-            if (!rows.length) return '<p style="color:#888;">Нет записей</p>';
-            let html = '<div style="overflow-x:auto;"><table><thead><tr>';
-            cols.forEach(function(c) { html += '<th>' + c.label + '</th>'; });
-            html += '</tr></thead><tbody>';
-            rows.forEach(function(r) {
-                html += '<tr>' + cols.map(function(c) {
-                    return '<td>' + (r[c.key] !== undefined ? r[c.key] : '—') + '</td>';
-                }).join('') + '</tr>';
-            });
-            return html + '</tbody></table></div>';
-        }
-
-        document.getElementById('mainResults').style.display = 'block';
-        document.getElementById('mainResults').innerHTML =
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('results').innerHTML =
             '<div class="section">' +
             '<h3>Итог</h3>' +
-            '<p>Уникальных анкет проверено: <strong class="info">' + allCombined.length + '</strong></p>' +
+            '<p>Всего анкет: <strong class="info">' + forms.length + '</strong></p>' +
             '<p>Записей в Базе контактов: <strong class="info">' + candidates.length + '</strong></p>' +
-            '<p>Анкеты БЕЗ пары в контактах: <span class="badge ' + (missing.length > 0 ? 'badge-red' : 'badge-green') + '">' + missing.length + '</span></p>' +
-            '<p>Анкеты С парой в контактах: <span class="badge badge-blue">' + matched.length + '</span></p>' +
+            '<p>Анкеты <strong>БЕЗ</strong> пары в контактах: <span class="badge ' +
+                (missing.length > 0 ? 'badge-red' : 'badge-green') + '">' + missing.length + '</span></p>' +
+            '<p>Анкеты <strong>С</strong> парой в контактах: <span class="badge badge-blue">' + matched.length + '</span></p>' +
             '</div>' +
+
             '<div class="section">' +
-            '<h3>Анкеты <span class="warn">БЕЗ</span> совпадения в Базе контактов <span class="badge badge-red">' + missing.length + '</span></h3>' +
-            renderTable(missing) +
+            '<h3>Анкеты <span class="warn">БЕЗ</span> совпадения в Базе контактов ' +
+            '<span class="badge badge-red">' + missing.length + '</span></h3>' +
+            renderTable(missing, cols) +
             '</div>' +
+
             '<div class="section">' +
-            '<h3>Анкеты <span class="ok">С</span> совпадением в Базе контактов <span class="badge badge-blue">' + matched.length + '</span></h3>' +
-            renderTable(matched) +
+            '<h3>Анкеты <span class="ok">С</span> совпадением в Базе контактов ' +
+            '<span class="badge badge-blue">' + matched.length + '</span></h3>' +
+            renderTable(matched, cols) +
             '</div>';
 
         btn.disabled = false;
-        btn.textContent = 'Повторить проверку';
+        btn.textContent = '🔄 Повторить проверку';
     }
 </script>
 </body>
