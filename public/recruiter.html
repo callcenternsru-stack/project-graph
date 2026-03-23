@@ -1615,6 +1615,7 @@
                 <button class="candidates-tab active" id="tabContacts"    data-tab="contacts"    onclick="switchCandidatesTab('contacts')">Контакты</button>
                 <button class="candidates-tab"        id="tabVerification" data-tab="verification" onclick="switchCandidatesTab('verification')">Проверка</button>
                 <button class="candidates-tab"        id="tabDraft"       data-tab="draft"       onclick="switchCandidatesTab('draft')">Черновик</button>
+                <button class="candidates-tab"        id="tabReminders"   data-tab="reminders"   onclick="switchCandidatesTab('reminders')">🔔 Напоминания</button>
                 <button class="candidates-tab"        id="tabOrgMeeting"  data-tab="orgMeeting"  onclick="switchCandidatesTab('orgMeeting')">Орг. встреча</button>
                 <button class="candidates-tab"        id="tabTraining"    data-tab="training"    onclick="switchCandidatesTab('training')">Обучение</button>
                 <button class="candidates-tab"        id="tabRejects"     data-tab="rejects"     onclick="switchCandidatesTab('rejects')">Отказы</button>
@@ -2657,6 +2658,7 @@
                 case 'contacts':     list = myCandidates; break;
                 case 'verification': list = myCandidates.filter(c => c.callResult === 'Проверка'); break;
                 case 'draft':        list = getDraftCandidates(); break;
+                case 'reminders':    list = getReminderCandidates(); break;
                 case 'orgMeeting':   list = [
                     ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
                     ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
@@ -2676,6 +2678,7 @@
                 contacts:     renderContactsCandidates,
                 verification: renderVerificationCandidates,
                 draft:        renderDraftCandidates,
+                reminders:    renderReminderCandidates,
                 orgMeeting:   renderOrgMeetingCandidates,
                 training:     renderTrainingCandidates,
                 rejects:      renderRejectsCandidates
@@ -2754,12 +2757,40 @@
         }
 
         function getDraftCandidates() {
-            const oneHourAgo = Date.now() - 60 * 60 * 1000;
             return allCandidates.filter(c =>
                 c.recruitmentStatus === 'draft' &&
-                new Date(c.createdAt).getTime() < oneHourAgo &&
                 c.recruiter === currentRecruiter.name
             );
+        }
+
+        function getReminderCandidates() {
+            const byMe = c => c.recruiter === currentRecruiter.name;
+            // Из allCandidates (анкеты)
+            const fromAll  = allCandidates.filter(c => (c.reminderCount || 0) > 0 && byMe(c));
+            // Из myCandidates (контакты), которых нет в allCandidates
+            const allPhones = new Set(allCandidates.map(c => (c.phone || '').replace(/\D/g, '')).filter(Boolean));
+            const fromMy   = myCandidates.filter(c => {
+                if ((c.reminderCount || 0) <= 0) return false;
+                const phone = (c.phone || '').replace(/\D/g, '');
+                return !(phone && allPhones.has(phone));
+            });
+            // Объединяем и убираем дубли по id
+            const seen = new Set();
+            return [...fromAll, ...fromMy].filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true; });
+        }
+
+        function renderReminderCandidates(list) {
+            const cards = list.map(c => {
+                const status = c.callResult || c.recruitmentStatus || 'ожидает связи';
+                const reminderBadge = `<span class="reminder-badge">🔔 ${c.reminderCount}</span>`;
+                const isNew = !seenCandidateIds.has(c.id);
+                return makeCandidateCard(c, [
+                    `<div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge">${escapeHtml(status)}</span> ${reminderBadge}</div></div>`,
+                    `<div class="candidate-field"><div class="label">Комментарий</div><div class="value">${escapeHtml(c.comment || '—')}</div></div>`
+                ], '', isNew);
+            }).join('');
+            setContainerHTML(cards, 'Нет кандидатов с напоминаниями');
+            attachCardListeners();
         }
 
         function renderDraftCandidates(list) {
@@ -2825,7 +2856,8 @@
             const byMe   = c => c.recruiter === currentRecruiter.name;
             const unseen = c => !seenCandidateIds.has(c.id);
 
-            const draftList   = getDraftCandidates();
+            const draftList     = getDraftCandidates();
+            const reminderList  = getReminderCandidates();
             const orgList     = [
                 ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
                 ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
@@ -2839,6 +2871,7 @@
                 contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
                 verification: myCandidates.filter(c => c.callResult === 'Проверка').length,
                 draft:        draftList.length,
+                reminders:    reminderList.length,
                 orgMeeting:   orgList.length,
                 training:     trainList.length,
                 rejects:      allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).length
@@ -2846,12 +2879,13 @@
 
             const newUnseen = {
                 draft:      draftList.filter(unseen).length,
+                reminders:  reminderList.filter(unseen).length,
                 orgMeeting: orgList.filter(unseen).length,
                 training:   trainList.filter(unseen).length,
             };
 
-            const labels = { contacts: 'Контакты', verification: 'Проверка', draft: 'Черновик', orgMeeting: 'Орг. встреча', training: 'Обучение', rejects: 'Отказы' };
-            const ids    = { contacts: 'tabContacts', verification: 'tabVerification', draft: 'tabDraft', orgMeeting: 'tabOrgMeeting', training: 'tabTraining', rejects: 'tabRejects' };
+            const labels = { contacts: 'Контакты', verification: 'Проверка', draft: 'Черновик', reminders: '🔔 Напоминания', orgMeeting: 'Орг. встреча', training: 'Обучение', rejects: 'Отказы' };
+            const ids    = { contacts: 'tabContacts', verification: 'tabVerification', draft: 'tabDraft', reminders: 'tabReminders', orgMeeting: 'tabOrgMeeting', training: 'tabTraining', rejects: 'tabRejects' };
 
             for (const key in ids) {
                 const el = document.getElementById(ids[key]);
@@ -2865,8 +2899,8 @@
                 }
             }
 
-            const totalUnseen = newUnseen.draft + newUnseen.orgMeeting + newUnseen.training;
-            const totalAll    = totals.draft + totals.orgMeeting + totals.training;
+            const totalUnseen = newUnseen.draft + newUnseen.reminders + newUnseen.orgMeeting + newUnseen.training;
+            const totalAll    = totals.draft + totals.reminders + totals.orgMeeting + totals.training;
             return { totalUnseen, totalAll };
         }
 

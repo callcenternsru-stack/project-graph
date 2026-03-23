@@ -30,6 +30,7 @@ exports.handler = async (event) => {
             projectId: data.formData?.projectId || '',
             status: data.status || 'pending',
             recruitmentStatus: data.recruitmentStatus || 'draft',
+            reminderCount: data.reminderCount || 0,
             recruiter: data.recruiter || null,
             contactId: data.contactId || null,   // ДОБАВЛЕНО
             createdAt: data.createdAt || data.formData?.timestamp,
@@ -86,6 +87,7 @@ exports.handler = async (event) => {
             projectId: data.projectId || '',
             status: data.status || 'draft',
             recruitmentStatus: data.recruitmentStatus || 'draft',
+            reminderCount: data.reminderCount || 0,
             recruiter: data.recruiter || null,
             contactId: data.contactId || null,   // ДОБАВЛЕНО
             createdAt: data.submittedAt,

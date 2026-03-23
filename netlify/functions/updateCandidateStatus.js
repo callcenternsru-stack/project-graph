@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { id, type, recruitmentStatus } = JSON.parse(event.body);
+    const { id, type, recruitmentStatus, reminderCount } = JSON.parse(event.body);
     if (!id || !type || !recruitmentStatus) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing fields' }) };
     }
@@ -25,6 +25,7 @@ exports.handler = async (event) => {
 
     // Обновляем статус в анкете
     data.recruitmentStatus = recruitmentStatus;
+    if (reminderCount !== undefined) data.reminderCount = reminderCount;
     await store.setJSON(id, data);
 
     // Если у анкеты есть contactId, обновляем соответствующую запись в базе контактов
@@ -39,6 +40,7 @@ exports.handler = async (event) => {
       if (candidateIndex !== -1) {
         // Синхронизируем статус звонка (callResult) из рекрутингового статуса
         candidates[candidateIndex].callResult = recruitmentStatus;
+        if (reminderCount !== undefined) candidates[candidateIndex].reminderCount = reminderCount;
         await candidatesStore.setJSON('_all', candidates);
       }
     }
