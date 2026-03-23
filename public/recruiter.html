@@ -2340,10 +2340,22 @@
                 if (res.ok) {
                     if (isReminder) {
                         showNotification(`🔔 Напоминание #${newReminderCount} добавлено`, 'success');
-                        // Обновляем локально
                         editingExternalCandidate.reminderCount = newReminderCount;
                         await refreshAllCandidates();
                     } else {
+                        // При смене статуса — обнуляем reminderCount в контакте
+                        if (newReminderCount === 0) {
+                            const phone = (payload.phone || '').replace(/\D/g, '');
+                            const contact = myCandidates.find(c => (c.phone || '').replace(/\D/g, '') === phone);
+                            if (contact && (contact.reminderCount || 0) > 0) {
+                                contact.reminderCount = 0;
+                                fetch('/.netlify/functions/submitCandidate', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ ...contact, reminderCount: 0 })
+                                }).catch(() => {});
+                            }
+                        }
                         showNotification('Кандидат сохранён', 'success');
                         await refreshAllCandidates();
                         await refreshMyCandidates();

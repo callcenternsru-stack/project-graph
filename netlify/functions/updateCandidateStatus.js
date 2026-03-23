@@ -41,7 +41,13 @@ exports.handler = async (event) => {
       if (candidateIndex !== -1) {
         // Синхронизируем статус звонка (callResult) из рекрутингового статуса
         candidates[candidateIndex].callResult = recruitmentStatus;
-        if (reminderCount !== undefined) candidates[candidateIndex].reminderCount = reminderCount;
+        // Если статус поменялся (не напоминание) — обнуляем reminderCount в контакте
+        if (reminderCount !== undefined) {
+          candidates[candidateIndex].reminderCount = reminderCount;
+        } else if (recruitmentStatus !== '__reminder__') {
+          // При любой смене статуса через updateCandidateStatus сбрасываем напоминания
+          candidates[candidateIndex].reminderCount = 0;
+        }
         await candidatesStore.setJSON('_all', candidates);
       }
     }
