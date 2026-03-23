@@ -2910,16 +2910,34 @@
 
             container.innerHTML = `
                 <table class="analytics-table">
-                    <thead><tr><th>Дата</th><th>Описание</th><th>Качество</th><th>Файл</th></tr></thead>
+                    <thead><tr><th>Дата</th><th>Описание</th><th>Итоговая оценка</th><th>Параметры</th><th>Файл</th></tr></thead>
                     <tbody>
-                        ${myAnalytics.map(e => `
-                            <tr>
-                                <td>${e.createdAt ? new Date(e.createdAt).toLocaleString() : '—'}</td>
-                                <td>${e.description || '—'}</td>
-                                <td><span class="quality-badge">${e.quality !== undefined ? e.quality : '—'}</span></td>
-                                <td>${e.fileUrl ? `<a href="${e.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—'}</td>
-                            </tr>
-                        `).join('')}
+                        ${myAnalytics.map(e => {
+                            const quality = e.quality !== undefined ? e.quality : 100;
+                            const scoreColor = quality >= 80 ? '#6bff6b' : quality >= 60 ? '#ffd700' : '#ff6b6b';
+                            let paramsHtml = '—';
+                            if (e.params && e.params.length > 0) {
+                                paramsHtml = e.params.map(p => {
+                                    const color = p.score >= 0 ? '#6bff6b' : '#ff6b6b';
+                                    const sign  = p.score >= 0 ? '+' : '';
+                                    return `<div style="font-size:12px;color:#ccc;">
+                                        <span style="color:#8f9bb3;">${p.criteria || ''} → </span>
+                                        <span>${p.name}</span>
+                                        <span style="color:${color};font-weight:600;"> ${sign}${p.score}%</span>
+                                    </div>`;
+                                }).join('');
+                            }
+                            return `
+                                <tr>
+                                    <td>${e.createdAt ? new Date(e.createdAt).toLocaleString() : '—'}</td>
+                                    <td>${e.description || '—'}</td>
+                                    <td style="text-align:center;">
+                                        <span class="quality-badge" style="color:${scoreColor};border-color:${scoreColor};">${quality}%</span>
+                                    </td>
+                                    <td>${paramsHtml}</td>
+                                    <td>${e.fileUrl ? `<a href="${e.fileUrl}" target="_blank" class="file-link">📁 Скачать</a>` : '—'}</td>
+                                </tr>`;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
