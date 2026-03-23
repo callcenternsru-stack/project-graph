@@ -2411,8 +2411,8 @@
             if (!status.trim()) return { stage: 1, label: 'Ожидает связи', status: 'Ожидает связи' };
 
             const stage1 = ['Автоответчик','Не берет трубку','Сброс','Выключен','Перезвонить'];
-            const stage2 = ['draft','passed','напоминание','Проверка','Приглашение орг.встреча','Вышел на орг. встречу'];
-            const stage3 = ['Обучение','Приглашение на обучение','Вышел на обучение'];
+            const stage2 = ['draft','passed','напоминание','Проверка','Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'];
+            const stage3 = ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'];
             const stage5 = ['Отказ акцент','Отказ фрикативная речь','Отказ интернет','Отказ наушники',
                             'Отказ не вышел на орг.встречу','Отказ не вышел на обучение','Не интересует',
                             'Нет ПК ноутбука','Номер не существует','фрикативная речь','Нет гарнитуры','Нет Lan кабеля'];
@@ -2458,8 +2458,8 @@
             const byMe   = c => c.recruiter === currentRecruiter.name;
 
             if      (stage === 1) candidates = myCandidates.filter(empty);
-            else if (stage === 2) candidates = myCandidates.filter(c => ['draft','passed','напоминание','Проверка','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.callResult));
-            else if (stage === 3) candidates = myCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.callResult));
+            else if (stage === 2) candidates = myCandidates.filter(c => ['draft','passed','напоминание','Проверка','Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult));
+            else if (stage === 3) candidates = myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult));
             else if (stage === 4) candidates = allCandidates.filter(c => c.recruitmentStatus === 'employee' && byMe(c));
             else if (stage === 5) candidates = myCandidates.filter(c => ['Отказ акцент','Отказ фрикативная речь','Отказ интернет','Отказ наушники','Отказ не вышел на орг.встречу','Отказ не вышел на обучение','Не интересует','Нет ПК ноутбука','Номер не существует','фрикативная речь','Нет гарнитуры','Нет Lan кабеля'].includes(c.callResult));
 
@@ -2521,8 +2521,14 @@
             const passed          = allCandidates.filter(c => c.recruitmentStatus === 'passed' && byMe(c)).length;
             const rejects         = allCandidates.filter(c => ['Не интересует','Нет ПК/Ноутбука','Фрикативная речь','Акцент','Нет гарнитуры','Нет Lan кабеля'].includes(c.recruitmentStatus) && byMe(c)).length;
             const verCount        = allCandidates.filter(c => c.recruitmentStatus === 'Проверка' && byMe(c)).length;
-            const orgMeeting      = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на орг. встречу' && byMe(c)).length;
-            const training        = allCandidates.filter(c => c.recruitmentStatus === 'Вышел на обучение' && byMe(c)).length;
+            const orgMeeting      = [
+                ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
+            ].length;
+            const training        = [
+                ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult))
+            ].length;
             const employeeCount   = allCandidates.filter(c => c.recruitmentStatus === 'employee' && byMe(c)).length;
 
             const p1 = (rejects + verCount) > 0 ? passed / (rejects + verCount) : 0;
@@ -2651,8 +2657,14 @@
                 case 'contacts':     list = myCandidates; break;
                 case 'verification': list = myCandidates.filter(c => c.callResult === 'Проверка'); break;
                 case 'draft':        list = getDraftCandidates(); break;
-                case 'orgMeeting':   list = allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c)); break;
-                case 'training':     list = allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)); break;
+                case 'orgMeeting':   list = [
+                    ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
+                    ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
+                ]; break;
+                case 'training':     list = [
+                    ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)),
+                    ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult))
+                ]; break;
                 case 'rejects':      list = allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)); break;
             }
 
@@ -2814,8 +2826,14 @@
             const unseen = c => !seenCandidateIds.has(c.id);
 
             const draftList   = getDraftCandidates();
-            const orgList     = allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c));
-            const trainList   = allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c));
+            const orgList     = [
+                ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
+            ];
+            const trainList   = [
+                ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult))
+            ];
 
             const totals = {
                 contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
@@ -2925,8 +2943,9 @@
                 { key: 'draft',                   label: 'Черновик',            color: '#6B7280' },
                 { key: 'passed',                  label: 'Прошёл',              color: '#4CAF50' },
                 { key: 'Приглашение на обучение', label: 'Пригл. на обучение',  color: '#FF9800' },
-                { key: 'Приглашение орг.встреча', label: 'Пригл. орг. встреча', color: '#2196F3' },
-                { key: 'Вышел на орг. встречу',   label: 'Вышел орг. встреча',  color: '#00BCD4' },
+                { key: 'Приглашение на орг.встречу', label: 'Пригл. орг. встреча', color: '#2196F3' },
+                { key: 'Приглашение на орг.встречу отправлено', label: 'Орг. встреча отправлено', color: '#1565C0' },
+                { key: 'Вышел на орг.встречу',    label: 'Вышел орг. встреча',  color: '#00BCD4' },
                 { key: 'Вышел на обучение',       label: 'Вышел на обучение',   color: '#8BC34A' },
                 { key: 'employee',                label: 'Линия',               color: '#E91E63' },
             ];
@@ -3117,8 +3136,14 @@
                 contacts:    () => myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult || '' })),
                 verification: () => myCandidates.filter(c => c.callResult === 'Проверка').map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult })),
                 draft:       () => allCandidates.filter(c => c.recruitmentStatus === 'draft' && new Date(c.createdAt).getTime() < oneHourAgo && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                orgMeeting:  () => allCandidates.filter(c => ['Орг.встреча','Приглашение орг.встреча','Вышел на орг. встречу'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                training:    () => allCandidates.filter(c => ['Обучение','Приглашение на обучение','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
+                orgMeeting:  () => [
+                    ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
+                    ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
+                ],
+                training:    () => [
+                    ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
+                    ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
+                ],
                 rejects:     () => allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus }))
             };
 
