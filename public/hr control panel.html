@@ -1132,12 +1132,12 @@
     </div>
 
     <!-- Модальное окно для добавления/редактирования аналитики -->
-    <div id="analyticsModal" class="modal">
+    <div id="analyticsModal" class="modal" style="width:600px;max-width:95vw;">
         <div class="modal-header">
             <span id="analyticsModalTitle">Добавить запись аналитики</span>
             <button class="modal-close" onclick="closeAnalyticsModal()">✕</button>
         </div>
-        <div class="modal-content">
+        <div class="modal-content" style="max-height:80vh;overflow-y:auto;">
             <form id="analyticsForm" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Выберите рекрутера <span style="color:#ff6b6b;">*</span></label>
@@ -1149,20 +1149,64 @@
                     <label>Описание звонка <span style="color:#ff6b6b;">*</span></label>
                     <textarea id="analyticsDescription" rows="4" required placeholder="Введите описание звонка..."></textarea>
                 </div>
+
+                <!-- Итоговая оценка -->
                 <div class="form-group">
-                    <label>Качество звонка (%) <span style="color:#ff6b6b;">*</span></label>
-                    <input type="number" id="analyticsQuality" min="0" max="100" step="1" required placeholder="0-100">
+                    <label>Итоговая оценка</label>
+                    <div style="display:flex;align-items:center;gap:15px;">
+                        <div id="analyticsScoreDisplay" style="font-size:32px;font-weight:700;color:#ffd700;min-width:70px;">100%</div>
+                        <div style="color:#8f9bb3;font-size:13px;">Начальная оценка 100%. Выберите параметры для изменения.</div>
+                    </div>
                 </div>
+
+                <!-- Выбор параметров -->
+                <div class="form-group">
+                    <label>Параметры оценки</label>
+                    <div style="display:flex;gap:10px;margin-bottom:10px;">
+                        <select id="analyticsParamSelect" style="flex:1;background:#1a1a1a;border:2px solid #333;border-radius:8px;padding:10px;color:#fff;">
+                            <option value="">— выберите параметр —</option>
+                        </select>
+                        <button type="button" onclick="addAnalyticsParam()" style="padding:10px 16px;background:#ffd700;color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap;">➕ Добавить</button>
+                    </div>
+                    <!-- Список выбранных параметров -->
+                    <div id="analyticsParamsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                </div>
+
                 <div class="form-group">
                     <label>Прикрепить файл (необязательно)</label>
                     <input type="file" id="analyticsFile" accept=".mp3,.wav,.ogg,.m4a">
                 </div>
                 <input type="hidden" id="analyticsId">
+                <input type="hidden" id="analyticsQuality" value="100">
                 <div class="modal-actions">
                     <button type="submit" class="save-btn" id="analyticsSaveBtn">💾 Сохранить</button>
                     <button type="button" class="delete-time-btn" onclick="closeAnalyticsModal()">Отмена</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно управления параметрами аналитики -->
+    <div id="analyticsParamsModal" class="modal" style="width:500px;max-width:95vw;">
+        <div class="modal-header">
+            <span>⚙️ Управление параметрами</span>
+            <button class="modal-close" onclick="closeAnalyticsParamsModal()">✕</button>
+        </div>
+        <div class="modal-content">
+            <div class="form-group">
+                <label>Наименование параметра <span style="color:#ff6b6b;">*</span></label>
+                <input type="text" id="newParamName" placeholder="Например: Приветствие, Грубость...">
+            </div>
+            <div class="form-group">
+                <label>Оценка (% со знаком) <span style="color:#ff6b6b;">*</span></label>
+                <input type="number" id="newParamScore" placeholder="Например: -10 или +5" step="1">
+                <div style="color:#8f9bb3;font-size:12px;margin-top:5px;">Минус (-) вычитает из итоговой оценки, плюс (+) прибавляет</div>
+            </div>
+            <button type="button" class="save-btn" onclick="saveAnalyticsParam()" style="margin-bottom:15px;">➕ Добавить параметр</button>
+            <div class="form-group">
+                <label>Существующие параметры</label>
+                <div id="analyticsParamsMasterList" style="max-height:250px;overflow-y:auto;border:2px solid #333;border-radius:12px;background:#1a1a1a;"></div>
+            </div>
         </div>
     </div>
 
@@ -3277,7 +3321,10 @@
             let html = `
                 <div class="section-header">
                     <h2>Аналитика звонков</h2>
-                    <button class="add-btn" onclick="openAnalyticsModal()">➕ Добавить запись</button>
+                    <div style="display:flex;gap:10px;">
+                        <button class="add-btn" style="background:#1a1a1a;border:1px solid #ffd700;color:#ffd700;" onclick="openAnalyticsParamsModal()">⚙️ Параметры</button>
+                        <button class="add-btn" onclick="openAnalyticsModal()">➕ Добавить запись</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table>
@@ -3286,7 +3333,8 @@
                                 <th>Дата</th>
                                 <th>Рекрутер</th>
                                 <th>Описание</th>
-                                <th>Качество (%)</th>
+                                <th>Итоговая оценка</th>
+                                <th>Параметры</th>
                                 <th>Файл</th>
                                 <th>Действия</th>
                             </tr>
@@ -3294,20 +3342,35 @@
                         <tbody>
             `;
             if (state.analytics.length === 0) {
-                html += '<tr><td colspan="6" style="text-align:center;">Нет записей</td></tr>';
+                html += '<tr><td colspan="7" style="text-align:center;">Нет записей</td></tr>';
             } else {
                 state.analytics.forEach(entry => {
                     const date = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '—';
                     const recruiterName = entry.recruiterName || '—';
                     const description = entry.description || '—';
-                    const quality = entry.quality !== undefined ? entry.quality : '—';
+                    const quality = entry.quality !== undefined ? entry.quality : 100;
                     const fileLink = entry.fileUrl ? `<a href="${entry.fileUrl}" target="_blank" class="download-btn">📁 Скачать</a>` : '—';
+
+                    // Параметры
+                    let paramsHtml = '—';
+                    if (entry.params && entry.params.length > 0) {
+                        paramsHtml = entry.params.map(p => {
+                            const color = p.score >= 0 ? '#6bff6b' : '#ff6b6b';
+                            const sign = p.score >= 0 ? '+' : '';
+                            return `<span style="background:#1a1a1a;border:1px solid ${color};color:${color};padding:2px 8px;border-radius:12px;font-size:12px;margin:2px;display:inline-block;">${p.name} ${sign}${p.score}%</span>`;
+                        }).join('');
+                    }
+
+                    // Цвет итоговой оценки
+                    const scoreColor = quality >= 80 ? '#6bff6b' : quality >= 60 ? '#ffd700' : '#ff6b6b';
+
                     html += `
                         <tr>
                             <td>${date}</td>
                             <td>${recruiterName}</td>
                             <td>${description}</td>
-                            <td style="text-align:center;"><span class="quality-badge">${quality}</span></td>
+                            <td style="text-align:center;"><span class="quality-badge" style="color:${scoreColor};border-color:${scoreColor};">${quality}%</span></td>
+                            <td>${paramsHtml}</td>
                             <td>${fileLink}</td>
                             <td class="actions">
                                 <button class="edit-btn" onclick="editAnalytics('${entry.id}')">✏️</button>
@@ -3321,12 +3384,76 @@
             container.innerHTML = html;
         }
 
+        // Текущие выбранные параметры в форме
+        let currentAnalyticsParams = [];
+
+        function calcAnalyticsScore() {
+            let score = 100;
+            currentAnalyticsParams.forEach(p => { score += p.score; });
+            score = Math.max(0, Math.min(100, score));
+            document.getElementById('analyticsScoreDisplay').textContent = score + '%';
+            document.getElementById('analyticsQuality').value = score;
+            const color = score >= 80 ? '#6bff6b' : score >= 60 ? '#ffd700' : '#ff6b6b';
+            document.getElementById('analyticsScoreDisplay').style.color = color;
+        }
+
+        function renderAnalyticsParamsList() {
+            const container = document.getElementById('analyticsParamsList');
+            if (!container) return;
+            if (currentAnalyticsParams.length === 0) {
+                container.innerHTML = '<div style="color:#8f9bb3;font-size:13px;padding:8px;">Параметры не выбраны</div>';
+                return;
+            }
+            container.innerHTML = currentAnalyticsParams.map((p, i) => {
+                const color = p.score >= 0 ? '#6bff6b' : '#ff6b6b';
+                const sign = p.score >= 0 ? '+' : '';
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a1a1a;border:1px solid #333;border-radius:10px;">
+                    <span style="color:#fff;">${p.name}</span>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="color:${color};font-weight:700;font-size:16px;">${sign}${p.score}%</span>
+                        <button type="button" onclick="removeAnalyticsParam(${i})" style="background:#ff6b6b;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">✕</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function addAnalyticsParam() {
+            const select = document.getElementById('analyticsParamSelect');
+            const val = select.value;
+            if (!val) { showNotification('Выберите параметр', 'error'); return; }
+            const param = (state.analyticsParams || []).find(p => p.name === val);
+            if (!param) return;
+            // Проверяем дубликат
+            if (currentAnalyticsParams.find(p => p.name === param.name)) {
+                showNotification('Параметр уже добавлен', 'error'); return;
+            }
+            currentAnalyticsParams.push({ name: param.name, score: param.score });
+            select.value = '';
+            renderAnalyticsParamsList();
+            calcAnalyticsScore();
+        }
+
+        function removeAnalyticsParam(index) {
+            currentAnalyticsParams.splice(index, 1);
+            renderAnalyticsParamsList();
+            calcAnalyticsScore();
+        }
+
+        function fillAnalyticsParamSelect() {
+            const select = document.getElementById('analyticsParamSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">— выберите параметр —</option>' +
+                (state.analyticsParams || []).map(p => {
+                    const sign = p.score >= 0 ? '+' : '';
+                    return `<option value="${p.name}">${p.name} (${sign}${p.score}%)</option>`;
+                }).join('');
+        }
+
         function openAnalyticsModal(entry = null) {
             const modal = document.getElementById('analyticsModal');
             const title = document.getElementById('analyticsModalTitle');
             const recruiterSelect = document.getElementById('analyticsRecruiter');
             const description = document.getElementById('analyticsDescription');
-            const quality = document.getElementById('analyticsQuality');
             const fileInput = document.getElementById('analyticsFile');
             const idField = document.getElementById('analyticsId');
             const saveBtn = document.getElementById('analyticsSaveBtn');
@@ -3334,26 +3461,102 @@
             recruiterSelect.innerHTML = '<option value="">— выберите рекрутера —</option>' +
                 state.recruiters.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
 
+            fillAnalyticsParamSelect();
+
             if (entry) {
                 title.textContent = 'Редактировать запись аналитики';
                 recruiterSelect.value = entry.recruiterName || '';
                 description.value = entry.description || '';
-                quality.value = entry.quality !== undefined ? entry.quality : '';
                 idField.value = entry.id;
                 fileInput.value = '';
                 saveBtn.textContent = '💾 Обновить';
+                // Восстанавливаем параметры
+                currentAnalyticsParams = entry.params ? [...entry.params] : [];
             } else {
                 title.textContent = 'Добавить запись аналитики';
                 recruiterSelect.value = '';
                 description.value = '';
-                quality.value = '';
                 idField.value = '';
                 fileInput.value = '';
                 saveBtn.textContent = '💾 Сохранить';
+                currentAnalyticsParams = [];
             }
+
+            renderAnalyticsParamsList();
+            calcAnalyticsScore();
 
             modal.classList.add('show');
             document.body.classList.add('menu-open');
+        }
+
+        // ── Управление мастер-списком параметров ──────────────────────────────
+        function openAnalyticsParamsModal() {
+            if (!state.analyticsParams) state.analyticsParams = [];
+            renderParamsMasterList();
+            document.getElementById('newParamName').value = '';
+            document.getElementById('newParamScore').value = '';
+            document.getElementById('analyticsParamsModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function closeAnalyticsParamsModal() {
+            document.getElementById('analyticsParamsModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+        }
+
+        function renderParamsMasterList() {
+            const list = document.getElementById('analyticsParamsMasterList');
+            if (!list) return;
+            const params = state.analyticsParams || [];
+            if (params.length === 0) {
+                list.innerHTML = '<div style="padding:15px;color:#8f9bb3;text-align:center;">Нет параметров</div>';
+                return;
+            }
+            list.innerHTML = params.map((p, i) => {
+                const color = p.score >= 0 ? '#6bff6b' : '#ff6b6b';
+                const sign = p.score >= 0 ? '+' : '';
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #333;">
+                    <span style="color:#fff;">${p.name}</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="color:${color};font-weight:600;">${sign}${p.score}%</span>
+                        <button onclick="deleteAnalyticsParam(${i})" style="background:#ff6b6b;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">✕</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function saveAnalyticsParam() {
+            const name = document.getElementById('newParamName').value.trim();
+            const score = parseInt(document.getElementById('newParamScore').value, 10);
+            if (!name) { showNotification('Введите наименование параметра', 'error'); return; }
+            if (isNaN(score)) { showNotification('Введите оценку в %', 'error'); return; }
+            if (!state.analyticsParams) state.analyticsParams = [];
+            if (state.analyticsParams.find(p => p.name === name)) {
+                showNotification('Параметр с таким именем уже существует', 'error'); return;
+            }
+            state.analyticsParams.push({ name, score });
+            // Сохраняем в localStorage
+            localStorage.setItem('analyticsParams', JSON.stringify(state.analyticsParams));
+            document.getElementById('newParamName').value = '';
+            document.getElementById('newParamScore').value = '';
+            renderParamsMasterList();
+            showNotification('Параметр добавлен', 'success');
+        }
+
+        function deleteAnalyticsParam(index) {
+            if (!confirm('Удалить параметр?')) return;
+            state.analyticsParams.splice(index, 1);
+            localStorage.setItem('analyticsParams', JSON.stringify(state.analyticsParams));
+            renderParamsMasterList();
+            showNotification('Параметр удалён', 'success');
+        }
+
+        // Загружаем параметры из localStorage при старте
+        function loadAnalyticsParams() {
+            try {
+                const saved = localStorage.getItem('analyticsParams');
+                state.analyticsParams = saved ? JSON.parse(saved) : [];
+            } catch { state.analyticsParams = []; }
         }
 
         function editAnalytics(id) {
@@ -3395,25 +3598,20 @@
 
             const recruiterName = document.getElementById('analyticsRecruiter').value;
             const description = document.getElementById('analyticsDescription').value.trim();
-            const quality = document.getElementById('analyticsQuality').value;
+            const quality = parseInt(document.getElementById('analyticsQuality').value, 10);
             const fileInput = document.getElementById('analyticsFile');
             const id = document.getElementById('analyticsId').value;
 
-            if (!recruiterName || !description || quality === '') {
+            if (!recruiterName || !description) {
                 showNotification('Заполните все обязательные поля', 'error');
-                return;
-            }
-
-            const qualityNum = parseInt(quality, 10);
-            if (isNaN(qualityNum) || qualityNum < 0 || qualityNum > 100) {
-                showNotification('Качество должно быть числом от 0 до 100', 'error');
                 return;
             }
 
             const formData = new FormData();
             formData.append('recruiterName', recruiterName);
             formData.append('description', description);
-            formData.append('quality', qualityNum);
+            formData.append('quality', isNaN(quality) ? 100 : quality);
+            formData.append('params', JSON.stringify(currentAnalyticsParams));
             if (fileInput.files.length > 0) {
                 formData.append('file', fileInput.files[0]);
             }
@@ -3541,6 +3739,7 @@
         document.head.appendChild(styleElem);
 
         document.addEventListener('DOMContentLoaded', async function() {
+            loadAnalyticsParams();
             await loadAllData();
             if (!scheduleOnly) {
                 switchTab('recruiters');

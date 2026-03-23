@@ -84,6 +84,12 @@ async function saveEntry(fields, fileData, fileName, fileMime) {
     };
   }
 
+  // Парсим параметры оценки
+  let params = [];
+  try {
+    if (fields.params) params = JSON.parse(fields.params);
+  } catch { params = []; }
+
   const store = getStore({
     name: 'analytics',
     siteID: process.env.NETLIFY_SITE_ID,
@@ -95,7 +101,6 @@ async function saveEntry(fields, fileData, fileName, fileMime) {
   const id = `analytics_${Date.now()}`;
   let fileUrl = null;
 
-  // Сохраняем файл если есть
   if (fileData && fileName) {
     const fileKey = `${id}/${fileName}`;
     await store.set(fileKey, fileData);
@@ -107,6 +112,7 @@ async function saveEntry(fields, fileData, fileName, fileMime) {
     recruiterName,
     description,
     quality: qualityNum,
+    params,
     fileUrl,
     createdAt: new Date().toISOString()
   };
