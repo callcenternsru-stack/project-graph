@@ -3281,37 +3281,36 @@
         }
 
         function renderHistoryHTML(contactId, history) {
-            const evtHTML = history.length === 0
-                ? '<p style="color:#666;text-align:center;padding:20px;">История пуста</p>'
-                : history.map(evt => {
-                    const time = evt.timestamp ? new Date(evt.timestamp).toLocaleString() : '—';
-                    const d = evt.details || {};
-                    const chips = [
-                        d.project      && `<span class="evt-detail-chip">📁 ${d.project}</span>`,
-                        d.status       && `<span class="evt-detail-chip">🏷 ${d.status}</span>`,
-                        d.trainingDate && `<span class="evt-detail-chip">📅 ${d.trainingDate}${d.trainingTime ? ' ' + d.trainingTime : ''}</span>`,
-                        d.formId       && `<span class="evt-detail-chip">📄 ${d.formType || ''} ${d.formId.slice(-8)}</span>`,
-                        d.channel      && `<span class="evt-detail-chip">${d.channel === 'whatsapp' ? '💬 WhatsApp' : '✈️ Telegram'}</span>`,
-                        d.messageText  && `<div class="evt-comment">${escapeHtml(d.messageText.slice(0, 200))}</div>`,
-                        d.comment      && `<div class="evt-comment">💬 ${escapeHtml(d.comment)}</div>`,
-                        d.adminComment && `<div class="evt-comment">👤 ${escapeHtml(d.adminComment)}</div>`,
-                    ].filter(Boolean).join('');
-
-                    return \`<div class="history-event">
-                        <div class="evt-time">\${time}</div>
-                        <div class="evt-label">\${evt.label || evt.type}</div>
-                        \${evt.recruiter ? \`<div class="evt-recruiter">👤 \${escapeHtml(evt.recruiter)}</div>\` : ''}
-                        <div class="evt-details">\${chips}</div>
-                    </div>\`;
-                }).join('');
-
-            return \`<div class="history-timeline">\${evtHTML}</div>
-                <div class="history-add-comment">
-                    <textarea id="histComment_\${contactId}" placeholder="Комментарий администратора..."></textarea>
-                    <button onclick="saveHistoryComment('\${contactId}')">💾 Добавить</button>
-                </div>\`;
+            var evtHTML = '';
+            if (history.length === 0) {
+                evtHTML = '<p style="color:#666;text-align:center;padding:20px;">История пуста</p>';
+            } else {
+                history.forEach(function(evt) {
+                    var time = evt.timestamp ? new Date(evt.timestamp).toLocaleString() : '—';
+                    var d = evt.details || {};
+                    var chips = '';
+                    if (d.project)      chips += '<span class="evt-detail-chip">📁 ' + escapeHtml(d.project) + '</span>';
+                    if (d.status)       chips += '<span class="evt-detail-chip">🏷 ' + escapeHtml(d.status) + '</span>';
+                    if (d.trainingDate) chips += '<span class="evt-detail-chip">📅 ' + escapeHtml(d.trainingDate) + (d.trainingTime ? ' ' + d.trainingTime : '') + '</span>';
+                    if (d.formId)       chips += '<span class="evt-detail-chip">📄 ' + (d.formType || '') + ' ' + d.formId.slice(-8) + '</span>';
+                    if (d.channel)      chips += '<span class="evt-detail-chip">' + (d.channel === 'whatsapp' ? '💬 WhatsApp' : '✈️ Telegram') + '</span>';
+                    if (d.messageText)  chips += '<div class="evt-comment">' + escapeHtml(d.messageText.slice(0, 200)) + '</div>';
+                    if (d.comment)      chips += '<div class="evt-comment">💬 ' + escapeHtml(d.comment) + '</div>';
+                    if (d.adminComment) chips += '<div class="evt-comment">👤 ' + escapeHtml(d.adminComment) + '</div>';
+                    evtHTML += '<div class="history-event">';
+                    evtHTML += '<div class="evt-time">' + time + '</div>';
+                    evtHTML += '<div class="evt-label">' + escapeHtml(String(evt.label || evt.type || '')) + '</div>';
+                    if (evt.recruiter) evtHTML += '<div class="evt-recruiter">👤 ' + escapeHtml(evt.recruiter) + '</div>';
+                    evtHTML += '<div class="evt-details">' + chips + '</div>';
+                    evtHTML += '</div>';
+                });
+            }
+            return '<div class="history-timeline">' + evtHTML + '</div>' +
+                '<div class="history-add-comment">' +
+                '<textarea id="histComment_' + contactId + '" placeholder="Комментарий администратора..."></textarea>' +
+                '<button onclick="saveHistoryComment('' + contactId + '')">💾 Добавить</button>' +
+                '</div>';
         }
-
         async function saveHistoryComment(contactId) {
             const input = document.getElementById('histComment_' + contactId);
             const text = input ? input.value.trim() : '';
