@@ -3224,10 +3224,15 @@
 
             _currentDetailsId   = id;
             _currentDetailsType = type;
-            // Сбрасываем на вкладку Results
-            switchDetailsTab('results');
-            document.getElementById('candidateDetailsContent').style.display = '';
-            document.getElementById('candidateDetailsHistory').style.display = 'none';
+            // Сбрасываем состояние вкладок вручную без вызова switchDetailsTab
+            var tabR = document.getElementById('tabResults');
+            var tabH = document.getElementById('tabHistory');
+            var contR = document.getElementById('candidateDetailsContent');
+            var contH = document.getElementById('candidateDetailsHistory');
+            if (tabR) { tabR.classList.add('active'); }
+            if (tabH) { tabH.classList.remove('active'); }
+            if (contR) contR.style.display = '';
+            if (contH) contH.style.display = 'none';
             document.getElementById('candidateDetailsModal').classList.add('show');
             document.body.classList.add('menu-open');
         }
@@ -3242,15 +3247,19 @@
         let _currentDetailsType = null;
 
         function switchDetailsTab(tab) {
-            document.getElementById('tabResults').classList.toggle('active', tab === 'results');
-            document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
-            document.getElementById('candidateDetailsContent').style.display  = tab === 'results' ? '' : 'none';
-            document.getElementById('candidateDetailsHistory').style.display  = tab === 'history'  ? '' : 'none';
+            var tabR = document.getElementById('tabResults');
+            var tabH = document.getElementById('tabHistory');
+            var contR = document.getElementById('candidateDetailsContent');
+            var contH = document.getElementById('candidateDetailsHistory');
+            if (tabR) tabR.classList.toggle('active', tab === 'results');
+            if (tabH) tabH.classList.toggle('active', tab === 'history');
+            if (contR) contR.style.display = tab === 'results' ? '' : 'none';
+            if (contH) contH.style.display = tab === 'history'  ? '' : 'none';
             if (tab === 'history' && _currentDetailsId) {
                 const c = state.allCandidates.find(x => x.id === _currentDetailsId && x.type === _currentDetailsType);
-                const contactId = c?.contactId || null;
+                const contactId = c ? (c.contactId || null) : null;
                 if (contactId) loadHistoryInto('candidateDetailsHistory', contactId);
-                else document.getElementById('candidateDetailsHistory').innerHTML = '<p style="color:#a0a0a0;">Нет привязанного контакта (contactId не найден)</p>';
+                else if (contH) contH.innerHTML = '<p style="color:#a0a0a0;">Нет привязанного контакта</p>';
             }
         }
 
