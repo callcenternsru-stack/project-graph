@@ -1807,6 +1807,57 @@
             return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
         }
 
+        /* =====================================================================
+           STATUS MATCHING HELPERS
+           Гибкое сравнение статусов: поддерживает сокращённые ("орг.встречу")
+           и полные ("организационную встречу") формы написания.
+        ===================================================================== */
+        function isOrgMeetingStatus(status) {
+            if (!status) return false;
+            const s = status.toLowerCase().trim();
+            // Исключаем статусы-отказы, которые содержат слова орг/встреч
+            if (s.startsWith('отказ')) return false;
+            return (s.includes('орг') && s.includes('встреч')) ||
+                   (s.includes('организационн') && s.includes('встреч'));
+        }
+
+        function isTrainingStatus(status) {
+            if (!status) return false;
+            const s = status.toLowerCase().trim();
+            if (s.startsWith('отказ')) return false;
+            return (s.includes('обучени') || s.includes('training')) &&
+                   !isOrgMeetingStatus(status);
+        }
+
+        function isOrgMeetingInvitation(status) {
+            if (!status) return false;
+            const s = status.toLowerCase().trim();
+            return isOrgMeetingStatus(status) &&
+                   !s.includes('отправлен') && !s.includes('вышел');
+        }
+
+        function isOrgMeetingSent(status) {
+            if (!status) return false;
+            return isOrgMeetingStatus(status) && status.toLowerCase().includes('отправлен');
+        }
+
+        function isOrgMeetingAttended(status) {
+            if (!status) return false;
+            return isOrgMeetingStatus(status) && status.toLowerCase().includes('вышел');
+        }
+
+        function isAnyOrgMeeting(status) {
+            return isOrgMeetingStatus(status);
+        }
+
+        function isAnyTraining(status) {
+            if (!status) return false;
+            const s = status.toLowerCase().trim();
+            return (s.includes('приглашение на обучени') ||
+                    s.includes('вышел на обучени') ||
+                    s === 'обучение');
+        }
+
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
@@ -2130,6 +2181,7 @@
             }
 
             const c = myCandidates[idx];
+            currentCandidateIdForMessage = c.id; // [SYNC] обновляем id для ссылки в мессенджерах
             document.getElementById('fullName').value    = c.fullName || '';
             document.getElementById('phoneNumber').value = c.phone    || '';
             document.getElementById('callResult').value  = c.callResult  || '';
@@ -2189,11 +2241,16 @@
             if (idx !== -1) {
                 currentCandidateIndex = idx;
                 editingExternalCandidate = null;
+                currentCandidateIdForMessage = id; // [SYNC] гарантируем корректный id для ссылки
                 loadCandidateIntoForm(idx);
                 return;
             }
             const c = allCandidates.find(c => c.id === id);
-            if (c) { editingExternalCandidate = c; loadCandidateIntoForm(-1); }
+            if (c) {
+                editingExternalCandidate = c;
+                currentCandidateIdForMessage = id; // [SYNC] внешний кандидат
+                loadCandidateIntoForm(-1);
+            }
             else showNotification('Кандидат не найден', 'error');
         }
 
@@ -2424,15 +2481,14 @@
             if (!status.trim()) return { stage: 1, label: 'Ожидает связи', status: 'Ожидает связи' };
 
             const stage1 = ['Автоответчик','Не берет трубку','Сброс','Выключен','Перезвонить'];
-            const stage2 = ['draft','passed','напоминание','Проверка','Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'];
-            const stage3 = ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'];
             const stage5 = ['Отказ акцент','Отказ фрикативная речь','Отказ интернет','Отказ наушники',
                             'Отказ не вышел на орг.встречу','Отказ не вышел на обучение','Не интересует',
                             'Нет ПК ноутбука','Номер не существует','фрикативная речь','Нет гарнитуры','Нет Lan кабеля'];
 
             if (stage1.includes(status)) return { stage: 1, label: 'Ожидает связи', status };
-            if (stage2.includes(status)) return { stage: 2, label: 'Проверка',      status };
-            if (stage3.includes(status)) return { stage: 3, label: 'Обучение',      status };
+            if (['draft','passed','напоминание','Проверка'].includes(status) || isAnyOrgMeeting(status))
+                                         return { stage: 2, label: 'Проверка',      status };
+            if (isAnyTraining(status))   return { stage: 3, label: 'Обучение',      status };
             if (status === 'employee' || status === 'Сотрудник') return { stage: 4, label: 'Линия', status };
             if (stage5.includes(status)) return { stage: 5, label: 'Отказ',         status };
 
@@ -2471,8 +2527,8 @@
             const byMe   = c => c.recruiter === currentRecruiter.name;
 
             if      (stage === 1) candidates = myCandidates.filter(empty);
-            else if (stage === 2) candidates = myCandidates.filter(c => ['draft','passed','напоминание','Проверка','Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult));
-            else if (stage === 3) candidates = myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult));
+            else if (stage === 2) candidates = myCandidates.filter(c => ['draft','passed','напоминание','Проверка'].includes(c.callResult) || isAnyOrgMeeting(c.callResult));
+            else if (stage === 3) candidates = myCandidates.filter(c => isAnyTraining(c.callResult));
             else if (stage === 4) candidates = allCandidates.filter(c => c.recruitmentStatus === 'employee' && byMe(c));
             else if (stage === 5) candidates = myCandidates.filter(c => ['Отказ акцент','Отказ фрикативная речь','Отказ интернет','Отказ наушники','Отказ не вышел на орг.встречу','Отказ не вышел на обучение','Не интересует','Нет ПК ноутбука','Номер не существует','фрикативная речь','Нет гарнитуры','Нет Lan кабеля'].includes(c.callResult));
 
@@ -2535,12 +2591,12 @@
             const rejects         = allCandidates.filter(c => ['Не интересует','Нет ПК/Ноутбука','Фрикативная речь','Акцент','Нет гарнитуры','Нет Lan кабеля'].includes(c.recruitmentStatus) && byMe(c)).length;
             const verCount        = allCandidates.filter(c => c.recruitmentStatus === 'Проверка' && byMe(c)).length;
             const orgMeeting      = [
-                ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
+                ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult))
             ].length;
             const training        = [
-                ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult))
+                ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => isAnyTraining(c.callResult))
             ].length;
             const employeeCount   = allCandidates.filter(c => c.recruitmentStatus === 'employee' && byMe(c)).length;
 
@@ -2672,12 +2728,12 @@
                 case 'draft':        list = getDraftCandidates(); break;
                 case 'reminders':    list = getReminderCandidates(); break;
                 case 'orgMeeting':   list = [
-                    ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
-                    ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
+                    ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)),
+                    ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult))
                 ]; break;
                 case 'training':     list = [
-                    ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)),
-                    ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult))
+                    ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)),
+                    ...myCandidates.filter(c => isAnyTraining(c.callResult))
                 ]; break;
                 case 'rejects':      list = allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)); break;
             }
@@ -2917,12 +2973,12 @@
             const draftList     = getDraftCandidates();
             const reminderList  = getReminderCandidates();
             const orgList     = [
-                ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult))
+                ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult))
             ];
             const trainList   = [
-                ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult))
+                ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)),
+                ...myCandidates.filter(c => isAnyTraining(c.callResult))
             ];
 
             const totals = {
@@ -3049,15 +3105,15 @@
                 : 0;
 
             const STATUSES = [
-                { key: 'Проверка',                label: 'Проверка',            color: '#FFD700' },
-                { key: 'draft',                   label: 'Черновик',            color: '#6B7280' },
-                { key: 'passed',                  label: 'Прошёл',              color: '#4CAF50' },
-                { key: 'Приглашение на обучение', label: 'Пригл. на обучение',  color: '#FF9800' },
-                { key: 'Приглашение на орг.встречу', label: 'Пригл. орг. встреча', color: '#2196F3' },
-                { key: 'Приглашение на орг.встречу отправлено', label: 'Орг. встреча отправлено', color: '#1565C0' },
-                { key: 'Вышел на орг.встречу',    label: 'Вышел орг. встреча',  color: '#00BCD4' },
-                { key: 'Вышел на обучение',       label: 'Вышел на обучение',   color: '#8BC34A' },
-                { key: 'employee',                label: 'Линия',               color: '#E91E63' },
+                { key: 'Проверка',                label: 'Проверка',            color: '#FFD700', match: s => s === 'Проверка' },
+                { key: 'draft',                   label: 'Черновик',            color: '#6B7280', match: s => s === 'draft' },
+                { key: 'passed',                  label: 'Прошёл',              color: '#4CAF50', match: s => s === 'passed' },
+                { key: 'Приглашение на обучение', label: 'Пригл. на обучение',  color: '#FF9800', match: s => isAnyTraining(s) && !s.toLowerCase().includes('отправлен') && !s.toLowerCase().includes('вышел') },
+                { key: 'Приглашение на орг.встречу', label: 'Пригл. орг. встреча', color: '#2196F3', match: s => isAnyOrgMeeting(s) && !s.toLowerCase().includes('отправлен') && !s.toLowerCase().includes('вышел') },
+                { key: 'Приглашение на орг.встречу отправлено', label: 'Орг. встреча отправлено', color: '#1565C0', match: s => isAnyOrgMeeting(s) && s.toLowerCase().includes('отправлен') },
+                { key: 'Вышел на орг.встречу',    label: 'Вышел орг. встреча',  color: '#00BCD4', match: s => isAnyOrgMeeting(s) && s.toLowerCase().includes('вышел') },
+                { key: 'Вышел на обучение',       label: 'Вышел на обучение',   color: '#8BC34A', match: s => isAnyTraining(s) && s.toLowerCase().includes('вышел') },
+                { key: 'employee',                label: 'Линия',               color: '#E91E63', match: s => s === 'employee' || s === 'Сотрудник' },
             ];
 
             const projects = appData.projects.map(p => p.name || p);
@@ -3070,7 +3126,7 @@
             // Анкеты (allCandidates) — recruitmentStatus
             allCandidates.forEach(c => {
                 if (c.project && c.recruitmentStatus && matrix[c.project] !== undefined) {
-                    const st = STATUSES.find(s => s.key === c.recruitmentStatus);
+                    const st = STATUSES.find(s => s.match(c.recruitmentStatus));
                     if (st) matrix[c.project][st.key]++;
                 }
             });
@@ -3081,7 +3137,7 @@
                 const status = c.callResult || '';
                 if (!status || !c.project) return;
                 if (matrix[c.project] === undefined) return;
-                const st = STATUSES.find(s => s.key === status);
+                const st = STATUSES.find(s => s.match(status));
                 if (!st) return;
                 // Не считаем дважды если у кандидата уже есть анкета
                 const phone = (c.phone || '').replace(/\D/g, '');
@@ -3247,12 +3303,12 @@
                 verification: () => myCandidates.filter(c => c.callResult === 'Проверка').map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult })),
                 draft:       () => allCandidates.filter(c => c.recruitmentStatus === 'draft' && new Date(c.createdAt).getTime() < oneHourAgo && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
                 orgMeeting:  () => [
-                    ...allCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                    ...myCandidates.filter(c => ['Приглашение на орг.встречу','Приглашение на орг.встречу отправлено','Вышел на орг.встречу'].includes(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
+                    ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
+                    ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
                 ],
                 training:    () => [
-                    ...allCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                    ...myCandidates.filter(c => ['Приглашение на обучение','Приглашение на обучение отправлено','Вышел на обучение'].includes(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
+                    ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
+                    ...myCandidates.filter(c => isAnyTraining(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
                 ],
                 rejects:     () => allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus }))
             };
@@ -3353,6 +3409,11 @@
             currentCandidateIdForMessage = (idx >= 0 && myCandidates[idx]) ? myCandidates[idx].id
                 : editingExternalCandidate ? editingExternalCandidate.id : null;
 
+            // [SYNC] fallback: если id ещё не установлен — берём из текущего индекса
+            if (!currentCandidateIdForMessage && currentCandidateIndex >= 0 && myCandidates[currentCandidateIndex]) {
+                currentCandidateIdForMessage = myCandidates[currentCandidateIndex].id;
+            }
+
             currentMessageType = type;
             document.getElementById('messageModalTitle').textContent = type === 'telegram'
                 ? 'Выберите сообщение для Telegram'
@@ -3402,6 +3463,7 @@
             const projectId   = projectObj ? projectObj.id : '';
             let link = projectId ? `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}` : '';
             if (link && currentCandidateIdForMessage) link += `&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`;
+            if (link && currentRecruiter?.name) link += `&recruiter=${encodeURIComponent(currentRecruiter.name)}`; // [SYNC] рекрутер в ссылку
 
             let text = htmlToPlainText(script.content);
             if (link && script.title.trim().toLowerCase() === 'проверка')
@@ -3422,6 +3484,7 @@
 
             let link = `${window.location.origin}/candidate.html?projectId=${encodeURIComponent(projectId)}`;
             if (currentCandidateIdForMessage) link += `&candidateId=${encodeURIComponent(currentCandidateIdForMessage)}`;
+            if (currentRecruiter?.name) link += `&recruiter=${encodeURIComponent(currentRecruiter.name)}`; // [SYNC] рекрутер в ссылку
 
             let text = htmlToPlainText(script.content);
             if (link && script.title.trim().toLowerCase() === 'проверка')
