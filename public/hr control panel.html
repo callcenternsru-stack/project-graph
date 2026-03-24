@@ -3174,18 +3174,22 @@
             }
 
             if (type === 'manual') {
-                if (candidate.taskInputs && candidate.taskInputs['task_4_input']) {
-                    extraInfoHtml += `<p><strong>AnyDesk (задание 5):</strong> ${candidate.taskInputs['task_4_input']}</p>`;
+                // AnyDesk — задание №5, индекс 4 в массиве tasks (ключ '4' или 4)
+                const anyDeskValue = candidate.taskInputs && (candidate.taskInputs['4'] || candidate.taskInputs[4]);
+                if (anyDeskValue) {
+                    extraInfoHtml += `<p><strong>AnyDesk (задание 5):</strong> ${anyDeskValue}</p>`;
                 }
-                if (candidate.taskScores && candidate.taskScores['task_2_score']) {
+                // Тест на знание ПК — задание №3, индекс 2 в массиве tasks (ключ '2' или 2)
+                const rawScore = candidate.taskScores && (candidate.taskScores['2'] || candidate.taskScores[2]);
+                if (rawScore) {
                     try {
-                        const score = typeof candidate.taskScores['task_2_score'] === 'string'
-                            ? JSON.parse(candidate.taskScores['task_2_score'])
-                            : candidate.taskScores['task_2_score'];
+                        const score = typeof rawScore === 'string'
+                            ? JSON.parse(rawScore)
+                            : rawScore;
                         extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${score.correct} из ${score.total} (${score.percentage}%)</p>`;
                     } catch (e) {
                         console.error('Error parsing task score', e);
-                        extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${candidate.taskScores['task_2_score']} (ошибка парсинга)</p>`;
+                        extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${rawScore} (ошибка парсинга)</p>`;
                     }
                 }
             }
