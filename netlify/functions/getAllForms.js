@@ -13,14 +13,13 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Читаем индекс
+    // Читаем индекс (все записи без лимита)
     const index = await store.get('_index', { type: 'json' }) || [];
-    const MAX_FORMS = 20;
-    const recentCodes = index.slice(-MAX_FORMS).map(item => item.code);
+    const allCodes = index.map(item => item.code);
 
     // Загружаем данные параллельно
     const forms = await Promise.all(
-      recentCodes.map(async (code) => {
+      allCodes.map(async (code) => {
         try {
           const data = await store.get(code, { type: 'json' });
           return data ? { code, ...data } : null;

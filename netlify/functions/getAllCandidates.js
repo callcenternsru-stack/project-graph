@@ -14,32 +14,32 @@ exports.handler = async (event) => {
     });
     const autoIndex = (await autoStore.get('_index', { type: 'json' })) || [];
     const autoForms = await Promise.all(
-      autoIndex.slice(-200).map(async ({ code }) => {
+      autoIndex.map(async ({ code }) => {
         try {
           const data = await autoStore.get(code, { type: 'json' });
           if (!data) return null;
           return {
             id: code,
             type: 'auto',
-            fullName: data.formData?.fullName || '',
-            nickname: data.formData?.nickname || '',
-            telegram: data.formData?.telegram || '',
-            phone: data.formData?.phone || '',
-            email: data.formData?.email || '',
-            project: data.formData?.project || '',
-            projectId: data.formData?.projectId || '',
-            status: data.status || 'pending',
-            recruitmentStatus: data.recruitmentStatus || 'draft',
-            reminderCount: data.reminderCount || 0,
-            recruiter: data.recruiter || null,
-            contactId: data.contactId || null,   // ДОБАВЛЕНО
-            createdAt: data.createdAt || data.formData?.timestamp,
-            completedAt: data.completedAt,
+            fullName:          data.formData?.fullName  || '',
+            nickname:          data.formData?.nickname  || '',
+            telegram:          data.formData?.telegram  || '',
+            phone:             data.formData?.phone     || '',
+            email:             data.formData?.email     || '',
+            project:           data.formData?.project   || '',
+            projectId:         data.formData?.projectId || '',
+            status:            data.status              || 'pending',
+            recruitmentStatus: data.recruitmentStatus   || 'draft',
+            reminderCount:     data.reminderCount       || 0,
+            recruiter:         data.recruiter           || null,
+            contactId:         data.contactId           || null,
+            createdAt:         data.createdAt           || data.formData?.timestamp,
+            completedAt:       data.completedAt,
             files: data.status === 'completed'
               ? {
-                  report: `/.netlify/functions/getFile?code=${code}&file=report.txt&type=auto`,
+                  report:  `/.netlify/functions/getFile?code=${code}&file=report.txt&type=auto`,
                   results: `/.netlify/functions/getFile?code=${code}&file=results.json&type=auto`,
-                  voice: `/.netlify/functions/getFile?code=${code}&file=voice_recording.wav&type=auto`,
+                  voice:   `/.netlify/functions/getFile?code=${code}&file=voice_recording.wav&type=auto`,
                 }
               : {},
           };
@@ -57,7 +57,7 @@ exports.handler = async (event) => {
     });
     const manualIndex = (await manualStore.get('_index', { type: 'json' })) || [];
     const manualForms = await Promise.all(
-      manualIndex.slice(-200).map(async ({ id }) => {
+      manualIndex.map(async ({ id }) => {
         try {
           const data = await manualStore.get(id, { type: 'json' });
           if (!data) return null;
@@ -76,22 +76,22 @@ exports.handler = async (event) => {
             }
           }
           return {
-            id: data.id,
-            type: 'manual',
-            fullName: data.fullName || '',
-            nickname: data.nickname || '',
-            telegram: data.telegram || '',
-            phone: data.phone || '',
-            email: data.email || '',
-            project: data.project || '',
-            projectId: data.projectId || '',
-            status: data.status || 'draft',
+            id:                data.id,
+            type:              'manual',
+            fullName:          data.fullName          || '',
+            nickname:          data.nickname          || '',
+            telegram:          data.telegram          || '',
+            phone:             data.phone             || '',
+            email:             data.email             || '',
+            project:           data.project           || '',
+            projectId:         data.projectId         || '',
+            status:            data.status            || 'draft',
             recruitmentStatus: data.recruitmentStatus || 'draft',
-            reminderCount: data.reminderCount || 0,
-            recruiter: data.recruiter || null,
-            contactId: data.contactId || null,   // ДОБАВЛЕНО
-            createdAt: data.submittedAt,
-            files: data.files || {},
+            reminderCount:     data.reminderCount     || 0,
+            recruiter:         data.recruiter         || null,
+            contactId:         data.contactId         || null,
+            createdAt:         data.submittedAt,
+            files:             data.files             || {},
             taskInputs,
             taskScores,
           };
@@ -117,9 +117,8 @@ exports.handler = async (event) => {
         .map(c => [(c.phone).replace(/\D/g, ''), c])
     );
 
-    // Анкеты без contactId — сохраним его асинхронно
-    const autoToUpdate   = []; // { code, contactId }
-    const manualToUpdate = []; // { id,   contactId }
+    const autoToUpdate   = [];
+    const manualToUpdate = [];
 
     const all = [...autoForms, ...manualForms]
       .filter(f => f !== null)
@@ -127,15 +126,12 @@ exports.handler = async (event) => {
         let contact = null;
 
         if (f.contactId && candidatesById.has(f.contactId)) {
-          // Уже привязан
           contact = candidatesById.get(f.contactId);
         } else {
-          // Нет contactId — ищем по телефону
           const normPhone = (f.phone || '').replace(/\D/g, '');
           if (normPhone.length > 5) {
             contact = candidatesByPhone.get(normPhone) || null;
             if (contact) {
-              // Запоминаем для фоновой записи contactId
               if (f.type === 'auto') {
                 autoToUpdate.push({ code: f.id, contactId: contact.id });
               } else {
@@ -148,7 +144,6 @@ exports.handler = async (event) => {
 
         if (contact) {
           f.contact = contact;
-          // Подтягиваем дату/время обучения из контакта если в анкете нет
           if (!f.trainingDate && contact.trainingDate) f.trainingDate = contact.trainingDate;
           if (!f.trainingTime && contact.trainingTime) f.trainingTime = contact.trainingTime;
         }

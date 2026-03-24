@@ -16,7 +16,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Извлекаем candidateId, если он передан
     let candidateId = formData.candidateId || null;
 
     const autoStore = getStore({
@@ -49,15 +48,13 @@ exports.handler = async (event) => {
       }
     }
 
-    // Нормализуем телефон для поиска
     const normPhone = (formData.phone || '').replace(/\D/g, '');
-    // Ключ для поиска дубликатов: ФИО + нормализованный телефон + projectId
     const contactKey = `${formData.fullName}_${normPhone}_${formData.projectId}`;
 
-    // Удаляем из auto-хранилища все записи с таким же contactKey (кроме текущей)
+    // Удаляем дубликаты из auto-хранилища
     const autoList = await autoStore.list();
     for (const blob of autoList.blobs) {
-      if (blob.key.includes('/')) continue; // пропускаем файлы
+      if (blob.key.includes('/')) continue;
       const existing = await autoStore.get(blob.key, { type: 'json' });
       if (existing && existing.formData) {
         const existingNormPhone = (existing.formData.phone || '').replace(/\D/g, '');
@@ -74,7 +71,7 @@ exports.handler = async (event) => {
       }
     }
 
-    // Удаляем из manual-хранилища все записи с таким же contactKey
+    // Удаляем дубликаты из manual-хранилища
     const manualList = await manualStore.list();
     for (const blob of manualList.blobs) {
       if (blob.key.includes('/')) continue;
@@ -101,15 +98,14 @@ exports.handler = async (event) => {
       createdAt: new Date().toISOString(),
       recruitmentStatus: 'draft',
       recruiter: formData.recruiter || null,
-      contactId: candidateId   // <-- ДОБАВЛЕНО
+      contactId: candidateId
     };
     await autoStore.setJSON(code, candidateData);
 
-    // Обновляем индекс
+    // Обновляем индекс (без лимита)
     const indexKey = '_index';
     let index = await autoStore.get(indexKey, { type: 'json' }) || [];
     index.push({ code, createdAt: candidateData.createdAt });
-    if (index.length > 200) index = index.slice(-200);
     await autoStore.setJSON(indexKey, index);
 
     return {

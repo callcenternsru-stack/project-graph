@@ -304,7 +304,6 @@ async function processRecord(fields, files = {}) {
     let index = await manualStore.get(indexKey, { type: 'json' }) || [];
     index = index.filter(item => item.id !== recordId);
     index.push({ id: recordId, submittedAt: record.submittedAt, status: record.status });
-    if (index.length > 200) index = index.slice(-200);
     await manualStore.setJSON(indexKey, index);
     console.log('Index updated');
 

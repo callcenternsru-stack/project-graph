@@ -13,14 +13,13 @@ exports.handler = async (event) => {
       apiURL: 'https://api.netlify.com'
     });
 
-    // Читаем индекс
+    // Читаем индекс (все записи без лимита)
     const index = await store.get('_index', { type: 'json' }) || [];
-    const MAX_FORMS = 20;
-    const recentCodes = index.slice(-MAX_FORMS).map(item => item.code);
+    const allCodes = index.map(item => item.code);
 
     // Загружаем данные параллельно
     const candidatesData = await Promise.all(
-      recentCodes.map(async (code) => {
+      allCodes.map(async (code) => {
         try {
           return await store.get(code, { type: 'json' });
         } catch (e) {
@@ -33,8 +32,8 @@ exports.handler = async (event) => {
     const baseUrl = `${event.headers['x-forwarded-proto'] || 'https'}://${event.headers.host}/.netlify/functions/getFile`;
     const results = [];
 
-    for (let i = 0; i < recentCodes.length; i++) {
-      const code = recentCodes[i];
+    for (let i = 0; i < allCodes.length; i++) {
+      const code = allCodes[i];
       const candidateData = candidatesData[i];
       if (!candidateData) continue;
       if (candidateData.status === 'completed') {
@@ -43,11 +42,10 @@ exports.handler = async (event) => {
           formData: candidateData.formData,
           createdAt: candidateData.createdAt,
           completedAt: candidateData.completedAt,
-          // Добавлен параметр type=auto
           files: {
-            report: baseUrl + `?code=${encodeURIComponent(code)}&file=report.txt&type=auto`,
+            report:      baseUrl + `?code=${encodeURIComponent(code)}&file=report.txt&type=auto`,
             resultsJson: baseUrl + `?code=${encodeURIComponent(code)}&file=results.json&type=auto`,
-            voice: baseUrl + `?code=${encodeURIComponent(code)}&file=voice_recording.wav&type=auto`
+            voice:       baseUrl + `?code=${encodeURIComponent(code)}&file=voice_recording.wav&type=auto`
           }
         });
       }
