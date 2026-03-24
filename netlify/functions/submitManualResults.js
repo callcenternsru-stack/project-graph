@@ -2,6 +2,7 @@
 const { getStore } = require('@netlify/blobs');
 const Busboy = require('busboy');
 const { Readable } = require('stream');
+const { findOrCreateContact, appendHistory } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -149,11 +150,11 @@ async function processRecord(fields, files = {}) {
         token:   process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Нормализация телефона для поиска дубликатов
+    // ── Нормализация телефона для поиска дубликатов ───────────────────
     const normPhone  = (fields.phone || '').replace(/\D/g, '');
     const contactKey = `${fields.fullName}_${normPhone}_${fields.projectId || fields.project}`;
 
-    // Удаление дубликатов из авто-анкет
+    // ── Удаление дубликатов из авто-анкет ────────────────────────────
     const autoList = await autoStore.list();
     for (const blob of autoList.blobs) {
         if (blob.key.includes('/')) continue;
@@ -173,7 +174,7 @@ async function processRecord(fields, files = {}) {
         }
     }
 
-    // Удаление дубликатов из ручных анкет (кроме текущей)
+    // ── Удаление дубликатов из ручных анкет (кроме текущей) ──────────
     const manualList = await manualStore.list();
     for (const blob of manualList.blobs) {
         if (blob.key.includes('/')) continue;
@@ -196,7 +197,7 @@ async function processRecord(fields, files = {}) {
     const recordId = fields.id || `manual_${Date.now()}`;
     console.log('Record ID:', recordId);
 
-    // Получить существующую запись если есть
+    // ── Получить существующую запись если есть ────────────────────────
     let existingRecord = null;
     if (fields.id) {
         try {
@@ -204,27 +205,30 @@ async function processRecord(fields, files = {}) {
         } catch (e) {}
     }
 
-    // Определяем contactId: из поля → из существующей записи → поиск по телефону
-    let resolvedContactId = fields.candidateId || existingRecord?.contactId || null;
-    if (!resolvedContactId) {
-        try {
-            const candidatesStore = getStore({
-                name: 'candidates',
-                siteID:  process.env.NETLIFY_SITE_ID,
-                token:   process.env.NETLIFY_ACCESS_TOKEN,
-            });
-            const allContacts = await candidatesStore.get('_all', { type: 'json' }) || [];
-            const normPhone = (fields.phone || '').replace(/\D/g, '');
-            if (normPhone.length > 5) {
-                const match = allContacts.find(c => (c.phone || '').replace(/\D/g, '') === normPhone);
-                if (match) resolvedContactId = match.id;
-            }
-        } catch (e) {
-            console.error('Phone lookup for contactId failed:', e);
+    // ── Поиск/создание контакта + синхронизация рекрутера ─────────────
+    const recruiterFromUrl = fields.recruiter || existingRecord?.recruiter || null;
+    let resolvedContactId  = fields.candidateId || existingRecord?.contactId || null;
+    let recruiterSynced    = recruiterFromUrl;
+
+    try {
+        const formDataForLookup = {
+            fullName:    fields.fullName,
+            phone:       fields.phone,
+            project:     fields.project || fields.projectId,
+            projectId:   fields.projectId,
+            country:     fields.country,
+            candidateId: resolvedContactId,
+        };
+        const result = await findOrCreateContact(formDataForLookup, recruiterFromUrl);
+        if (result.contact) {
+            resolvedContactId = result.contact.id;
+            recruiterSynced   = result.recruiterSynced;
         }
+    } catch (e) {
+        console.error('findOrCreateContact failed, continuing without contact:', e);
     }
 
-    // Определяем recruitmentStatus
+    // ── Определяем recruitmentStatus ──────────────────────────────────
     let recruitmentStatus;
     if (fields.recruitmentStatus) {
         recruitmentStatus = fields.recruitmentStatus;
@@ -236,7 +240,7 @@ async function processRecord(fields, files = {}) {
 
     const technicalStatus = fields.status || 'draft';
 
-    // Объединяем существующие и новые поля (новые имеют приоритет)
+    // ── Объединяем существующие и новые поля (новые имеют приоритет) ──
     const mergedFields = { ...existingRecord, ...fields };
 
     const record = {
@@ -245,10 +249,11 @@ async function processRecord(fields, files = {}) {
         submittedAt:       new Date().toISOString(),
         recruitmentStatus,
         status:            technicalStatus,
-        contactId:         resolvedContactId
+        contactId:         resolvedContactId,
+        recruiter:         recruiterSynced,   // синхронизированный рекрутер
     };
 
-    // Сохраняем файлы если есть (только multipart)
+    // ── Сохраняем файлы если есть (только multipart) ──────────────────
     const fileUrls = {};
     for (const [name, fileInfo] of Object.entries(files)) {
         const fileKey = `${recordId}/${fileInfo.filename}`;
@@ -262,44 +267,46 @@ async function processRecord(fields, files = {}) {
     await manualStore.setJSON(recordId, record);
     console.log('Record saved:', recordId);
 
-    // Фиксируем в истории
+    // ── Фиксируем в истории (единый appendHistory из contactHelper) ───
     if (resolvedContactId) {
-      const isDraft = technicalStatus === 'draft';
-      const isCompleted = technicalStatus === 'completed' || recruitmentStatus !== 'draft';
-      if (isDraft && !existingRecord) {
-        await appendHistory(resolvedContactId, {
-          type: 'form_draft',
-          label: '📝 Попал в черновики',
-          details: {
-            formId:   recordId,
-            formType: 'manual',
-            project:  fields.project,
-            fullName: fields.fullName
-          }
-        });
-      } else if (isCompleted && existingRecord?.status !== 'completed') {
-        await appendHistory(resolvedContactId, {
-          type: 'form_completed',
-          label: '✅ Прошёл проверку (ручная)',
-          details: {
-            formId:   recordId,
-            formType: 'manual',
-            status:   recruitmentStatus
-          }
-        });
-      } else if (existingRecord && existingRecord.recruitmentStatus !== recruitmentStatus) {
-        await appendHistory(resolvedContactId, {
-          type: 'form_status_changed',
-          label: '🔄 Статус анкеты изменён',
-          details: {
-            status:   recruitmentStatus,
-            formId:   recordId,
-            formType: 'manual'
-          }
-        });
-      }
+        const isDraft     = technicalStatus === 'draft';
+        const isCompleted = technicalStatus === 'completed' || recruitmentStatus !== 'draft';
+
+        if (isDraft && !existingRecord) {
+            await appendHistory(resolvedContactId, {
+                type:  'form_draft',
+                label: '📝 Попал в черновики',
+                details: {
+                    formId:   recordId,
+                    formType: 'manual',
+                    project:  fields.project,
+                    fullName: fields.fullName
+                }
+            });
+        } else if (isCompleted && existingRecord?.status !== 'completed') {
+            await appendHistory(resolvedContactId, {
+                type:  'form_completed',
+                label: '✅ Прошёл проверку (ручная)',
+                details: {
+                    formId:   recordId,
+                    formType: 'manual',
+                    status:   recruitmentStatus
+                }
+            });
+        } else if (existingRecord && existingRecord.recruitmentStatus !== recruitmentStatus) {
+            await appendHistory(resolvedContactId, {
+                type:  'form_status_changed',
+                label: '🔄 Статус анкеты изменён',
+                details: {
+                    status:   recruitmentStatus,
+                    formId:   recordId,
+                    formType: 'manual'
+                }
+            });
+        }
     }
 
+    // ── Обновляем индекс ──────────────────────────────────────────────
     const indexKey = '_index';
     let index = await manualStore.get(indexKey, { type: 'json' }) || [];
     index = index.filter(item => item.id !== recordId);
@@ -311,26 +318,4 @@ async function processRecord(fields, files = {}) {
         statusCode: 200,
         body: JSON.stringify({ success: true, id: recordId })
     };
-}
-
-
-async function appendHistory(contactId, event) {
-  try {
-    const { getStore } = require('@netlify/blobs');
-    const store = getStore({
-      name: 'candidate-history',
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_ACCESS_TOKEN,
-    });
-    let history = [];
-    try { history = await store.get(contactId, { type: 'json' }) || []; } catch(e) {}
-    history.push({
-      ...event,
-      timestamp: new Date().toISOString(),
-      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)
-    });
-    await store.setJSON(contactId, history);
-  } catch(e) {
-    console.error('appendHistory error:', e);
-  }
 }

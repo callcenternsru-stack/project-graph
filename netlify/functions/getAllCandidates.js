@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+const { updateFormRecruiterIfNeeded } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -6,7 +7,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Автоматические анкеты
+    // ── Автоматические анкеты ─────────────────────────────────────────
     const autoStore = getStore({
       name: 'candidates-data',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -49,7 +50,7 @@ exports.handler = async (event) => {
       })
     );
 
-    // Ручные анкеты
+    // ── Ручные анкеты ─────────────────────────────────────────────────
     const manualStore = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -101,7 +102,7 @@ exports.handler = async (event) => {
       })
     );
 
-    // Загружаем всех кандидатов из базы контактов
+    // ── Загружаем всех кандидатов из базы контактов ───────────────────
     const candidatesStore = getStore({
       name: 'candidates',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -125,6 +126,7 @@ exports.handler = async (event) => {
       .map(f => {
         let contact = null;
 
+        // ── Привязка к контакту ──────────────────────────────────────
         if (f.contactId && candidatesById.has(f.contactId)) {
           contact = candidatesById.get(f.contactId);
         } else {
@@ -146,37 +148,55 @@ exports.handler = async (event) => {
           f.contact = contact;
           if (!f.trainingDate && contact.trainingDate) f.trainingDate = contact.trainingDate;
           if (!f.trainingTime && contact.trainingTime) f.trainingTime = contact.trainingTime;
+
+          // ── Подставляем recruiter из контакта если у анкеты нет ─────
+          if (!f.recruiter && contact.recruiter) {
+            f.recruiter = contact.recruiter;
+
+            // Фоновое обновление анкеты (не блокируем ответ)
+            if (f.type === 'auto') {
+              autoToUpdate.find(u => u.code === f.id)
+                ? (autoToUpdate.find(u => u.code === f.id).recruiter = contact.recruiter)
+                : autoToUpdate.push({ code: f.id, contactId: contact.id, recruiter: contact.recruiter });
+            } else {
+              manualToUpdate.find(u => u.id === f.id)
+                ? (manualToUpdate.find(u => u.id === f.id).recruiter = contact.recruiter)
+                : manualToUpdate.push({ id: f.id, contactId: contact.id, recruiter: contact.recruiter });
+            }
+          }
         }
 
         return f;
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // Фоново сохраняем contactId — не блокируем ответ
+    // ── Фоновые обновления contactId и recruiter (не блокируем ответ) ─
     if (autoToUpdate.length > 0) {
-      Promise.all(autoToUpdate.map(async ({ code, contactId }) => {
+      Promise.all(autoToUpdate.map(async ({ code, contactId, recruiter }) => {
         try {
           const data = await autoStore.get(code, { type: 'json' });
-          if (data && !data.contactId) {
-            data.contactId = contactId;
-            await autoStore.setJSON(code, data);
-          }
+          if (!data) return;
+          let changed = false;
+          if (!data.contactId) { data.contactId = contactId; changed = true; }
+          if (!data.recruiter && recruiter) { data.recruiter = recruiter; changed = true; }
+          if (changed) await autoStore.setJSON(code, data);
         } catch (e) {
-          console.error(`Failed to update contactId for auto ${code}:`, e);
+          console.error(`Failed to update auto ${code}:`, e);
         }
       })).catch(console.error);
     }
 
     if (manualToUpdate.length > 0) {
-      Promise.all(manualToUpdate.map(async ({ id, contactId }) => {
+      Promise.all(manualToUpdate.map(async ({ id, contactId, recruiter }) => {
         try {
           const data = await manualStore.get(id, { type: 'json' });
-          if (data && !data.contactId) {
-            data.contactId = contactId;
-            await manualStore.setJSON(id, data);
-          }
+          if (!data) return;
+          let changed = false;
+          if (!data.contactId) { data.contactId = contactId; changed = true; }
+          if (!data.recruiter && recruiter) { data.recruiter = recruiter; changed = true; }
+          if (changed) await manualStore.setJSON(id, data);
         } catch (e) {
-          console.error(`Failed to update contactId for manual ${id}:`, e);
+          console.error(`Failed to update manual ${id}:`, e);
         }
       })).catch(console.error);
     }

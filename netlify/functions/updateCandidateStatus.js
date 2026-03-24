@@ -1,4 +1,9 @@
 const { getStore } = require('@netlify/blobs');
+const {
+  syncRecruiterBetweenContactAndForm,
+  updateContactRecruiter,
+  appendHistory
+} = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -23,45 +28,72 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }
 
-    // Обновляем статус и contactId в анкете
+    // ── Обновляем статус и contactId в анкете ────────────────────────
     data.recruitmentStatus = recruitmentStatus;
     if (reminderCount !== undefined) data.reminderCount = reminderCount;
     if (contactId !== undefined) data.contactId = contactId;
-    await store.setJSON(id, data);
 
-    // Если у анкеты есть contactId, обновляем соответствующую запись в базе контактов
-    if (data.contactId) {
+    const resolvedContactId = contactId || data.contactId || null;
+
+    // ── Синхронизация с базой контактов ──────────────────────────────
+    if (resolvedContactId) {
       const candidatesStore = getStore({
         name: 'candidates',
         siteID: process.env.NETLIFY_SITE_ID,
         token: process.env.NETLIFY_ACCESS_TOKEN,
       });
       let candidates = await candidatesStore.get('_all', { type: 'json' }) || [];
-      const candidateIndex = candidates.findIndex(c => c.id === data.contactId);
+      const candidateIndex = candidates.findIndex(c => c.id === resolvedContactId);
+
       if (candidateIndex !== -1) {
-        // Синхронизируем статус звонка (callResult) из рекрутингового статуса
+        const contact = candidates[candidateIndex];
+
+        // Синхронизируем callResult
         candidates[candidateIndex].callResult = recruitmentStatus;
-        // Если статус поменялся (не напоминание) — обнуляем reminderCount в контакте
+
+        // Синхронизируем reminderCount
         if (reminderCount !== undefined) {
           candidates[candidateIndex].reminderCount = reminderCount;
         } else if (recruitmentStatus !== '__reminder__') {
-          // При любой смене статуса через updateCandidateStatus сбрасываем напоминания
           candidates[candidateIndex].reminderCount = 0;
         }
+
+        // ── Синхронизация recruiter между анкетой и контактом ─────────
+        const formRecruiter    = data.recruiter || null;
+        const contactRecruiter = contact.recruiter || null;
+
+        const recruiterSynced = syncRecruiterBetweenContactAndForm(contact, formRecruiter);
+
+        // Обновляем рекрутера в контакте если изменился
+        if (recruiterSynced && contactRecruiter !== recruiterSynced) {
+          // updateContactRecruiter сам сохраняет в _all и пишет историю,
+          // поэтому обновляем локально и вызываем отдельно
+          candidates[candidateIndex].recruiter = recruiterSynced;
+          // Запускаем логирование смены рекрутера асинхронно
+          updateContactRecruiter(resolvedContactId, recruiterSynced).catch(console.error);
+        }
+
+        // Обновляем рекрутера в анкете если изменился
+        if (recruiterSynced && data.recruiter !== recruiterSynced) {
+          data.recruiter = recruiterSynced;
+        }
+
         await candidatesStore.setJSON('_all', candidates);
       }
     }
 
-    // Фиксируем смену статуса анкеты в истории
-    const resolvedContactId = contactId || data.contactId || null;
+    // ── Сохраняем обновлённую анкету ─────────────────────────────────
+    await store.setJSON(id, data);
+
+    // ── Фиксируем смену статуса в истории ────────────────────────────
     if (resolvedContactId) {
       await appendHistory(resolvedContactId, {
-        type: 'form_status_changed',
+        type:  'form_status_changed',
         label: '🔄 Статус анкеты изменён',
         details: {
-          status:    recruitmentStatus,
-          formId:    id,
-          formType:  type
+          status:   recruitmentStatus,
+          formId:   id,
+          formType: type
         }
       });
     }
@@ -78,24 +110,3 @@ exports.handler = async (event) => {
     };
   }
 };
-
-async function appendHistory(contactId, event) {
-  try {
-    const { getStore } = require('@netlify/blobs');
-    const store = getStore({
-      name: 'candidate-history',
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_ACCESS_TOKEN,
-    });
-    let history = [];
-    try { history = await store.get(contactId, { type: 'json' }) || []; } catch(e) {}
-    history.push({
-      ...event,
-      timestamp: new Date().toISOString(),
-      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)
-    });
-    await store.setJSON(contactId, history);
-  } catch(e) {
-    console.error('appendHistory error:', e);
-  }
-}

@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+const { findOrCreateContact } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -16,8 +17,6 @@ exports.handler = async (event) => {
       };
     }
 
-    let candidateId = formData.candidateId || null;
-
     const autoStore = getStore({
       name: 'candidates-data',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -29,29 +28,25 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
-    // Если contactId не передан — ищем кандидата по телефону в базе контактов
-    if (!candidateId) {
-      try {
-        const candidatesStore = getStore({
-          name: 'candidates',
-          siteID: process.env.NETLIFY_SITE_ID,
-          token: process.env.NETLIFY_ACCESS_TOKEN,
-        });
-        const allContacts = await candidatesStore.get('_all', { type: 'json' }) || [];
-        const normPhone = (formData.phone || '').replace(/\D/g, '');
-        if (normPhone.length > 5) {
-          const match = allContacts.find(c => (c.phone || '').replace(/\D/g, '') === normPhone);
-          if (match) candidateId = match.id;
-        }
-      } catch (e) {
-        console.error('Phone lookup failed:', e);
+    // ── Поиск/создание контакта + синхронизация рекрутера ────────────
+    const recruiterFromUrl = formData.recruiter || null;
+    let contactId     = null;
+    let recruiterSynced = recruiterFromUrl;
+
+    try {
+      const result = await findOrCreateContact(formData, recruiterFromUrl);
+      if (result.contact) {
+        contactId       = result.contact.id;
+        recruiterSynced = result.recruiterSynced;
       }
+    } catch (e) {
+      console.error('findOrCreateContact failed, continuing without contact:', e);
     }
 
-    const normPhone = (formData.phone || '').replace(/\D/g, '');
+    const normPhone  = (formData.phone || '').replace(/\D/g, '');
     const contactKey = `${formData.fullName}_${normPhone}_${formData.projectId}`;
 
-    // Удаляем дубликаты из auto-хранилища
+    // ── Удаляем дубликаты из auto-хранилища ──────────────────────────
     const autoList = await autoStore.list();
     for (const blob of autoList.blobs) {
       if (blob.key.includes('/')) continue;
@@ -71,7 +66,7 @@ exports.handler = async (event) => {
       }
     }
 
-    // Удаляем дубликаты из manual-хранилища
+    // ── Удаляем дубликаты из manual-хранилища ────────────────────────
     const manualList = await manualStore.list();
     for (const blob of manualList.blobs) {
       if (blob.key.includes('/')) continue;
@@ -91,18 +86,18 @@ exports.handler = async (event) => {
       }
     }
 
-    // Сохраняем новую анкету
+    // ── Сохраняем анкету с синхронизированным рекрутером ─────────────
     const candidateData = {
       formData,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
+      status:            'pending',
+      createdAt:         new Date().toISOString(),
       recruitmentStatus: 'draft',
-      recruiter: formData.recruiter || null,
-      contactId: candidateId
+      recruiter:         recruiterSynced,   // синхронизированный рекрутер
+      contactId:         contactId          // привязка к контакту
     };
     await autoStore.setJSON(code, candidateData);
 
-    // Обновляем индекс (без лимита)
+    // ── Обновляем индекс ──────────────────────────────────────────────
     const indexKey = '_index';
     let index = await autoStore.get(indexKey, { type: 'json' }) || [];
     index.push({ code, createdAt: candidateData.createdAt });
