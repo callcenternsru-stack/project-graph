@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+const { appendHistory } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -111,24 +112,3 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 };
-
-async function appendHistory(contactId, event) {
-  try {
-    const { getStore } = require('@netlify/blobs');
-    const store = getStore({
-      name: 'candidate-history',
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_ACCESS_TOKEN,
-    });
-    let history = [];
-    try { history = await store.get(contactId, { type: 'json' }) || []; } catch(e) {}
-    history.push({
-      ...event,
-      timestamp: new Date().toISOString(),
-      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)
-    });
-    await store.setJSON(contactId, history);
-  } catch(e) {
-    console.error('appendHistory error:', e);
-  }
-}
