@@ -117,9 +117,8 @@ exports.handler = async (event) => {
 async function processRecord(fields, files = {}) {
     console.log('All fields keys:', Object.keys(fields));
     console.log('status field value:', fields.status);
+    console.log('candidateId field value:', fields.candidateId);
 
-    // Для запросов из recruiter.html обязательные поля другие —
-    // там нет nickname/email/projectId, но есть fullName/phone/recruiter
     const isRecruiterRequest = !!fields.recruiter;
 
     if (!isRecruiterRequest) {
@@ -150,9 +149,29 @@ async function processRecord(fields, files = {}) {
         token:   process.env.NETLIFY_ACCESS_TOKEN,
     });
 
+    const recordId = fields.id || `manual_${Date.now()}`;
+    console.log('Record ID:', recordId);
+
+    // ══════════════════════════════════════════════════════════════════
+    // ФИX 1: Читаем existingRecord ДО удаления дубликатов,
+    // чтобы сохранить contactId, recruiter и другие поля из черновика.
+    // ══════════════════════════════════════════════════════════════════
+    let existingRecord = null;
+    try {
+        existingRecord = await manualStore.get(recordId, { type: 'json' });
+        if (existingRecord) {
+            console.log('Found existingRecord, contactId:', existingRecord.contactId);
+        }
+    } catch (e) {
+        console.log('No existing record found for id:', recordId);
+    }
+
     // ── Нормализация телефона для поиска дубликатов ───────────────────
     const normPhone  = (fields.phone || '').replace(/\D/g, '');
     const contactKey = `${fields.fullName}_${normPhone}_${fields.projectId || fields.project}`;
+
+    // Сюда соберём contactId из удалённых дублей (если у нас его ещё нет)
+    let inheritedContactId = null;
 
     // ── Удаление дубликатов из авто-анкет ────────────────────────────
     const autoList = await autoStore.list();
@@ -178,13 +197,19 @@ async function processRecord(fields, files = {}) {
     const manualList = await manualStore.list();
     for (const blob of manualList.blobs) {
         if (blob.key.includes('/')) continue;
+        if (blob.key === recordId) continue; // никогда не удаляем текущую запись
         const data = await manualStore.get(blob.key, { type: 'json' });
         if (data) {
             const dataNormPhone = (data.phone || '').replace(/\D/g, '');
             const key = `${data.fullName}_${dataNormPhone}_${data.projectId || data.project}`;
-            if (key === contactKey && blob.key !== fields.id) {
+            if (key === contactKey) {
+                // ФИX 2: Наследуем contactId из дубликата, если у нас его ещё нет
+                if (data.contactId && !inheritedContactId) {
+                    inheritedContactId = data.contactId;
+                    console.log(`Inheriting contactId=${inheritedContactId} from duplicate ${blob.key}`);
+                }
                 await manualStore.delete(blob.key);
-                console.log(`Deleted manual draft with key ${blob.key}`);
+                console.log(`Deleted manual duplicate with key ${blob.key}`);
                 const index    = await manualStore.get('_index', { type: 'json' }) || [];
                 const newIndex = index.filter(item => item.id !== blob.key);
                 if (newIndex.length !== index.length) {
@@ -194,21 +219,23 @@ async function processRecord(fields, files = {}) {
         }
     }
 
-    const recordId = fields.id || `manual_${Date.now()}`;
-    console.log('Record ID:', recordId);
-
-    // ── Получить существующую запись если есть ────────────────────────
-    let existingRecord = null;
-    if (fields.id) {
-        try {
-            existingRecord = await manualStore.get(fields.id, { type: 'json' });
-        } catch (e) {}
-    }
-
-    // ── Поиск/создание контакта + синхронизация рекрутера ─────────────
+    // ══════════════════════════════════════════════════════════════════
+    // ФИX 3: resolvedContactId — чёткий приоритет источников:
+    //   1. candidateId из URL/формы (явная привязка)
+    //   2. contactId из existingRecord (черновик уже был привязан)
+    //   3. inheritedContactId из удалённого дубликата
+    //   4. null — findOrCreateContact создаст новый
+    // ══════════════════════════════════════════════════════════════════
     const recruiterFromUrl = fields.recruiter || existingRecord?.recruiter || null;
-    let resolvedContactId  = fields.candidateId || existingRecord?.contactId || null;
-    let recruiterSynced    = recruiterFromUrl;
+    let resolvedContactId  =
+        fields.candidateId         ||
+        existingRecord?.contactId  ||
+        inheritedContactId         ||
+        null;
+
+    let recruiterSynced = recruiterFromUrl;
+
+    console.log('resolvedContactId before findOrCreate:', resolvedContactId);
 
     try {
         const formDataForLookup = {
@@ -223,6 +250,7 @@ async function processRecord(fields, files = {}) {
         if (result.contact) {
             resolvedContactId = result.contact.id;
             recruiterSynced   = result.recruiterSynced;
+            console.log('resolvedContactId after findOrCreate:', resolvedContactId);
         }
     } catch (e) {
         console.error('findOrCreateContact failed, continuing without contact:', e);
@@ -240,7 +268,8 @@ async function processRecord(fields, files = {}) {
 
     const technicalStatus = fields.status || 'draft';
 
-    // ── Объединяем существующие и новые поля (новые имеют приоритет) ──
+    // ── Объединяем поля (existingRecord < fields), затем явно защищаем
+    // contactId и recruiter от перезаписи пустыми значениями ───────────
     const mergedFields = { ...existingRecord, ...fields };
 
     const record = {
@@ -249,8 +278,9 @@ async function processRecord(fields, files = {}) {
         submittedAt:       new Date().toISOString(),
         recruitmentStatus,
         status:            technicalStatus,
-        contactId:         resolvedContactId,
-        recruiter:         recruiterSynced,   // синхронизированный рекрутер
+        // ФИX 4: явно проставляем — не даём spread перезаписать пустым
+        contactId: resolvedContactId || existingRecord?.contactId || null,
+        recruiter: recruiterSynced   || existingRecord?.recruiter || null,
     };
 
     // ── Сохраняем файлы если есть (только multipart) ──────────────────
@@ -261,21 +291,30 @@ async function processRecord(fields, files = {}) {
         fileUrls[name] = `/.netlify/functions/getFile?code=${recordId}&file=${encodeURIComponent(fileInfo.filename)}&type=manual`;
     }
     if (Object.keys(fileUrls).length > 0) {
-        record.files = fileUrls;
+        // Сохраняем старые файлы + добавляем новые
+        record.files = { ...(existingRecord?.files || {}), ...fileUrls };
     }
 
     await manualStore.setJSON(recordId, record);
-    console.log('Record saved:', recordId);
+    console.log('Record saved:', recordId, '| contactId:', record.contactId);
 
-    // ── Фиксируем в истории (единый appendHistory из contactHelper) ───
-    if (resolvedContactId) {
-        const isDraft     = technicalStatus === 'draft';
-        const isCompleted = technicalStatus === 'completed' || recruitmentStatus !== 'draft';
+    // ══════════════════════════════════════════════════════════════════
+    // ФИX 5: История — взаимоисключающие условия без двойного
+    // срабатывания. Все события пишем только если есть contactId.
+    // ══════════════════════════════════════════════════════════════════
+    if (record.contactId) {
+        const wasNew         = !existingRecord;
+        const wasCompleted   = existingRecord?.status === 'completed';
+        const nowCompleted   = technicalStatus === 'completed';
+        const prevStatus     = existingRecord?.recruitmentStatus || null;
+        const hasNewFiles    = Object.keys(fileUrls).length > 0;
 
-        if (isDraft && !existingRecord) {
-            await appendHistory(resolvedContactId, {
-                type:  'form_draft',
-                label: '📝 Попал в черновики',
+        if (wasNew && technicalStatus === 'draft') {
+            // Первичное появление в черновиках
+            await appendHistory(record.contactId, {
+                type:      'form_draft',
+                label:     '📝 Попал в черновики',
+                recruiter: recruiterSynced || null,
                 details: {
                     formId:   recordId,
                     formType: 'manual',
@@ -283,27 +322,50 @@ async function processRecord(fields, files = {}) {
                     fullName: fields.fullName
                 }
             });
-        } else if (isCompleted && existingRecord?.status !== 'completed') {
-            await appendHistory(resolvedContactId, {
-                type:  'form_completed',
-                label: '✅ Прошёл проверку (ручная)',
+
+        } else if (!wasCompleted && nowCompleted) {
+            // Кандидат завершил проверку (status → completed)
+            await appendHistory(record.contactId, {
+                type:      'form_completed',
+                label:     '✅ Прошёл проверку (ручная)',
+                recruiter: recruiterSynced || null,
                 details: {
-                    formId:   recordId,
-                    formType: 'manual',
-                    status:   recruitmentStatus
+                    formId:            recordId,
+                    formType:          'manual',
+                    status:            recruitmentStatus,
+                    recruitmentStatus
                 }
             });
-        } else if (existingRecord && existingRecord.recruitmentStatus !== recruitmentStatus) {
-            await appendHistory(resolvedContactId, {
-                type:  'form_status_changed',
-                label: '🔄 Статус анкеты изменён',
+
+        } else if (!wasNew && prevStatus && prevStatus !== recruitmentStatus) {
+            // Смена статуса рекрутером/администратором
+            await appendHistory(record.contactId, {
+                type:      'form_status_changed',
+                label:     '🔄 Статус анкеты изменён',
+                recruiter: recruiterSynced || null,
                 details: {
+                    prevStatus,
                     status:   recruitmentStatus,
                     formId:   recordId,
                     formType: 'manual'
                 }
             });
+
+        } else if (!wasNew && hasNewFiles) {
+            // Загрузка файлов без смены статуса
+            await appendHistory(record.contactId, {
+                type:      'form_files_uploaded',
+                label:     '📎 Загружены файлы проверки',
+                recruiter: recruiterSynced || null,
+                details: {
+                    formId:   recordId,
+                    formType: 'manual',
+                    files:    Object.keys(fileUrls)
+                }
+            });
         }
+    } else {
+        console.warn('No contactId resolved — history NOT recorded for record:', recordId);
     }
 
     // ── Обновляем индекс ──────────────────────────────────────────────
@@ -316,6 +378,7 @@ async function processRecord(fields, files = {}) {
 
     return {
         statusCode: 200,
-        body: JSON.stringify({ success: true, id: recordId })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, id: recordId, contactId: record.contactId })
     };
 }
