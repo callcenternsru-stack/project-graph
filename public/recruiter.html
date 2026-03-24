@@ -1876,13 +1876,6 @@
             return result;
         }
 
-        function showLoading() { (!status) return false;
-            const s = status.toLowerCase().trim();
-            return (s.includes('приглашение на обучени') ||
-                    s.includes('вышел на обучени') ||
-                    s === 'обучение');
-        }
-
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
@@ -3766,6 +3759,7 @@
 
         const _origInit = initInterface;
         initInterface = async function () {
+            if (!currentRecruiter) return;
             await loadStateForMenu();
             await _origInit();
         };
