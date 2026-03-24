@@ -1858,6 +1858,31 @@
                     s === 'обучение');
         }
 
+        /* Объединяет анкеты (allCandidates) и контакты (myCandidates) без дублей.
+           Приоритет отдаётся анкете — если телефон уже встречался, контакт пропускается. */
+        function mergeWithoutDuplicates(fromAll, fromMy) {
+            const seenPhones = new Set();
+            const result = [];
+            for (const c of fromAll) {
+                const phone = (c.phone || '').replace(/\D/g, '');
+                if (phone) seenPhones.add(phone);
+                result.push(c);
+            }
+            for (const c of fromMy) {
+                const phone = (c.phone || '').replace(/\D/g, '');
+                if (phone && seenPhones.has(phone)) continue;
+                result.push(c);
+            }
+            return result;
+        }
+
+        function showLoading() { (!status) return false;
+            const s = status.toLowerCase().trim();
+            return (s.includes('приглашение на обучени') ||
+                    s.includes('вышел на обучени') ||
+                    s === 'обучение');
+        }
+
         function showLoading() {
             let overlay = document.getElementById('loadingOverlay');
             if (!overlay) {
@@ -2590,14 +2615,8 @@
             const passed          = allCandidates.filter(c => c.recruitmentStatus === 'passed' && byMe(c)).length;
             const rejects         = allCandidates.filter(c => ['Не интересует','Нет ПК/Ноутбука','Фрикативная речь','Акцент','Нет гарнитуры','Нет Lan кабеля'].includes(c.recruitmentStatus) && byMe(c)).length;
             const verCount        = allCandidates.filter(c => c.recruitmentStatus === 'Проверка' && byMe(c)).length;
-            const orgMeeting      = [
-                ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult))
-            ].length;
-            const training        = [
-                ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => isAnyTraining(c.callResult))
-            ].length;
+            const orgMeeting      = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)).length;
+            const training        = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)).length;
             const employeeCount   = allCandidates.filter(c => c.recruitmentStatus === 'employee' && byMe(c)).length;
 
             const p1 = (rejects + verCount) > 0 ? passed / (rejects + verCount) : 0;
@@ -2727,14 +2746,8 @@
                 case 'verification': list = myCandidates.filter(c => c.callResult === 'Проверка'); break;
                 case 'draft':        list = getDraftCandidates(); break;
                 case 'reminders':    list = getReminderCandidates(); break;
-                case 'orgMeeting':   list = [
-                    ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)),
-                    ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult))
-                ]; break;
-                case 'training':     list = [
-                    ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)),
-                    ...myCandidates.filter(c => isAnyTraining(c.callResult))
-                ]; break;
+                case 'orgMeeting':   list = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)); break;
+                case 'training':     list = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)); break;
                 case 'rejects':      list = allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)); break;
             }
 
@@ -2972,14 +2985,8 @@
 
             const draftList     = getDraftCandidates();
             const reminderList  = getReminderCandidates();
-            const orgList     = [
-                ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult))
-            ];
-            const trainList   = [
-                ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)),
-                ...myCandidates.filter(c => isAnyTraining(c.callResult))
-            ];
+            const orgList     = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c));
+            const trainList   = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c));
 
             const totals = {
                 contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
@@ -3302,14 +3309,8 @@
                 contacts:    () => myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult || '' })),
                 verification: () => myCandidates.filter(c => c.callResult === 'Проверка').map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult })),
                 draft:       () => allCandidates.filter(c => c.recruitmentStatus === 'draft' && new Date(c.createdAt).getTime() < oneHourAgo && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                orgMeeting:  () => [
-                    ...allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                    ...myCandidates.filter(c => isAnyOrgMeeting(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
-                ],
-                training:    () => [
-                    ...allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                    ...myCandidates.filter(c => isAnyTraining(c.callResult)).map(c => ({ id: c.id, type: 'contact', fullName: c.fullName, phone: c.phone, project: c.project, status: c.callResult }))
-                ],
+                orgMeeting:  () => allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
+                training:    () => allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
                 rejects:     () => allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus }))
             };
 
