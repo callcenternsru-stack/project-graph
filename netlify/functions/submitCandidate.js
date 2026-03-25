@@ -1,6 +1,16 @@
 const { getStore } = require('@netlify/blobs');
 const { appendHistory } = require('./shared/contactHelper');
 
+// Поля которые синхронизируются из базы контактов в анкеты
+const SYNC_FIELDS = [
+  { key: 'fullName',     label: 'ФИО' },
+  { key: 'phone',        label: 'Телефон' },
+  { key: 'project',      label: 'Проект' },
+  { key: 'country',      label: 'Страна' },
+  { key: 'trainingDate', label: 'Дата обучения' },
+  { key: 'trainingTime', label: 'Время обучения' },
+];
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -85,6 +95,20 @@ exports.handler = async (event) => {
       if (changedFields.length > 0 || isFirstAction) {
         await appendHistory(candidateId, { type: evtType, label, recruiter: updatedCandidate.recruiter, details });
       }
+
+      // ── Синхронизация изменённых полей в анкеты ──────────────────────
+      const syncableChanged = changedFields.filter(l =>
+        SYNC_FIELDS.some(f => f.label === l)
+      );
+
+      if (syncableChanged.length > 0) {
+        try {
+          await syncContactFieldsToForms(candidateId, updatedCandidate, syncableChanged);
+        } catch (e) {
+          console.error('submitCandidate: syncContactFieldsToForms failed:', e);
+        }
+      }
+
     } else {
       candidates.push(updatedCandidate);
       await appendHistory(candidateId, {
@@ -112,3 +136,82 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 };
+
+// ══════════════════════════════════════════════════════════════════════
+// Синхронизация полей контакта во все привязанные анкеты
+// ══════════════════════════════════════════════════════════════════════
+async function syncContactFieldsToForms(contactId, updatedContact, changedLabels) {
+  const SYNC_FIELDS = [
+    { key: 'fullName',     label: 'ФИО' },
+    { key: 'phone',        label: 'Телефон' },
+    { key: 'project',      label: 'Проект' },
+    { key: 'country',      label: 'Страна' },
+    { key: 'trainingDate', label: 'Дата обучения' },
+    { key: 'trainingTime', label: 'Время обучения' },
+  ];
+
+  const fieldsToSync = SYNC_FIELDS.filter(f => changedLabels.includes(f.label));
+  if (fieldsToSync.length === 0) return;
+
+  // Обновляем ручные анкеты
+  const manualStore = getStore({
+    name: 'manualForms',
+    siteID: process.env.NETLIFY_SITE_ID,
+    token: process.env.NETLIFY_ACCESS_TOKEN,
+  });
+
+  const { blobs: manualBlobs } = await manualStore.list();
+  for (const blob of manualBlobs) {
+    if (blob.key.includes('/') || blob.key === '_index') continue;
+    const form = await manualStore.get(blob.key, { type: 'json' });
+    if (!form || form.contactId !== contactId) continue;
+
+    let changed = false;
+    fieldsToSync.forEach(f => {
+      if (form[f.key] !== updatedContact[f.key]) {
+        form[f.key] = updatedContact[f.key];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      await manualStore.setJSON(blob.key, form);
+      console.log(`syncContactFieldsToForms: updated manualForm ${blob.key}`);
+    }
+  }
+
+  // Обновляем авто-анкеты
+  const autoStore = getStore({
+    name: 'candidates-data',
+    siteID: process.env.NETLIFY_SITE_ID,
+    token: process.env.NETLIFY_ACCESS_TOKEN,
+  });
+
+  const autoList = await autoStore.list();
+  for (const blob of autoList.blobs) {
+    if (blob.key.includes('/') || blob.key === '_index') continue;
+    const form = await autoStore.get(blob.key, { type: 'json' });
+    if (!form || form.contactId !== contactId) continue;
+
+    let changed = false;
+    fieldsToSync.forEach(f => {
+      // Авто-анкеты хранят данные в formData
+      if (form.formData) {
+        if (form.formData[f.key] !== updatedContact[f.key]) {
+          form.formData[f.key] = updatedContact[f.key];
+          changed = true;
+        }
+      } else {
+        if (form[f.key] !== updatedContact[f.key]) {
+          form[f.key] = updatedContact[f.key];
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      await autoStore.setJSON(blob.key, form);
+      console.log(`syncContactFieldsToForms: updated autoForm ${blob.key}`);
+    }
+  }
+}

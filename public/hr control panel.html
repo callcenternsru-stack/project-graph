@@ -3557,13 +3557,26 @@
 
         async function updateCandidateStatus(id, type, newStatus, showNotif = true) {
             try {
+                // Собираем все поля кандидата для синхронизации
+                const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
+                const payload = {
+                    id,
+                    type,
+                    recruitmentStatus: newStatus,
+                    // Передаём все поля для синхронизации с базой контактов
+                    fullName:     candidate?.fullName     || undefined,
+                    phone:        candidate?.phone        || undefined,
+                    project:      candidate?.project      || undefined,
+                    country:      candidate?.country      || undefined,
+                    trainingDate: candidate?.trainingDate || undefined,
+                    trainingTime: candidate?.trainingTime || undefined,
+                };
                 const response = await fetch('/.netlify/functions/updateCandidateStatus', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, type, recruitmentStatus: newStatus })
+                    body: JSON.stringify(payload)
                 });
                 if (response.ok) {
-                    const candidate = state.allCandidates.find(c => c.id === id && c.type === type);
                     if (candidate) candidate.recruitmentStatus = newStatus;
                     if (showNotif) showNotification('Статус обновлён', 'success');
                 } else {
