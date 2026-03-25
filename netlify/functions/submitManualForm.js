@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+const { findOrCreateContact, appendHistory } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -6,50 +7,102 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { formData } = JSON.parse(event.body);
-    if (!formData) {
+    const body = JSON.parse(event.body);
+
+    // Поддерживаем оба формата: { formData } и плоский объект
+    const formData      = body.formData || body;
+    const recruiterUrl  = body.recruiter || formData.recruiter || null;
+
+    if (!formData || !formData.phone) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing formData' }) };
     }
 
     const store = getStore({
       name: 'manualForms',
       siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_ACCESS_TOKEN,
+      token:  process.env.NETLIFY_ACCESS_TOKEN,
       apiURL: 'https://api.netlify.com'
     });
 
-    // Получаем список всех ключей в хранилище
+    // ── Удаление дубликатов (оригинальная логика) ────────────────────
+    const isSameCandidate = (a, b) =>
+      a.fullName === b.fullName &&
+      a.nickname === b.nickname &&
+      a.telegram === b.telegram &&
+      a.phone    === b.phone    &&
+      a.email    === b.email    &&
+      a.project  === b.project;
+
     const { blobs } = await store.list();
-
-    // Функция для сравнения двух объектов анкет (без учёта временных меток)
-    const isSameCandidate = (a, b) => {
-      return a.fullName === b.fullName &&
-             a.nickname === b.nickname &&
-             a.telegram === b.telegram &&
-             a.phone === b.phone &&
-             a.email === b.email &&
-             a.project === b.project;
-    };
-
-    // Перебираем все ключи и ищем дубликат
     for (const blob of blobs) {
       const existing = await store.get(blob.key, { type: 'json' });
       if (existing && isSameCandidate(existing, formData)) {
-        // Нашли дубликат – удаляем его
         await store.delete(blob.key);
         console.log(`Deleted duplicate manual form with key ${blob.key}`);
         break;
       }
     }
 
-    // Сохраняем новую анкету
-    const key = `manual_${Date.now()}`;
-    const record = { ...formData, id: key, submittedAt: new Date().toISOString() };
+    // ── Привязка к контакту по candidateId из URL или телефону ────────
+    let resolvedContactId = formData.candidateId || null;
+    let recruiterSynced   = recruiterUrl;
+
+    try {
+      const result = await findOrCreateContact(
+        {
+          fullName:    formData.fullName    || '',
+          phone:       formData.phone       || '',
+          project:     formData.project     || '',
+          country:     formData.country     || '',
+          candidateId: resolvedContactId,   // приоритет — ID из URL
+        },
+        recruiterUrl
+      );
+      if (result.contact) {
+        resolvedContactId = result.contact.id;
+        recruiterSynced   = result.recruiterSynced || recruiterUrl;
+        console.log('submitManualForm: contactId resolved =', resolvedContactId);
+      }
+    } catch (e) {
+      console.error('submitManualForm: findOrCreateContact failed:', e);
+      // Не блокируем создание черновика при ошибке поиска контакта
+    }
+
+    // ── Сохраняем черновик с contactId ───────────────────────────────
+    const key    = `manual_${Date.now()}`;
+    const record = {
+      ...formData,
+      id:          key,
+      submittedAt: new Date().toISOString(),
+      contactId:   resolvedContactId || null,
+      recruiter:   recruiterSynced   || formData.recruiter || null,
+    };
+
     await store.setJSON(key, record);
+    console.log('submitManualForm: saved record', key, '| contactId:', record.contactId);
+
+    // ── Пишем историю в контакт ──────────────────────────────────────
+    if (record.contactId) {
+      try {
+        await appendHistory(record.contactId, {
+          type:      'form_draft',
+          label:     '📝 Попал в черновики',
+          recruiter: recruiterSynced || null,
+          details: {
+            formId:   key,
+            formType: 'manual',
+            project:  formData.project  || '',
+            fullName: formData.fullName || '',
+          }
+        });
+      } catch (e) {
+        console.error('submitManualForm: appendHistory failed:', e);
+      }
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, id: key })
+      body: JSON.stringify({ success: true, id: key, contactId: record.contactId })
     };
   } catch (error) {
     console.error('Error in submitManualForm:', error);

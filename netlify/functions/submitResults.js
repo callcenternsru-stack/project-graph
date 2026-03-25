@@ -1,6 +1,7 @@
 const { getStore } = require('@netlify/blobs');
 const Busboy = require('busboy');
 const { Readable } = require('stream');
+const { appendHistory } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -67,16 +68,12 @@ exports.handler = async (event) => {
           return;
         }
 
-        // Разрешаем повторную отправку если статус уже completed
-        // (на случай если предыдущая отправка прервалась на стороне клиента)
-        // НЕ блокируем — просто перезаписываем файлы
+        const wasCompleted = candidateData.status === 'completed';
 
         // Сохраняем файлы
         for (const [fieldname, fileInfo] of Object.entries(files)) {
-          // Используем стандартные имена файлов для надёжности
           let saveFilename = fileInfo.filename;
           if (!saveFilename || saveFilename.trim() === '') {
-            // Если имя пустое — используем fieldname с расширением по mimeType
             const extMap = { 'audio/wav': '.wav', 'audio/mpeg': '.mp3', 'text/plain': '.txt', 'application/json': '.json' };
             saveFilename = fieldname + (extMap[fileInfo.mimeType] || '');
           }
@@ -86,9 +83,28 @@ exports.handler = async (event) => {
         }
 
         // Обновляем статус
-        candidateData.status = 'completed';
+        candidateData.status      = 'completed';
         candidateData.completedAt = new Date().toISOString();
         await store.setJSON(code, candidateData);
+
+        // ── Пишем историю в контакт (только при первом completed) ──────
+        if (!wasCompleted && candidateData.contactId) {
+          try {
+            await appendHistory(candidateData.contactId, {
+              type:      'form_completed',
+              label:     '✅ Прошёл проверку (авто)',
+              recruiter: candidateData.recruiter || null,
+              details: {
+                formId:            code,
+                formType:          'auto',
+                recruitmentStatus: candidateData.recruitmentStatus || 'draft'
+              }
+            });
+            console.log('[submitResults] History written for contactId:', candidateData.contactId);
+          } catch (e) {
+            console.error('[submitResults] appendHistory failed:', e);
+          }
+        }
 
         resolve({
           statusCode: 200,
