@@ -1781,6 +1781,17 @@
         let refreshInterval           = null;
         let isRefreshing              = false;
 
+        /* Единый список статусов отказов из анкет */
+        const REJECT_STATUSES = [
+            'Отказ акцент',
+            'Отказ фрикативная речь',
+            'Отказ интернет',
+            'Отказ наушники',
+            'Отказ не вышел на орг.встречу',
+            'Отказ не вышел на обучение',
+            'Отказ по ТХ'
+        ];
+
         /* =====================================================================
            UTILITIES
         ===================================================================== */
@@ -2606,7 +2617,7 @@
             document.getElementById('statAnalytics').textContent = avgQuality + '%';
 
             const passed          = allCandidates.filter(c => c.recruitmentStatus === 'passed' && byMe(c)).length;
-            const rejects         = allCandidates.filter(c => ['Не интересует','Нет ПК/Ноутбука','Фрикативная речь','Акцент','Нет гарнитуры','Нет Lan кабеля'].includes(c.recruitmentStatus) && byMe(c)).length;
+            const rejects         = allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)).length;
             const verCount        = allCandidates.filter(c => c.recruitmentStatus === 'Проверка' && byMe(c)).length;
             const orgMeeting      = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)).length;
             const training        = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)).length;
@@ -2741,7 +2752,7 @@
                 case 'reminders':    list = getReminderCandidates(); break;
                 case 'orgMeeting':   list = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)); break;
                 case 'training':     list = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)); break;
-                case 'rejects':      list = allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)); break;
+                case 'rejects':      list = allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)); break;
             }
 
             if (searchQuery) {
@@ -2958,7 +2969,28 @@
 
         function renderOrgMeetingCandidates(list) { renderWithTransfer(list, 'Нет кандидатов на орг. встречу'); }
         function renderTrainingCandidates(list)    { renderWithTransfer(list, 'Нет кандидатов на обучение');  }
-        function renderRejectsCandidates(list)     { renderWithTransfer(list, 'Нет отказов');                 }
+        function renderRejectsCandidates(list) {
+            const cards = list.map(c => {
+                const trainingDate = c.trainingDate || '—';
+                const trainingTime = c.trainingTime || c.meetingTime || '';
+                const isNew = !seenCandidateIds.has(c.id);
+                const newBadge = isNew ? '<span class="new-badge">Новый</span>' : '';
+                const status = c.recruitmentStatus || '—';
+                return `
+                    <div class="candidate-card ${isNew ? 'is-new' : ''}" data-id="${c.id}" data-type="${c.type || ''}">
+                        ${newBadge}
+                        <div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${escapeHtml(c.fullName || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Телефон</div><div class="value">${escapeHtml(c.phone || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Проект</div><div class="value">${escapeHtml(c.project || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">📅 Дата обучения</div><div class="value">${escapeHtml(trainingDate)}</div></div>
+                        <div class="candidate-field"><div class="label">🕐 Время обучения</div><div class="value">${escapeHtml(trainingTime || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge" style="background:rgba(255,107,107,0.15);color:#ff6b6b;">${escapeHtml(status)}</span></div></div>
+                    </div>
+                `;
+            }).join('');
+            setContainerHTML(cards, 'Нет отказов');
+            attachCardListeners();
+        }
 
         /* =====================================================================
            TAB COUNTS
@@ -2988,7 +3020,7 @@
                 reminders:    reminderList.length,
                 orgMeeting:   orgList.length,
                 training:     trainList.length,
-                rejects:      allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).length
+                rejects:      allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)).length
             };
 
             const newUnseen = {
@@ -3304,7 +3336,7 @@
                 draft:       () => allCandidates.filter(c => c.recruitmentStatus === 'draft' && new Date(c.createdAt).getTime() < oneHourAgo && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
                 orgMeeting:  () => allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
                 training:    () => allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus })),
-                rejects:     () => allCandidates.filter(c => ['Отказ ТХ','Отказ Интернет','Отказ подключения','Отказ гарнитура','Отказ акцент'].includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus }))
+                rejects:     () => allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)).map(c => ({ id: c.id, type: c.type, fullName: c.fullName, phone: c.phone, project: c.project, status: c.recruitmentStatus }))
             };
 
             if (!map[category]) return;

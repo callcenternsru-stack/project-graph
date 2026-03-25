@@ -3174,13 +3174,21 @@
             }
 
             if (type === 'manual') {
-                // AnyDesk — задание №5, индекс 4 в массиве tasks (ключ '4' или 4)
-                const anyDeskValue = candidate.taskInputs && (candidate.taskInputs['4'] || candidate.taskInputs[4]);
+                // AnyDesk — задание №5, ключ task_4_input (индекс 4, нумерация с 0)
+                const anyDeskValue = candidate.taskInputs && (
+                    candidate.taskInputs['task_4_input'] ||
+                    candidate.taskInputs['4'] ||
+                    candidate.taskInputs[4]
+                );
                 if (anyDeskValue) {
                     extraInfoHtml += `<p><strong>AnyDesk (задание 5):</strong> ${anyDeskValue}</p>`;
                 }
-                // Тест на знание ПК — задание №3, индекс 2 в массиве tasks (ключ '2' или 2)
-                const rawScore = candidate.taskScores && (candidate.taskScores['2'] || candidate.taskScores[2]);
+                // Тест на знание ПК — задание №3, ключ task_2_score (индекс 2, нумерация с 0)
+                const rawScore = candidate.taskScores && (
+                    candidate.taskScores['task_2_score'] ||
+                    candidate.taskScores['2'] ||
+                    candidate.taskScores[2]
+                );
                 if (rawScore) {
                     try {
                         const score = typeof rawScore === 'string'
@@ -3191,6 +3199,12 @@
                         console.error('Error parsing task score', e);
                         extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${rawScore} (ошибка парсинга)</p>`;
                     }
+                }
+
+                // Отладка: если ничего не нашли — покажем все доступные ключи в консоли
+                if (!anyDeskValue && !rawScore) {
+                    console.log('[DEBUG] taskInputs keys:', Object.keys(candidate.taskInputs || {}));
+                    console.log('[DEBUG] taskScores keys:', Object.keys(candidate.taskScores || {}));
                 }
             }
 
