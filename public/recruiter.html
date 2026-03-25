@@ -2751,8 +2751,10 @@
                     if (c.callResult !== 'Проверка') return false;
                     const normPhone = (c.phone || '').replace(/\D/g, '');
                     const hasDraft = allCandidates.some(a =>
-                        a.recruitmentStatus === 'draft' &&
-                        (a.phone || '').replace(/\D/g, '') === normPhone
+                        a.recruitmentStatus === 'draft' && (
+                            (normPhone && (a.phone || '').replace(/\D/g, '') === normPhone) ||
+                            (c.id && a.contactId === c.id)
+                        )
                     );
                     return !hasDraft;
                 }); break;
