@@ -9,6 +9,7 @@ const SYNC_FIELDS = [
   { key: 'country',      label: 'Страна' },
   { key: 'trainingDate', label: 'Дата обучения' },
   { key: 'trainingTime', label: 'Время обучения' },
+  { key: 'callResult',   label: 'Статус' },
 ];
 
 exports.handler = async (event) => {
@@ -142,12 +143,13 @@ exports.handler = async (event) => {
 // ══════════════════════════════════════════════════════════════════════
 async function syncContactFieldsToForms(contactId, updatedContact, changedLabels) {
   const SYNC_FIELDS = [
-    { key: 'fullName',     label: 'ФИО' },
-    { key: 'phone',        label: 'Телефон' },
-    { key: 'project',      label: 'Проект' },
-    { key: 'country',      label: 'Страна' },
-    { key: 'trainingDate', label: 'Дата обучения' },
-    { key: 'trainingTime', label: 'Время обучения' },
+    { key: 'fullName',     label: 'ФИО',           formKey: 'fullName' },
+    { key: 'phone',        label: 'Телефон',        formKey: 'phone' },
+    { key: 'project',      label: 'Проект',         formKey: 'project' },
+    { key: 'country',      label: 'Страна',         formKey: 'country' },
+    { key: 'trainingDate', label: 'Дата обучения',  formKey: 'trainingDate' },
+    { key: 'trainingTime', label: 'Время обучения', formKey: 'trainingTime' },
+    { key: 'callResult',   label: 'Статус',         formKey: 'recruitmentStatus' }, // callResult → recruitmentStatus
   ];
 
   const fieldsToSync = SYNC_FIELDS.filter(f => changedLabels.includes(f.label));
@@ -168,8 +170,10 @@ async function syncContactFieldsToForms(contactId, updatedContact, changedLabels
 
     let changed = false;
     fieldsToSync.forEach(f => {
-      if (form[f.key] !== updatedContact[f.key]) {
-        form[f.key] = updatedContact[f.key];
+      const formKey    = f.formKey || f.key;
+      const contactVal = updatedContact[f.key];
+      if (form[formKey] !== contactVal) {
+        form[formKey] = contactVal;
         changed = true;
       }
     });
@@ -195,17 +199,19 @@ async function syncContactFieldsToForms(contactId, updatedContact, changedLabels
 
     let changed = false;
     fieldsToSync.forEach(f => {
+      const formKey    = f.formKey || f.key;
+      const contactVal = updatedContact[f.key];
       // Авто-анкеты хранят данные в formData
       if (form.formData) {
-        if (form.formData[f.key] !== updatedContact[f.key]) {
-          form.formData[f.key] = updatedContact[f.key];
+        if (form.formData[f.key] !== contactVal) {
+          form.formData[f.key] = contactVal;
           changed = true;
         }
-      } else {
-        if (form[f.key] !== updatedContact[f.key]) {
-          form[f.key] = updatedContact[f.key];
-          changed = true;
-        }
+      }
+      // recruitmentStatus всегда на верхнем уровне
+      if (form[formKey] !== contactVal) {
+        form[formKey] = contactVal;
+        changed = true;
       }
     });
 
