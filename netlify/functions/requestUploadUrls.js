@@ -51,14 +51,28 @@ exports.handler = async (event) => {
       token: process.env.NETLIFY_ACCESS_TOKEN,
     });
 
+    // ── Читаем существующий черновик чтобы сохранить contactId и recruiter ──
+    let existingRecord = null;
+    try {
+      existingRecord = await manualStore.get(candidateId, { type: 'json' });
+      if (existingRecord) {
+        console.log('requestUploadUrls: found existing record, contactId:', existingRecord.contactId);
+      }
+    } catch (e) {
+      console.log('requestUploadUrls: no existing record for', candidateId);
+    }
+
     const record = {
       id: candidateId,
       ...formData,
       submittedAt: new Date().toISOString(),
       status: 'uploading',
-      recruitmentStatus: 'draft',
-      files: [], // пока пусто, заполним после загрузки
+      recruitmentStatus: existingRecord?.recruitmentStatus || 'draft',
+      files: [],
       fileKeys: fileKeys.map(f => ({ index: f.index, key: f.key })),
+      // ── Сохраняем contactId и recruiter из черновика — не затираем! ──
+      contactId: existingRecord?.contactId || formData.candidateId || null,
+      recruiter: existingRecord?.recruiter || formData.recruiter   || null,
     };
 
     await manualStore.setJSON(candidateId, record);
