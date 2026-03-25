@@ -3529,32 +3529,49 @@
         }
 
         function fillContactTrainingSchedule(project, selectedDate = '', selectedTime = '') {
-            // Собираем даты из графика для выбранного проекта
+            // projectTrainings хранится как { "Project_2026-03_26": "10:00-16:00" }
+            // Преобразуем в массив { date, time } для нужного проекта
             const dateSel = document.getElementById('contactTrainingDate');
             const timeSel = document.getElementById('contactTrainingTime');
             dateSel.innerHTML = '<option value="">— Выберите дату —</option>';
             timeSel.innerHTML = '<option value="">— Выберите время —</option>';
 
-            const trainings = state.projectTrainings[project] || [];
-            const dates = [...new Set(trainings.map(t => t.date).filter(Boolean))];
+            // Собираем все записи для данного проекта
+            const trainings = [];
+            Object.entries(state.projectTrainings).forEach(([key, timeVal]) => {
+                if (!timeVal) return;
+                // Формат ключа: "ProjectName_YYYY-MM_D"
+                const prefix = project + '_';
+                if (!key.startsWith(prefix)) return;
+                const rest = key.slice(prefix.length); // "YYYY-MM_D"
+                const parts = rest.split('_');
+                if (parts.length < 2) return;
+                const monthStr = parts[0]; // "YYYY-MM"
+                const day = parts[1].padStart(2, '0');
+                const date = `${monthStr}-${day}`;
+                trainings.push({ date, time: timeVal });
+            });
+
+            // Сортируем по дате
+            trainings.sort((a, b) => a.date.localeCompare(b.date));
+
+            const dates = [...new Set(trainings.map(t => t.date))];
             dates.forEach(d => {
                 dateSel.innerHTML += `<option value="${d}" ${d === selectedDate ? 'selected' : ''}>${d}</option>`;
             });
 
-            if (selectedDate) {
-                const times = trainings.filter(t => t.date === selectedDate).map(t => t.time).filter(Boolean);
+            const fillTimes = (forDate) => {
+                timeSel.innerHTML = '<option value="">— Выберите время —</option>';
+                const times = trainings.filter(t => t.date === forDate).map(t => t.time);
                 times.forEach(t => {
                     timeSel.innerHTML += `<option value="${t}" ${t === selectedTime ? 'selected' : ''}>${t}</option>`;
                 });
-            }
+            };
+
+            if (selectedDate) fillTimes(selectedDate);
 
             dateSel.onchange = function() {
-                timeSel.innerHTML = '<option value="">— Выберите время —</option>';
-                const selectedD = this.value;
-                const times = trainings.filter(t => t.date === selectedD).map(t => t.time).filter(Boolean);
-                times.forEach(t => {
-                    timeSel.innerHTML += `<option value="${t}">${t}</option>`;
-                });
+                fillTimes(this.value);
             };
         }
 
