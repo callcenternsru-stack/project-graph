@@ -1619,6 +1619,7 @@
                 <button class="candidates-tab"        id="tabOrgMeeting"  data-tab="orgMeeting"  onclick="switchCandidatesTab('orgMeeting')">Орг. встреча</button>
                 <button class="candidates-tab"        id="tabTraining"    data-tab="training"    onclick="switchCandidatesTab('training')">Обучение</button>
                 <button class="candidates-tab"        id="tabRejects"     data-tab="rejects"     onclick="switchCandidatesTab('rejects')">Отказы</button>
+                <button class="candidates-tab"        id="tabArchive"     data-tab="archive"     onclick="switchCandidatesTab('archive')">Архив</button>
                 <button class="candidates-tab"                                                    onclick="openBulkTransferModal()">Передача</button>
             </div>
             <div id="candidatesListContainer" class="candidates-list"></div>
@@ -2763,6 +2764,7 @@
                 case 'orgMeeting':   list = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)); break;
                 case 'training':     list = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)); break;
                 case 'rejects':      list = allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)); break;
+                case 'archive':      list = getArchiveCandidates(); break;
             }
 
             if (searchQuery) {
@@ -2776,7 +2778,8 @@
                 reminders:    renderReminderCandidates,
                 orgMeeting:   renderOrgMeetingCandidates,
                 training:     renderTrainingCandidates,
-                rejects:      renderRejectsCandidates
+                rejects:      renderRejectsCandidates,
+                archive:      renderArchiveCandidates
             };
             renderMap[candidatesTab]?.(list);
         }
@@ -3002,6 +3005,36 @@
             attachCardListeners();
         }
 
+        function getArchiveCandidates() {
+            const byMe = c => c.recruiter === currentRecruiter.name;
+            const fromAll = allCandidates.filter(c => c.recruitmentStatus === 'Архив' && byMe(c));
+            const fromMy  = myCandidates.filter(c => c.callResult === 'Архив');
+            return mergeWithoutDuplicates(fromAll, fromMy);
+        }
+
+        function renderArchiveCandidates(list) {
+            const cards = list.map(c => {
+                const trainingDate = c.trainingDate || '—';
+                const trainingTime = c.trainingTime || c.meetingTime || '';
+                const isNew = !seenCandidateIds.has(c.id);
+                const newBadge = isNew ? '<span class="new-badge">Новый</span>' : '';
+                const status = c.recruitmentStatus || c.callResult || 'Архив';
+                return `
+                    <div class="candidate-card ${isNew ? 'is-new' : ''}" data-id="${c.id}" data-type="${c.type || ''}">
+                        ${newBadge}
+                        <div class="candidate-field"><div class="label">ФИО</div><div class="value highlight">${escapeHtml(c.fullName || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Телефон</div><div class="value">${escapeHtml(c.phone || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Проект</div><div class="value">${escapeHtml(c.project || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">📅 Дата обучения</div><div class="value">${escapeHtml(trainingDate)}</div></div>
+                        <div class="candidate-field"><div class="label">🕐 Время обучения</div><div class="value">${escapeHtml(trainingTime || '—')}</div></div>
+                        <div class="candidate-field"><div class="label">Статус</div><div class="value"><span class="candidate-status-badge" style="background:rgba(100,100,100,0.2);color:#a0a0a0;">${escapeHtml(status)}</span></div></div>
+                    </div>
+                `;
+            }).join('');
+            setContainerHTML(cards, 'Нет архивных кандидатов');
+            attachCardListeners();
+        }
+
         /* =====================================================================
            TAB COUNTS
         ===================================================================== */
@@ -3025,12 +3058,22 @@
 
             const totals = {
                 contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
-                verification: myCandidates.filter(c => c.callResult === 'Проверка').length,
+                verification: myCandidates.filter(c => {
+                    if (c.callResult !== 'Проверка') return false;
+                    const normPhone = (c.phone || '').replace(/\D/g, '');
+                    return !allCandidates.some(a =>
+                        a.recruitmentStatus === 'draft' && (
+                            (normPhone && (a.phone || '').replace(/\D/g, '') === normPhone) ||
+                            (c.id && a.contactId === c.id)
+                        )
+                    );
+                }).length,
                 draft:        draftList.length,
                 reminders:    reminderList.length,
                 orgMeeting:   orgList.length,
                 training:     trainList.length,
-                rejects:      allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)).length
+                rejects:      allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)).length,
+                archive:      getArchiveCandidates().length
             };
 
             const newUnseen = {
@@ -3040,8 +3083,8 @@
                 training:   trainList.filter(unseen).length,
             };
 
-            const labels = { contacts: 'Контакты', verification: 'Проверка', draft: 'Черновик', reminders: '🔔 Напоминания', orgMeeting: 'Орг. встреча', training: 'Обучение', rejects: 'Отказы' };
-            const ids    = { contacts: 'tabContacts', verification: 'tabVerification', draft: 'tabDraft', reminders: 'tabReminders', orgMeeting: 'tabOrgMeeting', training: 'tabTraining', rejects: 'tabRejects' };
+            const labels = { contacts: 'Контакты', verification: 'Проверка', draft: 'Черновик', reminders: '🔔 Напоминания', orgMeeting: 'Орг. встреча', training: 'Обучение', rejects: 'Отказы', archive: 'Архив' };
+            const ids    = { contacts: 'tabContacts', verification: 'tabVerification', draft: 'tabDraft', reminders: 'tabReminders', orgMeeting: 'tabOrgMeeting', training: 'tabTraining', rejects: 'tabRejects', archive: 'tabArchive' };
 
             for (const key in ids) {
                 const el = document.getElementById(ids[key]);
