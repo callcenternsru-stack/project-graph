@@ -1,5 +1,6 @@
 // netlify/functions/confirmUpload.js
 const { getStore } = require('@netlify/blobs');
+const { appendHistory } = require('./shared/contactHelper');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -23,14 +24,16 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Candidate not found' }) };
     }
 
+    const wasCompleted = record.status === 'completed';
+
     // Формируем публичные ссылки на R2
     const files = {};
     for (const f of fileKeys) {
       files[`task_${f.index}`] = `${process.env.R2_PUBLIC_URL}/${f.key}`;
     }
 
-    record.status = status;
-    record.files = files;
+    record.status      = status;
+    record.files       = files;
     record.completedAt = new Date().toISOString();
 
     await manualStore.setJSON(candidateId, record);
@@ -42,6 +45,27 @@ exports.handler = async (event) => {
       index[idxPos].status = status;
     }
     await manualStore.setJSON('_index', index);
+
+    // ── Пишем историю в контакт (только при первом completed) ──────────
+    if (!wasCompleted && status === 'completed' && record.contactId) {
+      try {
+        await appendHistory(record.contactId, {
+          type:      'form_completed',
+          label:     '✅ Прошёл проверку (ручная)',
+          recruiter: record.recruiter || null,
+          details: {
+            formId:            candidateId,
+            formType:          'manual',
+            recruitmentStatus: record.recruitmentStatus || 'draft'
+          }
+        });
+        console.log('confirmUpload: history written for contactId:', record.contactId);
+      } catch (e) {
+        console.error('confirmUpload: appendHistory failed:', e);
+      }
+    } else if (!record.contactId) {
+      console.warn('confirmUpload: no contactId on record, history skipped');
+    }
 
     return {
       statusCode: 200,

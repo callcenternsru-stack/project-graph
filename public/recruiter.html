@@ -2747,7 +2747,15 @@
 
             switch (candidatesTab) {
                 case 'contacts':     list = myCandidates; break;
-                case 'verification': list = myCandidates.filter(c => c.callResult === 'Проверка'); break;
+                case 'verification': list = myCandidates.filter(c => {
+                    if (c.callResult !== 'Проверка') return false;
+                    const normPhone = (c.phone || '').replace(/\D/g, '');
+                    const hasDraft = allCandidates.some(a =>
+                        a.recruitmentStatus === 'draft' &&
+                        (a.phone || '').replace(/\D/g, '') === normPhone
+                    );
+                    return !hasDraft;
+                }); break;
                 case 'draft':        list = getDraftCandidates(); break;
                 case 'reminders':    list = getReminderCandidates(); break;
                 case 'orgMeeting':   list = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)); break;
