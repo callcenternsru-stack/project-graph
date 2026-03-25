@@ -1865,9 +1865,14 @@
         function isAnyTraining(status) {
             if (!status) return false;
             const s = status.toLowerCase().trim();
-            return (s.includes('приглашение на обучени') ||
-                    s.includes('вышел на обучени') ||
-                    s === 'обучение');
+            return (
+                s === 'приглашение на обучение' ||
+                s === 'приглашение на обучение отправлено' ||
+                s === 'вышел на обучение' ||
+                s.includes('приглашение на обучени') ||
+                s.includes('вышел на обучени') ||
+                s === 'обучение'
+            );
         }
 
         /* Объединяет анкеты (allCandidates) и контакты (myCandidates) без дублей.
@@ -2762,7 +2767,7 @@
                 case 'draft':        list = getDraftCandidates(); break;
                 case 'reminders':    list = getReminderCandidates(); break;
                 case 'orgMeeting':   list = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c)); break;
-                case 'training':     list = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)); break;
+                case 'training':     list = mergeWithoutDuplicates(allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)), myCandidates.filter(c => isAnyTraining(c.callResult))); break;
                 case 'rejects':      list = allCandidates.filter(c => REJECT_STATUSES.includes(c.recruitmentStatus) && byMe(c)); break;
                 case 'archive':      list = getArchiveCandidates(); break;
             }
@@ -3054,7 +3059,7 @@
             const draftList     = getDraftCandidates();
             const reminderList  = getReminderCandidates();
             const orgList     = allCandidates.filter(c => isAnyOrgMeeting(c.recruitmentStatus) && byMe(c));
-            const trainList   = allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c));
+            const trainList   = mergeWithoutDuplicates(allCandidates.filter(c => isAnyTraining(c.recruitmentStatus) && byMe(c)), myCandidates.filter(c => isAnyTraining(c.callResult)));
 
             const totals = {
                 contacts:     myCandidates.filter(c => !c.callResult || c.callResult.trim() === '').length,
