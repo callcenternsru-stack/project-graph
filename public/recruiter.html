@@ -2419,14 +2419,37 @@
 
             showLoading();
             try {
-                const url = editingExternalCandidate.type === 'manual'
-                    ? '/.netlify/functions/submitManualResults'
-                    : '/.netlify/functions/updateCandidateStatus';
+                // contact → submitCandidate (база контактов)
+                // manual  → submitManualResults (ручная анкета)
+                // auto    → updateCandidateStatus (авто-анкета)
+                let url, body;
+                if (editingExternalCandidate.type === 'contact') {
+                    url = '/.netlify/functions/submitCandidate';
+                    body = JSON.stringify({
+                        ...editingExternalCandidate,
+                        fullName:     payload.fullName,
+                        phone:        payload.phone,
+                        project:      payload.project,
+                        country:      payload.country,
+                        trainingDate: payload.trainingDate,
+                        trainingTime: payload.trainingTime,
+                        callResult:   baseStatus,
+                        reminderCount: newReminderCount,
+                        comment:      payload.comment,
+                        recruiter:    payload.recruiter,
+                    });
+                } else if (editingExternalCandidate.type === 'manual') {
+                    url  = '/.netlify/functions/submitManualResults';
+                    body = JSON.stringify(payload);
+                } else {
+                    url  = '/.netlify/functions/updateCandidateStatus';
+                    body = JSON.stringify(payload);
+                }
 
                 const res = await fetch(url, {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify(payload)
+                    body
                 });
 
                 if (res.ok) {
