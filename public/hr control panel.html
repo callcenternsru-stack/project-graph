@@ -1272,6 +1272,115 @@
         <div class="modal-content" style="flex:1;overflow-y:auto;" id="candidateHistoryContent"></div>
     </div>
 
+
+    <!-- Модальное окно добавления/редактирования контакта -->
+    <div id="addContactModal" class="modal" style="max-height:90vh;overflow:hidden;flex-direction:column;max-width:700px;">
+        <div class="modal-header">
+            <span id="addContactModalTitle">Добавить контакт</span>
+            <button class="modal-close" onclick="closeAddContactModal()">✕</button>
+        </div>
+        <div style="padding:0 25px;background:#111;border-bottom:1px solid #333;">
+            <div class="history-tabs">
+                <button class="history-tab active" id="contactTabInfo" onclick="switchContactTab('info')">📋 Инфо</button>
+                <button class="history-tab" id="contactTabHistory" onclick="switchContactTab('history')">🕐 История</button>
+            </div>
+        </div>
+        <div class="modal-content" style="flex:1;overflow-y:auto;">
+            <!-- Вкладка Инфо -->
+            <div id="contactTabInfoContent">
+                <!-- Инфо существующего контакта (при редактировании) -->
+                <div id="contactInfoView" style="display:none;">
+                    <div style="display:flex;gap:10px;margin-bottom:20px;">
+                        <button class="add-btn" onclick="switchToEditContact()">✏️ Редактировать</button>
+                        <button class="delete-btn" onclick="deleteCurrentContact()" style="padding:8px 16px;border-radius:8px;">🗑️ Удалить</button>
+                    </div>
+                    <div id="contactInfoViewContent"></div>
+                </div>
+                <!-- Форма добавления/редактирования -->
+                <div id="contactInfoForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>ФИО *</label>
+                            <input type="text" id="contactFullName" placeholder="Иванов Иван Иванович">
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон *</label>
+                            <input type="text" id="contactPhone" placeholder="+7 900 000 00 00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Страна</label>
+                            <input type="text" id="contactCountry" placeholder="Определяется автоматически">
+                        </div>
+                        <div class="form-group">
+                            <label>Рекрутер</label>
+                            <select id="contactRecruiter">
+                                <option value="">— Выберите рекрутера —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Проект</label>
+                            <select id="contactProject" onchange="onContactProjectChange()">
+                                <option value="">— Без проекта —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Поля появляются если выбран проект -->
+                    <div id="contactProjectFields" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Дата обучения</label>
+                                <select id="contactTrainingDate">
+                                    <option value="">— Выберите дату —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Время обучения</label>
+                                <select id="contactTrainingTime">
+                                    <option value="">— Выберите время —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Статус</label>
+                                <select id="contactStatus">
+                                    <option value="Брак">Брак</option>
+                                    <option value="Не интересует">Не интересует</option>
+                                    <option value="Автоответчик">Автоответчик</option>
+                                    <option value="Не берет трубку">Не берет трубку</option>
+                                    <option value="Сброс">Сброс</option>
+                                    <option value="Выключен">Выключен</option>
+                                    <option value="Номер не существует">Номер не существует</option>
+                                    <option value="Перезвонить">Перезвонить</option>
+                                    <option value="Нет ПК/Ноутбука">Нет ПК/Ноутбука</option>
+                                    <option value="Фрикативная речь">Фрикативная речь</option>
+                                    <option value="Акцент">Акцент</option>
+                                    <option value="Нет гарнитуры">Нет гарнитуры</option>
+                                    <option value="Нет Lan кабеля">Нет Lan кабеля</option>
+                                    <option value="Проверка">Проверка</option>
+                                    <option value="Напоминание">Напоминание</option>
+                                    <option value="Приглашение на орг.встречу отправлено">Приглашение на орг.встречу отправлено</option>
+                                    <option value="Приглашение на обучение отправлено">Приглашение на обучение отправлено</option>
+                                    <option value="Архив">Архив</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:20px;">
+                        <button class="add-btn" onclick="saveContactForm()">💾 Сохранить</button>
+                        <button class="filter-btn" onclick="closeAddContactModal()">Отмена</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Вкладка История -->
+            <div id="contactTabHistoryContent" style="display:none;"></div>
+        </div>
+    </div>
+
     <!-- Модальное окно фильтра для Базы контактов -->
     <div id="filterCandidatesModal" class="modal">
         <div class="modal-header">
@@ -1841,7 +1950,7 @@
                     const createdAtStr = new Date(c.createdAt).toLocaleString();
                     const checked = selectedCandidateIds.has(c.id) ? 'checked' : '';
                     rowsHtml += `
-                        <tr onclick="openCandidateHistory('${c.id}', '${c.fullName}')" style="cursor:pointer;">
+                        <tr onclick="openEditContactModal('${c.id}')" style="cursor:pointer;">
                             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${c.id}" ${checked} onclick="event.stopPropagation(); toggleCandidateSelect('${c.id}', this.checked)"></td>
                             <td>${updatedAtStr}</td>
                             <td>${createdAtStr}</td>
@@ -1855,7 +1964,7 @@
                             <td>${c.contactType || '—'}</td>
                             <td>${c.recruiter || '—'}</td>
                             <td>${c.comment || '—'}</td>
-                            <td><button class="delete-candidate-btn" onclick="event.stopPropagation(); deleteCandidateFromBase('${c.id}')">✕</button></td>
+                            
                         </tr>
                     `;
                 });
@@ -1871,6 +1980,7 @@
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <button class="filter-btn" onclick="openFilterModal()">${filterBtnText}</button>
                         ${isFilterActive ? '<button class="filter-btn clear-filter-btn" onclick="resetCandidatesFilter()">Сбросить фильтр</button>' : ''}
+                        <button class="add-btn" onclick="openAddContactModal()">+ Добавить контакт</button>
                         <div class="bulk-actions">
                             <button class="bulk-delete-btn" ${bulkDeleteDisabled} onclick="bulkDeleteCandidates()">
                                 <i class="fas fa-trash-alt"></i> Удалить выбранные (${selectedCandidateIds.size})
@@ -3298,6 +3408,233 @@
             document.getElementById('candidateHistoryModal').classList.add('show');
             document.body.classList.add('menu-open');
             await loadHistoryInto('candidateHistoryContent', contactId);
+        }
+
+
+        // ══════════════════════════════════════════════════════════════════
+        // ДОБАВЛЕНИЕ / РЕДАКТИРОВАНИЕ КОНТАКТА
+        // ══════════════════════════════════════════════════════════════════
+        let _editingContactId = null;
+
+        function openAddContactModal() {
+            _editingContactId = null;
+            document.getElementById('addContactModalTitle').textContent = 'Добавить контакт';
+            document.getElementById('contactInfoView').style.display = 'none';
+            document.getElementById('contactInfoForm').style.display = '';
+            document.getElementById('contactTabInfo').classList.add('active');
+            document.getElementById('contactTabHistory').classList.remove('active');
+            document.getElementById('contactTabInfoContent').style.display = '';
+            document.getElementById('contactTabHistoryContent').style.display = 'none';
+            // Сбрасываем форму
+            document.getElementById('contactFullName').value = '';
+            document.getElementById('contactPhone').value = '';
+            document.getElementById('contactCountry').value = '';
+            document.getElementById('contactTrainingDate').value = '';
+            document.getElementById('contactTrainingTime').value = '';
+            document.getElementById('contactProjectFields').style.display = 'none';
+            // Заполняем рекрутеров
+            const recruiterSel = document.getElementById('contactRecruiter');
+            recruiterSel.innerHTML = '<option value="">— Выберите рекрутера —</option>';
+            state.recruiters.forEach(r => {
+                recruiterSel.innerHTML += `<option value="${r.name}">${r.name}</option>`;
+            });
+            // Заполняем проекты из скриптов
+            const projectSel = document.getElementById('contactProject');
+            projectSel.innerHTML = '<option value="">— Без проекта —</option>';
+            const projectNames = [...new Set(state.scripts.flatMap(s => s.projectNames || (s.projectName ? [s.projectName] : [])))];
+            projectNames.forEach(p => {
+                projectSel.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+            document.getElementById('addContactModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function openEditContactModal(contactId) {
+            const c = state.candidates.find(x => x.id === contactId);
+            if (!c) return;
+            _editingContactId = contactId;
+            document.getElementById('addContactModalTitle').textContent = 'Контакт: ' + (c.fullName || '');
+            // Показываем вкладку Инфо с данными
+            document.getElementById('contactTabInfo').classList.add('active');
+            document.getElementById('contactTabHistory').classList.remove('active');
+            document.getElementById('contactTabInfoContent').style.display = '';
+            document.getElementById('contactTabHistoryContent').style.display = 'none';
+            document.getElementById('contactInfoView').style.display = '';
+            document.getElementById('contactInfoForm').style.display = 'none';
+            // Рендерим данные контакта
+            document.getElementById('contactInfoViewContent').innerHTML = `
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr><td style="padding:8px;color:#a0a0a0;width:140px;">ФИО</td><td style="padding:8px;">${c.fullName || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Телефон</td><td style="padding:8px;">${c.phone || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Страна</td><td style="padding:8px;">${c.country || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Рекрутер</td><td style="padding:8px;">${c.recruiter || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Проект</td><td style="padding:8px;">${c.project || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Дата обучения</td><td style="padding:8px;">${c.trainingDate || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Время обучения</td><td style="padding:8px;">${c.trainingTime || '—'}</td></tr>
+                    <tr><td style="padding:8px;color:#a0a0a0;">Статус</td><td style="padding:8px;"><span style="color:#ffd700;">${c.callResult || 'ожидает связи'}</span></td></tr>
+                </table>
+            `;
+            document.getElementById('addContactModal').classList.add('show');
+            document.body.classList.add('menu-open');
+        }
+
+        function switchToEditContact() {
+            const c = state.candidates.find(x => x.id === _editingContactId);
+            if (!c) return;
+            document.getElementById('contactInfoView').style.display = 'none';
+            document.getElementById('contactInfoForm').style.display = '';
+            // Заполняем форму данными контакта
+            document.getElementById('contactFullName').value = c.fullName || '';
+            document.getElementById('contactPhone').value = c.phone || '';
+            document.getElementById('contactCountry').value = c.country || '';
+            // Рекрутеры
+            const recruiterSel = document.getElementById('contactRecruiter');
+            recruiterSel.innerHTML = '<option value="">— Выберите рекрутера —</option>';
+            state.recruiters.forEach(r => {
+                recruiterSel.innerHTML += `<option value="${r.name}" ${r.name === c.recruiter ? 'selected' : ''}>${r.name}</option>`;
+            });
+            // Проекты
+            const projectSel = document.getElementById('contactProject');
+            projectSel.innerHTML = '<option value="">— Без проекта —</option>';
+            const projectNames = [...new Set(state.scripts.flatMap(s => s.projectNames || (s.projectName ? [s.projectName] : [])))];
+            projectNames.forEach(p => {
+                projectSel.innerHTML += `<option value="${p}" ${p === c.project ? 'selected' : ''}>${p}</option>`;
+            });
+            if (c.project) {
+                document.getElementById('contactProjectFields').style.display = '';
+                fillContactTrainingSchedule(c.project, c.trainingDate, c.trainingTime);
+                document.getElementById('contactStatus').value = c.callResult || 'Проверка';
+            }
+        }
+
+        function switchContactTab(tab) {
+            document.getElementById('contactTabInfo').classList.toggle('active', tab === 'info');
+            document.getElementById('contactTabHistory').classList.toggle('active', tab === 'history');
+            document.getElementById('contactTabInfoContent').style.display = tab === 'info' ? '' : 'none';
+            document.getElementById('contactTabHistoryContent').style.display = tab === 'history' ? '' : 'none';
+            if (tab === 'history' && _editingContactId) {
+                loadHistoryInto('contactTabHistoryContent', _editingContactId);
+            }
+        }
+
+        function onContactProjectChange() {
+            const project = document.getElementById('contactProject').value;
+            const fields = document.getElementById('contactProjectFields');
+            if (project) {
+                fields.style.display = '';
+                fillContactTrainingSchedule(project);
+            } else {
+                fields.style.display = 'none';
+            }
+        }
+
+        function fillContactTrainingSchedule(project, selectedDate = '', selectedTime = '') {
+            // Собираем даты из графика для выбранного проекта
+            const dateSel = document.getElementById('contactTrainingDate');
+            const timeSel = document.getElementById('contactTrainingTime');
+            dateSel.innerHTML = '<option value="">— Выберите дату —</option>';
+            timeSel.innerHTML = '<option value="">— Выберите время —</option>';
+
+            const trainings = state.projectTrainings[project] || [];
+            const dates = [...new Set(trainings.map(t => t.date).filter(Boolean))];
+            dates.forEach(d => {
+                dateSel.innerHTML += `<option value="${d}" ${d === selectedDate ? 'selected' : ''}>${d}</option>`;
+            });
+
+            if (selectedDate) {
+                const times = trainings.filter(t => t.date === selectedDate).map(t => t.time).filter(Boolean);
+                times.forEach(t => {
+                    timeSel.innerHTML += `<option value="${t}" ${t === selectedTime ? 'selected' : ''}>${t}</option>`;
+                });
+            }
+
+            dateSel.onchange = function() {
+                timeSel.innerHTML = '<option value="">— Выберите время —</option>';
+                const selectedD = this.value;
+                const times = trainings.filter(t => t.date === selectedD).map(t => t.time).filter(Boolean);
+                times.forEach(t => {
+                    timeSel.innerHTML += `<option value="${t}">${t}</option>`;
+                });
+            };
+        }
+
+        async function saveContactForm() {
+            const fullName = document.getElementById('contactFullName').value.trim();
+            const phone    = document.getElementById('contactPhone').value.trim();
+            if (!fullName || !phone) {
+                showNotification('Заполните ФИО и Телефон', 'error');
+                return;
+            }
+            const project      = document.getElementById('contactProject').value;
+            const recruiter    = document.getElementById('contactRecruiter').value;
+            const country      = document.getElementById('contactCountry').value.trim();
+            const trainingDate = project ? document.getElementById('contactTrainingDate').value : '';
+            const trainingTime = project ? document.getElementById('contactTrainingTime').value : '';
+            const callResult   = project ? document.getElementById('contactStatus').value : 'ожидает связи';
+
+            const existing = _editingContactId ? state.candidates.find(c => c.id === _editingContactId) : null;
+
+            const payload = {
+                ...(existing || {}),
+                id:           _editingContactId || `contact_${Date.now()}`,
+                fullName,
+                phone,
+                country,
+                recruiter,
+                project,
+                trainingDate,
+                trainingTime,
+                callResult,
+                createdAt:    existing?.createdAt || new Date().toISOString(),
+                updatedAt:    new Date().toISOString(),
+            };
+
+            try {
+                const res = await fetch('/.netlify/functions/submitCandidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showNotification(_editingContactId ? 'Контакт обновлён' : 'Контакт добавлен', 'success');
+                    closeAddContactModal();
+                    const refreshed = await fetch('/.netlify/functions/getCandidates');
+                    state.candidates = await refreshed.json();
+                    updateFilterCache();
+                    renderContent();
+                } else {
+                    showNotification('Ошибка сохранения', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        async function deleteCurrentContact() {
+            if (!_editingContactId) return;
+            if (!confirm('Удалить этот контакт?')) return;
+            try {
+                const res = await fetch(`/.netlify/functions/deleteCandidate?id=${encodeURIComponent(_editingContactId)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    state.candidates = state.candidates.filter(c => c.id !== _editingContactId);
+                    selectedCandidateIds.delete(_editingContactId);
+                    updateFilterCache();
+                    closeAddContactModal();
+                    renderContent();
+                    showNotification('Контакт удалён', 'success');
+                } else {
+                    showNotification('Ошибка удаления', 'error');
+                }
+            } catch (e) {
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        function closeAddContactModal() {
+            document.getElementById('addContactModal').classList.remove('show');
+            document.body.classList.remove('menu-open');
+            _editingContactId = null;
         }
 
         function closeCandidateHistory() {
