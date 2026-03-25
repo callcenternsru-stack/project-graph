@@ -44,7 +44,7 @@ exports.handler = async (event) => {
           completedAt: candidateData.completedAt,
           files: {
             report:      baseUrl + `?code=${encodeURIComponent(code)}&file=report.txt&type=auto`,
-            resultsJson: baseUrl + `?code=${encodeURIComponent(code)}&file=results.json&type=auto`,
+            results: baseUrl + `?code=${encodeURIComponent(code)}&file=results.json&type=auto`,
             voice:       baseUrl + `?code=${encodeURIComponent(code)}&file=voice_recording.wav&type=auto`
           }
         });

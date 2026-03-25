@@ -3318,6 +3318,11 @@
                 }
             }
 
+            // Ищем авто-анкету по contactId для отображения файлов авто-проверки
+            const linkedAutoForm = candidate.contactId
+                ? state.allCandidates.find(c => c.type === 'auto' && c.contactId === candidate.contactId && c.status === 'completed')
+                : null;
+
             if (type === 'auto' && candidate.status === 'completed') {
                 filesHtml = `
                     <h3>Файлы автоматической проверки</h3>
@@ -3325,6 +3330,16 @@
                         <li><a href="${candidate.files.report}" target="_blank">report.txt</a></li>
                         <li><a href="${candidate.files.results}" target="_blank">results.json</a></li>
                         <li><a href="${candidate.files.voice}" target="_blank">voice_recording.wav</a></li>
+                    </ul>
+                `;
+            } else if (type === 'manual' && linkedAutoForm) {
+                // Показываем файлы авто-проверки привязанной анкеты
+                filesHtml = `
+                    <h3>Файлы автоматической проверки</h3>
+                    <ul class="file-list">
+                        <li><a href="${linkedAutoForm.files.report}" target="_blank">report.txt</a></li>
+                        <li><a href="${linkedAutoForm.files.results}" target="_blank">results.json</a></li>
+                        <li><a href="${linkedAutoForm.files.voice}" target="_blank">voice_recording.wav</a></li>
                     </ul>
                 `;
             } else if (type === 'manual' && candidate.files && Object.keys(candidate.files).length > 0) {
