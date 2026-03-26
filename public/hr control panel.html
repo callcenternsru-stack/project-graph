@@ -735,42 +735,35 @@
             margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: nowrap;
+            overflow: hidden;
         }
-        .file-list li strong {
-            min-width: 130px;
-            flex-shrink: 0;
-        }
+        .file-list li strong { min-width: 120px; flex-shrink: 0; }
+        .file-list a { flex-shrink: 0; }
         .task-result-select {
-            background: #1a1a1a;
-            color: #ffd700;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            width: 200px;
-            flex-shrink: 0;
+            background: #1a1a1a; color: #ffd700;
+            border: 1px solid #333; border-radius: 6px;
+            padding: 4px 8px; font-size: 12px; cursor: pointer;
+            width: 190px; flex-shrink: 0;
         }
         .task-result-select:focus { outline: none; border-color: #ffd700; }
         .task-result-select.saved { border-color: #22c55e; color: #22c55e; }
         .task-score-badge {
-            font-size: 12px; color: #aaa;
-            background: #222; padding: 3px 8px;
-            border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+            font-size: 12px; color: #aaa; background: #222;
+            padding: 3px 8px; border-radius: 4px;
+            white-space: nowrap; flex-shrink: 0;
         }
-        .task-checkboxes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-        .task-checkbox-label {
+        .task-checkboxes { display: flex; flex-wrap: wrap; gap: 5px; }
+        .task-cb-lbl {
             display: flex; align-items: center; gap: 4px;
             font-size: 12px; color: #ccc; cursor: pointer;
             background: #1a1a1a; border: 1px solid #333;
-            border-radius: 6px; padding: 3px 8px;
-            white-space: nowrap; transition: all 0.15s;
+            border-radius: 6px; padding: 3px 8px; white-space: nowrap;
         }
-        .task-checkbox-label:hover { border-color: #ffd700; color: #ffd700; }
-        .task-checkbox-label input { accent-color: #ffd700; cursor: pointer; }
-        .task-checkbox-label.checked { border-color: #22c55e; color: #22c55e; }
+        .task-cb-lbl:hover { border-color: #ffd700; color: #ffd700; }
+        .task-cb-lbl input { accent-color: #ffd700; cursor: pointer; margin: 0; }
+        .task-cb-lbl.on { border-color: #22c55e; color: #22c55e; }
         .file-list a {
             color: #000;
             background: #ffd700;
@@ -3327,7 +3320,7 @@
                     candidate.taskInputs['4'] ||
                     candidate.taskInputs[4]
                 );
-                // AnyDesk и Знание ПК показываются inline в списке заданий
+                // AnyDesk и Знание ПК — показываются в списке заданий
             }
 
             // Ищем авто-анкету по contactId для отображения файлов авто-проверки
@@ -3375,41 +3368,40 @@
                     7: ['Процессор','RAM','Ядра','Частота','ОС','Прошел'],
                 };
                 const savedResults = candidate.taskResults || {};
-                const anyDeskVal = candidate.taskInputs && (
-                    candidate.taskInputs['task_4_input'] || candidate.taskInputs['4'] || candidate.taskInputs[4]);
-                const rawScore3 = candidate.taskScores && (
-                    candidate.taskScores['task_2_score'] || candidate.taskScores['2'] || candidate.taskScores[2]);
+                const anyDeskVal = candidate.taskInputs && (candidate.taskInputs['task_4_input'] || candidate.taskInputs['4'] || candidate.taskInputs[4]);
+                const rawScore3  = candidate.taskScores  && (candidate.taskScores['task_2_score']  || candidate.taskScores['2']  || candidate.taskScores[2]);
                 let scoreText = '';
-                if (rawScore3) {
-                    try {
-                        const sc = typeof rawScore3 === 'string' ? JSON.parse(rawScore3) : rawScore3;
-                        scoreText = sc.correct + ' из ' + sc.total + ' (' + sc.percentage + '%)';
-                    } catch(e) { scoreText = String(rawScore3); }
-                }
+                if (rawScore3) { try { const sc = typeof rawScore3==='string'?JSON.parse(rawScore3):rawScore3; scoreText=sc.correct+' из '+sc.total+' ('+sc.percentage+'%)'; } catch(e){} }
+
                 for (let i = 1; i <= 7; i++) {
-                    if (!taskFiles[i] && i !== 3 && i !== 5) continue;
-                    if (i === 3 && !taskFiles[i] && !scoreText) continue;
-                    if (i === 5 && !taskFiles[i] && !anyDeskVal) continue;
+                    const hasFile = !!taskFiles[i];
+                    const isTask3 = i === 3;
+                    const isTask5 = i === 5;
+                    // Показываем задание если есть файл ИЛИ это задание 3 (знание ПК) ИЛИ задание 5 (anydesk)
+                    if (!hasFile && !isTask3 && !isTask5) continue;
+
                     const statuses = taskStatuses[i] || [];
                     const savedVal = savedResults[i] || '';
                     const isMulti  = i === 7;
                     let selectHtml = '';
+
                     if (isMulti) {
                         const selArr = savedVal ? savedVal.split(',') : [];
                         const cbs = statuses.map(s => {
-                            const isChk = selArr.includes(s);
-                            return '<label class="task-checkbox-label' + (isChk?' checked':'') + '"><input type="checkbox" value="' + s + '" ' + (isChk?'checked':'') + ' onchange="saveTaskCheckbox(\'' + id + '\',\'' + type + '\',' + i + ',this)">' + s + '</label>';
+                            const on = selArr.includes(s);
+                            return '<label class="task-cb-lbl'+(on?' on':'')+'"><input type="checkbox" value="'+s+'" '+(on?'checked':'')+' onchange="saveTaskCb(\''+id+'\',\''+type+'\','+i+',this)">'+s+'</label>';
                         }).join('');
-                        selectHtml = '<div class="task-checkboxes">' + cbs + '</div>';
+                        selectHtml = '<div class="task-checkboxes">'+cbs+'</div>';
                     } else {
-                        const opts = statuses.map(s => '<option value="' + s + '" ' + (savedVal===s?'selected':'') + '>' + s + '</option>').join('');
-                        selectHtml = '<select class="task-result-select' + (savedVal && savedVal!=='— выберите —'?' saved':'') + '" onchange="saveTaskResult(\'' + id + '\',\'' + type + '\',' + i + ',this.value)">' + opts + '</select>';
+                        const opts = statuses.map(s => '<option value="'+s+'" '+(savedVal===s?'selected':'')+'>'+s+'</option>').join('');
+                        selectHtml = '<select class="task-result-select'+(savedVal&&savedVal!=='— выберите —'?' saved':'')+'" onchange="saveTaskRes(\''+id+'\',\''+type+'\','+i+',this.value)">'+opts+'</select>';
                     }
-                    let extraBadge = '';
-                    if (i === 3 && scoreText) extraBadge = '<span class="task-score-badge">Знание ПК: ' + scoreText + '</span>';
-                    if (i === 5 && anyDeskVal) extraBadge = '<span class="task-score-badge">ID: ' + anyDeskVal + '</span>';
-                    const downloadBtn = taskFiles[i] ? '<a href="' + taskFiles[i].url + '" target="_blank">Скачать</a>' : '';
-                    filesHtml += '<li><strong>' + taskLabels[i] + ':</strong>' + downloadBtn + extraBadge + selectHtml + '</li>';
+
+                    let badge = '';
+                    if (isTask3 && scoreText) badge = '<span class="task-score-badge">'+scoreText+'</span>';
+                    if (isTask5 && anyDeskVal) badge = '<span class="task-score-badge">ID: '+anyDeskVal+'</span>';
+                    const dl = hasFile ? '<a href="'+taskFiles[i].url+'" target="_blank">Скачать</a>' : '';
+                    filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dl+badge+selectHtml+'</li>';
                 }
                 filesHtml += '</ul>';
             } else {
@@ -3444,37 +3436,25 @@
             document.body.classList.add('menu-open');
         }
 
-        function saveTaskCheckbox(formId, formType, taskNum, checkbox) {
-            const li = checkbox.closest('li');
-            const checked = Array.from(li.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
-            li.querySelectorAll('.task-checkbox-label').forEach(lbl => {
-                lbl.classList.toggle('checked', lbl.querySelector('input').checked);
-            });
-            saveTaskResult(formId, formType, taskNum, checked.join(','));
+        function saveTaskCb(fid, ftype, tnum, cb) {
+            const li = cb.closest('li');
+            const vals = Array.from(li.querySelectorAll('input:checked')).map(c=>c.value);
+            li.querySelectorAll('.task-cb-lbl').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
+            saveTaskRes(fid, ftype, tnum, vals.join(','));
         }
-
-        async function saveTaskResult(formId, formType, taskNum, value) {
+        async function saveTaskRes(fid, ftype, tnum, val) {
             try {
+                const c = state.allCandidates.find(x=>x.id===fid);
                 const res = await fetch('/.netlify/functions/updateCandidateStatus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: formId, type: formType,
-                        recruitmentStatus: (state.allCandidates.find(c => c.id === formId)?.recruitmentStatus || 'draft'),
-                        taskResult: { taskNum, value }
-                    })
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ id:fid, type:ftype, recruitmentStatus:(c?.recruitmentStatus||'draft'), taskResult:{taskNum:tnum,value:val} })
                 });
                 if (res.ok) {
-                    const c = state.allCandidates.find(x => x.id === formId);
-                    if (c) { if (!c.taskResults) c.taskResults = {}; c.taskResults[taskNum] = value; }
-                    document.querySelectorAll('.task-result-select').forEach(s => {
-                        if (s.onchange && s.onchange.toString().includes(',' + taskNum + ',')) s.classList.add('saved');
-                    });
-                    showNotification('Результат сохранён', 'success');
-                } else { showNotification('Ошибка сохранения', 'error'); }
-            } catch(e) { showNotification('Ошибка сети', 'error'); }
+                    if (c) { if(!c.taskResults) c.taskResults={}; c.taskResults[tnum]=val; }
+                    showNotification('Сохранено', 'success');
+                } else showNotification('Ошибка', 'error');
+            } catch(e) { showNotification('Ошибка сети','error'); }
         }
-
         function closeCandidateDetails() {
             document.getElementById('candidateDetailsModal').classList.remove('show');
             document.body.classList.remove('menu-open');
