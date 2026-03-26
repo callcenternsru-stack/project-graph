@@ -734,7 +734,7 @@
         .file-list li {
             margin-bottom: 6px;
             display: grid;
-            grid-template-columns: 120px 80px 110px 1fr;
+            grid-template-columns: 120px 200px 1fr;
             align-items: center;
             gap: 8px;
             border-bottom: 1px solid #1c1c1c;
@@ -750,6 +750,7 @@
         }
         .task-result-select:focus { outline: none; border-color: #ffd700; }
         .task-result-select.saved { border-color: #22c55e; color: #22c55e; }
+        .task-result-select.red { border-color: #ff4444; color: #ff4444; }
         .task-score-badge {
             font-size: 12px; color: #aaa; background: #222;
             padding: 3px 8px; border-radius: 4px;
@@ -3425,7 +3426,10 @@
                         selectHtml = '<div class="task-checkboxes">'+cbs+'</div>';
                     } else {
                         const opts = statuses.map(s => '<option value="'+s+'" '+(savedVal===s?'selected':'')+'>'+s+'</option>').join('');
-                        selectHtml = '<select class="task-result-select'+(savedVal&&savedVal!=='— выберите —'?' saved':'')+'" onchange="saveTaskRes(\''+id+'\',\''+type+'\','+i+',this.value)">'+opts+'</select>';
+                        const isPass = savedVal === 'Прошел';
+                        const isFail = savedVal && savedVal !== '— выберите —' && !isPass;
+                        const selClass = isPass ? ' saved' : (isFail ? ' red' : '');
+                        selectHtml = '<select class="task-result-select'+selClass+'" onchange="saveTaskRes(\''+id+'\',\''+type+'\','+i+',this.value);colorTaskSelect(this);">'+opts+'</select>';
                     }
 
                     let badge = '';
@@ -3434,11 +3438,11 @@
 
                     const dlHtml = hasFile
                         ? '<a href="'+taskFiles[i].url+'" target="_blank">Скачать</a>'
-                        : '<span style="display:inline-block;width:72px;"></span>';
+                        : '';
                     const badgeHtml = badge
                         ? '<span class="task-score-badge">'+badge+'</span>'
-                        : '<span></span>';
-                    filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dlHtml+badgeHtml+'<div>'+selectHtml+'</div></li>';
+                        : '';
+                    filesHtml += '<li><strong>'+taskLabels[i]+':</strong><div style="display:flex;align-items:center;gap:6px;">'+dlHtml+badgeHtml+'</div><div>'+selectHtml+'</div></li>';
                 }
                 filesHtml += '</ul>';
             } else {
@@ -3471,6 +3475,11 @@
             if (contH) contH.style.display = 'none';
             document.getElementById('candidateDetailsModal').classList.add('show');
             document.body.classList.add('menu-open');
+        }
+
+        function colorTaskSelect(sel) {
+            const v = sel.value;
+            sel.className = 'task-result-select ' + (v === 'Прошел' ? 'saved' : (v && v !== '— выберите —' ? 'red' : ''));
         }
 
         function saveTaskCb(fid, ftype, tnum, cb) {
