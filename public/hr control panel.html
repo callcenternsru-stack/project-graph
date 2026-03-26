@@ -3351,10 +3351,10 @@
                         <li><a href="${linkedAutoForm.files.voice}" target="_blank">voice_recording.wav</a></li>
                     </ul>
                 `;
-            } else if (type === 'manual' && candidate.files && Object.keys(candidate.files).length > 0) {
+            } else if (type === 'manual') {
                 filesHtml = '<h3>Загруженные файлы</h3><ul class="file-list">';
                 const taskFiles = {};
-                for (const [key, url] of Object.entries(candidate.files)) {
+                for (const [key, url] of Object.entries(candidate.files || {})) {
                     const match = key.match(/^task_(\d+)$/);
                     if (match) {
                         const taskNum = parseInt(match[1]) + 1;
@@ -3372,19 +3372,37 @@
                     7: ['Процессор','RAM','Ядра','Частота','ОС','Прошел'],
                 };
                 const savedResults = candidate.taskResults || {};
-                const anyDeskVal = candidate.taskInputs && (
-                    candidate.taskInputs['task_4_input'] ||
-                    candidate.taskInputs['task_5_input'] ||
-                    candidate.taskInputs['4'] ||
-                    candidate.taskInputs['5'] ||
-                    candidate.taskInputs[4] ||
-                    candidate.taskInputs[5] ||
-                    candidate.taskInputs['anydesk'] ||
-                    candidate.taskInputs['anyDesk']
+                // AnyDesk: задание 5, ищем по всем возможным ключам
+                const _ti = candidate.taskInputs || {};
+                const _td = candidate.taskData || {};
+                const anyDeskVal = (
+                    _ti['task_4_input'] || _ti['task_5_input'] ||
+                    _ti['4'] || _ti['5'] || _ti[4] || _ti[5] ||
+                    _ti['anydesk'] || _ti['anyDesk'] || _ti['AnyDesk'] ||
+                    _td['task_4_input'] || _td['task_5_input'] ||
+                    _td['anydesk'] || _td['anyDesk'] ||
+                    candidate.anyDeskId || candidate.anydesk || candidate.anyDesk || ''
                 );
-                const rawScore3  = candidate.taskScores  && (candidate.taskScores['task_2_score']  || candidate.taskScores['2']  || candidate.taskScores[2]);
+                const rawScore3 = candidate.taskScores && (
+                    candidate.taskScores['task_2_score'] ||
+                    candidate.taskScores['task_3_score'] ||
+                    candidate.taskScores['2'] ||
+                    candidate.taskScores['3'] ||
+                    candidate.taskScores[2] ||
+                    candidate.taskScores[3]
+                );
+                const rawScore3b = !rawScore3 && candidate.taskResults && (
+                    (typeof candidate.taskResults[3] === 'object' && candidate.taskResults[3]) ||
+                    (typeof candidate.taskResults['3'] === 'object' && candidate.taskResults['3'])
+                );
                 let scoreText = '';
-                if (rawScore3) { try { const sc = typeof rawScore3==='string'?JSON.parse(rawScore3):rawScore3; scoreText=sc.correct+' из '+sc.total+' ('+sc.percentage+'%)'; } catch(e){} }
+                const scoreRaw = rawScore3 || rawScore3b;
+                if (scoreRaw) {
+                    try {
+                        const sc = typeof scoreRaw === 'string' ? JSON.parse(scoreRaw) : scoreRaw;
+                        if (sc && sc.total) scoreText = sc.correct + ' из ' + sc.total + ' (' + sc.percentage + '%)';
+                    } catch(e) {}
+                }
 
                 for (let i = 1; i <= 7; i++) {
                     const hasFile = !!taskFiles[i];
