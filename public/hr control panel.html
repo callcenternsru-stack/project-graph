@@ -733,22 +733,20 @@
         }
         .file-list li {
             margin-bottom: 6px;
-            display: flex;
+            display: grid;
+            grid-template-columns: 120px 80px 110px 1fr;
             align-items: center;
-            gap: 6px;
-            flex-wrap: nowrap;
-            overflow: visible;
+            gap: 8px;
             border-bottom: 1px solid #1c1c1c;
             padding-bottom: 6px;
         }
-        .file-list li strong { min-width: 110px; max-width: 110px; flex-shrink: 0; font-size: 13px; color: #fff; }
+        .file-list li strong { font-size: 13px; color: #fff; white-space: nowrap; }
         .file-list a { flex-shrink: 0; }
         .task-result-select {
             background: #1a1a1a; color: #ffd700;
             border: 1px solid #444; border-radius: 6px;
             padding: 4px 8px; font-size: 12px; cursor: pointer;
-            flex-shrink: 0; height: 28px;
-            max-width: 180px;
+            width: 100%; height: 28px;
         }
         .task-result-select:focus { outline: none; border-color: #ffd700; }
         .task-result-select.saved { border-color: #22c55e; color: #22c55e; }
@@ -779,7 +777,6 @@
             display: inline-block;
             width: 72px;
             text-align: center;
-            flex-shrink: 0;
         }
         .file-list a:hover {
             background: #ffe44d;
@@ -3414,11 +3411,16 @@
                     }
 
                     let badge = '';
-                    if (isTask5 && anyDeskVal) badge = '<span class="task-score-badge">ID: '+anyDeskVal+'</span>';
-                    const dl = hasFile
+                    if (isTask3 && scoreText) badge = scoreText;
+                    if (isTask5 && anyDeskVal) badge = 'ID: '+anyDeskVal;
+
+                    const dlHtml = hasFile
                         ? '<a href="'+taskFiles[i].url+'" target="_blank">Скачать</a>'
-                        : '<span style="display:inline-block;width:72px;flex-shrink:0;"></span>';
-                    filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dl+badge+selectHtml+'</li>';
+                        : '<span></span>';
+                    const badgeHtml = badge
+                        ? '<span class="task-score-badge">'+badge+'</span>'
+                        : '<span></span>';
+                    filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dlHtml+badgeHtml+'<div>'+selectHtml+'</div></li>';
                 }
                 filesHtml += '</ul>';
             } else {
