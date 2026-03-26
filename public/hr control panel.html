@@ -777,6 +777,9 @@
             border: 1px solid #ccb000;
             transition: background 0.2s;
             display: inline-block;
+            width: 72px;
+            text-align: center;
+            flex-shrink: 0;
         }
         .file-list a:hover {
             background: #ffe44d;
@@ -3412,7 +3415,9 @@
 
                     let badge = '';
                     if (isTask5 && anyDeskVal) badge = '<span class="task-score-badge">ID: '+anyDeskVal+'</span>';
-                    const dl = hasFile ? '<a href="'+taskFiles[i].url+'" target="_blank">Скачать</a>' : '';
+                    const dl = hasFile
+                        ? '<a href="'+taskFiles[i].url+'" target="_blank">Скачать</a>'
+                        : '<span style="display:inline-block;width:72px;flex-shrink:0;"></span>';
                     filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dl+badge+selectHtml+'</li>';
                 }
                 filesHtml += '</ul>';
