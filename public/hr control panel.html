@@ -736,15 +736,17 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow: hidden;
         }
-        .file-list li strong { min-width: 120px; flex-shrink: 0; }
+        .file-list li strong { min-width: 130px; flex-shrink: 0; }
+        .file-list li { border-bottom: 1px solid #1c1c1c; padding-bottom: 8px; }
         .file-list a { flex-shrink: 0; }
         .task-result-select {
             background: #1a1a1a; color: #ffd700;
             border: 1px solid #333; border-radius: 6px;
             padding: 4px 8px; font-size: 12px; cursor: pointer;
-            max-width: 200px; width: auto; flex-shrink: 0;
+            width: 190px; flex-shrink: 0;
         }
         .task-result-select:focus { outline: none; border-color: #ffd700; }
         .task-result-select.saved { border-color: #22c55e; color: #22c55e; }
@@ -753,15 +755,15 @@
             padding: 3px 8px; border-radius: 4px;
             white-space: nowrap; flex-shrink: 0;
         }
-        .task-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+        .task-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; }
         .task-cb-lbl {
-            display: flex; align-items: center; gap: 4px;
+            display: flex; align-items: center; gap: 7px;
             font-size: 12px; color: #ccc; cursor: pointer;
             background: #1a1a1a; border: 1px solid #333;
-            border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+            border-radius: 6px; padding: 5px 12px; white-space: nowrap;
         }
         .task-cb-lbl:hover { border-color: #ffd700; color: #ffd700; }
-        .task-cb-lbl input { accent-color: #ffd700; cursor: pointer; margin: 0; }
+        .task-cb-lbl input { accent-color: #ffd700; cursor: pointer; margin: 0; width: 14px; height: 14px; flex-shrink: 0; }
         .task-cb-lbl.on { border-color: #22c55e; color: #22c55e; }
         .file-list a {
             color: #000;
@@ -3346,7 +3348,7 @@
                         <li><a href="${linkedAutoForm.files.voice}" target="_blank">voice_recording.wav</a></li>
                     </ul>
                 `;
-            } else if (type === 'manual') {
+            } else if (type === 'manual' && candidate.files && Object.keys(candidate.files).length > 0) {
                 filesHtml = '<h3>Загруженные файлы</h3><ul class="file-list">';
                 const taskFiles = {};
                 for (const [key, url] of Object.entries(candidate.files)) {
@@ -3403,6 +3405,8 @@
                     filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dl+badge+selectHtml+'</li>';
                 }
                 filesHtml += '</ul>';
+            } else {
+                filesHtml = '<p>Файлы отсутствуют или проверка ещё не завершена.</p>';
             }
 
             content.innerHTML = `
