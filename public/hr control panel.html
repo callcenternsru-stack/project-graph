@@ -745,8 +745,8 @@
         .task-result-select {
             background: #1a1a1a; color: #ffd700;
             border: 1px solid #333; border-radius: 6px;
-            padding: 4px 8px; font-size: 12px; cursor: pointer;
-            width: 190px; flex-shrink: 0;
+            padding: 3px 6px; font-size: 11px; cursor: pointer;
+            width: 160px; flex-shrink: 0;
         }
         .task-result-select:focus { outline: none; border-color: #ffd700; }
         .task-result-select.saved { border-color: #22c55e; color: #22c55e; }
@@ -755,15 +755,15 @@
             padding: 3px 8px; border-radius: 4px;
             white-space: nowrap; flex-shrink: 0;
         }
-        .task-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; }
+        .task-checkboxes { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; }
         .task-cb-lbl {
-            display: flex; align-items: center; gap: 7px;
-            font-size: 12px; color: #ccc; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+            font-size: 11px; color: #ccc; cursor: pointer;
             background: #1a1a1a; border: 1px solid #333;
-            border-radius: 6px; padding: 5px 12px; white-space: nowrap;
+            border-radius: 5px; padding: 3px 7px; white-space: nowrap;
         }
         .task-cb-lbl:hover { border-color: #ffd700; color: #ffd700; }
-        .task-cb-lbl input { accent-color: #ffd700; cursor: pointer; margin: 0; width: 14px; height: 14px; flex-shrink: 0; }
+        .task-cb-lbl input { accent-color: #ffd700; cursor: pointer; margin: 0; width: 12px; height: 12px; flex-shrink: 0; }
         .task-cb-lbl.on { border-color: #22c55e; color: #22c55e; }
         .file-list a {
             color: #000;
@@ -3369,7 +3369,16 @@
                     7: ['Процессор','RAM','Ядра','Частота','ОС','Прошел'],
                 };
                 const savedResults = candidate.taskResults || {};
-                const anyDeskVal = candidate.taskInputs && (candidate.taskInputs['task_4_input'] || candidate.taskInputs['4'] || candidate.taskInputs[4]);
+                const anyDeskVal = candidate.taskInputs && (
+                    candidate.taskInputs['task_4_input'] ||
+                    candidate.taskInputs['task_5_input'] ||
+                    candidate.taskInputs['4'] ||
+                    candidate.taskInputs['5'] ||
+                    candidate.taskInputs[4] ||
+                    candidate.taskInputs[5] ||
+                    candidate.taskInputs['anydesk'] ||
+                    candidate.taskInputs['anyDesk']
+                );
                 const rawScore3  = candidate.taskScores  && (candidate.taskScores['task_2_score']  || candidate.taskScores['2']  || candidate.taskScores[2]);
                 let scoreText = '';
                 if (rawScore3) { try { const sc = typeof rawScore3==='string'?JSON.parse(rawScore3):rawScore3; scoreText=sc.correct+' из '+sc.total+' ('+sc.percentage+'%)'; } catch(e){} }
@@ -3399,7 +3408,6 @@
                     }
 
                     let badge = '';
-                    if (isTask3 && scoreText) badge = '<span class="task-score-badge">'+scoreText+'</span>';
                     if (isTask5 && anyDeskVal) badge = '<span class="task-score-badge">ID: '+anyDeskVal+'</span>';
                     const dl = hasFile ? '<a href="'+taskFiles[i].url+'" target="_blank">Скачать</a>' : '';
                     filesHtml += '<li><strong>'+taskLabels[i]+':</strong>'+dl+badge+selectHtml+'</li>';
