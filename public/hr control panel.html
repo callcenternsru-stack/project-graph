@@ -732,7 +732,34 @@
             margin-top: 10px;
         }
         .file-list li {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .file-list li strong {
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .task-result-select {
+            background: #1a1a1a;
+            color: #ffd700;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 160px;
+        }
+        .task-result-select:focus { outline: none; border-color: #ffd700; }
+        .task-result-select.saved { border-color: #22c55e; color: #22c55e; }
+        .task-score-badge {
+            font-size: 12px;
+            color: #aaa;
+            background: #222;
+            padding: 3px 8px;
+            border-radius: 4px;
         }
         .file-list a {
             color: #000;
@@ -3290,32 +3317,7 @@
                     candidate.taskInputs['4'] ||
                     candidate.taskInputs[4]
                 );
-                if (anyDeskValue) {
-                    extraInfoHtml += `<p><strong>AnyDesk:</strong> ${anyDeskValue}</p>`;
-                }
-                // Тест на знание ПК — задание №3, ключ task_2_score (индекс 2, нумерация с 0)
-                const rawScore = candidate.taskScores && (
-                    candidate.taskScores['task_2_score'] ||
-                    candidate.taskScores['2'] ||
-                    candidate.taskScores[2]
-                );
-                if (rawScore) {
-                    try {
-                        const score = typeof rawScore === 'string'
-                            ? JSON.parse(rawScore)
-                            : rawScore;
-                        extraInfoHtml += `<p><strong>Знание ПК:</strong> ${score.correct} из ${score.total} (${score.percentage}%)</p>`;
-                    } catch (e) {
-                        console.error('Error parsing task score', e);
-                        extraInfoHtml += `<p><strong>Знание ПК:</strong> ${rawScore}</p>`;
-                    }
-                }
-
-                // Отладка: если ничего не нашли — покажем все доступные ключи в консоли
-                if (!anyDeskValue && !rawScore) {
-                    console.log('[DEBUG] taskInputs keys:', Object.keys(candidate.taskInputs || {}));
-                    console.log('[DEBUG] taskScores keys:', Object.keys(candidate.taskScores || {}));
-                }
+                // AnyDesk и Знание ПК теперь показываются inline в списке файлов
             }
 
             // Ищем авто-анкету по contactId для отображения файлов авто-проверки
@@ -3352,11 +3354,70 @@
                         taskFiles[taskNum] = { url, filename: url.split('/').pop() };
                     }
                 }
-                const taskLabels = {1:'Скорость',2:'Запись',3:'Знание ПК',4:'Гарнитура',5:'AnyDesk',6:'Печать',7:'Характеристики'};
+
+                // Статусы для каждого задания
+                const taskLabels  = {1:'Скорость',2:'Запись',3:'Знание ПК',4:'Гарнитура',5:'AnyDesk',6:'Печать',7:'Характеристики'};
+                const taskStatuses = {
+                    1: ['— выберите —','Низкая скорость','Требуется Lan кабель','Прошел'],
+                    2: ['— выберите —','Акцент','Фрикативная речь','Прошел'],
+                    3: ['— выберите —','Плохое знание ПК','Среднее знание ПК','Прошел'],
+                    4: ['— выберите —','Наушники от телефона','Аналоговые','micro jack','Прошел'],
+                    5: ['— выберите —','Нет AnyDesk','Прошел'],
+                    6: ['— выберите —','Низкая скорость печати','Прошел'],
+                    7: ['— выберите —','Процессор','RAM','Ядра','Частота','ОС','Прошел'],
+                };
+                const savedResults = candidate.taskResults || {};
+
+                // AnyDesk значение (задание 5, индекс 4)
+                const anyDeskVal = candidate.taskInputs && (
+                    candidate.taskInputs['task_4_input'] || candidate.taskInputs['4'] || candidate.taskInputs[4]
+                );
+                // Знание ПК (задание 3, индекс 2)
+                const rawScore3 = candidate.taskScores && (
+                    candidate.taskScores['task_2_score'] || candidate.taskScores['2'] || candidate.taskScores[2]
+                );
+                let scoreText = '';
+                if (rawScore3) {
+                    try {
+                        const sc = typeof rawScore3 === 'string' ? JSON.parse(rawScore3) : rawScore3;
+                        scoreText = `${sc.correct} из ${sc.total} (${sc.percentage}%)`;
+                    } catch(e) { scoreText = String(rawScore3); }
+                }
+
                 for (let i = 1; i <= 7; i++) {
-                    if (taskFiles[i]) {
-                        filesHtml += `<li><strong>${taskLabels[i]}:</strong> <a href="${taskFiles[i].url}" target="_blank">Скачать</a></li>`;
+                    if (!taskFiles[i] && i !== 3 && i !== 5) continue;
+                    if (i === 3 && !taskFiles[i] && !scoreText) continue;
+                    if (i === 5 && !taskFiles[i] && !anyDeskVal) continue;
+
+                    const statuses = taskStatuses[i] || [];
+                    const savedVal = savedResults[i] || '';
+                    const isMulti  = i === 7;
+
+                    // Выпадающий список
+                    let selectHtml = '';
+                    if (isMulti) {
+                        // Множественный выбор для характеристик
+                        const multiOpts = statuses.slice(1).map(s => {
+                            const selArr = Array.isArray(savedVal) ? savedVal : (savedVal ? savedVal.split(',') : []);
+                            const checked = selArr.includes(s) ? 'selected' : '';
+                            return `<option value="${s}" ${checked}>${s}</option>`;
+                        }).join('');
+                        selectHtml = `<select multiple class="task-result-select${savedVal?'  saved':''}" style="min-height:60px;" onchange="saveTaskResult('${id}','${type}',${i},Array.from(this.selectedOptions).map(o=>o.value).join(','))">${multiOpts}</select>`;
+                    } else {
+                        const opts = statuses.map(s => `<option value="${s}" ${savedVal===s?'selected':''}>${s}</option>`).join('');
+                        selectHtml = `<select class="task-result-select${savedVal && savedVal!=='— выберите —'?' saved':''}" onchange="saveTaskResult('${id}','${type}',${i},this.value)">${opts}</select>`;
                     }
+
+                    // Доп. инфо для задания 3 и 5
+                    let extraBadge = '';
+                    if (i === 3 && scoreText) extraBadge = `<span class="task-score-badge">Знание ПК: ${scoreText}</span>`;
+                    if (i === 5 && anyDeskVal) extraBadge = `<span class="task-score-badge">ID: ${anyDeskVal}</span>`;
+
+                    const downloadBtn = taskFiles[i]
+                        ? `<a href="${taskFiles[i].url}" target="_blank">Скачать</a>`
+                        : '';
+
+                    filesHtml += `<li><strong>${taskLabels[i]}:</strong>${downloadBtn}${extraBadge}${selectHtml}</li>`;
                 }
                 filesHtml += '</ul>';
             } else {
@@ -3389,6 +3450,46 @@
             if (contH) contH.style.display = 'none';
             document.getElementById('candidateDetailsModal').classList.add('show');
             document.body.classList.add('menu-open');
+        }
+
+        async function saveTaskResult(formId, formType, taskNum, value) {
+            try {
+                const storeName = formType === 'auto' ? 'candidates-data' : 'manualForms';
+                const res = await fetch('/.netlify/functions/updateCandidateStatus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: formId,
+                        type: formType,
+                        recruitmentStatus: (state.allCandidates.find(c => c.id === formId)?.recruitmentStatus || 'draft'),
+                        taskResult: { taskNum, value }
+                    })
+                });
+                if (res.ok) {
+                    // Обновляем локально
+                    const c = state.allCandidates.find(x => x.id === formId);
+                    if (c) {
+                        if (!c.taskResults) c.taskResults = {};
+                        c.taskResults[taskNum] = value;
+                    }
+                    // Подсвечиваем select зелёным
+                    const selects = document.querySelectorAll('.task-result-select');
+                    selects.forEach(s => {
+                        if (s.closest('li') && s.closest('li').querySelector('strong') &&
+                            s.closest('li').querySelector('strong').textContent.includes(
+                                {1:'Скорость',2:'Запись',3:'Знание ПК',4:'Гарнитура',5:'AnyDesk',6:'Печать',7:'Характеристики'}[taskNum]
+                            )) {
+                            s.classList.add('saved');
+                        }
+                    });
+                    showNotification('Результат сохранён', 'success');
+                } else {
+                    showNotification('Ошибка сохранения', 'error');
+                }
+            } catch(e) {
+                console.error('saveTaskResult error:', e);
+                showNotification('Ошибка сети', 'error');
+            }
         }
 
         function closeCandidateDetails() {
