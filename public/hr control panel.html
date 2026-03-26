@@ -3291,7 +3291,7 @@
                     candidate.taskInputs[4]
                 );
                 if (anyDeskValue) {
-                    extraInfoHtml += `<p><strong>AnyDesk (задание 5):</strong> ${anyDeskValue}</p>`;
+                    extraInfoHtml += `<p><strong>AnyDesk:</strong> ${anyDeskValue}</p>`;
                 }
                 // Тест на знание ПК — задание №3, ключ task_2_score (индекс 2, нумерация с 0)
                 const rawScore = candidate.taskScores && (
@@ -3304,10 +3304,10 @@
                         const score = typeof rawScore === 'string'
                             ? JSON.parse(rawScore)
                             : rawScore;
-                        extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${score.correct} из ${score.total} (${score.percentage}%)</p>`;
+                        extraInfoHtml += `<p><strong>Знание ПК:</strong> ${score.correct} из ${score.total} (${score.percentage}%)</p>`;
                     } catch (e) {
                         console.error('Error parsing task score', e);
-                        extraInfoHtml += `<p><strong>Тест (задание 3):</strong> ${rawScore} (ошибка парсинга)</p>`;
+                        extraInfoHtml += `<p><strong>Знание ПК:</strong> ${rawScore}</p>`;
                     }
                 }
 
@@ -3352,9 +3352,10 @@
                         taskFiles[taskNum] = { url, filename: url.split('/').pop() };
                     }
                 }
+                const taskLabels = {1:'Скорость',2:'Запись',3:'Знание ПК',4:'Гарнитура',5:'AnyDesk',6:'Печать',7:'Характеристики'};
                 for (let i = 1; i <= 7; i++) {
                     if (taskFiles[i]) {
-                        filesHtml += `<li><strong>Задание ${i}:</strong> <a href="${taskFiles[i].url}" target="_blank">Скачать</a></li>`;
+                        filesHtml += `<li><strong>${taskLabels[i]}:</strong> <a href="${taskFiles[i].url}" target="_blank">Скачать</a></li>`;
                     }
                 }
                 filesHtml += '</ul>';
