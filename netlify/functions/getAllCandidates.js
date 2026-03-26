@@ -64,32 +64,15 @@ exports.handler = async (event) => {
           if (!data) return null;
           const taskInputs = {};
           const taskScores = {};
-
-          // Ищем в data напрямую (ключи вида task_N_input / task_N_score)
           for (const key in data) {
             if (key.startsWith('task_') && key.endsWith('_input')) {
               taskInputs[key] = data[key];
             }
             if (key.startsWith('task_') && key.endsWith('_score')) {
-              try { taskScores[key] = JSON.parse(data[key]); }
-              catch { taskScores[key] = data[key]; }
-            }
-          }
-
-          // Fallback: taskInputs/taskScores могут лежать в data.taskInputs и data.taskScores
-          // с числовыми ключами (как отправляет candidate.html)
-          if (data.taskInputs && typeof data.taskInputs === 'object') {
-            for (const k in data.taskInputs) {
-              const normKey = `task_${k}_input`;
-              if (!taskInputs[normKey]) taskInputs[normKey] = data.taskInputs[k];
-            }
-          }
-          if (data.taskScores && typeof data.taskScores === 'object') {
-            for (const k in data.taskScores) {
-              const normKey = `task_${k}_score`;
-              if (!taskScores[normKey]) {
-                const val = data.taskScores[k];
-                taskScores[normKey] = (typeof val === 'string') ? (() => { try { return JSON.parse(val); } catch { return val; } })() : val;
+              try {
+                taskScores[key] = JSON.parse(data[key]);
+              } catch {
+                taskScores[key] = data[key];
               }
             }
           }
@@ -112,6 +95,7 @@ exports.handler = async (event) => {
             files:             data.files             || {},
             taskInputs,
             taskScores,
+            taskResults:       data.taskResults       || {},
           };
         } catch (e) {
           return null;

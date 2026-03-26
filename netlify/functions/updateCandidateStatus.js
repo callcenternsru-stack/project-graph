@@ -22,7 +22,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-    const { id, type, recruitmentStatus, reminderCount, contactId } = body;
+    const { id, type, recruitmentStatus, reminderCount, contactId, taskResult } = body;
 
     if (!id || !type || !recruitmentStatus) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing fields' }) };
@@ -104,6 +104,12 @@ exports.handler = async (event) => {
         candidates[candidateIndex].updatedAt = new Date().toISOString();
         await candidatesStore.setJSON('_all', candidates);
       }
+    }
+
+    // ── Сохраняем taskResult если передан ───────────────────────────
+    if (taskResult && taskResult.taskNum !== undefined) {
+      if (!data.taskResults) data.taskResults = {};
+      data.taskResults[taskResult.taskNum] = taskResult.value;
     }
 
     // ── Сохраняем обновлённую анкету ─────────────────────────────────
